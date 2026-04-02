@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Balloon Heroes Run & Rise</title>
+    <link rel="shortcut icon" href="TemplateData/favicon.ico">
+    <link rel="stylesheet" href="TemplateData/style.css">
+    <link rel="manifest" href="manifest.webmanifest">
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        background: #000; /* you can change background color */
+        overflow: hidden;
+      }
+      #unity-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100%;
+        width: 100%;
+      }
+      #unity-canvas {
+        display: block;
+        background: #000;
+      }
+      #unity-loading-bar {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="unity-container">
+      <canvas id="unity-canvas" tabindex="-1"></canvas>
+      <div id="unity-loading-bar">
+        <div id="unity-logo"></div>
+        <div id="unity-progress-bar-empty">
+          <div id="unity-progress-bar-full"></div>
+        </div>
+      </div>
+      <div id="unity-warning"></div>
+    </div>
+
+    <script>
+      const canvas = document.querySelector("#unity-canvas");
+
+      function resizeCanvas() {
+        const ratio = 9 / 16; // fixed aspect ratio
+        let w = window.innerWidth;
+        let h = window.innerHeight;
+
+        if (w / h > ratio) {
+          // screen too wide, limit by height
+          h = window.innerHeight;
+          w = h * ratio;
+        } else {
+          // screen too tall, limit by width
+          w = window.innerWidth;
+          h = w / ratio;
+        }
+
+        canvas.style.width = w + "px";
+        canvas.style.height = h + "px";
+      }
+
+      window.addEventListener("resize", resizeCanvas);
+      window.addEventListener("load", resizeCanvas);
+
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", function () {
+          navigator.serviceWorker.register("ServiceWorker.js");
+        });
+      }
+
+      var buildUrl = "Build";
+      var loaderUrl = buildUrl + "/GameMonetix.loader.js";
+      var config = {
+        dataUrl: buildUrl + "/GameMonetix.data",
+        frameworkUrl: buildUrl + "/GameMonetix.framework.js",
+        codeUrl: buildUrl + "/GameMonetix.wasm",
+        streamingAssetsUrl: "StreamingAssets",
+        companyName: "hyhygames",
+        productName: "Balloon Heroes Run & Rise",
+        productVersion: "1.0",
+        showBanner: unityShowBanner,
+      };
+
+      var loadingBar = document.querySelector("#unity-loading-bar");
+      var progressBarFull = document.querySelector("#unity-progress-bar-full");
+      var warningBanner = document.querySelector("#unity-warning");
+
+      function unityShowBanner(msg, type) {
+        function updateBannerVisibility() {
+          warningBanner.style.display = warningBanner.children.length ? "block" : "none";
+        }
+        var div = document.createElement("div");
+        div.innerHTML = msg;
+        warningBanner.appendChild(div);
+        if (type == "error") div.style = "background: red; padding: 10px;";
+        else {
+          if (type == "warning") div.style = "background: yellow; padding: 10px;";
+          setTimeout(function () {
+            warningBanner.removeChild(div);
+            updateBannerVisibility();
+          }, 5000);
+        }
+        updateBannerVisibility();
+      }
+
+      loadingBar.style.display = "block";
+
+      var script = document.createElement("script");
+      script.src = loaderUrl;
+      script.onload = () => {
+        createUnityInstance(canvas, config, (progress) => {
+          progressBarFull.style.width = 100 * progress + "%";
+        }).then((unityInstance) => {
+          loadingBar.style.display = "none";
+        }).catch((message) => {
+          alert(message);
+        });
+      };
+      document.body.appendChild(script);
+    </script>
+  </body>
+</html>

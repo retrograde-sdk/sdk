@@ -1,0 +1,1408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft Rooftop Snipers</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(to bottom, #1a2a6c, #b21f1f, #fdbb2d);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+        
+        .game-container {
+            width: 100%;
+            max-width: 800px;
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+        
+        .game-header {
+            background: linear-gradient(to right, #2c3e50, #4ca1af);
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .game-header h1 {
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        .game-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .top-controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        
+        .game-mode-select {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .mode-btn {
+            padding: 10px 20px;
+            font-size: 1rem;
+            background: linear-gradient(to bottom, #3498db, #2980b9);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .mode-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        .mode-btn.active {
+            background: linear-gradient(to bottom, #e74c3c, #c0392b);
+        }
+        
+        .difficulty-select {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .difficulty-btn {
+            padding: 8px 15px;
+            background: linear-gradient(to bottom, #95a5a6, #7f8c8d);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .difficulty-btn.active {
+            background: linear-gradient(to bottom, #e74c3c, #c0392b);
+        }
+        
+        .texture-controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .texture-btn {
+            padding: 8px 15px;
+            background: linear-gradient(to bottom, #9b59b6, #8e44ad);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .texture-btn.active {
+            background: linear-gradient(to bottom, #e74c3c, #c0392b);
+        }
+        
+        .texture-info {
+            margin: 10px 0;
+            font-size: 1rem;
+            color: #2c3e50;
+            text-align: center;
+            max-width: 600px;
+        }
+        
+        .level-info {
+            margin: 10px 0;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .game-canvas-container {
+            position: relative;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        
+        #gameCanvas {
+            background: linear-gradient(to bottom, #87CEEB, #E0F7FA);
+            border: 5px solid #2c3e50;
+            border-radius: 10px;
+            width: 100%;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .player-controls-container {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            margin-top: 20px;
+        }
+        
+        .player-controls {
+            background: linear-gradient(to bottom, #ecf0f1, #bdc3c7);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            min-width: 200px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .player-controls h3 {
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        
+        .controls-key {
+            display: inline-block;
+            background-color: #2c3e50;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            margin: 5px;
+            font-weight: bold;
+        }
+        
+        .score-board {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            margin: 20px 0;
+            background: linear-gradient(to right, #2c3e50, #4ca1af);
+            padding: 15px;
+            border-radius: 10px;
+            color: white;
+        }
+        
+        .score {
+            text-align: center;
+        }
+        
+        .score-value {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+        
+        .game-status {
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-align: center;
+            margin: 15px 0;
+            color: #e74c3c;
+            height: 30px;
+        }
+        
+        .instructions {
+            background-color: rgba(44, 62, 80, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: center;
+            width: 100%;
+        }
+        
+        .high-score {
+            margin-top: 15px;
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 1.2rem;
+        }
+        
+        .audio-controls {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        
+        .audio-btn {
+            padding: 8px 15px;
+            background: linear-gradient(to bottom, #27ae60, #219653);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        @media (max-width: 768px) {
+            .top-controls {
+                flex-direction: column;
+                align-items: center;
+                gap: 10px;
+            }
+            
+            .player-controls-container {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .player-controls {
+                width: 100%;
+            }
+            
+            .texture-controls {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+
+<div class="game-canvas-container">
+                <canvas id="gameCanvas" width="760" height="400"></canvas>
+            </div>
+
+         
+
+
+
+        
+        <div class="game-content">
+            <!-- Top Controls Section -->
+            <div class="top-controls">
+                <div class="game-mode-select">
+                    <button class="mode-btn active" id="pvpBtn">Player vs Player</button>
+                    <button class="mode-btn" id="pvaiBtn">Player vs AI</button>
+                </div>
+                
+                <div class="difficulty-select" id="difficultyContainer" style="display: none;">
+                    <button class="difficulty-btn active" id="easyBtn">Easy</button>
+                    <button class="difficulty-btn" id="mediumBtn">Medium</button>
+                    <button class="difficulty-btn" id="hardBtn">Hard</button>
+                </div>
+                
+                <div class="texture-controls">
+                    <button class="texture-btn active" id="defaultBtn">Default</button>
+                    <button class="texture-btn" id="creeperBtn">Creeper</button>
+                    <button class="texture-btn" id="netherBtn">Nether</button>
+                    <button class="texture-btn" id="enderBtn">End</button>
+                </div>
+            </div>
+            
+            <div class="texture-info">
+                <strong>Texture System:</strong> All textures are managed in one place. Check the TextureManager in the JavaScript code.
+            </div>
+            
+            <div class="level-info" id="levelInfo">Level 1: Basic Rooftops</div>
+            
+            <div class="game-status" id="gameStatus">Get Ready! One Shot Wins!</div>
+            
+            
+            
+            <div class="score-board">
+                <div class="score">
+                    <div>Player 1</div>
+                    <div class="score-value" id="player1Score">0</div>
+                </div>
+                <div class="score">
+                    <div>Player 2</div>
+                    <div class="score-value" id="player2Score">0</div>
+                </div>
+            </div>
+            
+            <div class="high-score" id="highScore">
+                High Score: 0
+            </div>
+            
+            <div class="audio-controls">
+                <button class="audio-btn" id="audioToggle">Sound: ON</button>
+            </div>
+            
+            <!-- Player Controls at the Top -->
+            <div class="player-controls-container">
+                <div class="player-controls">
+                    <h3>Player 1 Controls</h3>
+                    <p>Move: <span class="controls-key">A</span> <span class="controls-key">D</span></p>
+                    <p>Jump: <span class="controls-key">W</span></p>
+                    <p>Shoot: <span class="controls-key">Space</span></p>
+                </div>
+                
+                <div class="player-controls">
+                    <h3>Player 2 Controls</h3>
+                    <p>Move: <span class="controls-key">←</span> <span class="controls-key">→</span></p>
+                    <p>Jump: <span class="controls-key">↑</span></p>
+                    <p>Shoot: <span class="controls-key">Enter</span></p>
+                </div>
+            </div>
+            
+            <div class="instructions">
+                <p>One shot wins the round! First to 5 wins the match!</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // =============================================
+        // TEXTURE MANAGER - ALL TEXTURES IN ONE PLACE
+        // =============================================
+        class TextureManager {
+            constructor() {
+                this.themes = {
+                    default: {
+                        name: "Default Minecraft",
+                        player1: {
+                            body: '#8B4513',    // Brown for Steve's shirt
+                            pants: '#0000FF',   // Blue for Steve's pants
+                            head: '#F5DEB3',    // Wheat color for Steve's face
+                            arm: '#8B4513',     // Brown for Steve's arms
+                            leg: '#0000FF'      // Blue for Steve's legs
+                        },
+                        player2: {
+                            body: '#FF6B6B',    // Coral for Alex's shirt
+                            pants: '#4ECDC4',   // Teal for Alex's pants
+                            head: '#F5DEB3',    // Wheat color for Alex's face
+                            arm: '#FF6B6B',     // Coral for Alex's arms
+                            leg: '#4ECDC4'      // Teal for Alex's legs
+                        },
+                        blocks: {
+                            building: '#95a5a6',    // Stone block color
+                            roof: '#7f8c8d',        // Darker stone for roof
+                            floor: '#8B4513',       // Wood plank color for floor
+                            grass: '#2E8B57',       // Grass block top color
+                            cloud: 'white'          // Cloud color
+                        },
+                        sky: {
+                            top: '#87CEEB',         // Light blue sky at top
+                            bottom: '#E0F7FA'       // Very light blue at bottom
+                        },
+                        bullet: '#FFD700'           // Gold color for bullets
+                    },
+                    creeper: {
+                        name: "Creeper Theme",
+                        player1: {
+                            body: '#00FF00',    // Green body
+                            pants: '#006400',   // Dark green pants
+                            head: '#00FF00',    // Green head
+                            arm: '#00FF00',     // Green arms
+                            leg: '#006400'      // Dark green legs
+                        },
+                        player2: {
+                            body: '#8B0000',    // Dark red body
+                            pants: '#4B0082',   // Indigo pants
+                            head: '#8B0000',    // Dark red head
+                            arm: '#8B0000',     // Dark red arms
+                            leg: '#4B0082'      // Indigo legs
+                        },
+                        blocks: {
+                            building: '#228B22',    // Forest green
+                            roof: '#006400',        // Dark green
+                            floor: '#556B2F',       // Dark olive green
+                            grass: '#32CD32',       // Lime green
+                            cloud: '#98FB98'        // Pale green
+                        },
+                        sky: {
+                            top: '#98FB98',         // Pale green sky
+                            bottom: '#F0FFF0'       // Honeydew bottom
+                        },
+                        bullet: '#ADFF2F'           // Green yellow bullets
+                    },
+                    nether: {
+                        name: "Nether Theme",
+                        player1: {
+                            body: '#8B0000',    // Dark red
+                            pants: '#FF4500',   // Orange red
+                            head: '#8B0000',    // Dark red
+                            arm: '#8B0000',     // Dark red
+                            leg: '#FF4500'      // Orange red
+                        },
+                        player2: {
+                            body: '#4B0082',    // Indigo
+                            pants: '#8A2BE2',   // Blue violet
+                            head: '#4B0082',    // Indigo
+                            arm: '#4B0082',     // Indigo
+                            leg: '#8A2BE2'      // Blue violet
+                        },
+                        blocks: {
+                            building: '#8B0000',    // Dark red nether bricks
+                            roof: '#A52A2A',        // Brown roof
+                            floor: '#654321',       // Dark wood
+                            grass: '#DC143C',       // Crimson
+                            cloud: '#FF6347'        // Tomato red
+                        },
+                        sky: {
+                            top: '#FF4500',         // Orange red sky
+                            bottom: '#8B0000'       // Dark red bottom
+                        },
+                        bullet: '#FFD700'           // Gold bullets
+                    },
+                    end: {
+                        name: "End Theme",
+                        player1: {
+                            body: '#4B0082',    // Indigo
+                            pants: '#8A2BE2',   // Blue violet
+                            head: '#4B0082',    // Indigo
+                            arm: '#4B0082',     // Indigo
+                            leg: '#8A2BE2'      // Blue violet
+                        },
+                        player2: {
+                            body: '#000080',    // Navy
+                            pants: '#0000CD',   // Medium blue
+                            head: '#000080',    // Navy
+                            arm: '#000080',     // Navy
+                            leg: '#0000CD'      // Medium blue
+                        },
+                        blocks: {
+                            building: '#2F4F4F',    // Dark slate gray
+                            roof: '#696969',        // Dim gray
+                            floor: '#2F4F4F',       // Dark slate gray
+                            grass: '#708090',       // Slate gray
+                            cloud: '#B0C4DE'        // Light steel blue
+                        },
+                        sky: {
+                            top: '#000080',         // Navy sky
+                            bottom: '#191970'       // Midnight blue
+                        },
+                        bullet: '#7B68EE'           // Medium slate blue
+                    }
+                };
+                
+                this.currentTheme = 'default';
+            }
+            
+            setTheme(themeName) {
+                if (this.themes[themeName]) {
+                    this.currentTheme = themeName;
+                    return true;
+                }
+                return false;
+            }
+            
+            getPlayerTexture(playerNum) {
+                return this.themes[this.currentTheme][`player${playerNum}`];
+            }
+            
+            getBlockTexture(type) {
+                return this.themes[this.currentTheme].blocks[type];
+            }
+            
+            getSkyColor(position) {
+                return this.themes[this.currentTheme].sky[position];
+            }
+            
+            getBulletColor() {
+                return this.themes[this.currentTheme].bullet;
+            }
+            
+            getThemeName() {
+                return this.themes[this.currentTheme].name;
+            }
+            
+            // Method to add new themes easily
+            addTheme(name, themeData) {
+                this.themes[name] = themeData;
+            }
+        }
+
+        // Initialize texture manager
+        const textureManager = new TextureManager();
+
+        // Game variables
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const pvpBtn = document.getElementById('pvpBtn');
+        const pvaiBtn = document.getElementById('pvaiBtn');
+        const gameStatus = document.getElementById('gameStatus');
+        const player1ScoreElem = document.getElementById('player1Score');
+        const player2ScoreElem = document.getElementById('player2Score');
+        const highScoreElem = document.getElementById('highScore');
+        const audioToggle = document.getElementById('audioToggle');
+        const levelInfo = document.getElementById('levelInfo');
+        const difficultyContainer = document.getElementById('difficultyContainer');
+        const easyBtn = document.getElementById('easyBtn');
+        const mediumBtn = document.getElementById('mediumBtn');
+        const hardBtn = document.getElementById('hardBtn');
+        const defaultBtn = document.getElementById('defaultBtn');
+        const creeperBtn = document.getElementById('creeperBtn');
+        const netherBtn = document.getElementById('netherBtn');
+        const enderBtn = document.getElementById('enderBtn');
+        
+        // Game state
+        let gameMode = 'pvp';
+        let player1Score = 0;
+        let player2Score = 0;
+        let highScore = 0;
+        let gameRunning = true;
+        let soundEnabled = true;
+        let currentLevel = 1;
+        let buildings = [];
+        let aiDifficulty = 'easy'; // easy, medium, hard
+        
+        // Level configurations
+        const levels = [
+            { // Level 1: Basic Rooftops
+                name: "Basic Rooftops",
+                buildings: [
+                    {x: 100, y: 300, width: 200, height: 100},
+                    {x: 500, y: 300, width: 200, height: 100}
+                ]
+            },
+            { // Level 2: Higher Platforms
+                name: "Higher Platforms",
+                buildings: [
+                    {x: 50, y: 250, width: 150, height: 150},
+                    {x: 300, y: 320, width: 160, height: 80},
+                    {x: 560, y: 250, width: 150, height: 150}
+                ]
+            },
+            { // Level 3: Uneven Platforms
+                name: "Uneven Platforms",
+                buildings: [
+                    {x: 80, y: 280, width: 120, height: 120},
+                    {x: 280, y: 320, width: 200, height: 80},
+                    {x: 560, y: 270, width: 140, height: 130}
+                ]
+            },
+            { // Level 4: Narrow Platforms
+                name: "Narrow Platforms",
+                buildings: [
+                    {x: 100, y: 300, width: 100, height: 100},
+                    {x: 350, y: 300, width: 60, height: 100},
+                    {x: 560, y: 300, width: 100, height: 100}
+                ]
+            },
+            { // Level 5: Mixed Heights
+                name: "Mixed Heights",
+                buildings: [
+                    {x: 50, y: 320, width: 120, height: 80},
+                    {x: 250, y: 270, width: 120, height: 130},
+                    {x: 450, y: 300, width: 120, height: 100},
+                    {x: 650, y: 320, width: 60, height: 80}
+                ]
+            }
+        ];
+        
+        // Load high score from localStorage
+        if (localStorage.getItem('minecraftSnipersHighScore')) {
+            highScore = parseInt(localStorage.getItem('minecraftSnipersHighScore'));
+            highScoreElem.textContent = `High Score: ${highScore}`;
+        }
+        
+        // Audio elements
+        const jumpSound = new Audio();
+        const fireSound = new Audio();
+        const winSound = new Audio();
+        const loseSound = new Audio();
+        
+        // Set audio sources
+        jumpSound.src = 'jump.mp3';
+        fireSound.src = 'fire.mp3';
+        winSound.src = 'win.mp3';
+        loseSound.src = 'lose.mp3';
+        
+        // Preload audio
+        jumpSound.load();
+        fireSound.load();
+        winSound.load();
+        loseSound.load();
+        
+        // Bullet class
+        class Bullet {
+            constructor(x, y, direction, player) {
+                this.x = x;
+                this.y = y;
+                this.width = 10;
+                this.height = 5;
+                this.speed = 12;
+                this.direction = direction;
+                this.player = player;
+                this.active = true;
+            }
+            
+            update() {
+                this.x += this.speed * this.direction;
+                
+                // Deactivate if off screen
+                if (this.x < 0 || this.x > canvas.width) {
+                    this.active = false;
+                }
+                
+                return this.active;
+            }
+            
+            draw() {
+                // Get bullet color from texture manager
+                ctx.fillStyle = textureManager.getBulletColor();
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+                
+                // Add a glow effect
+                ctx.shadowColor = textureManager.getBulletColor();
+                ctx.shadowBlur = 10;
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+                ctx.shadowBlur = 0;
+            }
+            
+            checkHit(player) {
+                if (this.active && 
+                    this.x < player.x + player.width &&
+                    this.x + this.width > player.x &&
+                    this.y < player.y + player.height &&
+                    this.y + this.height > player.y) {
+                    this.active = false;
+                    return true;
+                }
+                return false;
+            }
+        }
+        
+        // Player class
+        class Player {
+            constructor(x, y, width, height, color, controls, playerNum) {
+                this.x = x;
+                this.y = y;
+                this.width = width;
+                this.height = height;
+                this.color = color;
+                this.playerNum = playerNum; // Store player number for texture lookup
+                this.velocityX = 0;
+                this.velocityY = 0;
+                this.jumping = false;
+                this.grounded = false;
+                this.recoil = 0;
+                this.facingRight = color === 'red';
+                this.controls = controls;
+                this.shooting = false;
+                this.shootCooldown = 0;
+                this.handY = 0;
+                this.handDirection = 1;
+                this.bullets = [];
+                this.alive = true;
+                this.isAI = false;
+                this.aiJumpTimer = 0;
+                this.aiShootTimer = 0;
+                this.aiMoveTimer = 0;
+                this.aiMoveDirection = 0; // -1 for left, 0 for stay, 1 for right
+            }
+            
+            update(keys, buildings) {
+                if (!this.alive) return false;
+                
+                // Apply gravity
+                if (!this.grounded) {
+                    this.velocityY += 0.5;
+                }
+                
+                // Handle controls for human players
+                if (!this.isAI) {
+                    if (keys[this.controls.left]) {
+                        this.velocityX = -5;
+                        this.facingRight = false;
+                    } else if (keys[this.controls.right]) {
+                        this.velocityX = 5;
+                        this.facingRight = true;
+                    } else {
+                        this.velocityX *= 0.9; // Smooth deceleration
+                        if (Math.abs(this.velocityX) < 0.5) this.velocityX = 0;
+                    }
+                    
+                    if (keys[this.controls.up] && this.grounded && !this.jumping) {
+                        this.velocityY = -15;
+                        this.jumping = true;
+                        this.grounded = false;
+                        if (soundEnabled) jumpSound.play();
+                    }
+                    
+                    // Handle shooting
+                    if (keys[this.controls.shoot] && this.shootCooldown <= 0) {
+                        this.shoot();
+                    }
+                }
+                
+                // Apply recoil recovery
+                if (this.recoil > 0) this.recoil -= 0.5;
+                
+                // Update position
+                this.x += this.velocityX;
+                this.y += this.velocityY;
+                
+                // Animate hand
+                this.handY += 0.1 * this.handDirection;
+                if (this.handY > 5 || this.handY < -5) {
+                    this.handDirection *= -1;
+                }
+                
+                // Update bullets
+                for (let i = this.bullets.length - 1; i >= 0; i--) {
+                    if (!this.bullets[i].update()) {
+                        this.bullets.splice(i, 1);
+                    }
+                }
+                
+                // Update shoot cooldown
+                if (this.shootCooldown > 0) this.shootCooldown--;
+                
+                // Check for collision with floor and buildings
+                this.grounded = false;
+                
+                // Check floor collision
+                if (this.y + this.height > canvas.height - 40) {
+                    this.y = canvas.height - 40 - this.height;
+                    this.velocityY = 0;
+                    this.grounded = true;
+                    this.jumping = false;
+                }
+                
+                // Check building collision
+                for (const building of buildings) {
+                    if (this.x + this.width > building.x && 
+                        this.x < building.x + building.width &&
+                        this.y + this.height > building.y && 
+                        this.y + this.height < building.y + 15) {
+                        this.y = building.y - this.height;
+                        this.velocityY = 0;
+                        this.grounded = true;
+                        this.jumping = false;
+                    }
+                }
+                
+                // Boundary check
+                if (this.x < 0) this.x = 0;
+                if (this.x + this.width > canvas.width) this.x = canvas.width - this.width;
+                if (this.y < 0) this.y = 0;
+                
+                return this.alive;
+            }
+            
+            // AI behavior - improved to shoot at any distance
+            updateAI(targetPlayer, buildings) {
+                if (!this.alive) return false;
+                
+                // Apply gravity
+                if (!this.grounded) {
+                    this.velocityY += 0.5;
+                }
+                
+                // AI movement logic based on difficulty
+                this.aiMoveTimer++;
+                if (this.aiMoveTimer > 60) {
+                    this.aiMoveTimer = 0;
+                    
+                    // Change movement direction randomly
+                    if (Math.random() < 0.3) {
+                        this.aiMoveDirection = Math.random() < 0.5 ? -1 : 1;
+                    } else {
+                        this.aiMoveDirection = 0;
+                    }
+                    
+                    // Higher difficulty = more movement
+                    if (aiDifficulty === 'hard' && Math.random() < 0.5) {
+                        this.aiMoveDirection = Math.random() < 0.5 ? -1 : 1;
+                    }
+                }
+                
+                // Apply movement
+                if (this.aiMoveDirection !== 0) {
+                    this.velocityX = this.aiMoveDirection * 4;
+                    this.facingRight = this.aiMoveDirection > 0;
+                } else {
+                    this.velocityX *= 0.9;
+                    if (Math.abs(this.velocityX) < 0.5) this.velocityX = 0;
+                }
+                
+                // AI jumping logic
+                this.aiJumpTimer++;
+                let jumpProbability = 0.02;
+                
+                // Adjust jump probability based on difficulty
+                if (aiDifficulty === 'medium') jumpProbability = 0.03;
+                if (aiDifficulty === 'hard') jumpProbability = 0.05;
+                
+                if (this.grounded && this.aiJumpTimer > 30 && Math.random() < jumpProbability) {
+                    this.velocityY = -15;
+                    this.jumping = true;
+                    this.grounded = false;
+                    this.aiJumpTimer = 0;
+                    if (soundEnabled) jumpSound.play();
+                }
+                
+                // AI shooting logic - shoots at any distance
+                this.aiShootTimer++;
+                const dx = targetPlayer.x - this.x;
+                
+                // Face the target
+                this.facingRight = dx > 0;
+                
+                // Shoot probabilities based on difficulty
+                let shootProbability = 0.03; // Easy
+                let shootCooldown = 50;
+                
+                if (aiDifficulty === 'medium') {
+                    shootProbability = 0.05;
+                    shootCooldown = 40;
+                } else if (aiDifficulty === 'hard') {
+                    shootProbability = 0.08;
+                    shootCooldown = 30;
+                }
+                
+                // AI shoots at any distance with varying probability
+                if (this.aiShootTimer > shootCooldown && Math.random() < shootProbability) {
+                    this.shoot();
+                    this.aiShootTimer = 0;
+                }
+                
+                // Update position
+                this.x += this.velocityX;
+                this.y += this.velocityY;
+                
+                // Animate hand
+                this.handY += 0.1 * this.handDirection;
+                if (this.handY > 5 || this.handY < -5) {
+                    this.handDirection *= -1;
+                }
+                
+                // Update bullets
+                for (let i = this.bullets.length - 1; i >= 0; i--) {
+                    if (!this.bullets[i].update()) {
+                        this.bullets.splice(i, 1);
+                    }
+                }
+                
+                // Update shoot cooldown
+                if (this.shootCooldown > 0) this.shootCooldown--;
+                
+                // Check for collision with floor and buildings
+                this.grounded = false;
+                
+                // Check floor collision
+                if (this.y + this.height > canvas.height - 40) {
+                    this.y = canvas.height - 40 - this.height;
+                    this.velocityY = 0;
+                    this.grounded = true;
+                    this.jumping = false;
+                }
+                
+                // Check building collision
+                for (const building of buildings) {
+                    if (this.x + this.width > building.x && 
+                        this.x < building.x + building.width &&
+                        this.y + this.height > building.y && 
+                        this.y + this.height < building.y + 15) {
+                        this.y = building.y - this.height;
+                        this.velocityY = 0;
+                        this.grounded = true;
+                        this.jumping = false;
+                    }
+                }
+                
+                // Boundary check
+                if (this.x < 0) {
+                    this.x = 0;
+                    this.aiMoveDirection = 1; // Change direction if hitting boundary
+                }
+                if (this.x + this.width > canvas.width) {
+                    this.x = canvas.width - this.width;
+                    this.aiMoveDirection = -1; // Change direction if hitting boundary
+                }
+                if (this.y < 0) this.y = 0;
+                
+                return this.alive;
+            }
+            
+            shoot() {
+                this.shooting = true;
+                this.recoil = 15;
+                this.shootCooldown = 30;
+                if (soundEnabled) fireSound.play();
+                
+                // Apply recoil force (less for AI)
+                const recoilForce = this.isAI ? 4 : 8;
+                if (this.facingRight) {
+                    this.velocityX -= recoilForce;
+                } else {
+                    this.velocityX += recoilForce;
+                }
+                
+                // Create a new bullet
+                const bulletX = this.facingRight ? this.x + this.width : this.x;
+                const bulletY = this.y + this.height / 2;
+                const direction = this.facingRight ? 1 : -1;
+                
+                this.bullets.push(new Bullet(bulletX, bulletY, direction, this));
+            }
+            
+            draw() {
+                if (!this.alive) return;
+                
+                // Get textures from texture manager
+                const texture = textureManager.getPlayerTexture(this.playerNum);
+                
+                // Draw body (Minecraft-style)
+                ctx.fillStyle = texture.body;
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+                
+                // Draw head
+                ctx.fillStyle = texture.head;
+                ctx.fillRect(this.x - 5, this.y - 20, this.width + 10, 20);
+                
+                // Draw legs
+                ctx.fillStyle = texture.pants;
+                ctx.fillRect(this.x, this.y + this.height, 10, 15);
+                ctx.fillRect(this.x + this.width - 10, this.y + this.height, 10, 15);
+                
+                // Draw arm with animation
+                const armY = this.y + 15 + this.handY;
+                ctx.fillStyle = texture.arm;
+                
+                if (this.facingRight) {
+                    ctx.fillRect(this.x + this.width, armY, 15, 10);
+                    // Draw gun
+                    ctx.fillStyle = '#333';
+                    ctx.fillRect(this.x + this.width + 15 + this.recoil, armY, 20 + this.recoil, 5);
+                } else {
+                    ctx.fillRect(this.x - 15, armY, 15, 10);
+                    // Draw gun
+                    ctx.fillStyle = '#333';
+                    ctx.fillRect(this.x - 35 - this.recoil, armY, 20 + this.recoil, 5);
+                }
+                
+                // Draw bullets
+                this.bullets.forEach(bullet => bullet.draw());
+                
+                // Draw AI indicator
+                if (this.isAI) {
+                    ctx.fillStyle = '#000';
+                    ctx.font = '12px Arial';
+                    ctx.fillText('AI', this.x + this.width/2 - 10, this.y - 25);
+                    
+                    // Draw difficulty indicator
+                    let diffText = aiDifficulty.toUpperCase();
+                    ctx.fillText(diffText, this.x + this.width/2 - 15, this.y - 40);
+                }
+            }
+            
+            checkHit(other) {
+                for (let i = this.bullets.length - 1; i >= 0; i--) {
+                    if (this.bullets[i].checkHit(other)) {
+                        // One shot kill
+                        other.alive = false;
+                        this.bullets.splice(i, 1);
+                        return true;
+                    }
+                }
+                return false;
+            }
+        }
+        
+        // Building class
+        class Building {
+            constructor(x, y, width, height) {
+                this.x = x;
+                this.y = y;
+                this.width = width;
+                this.height = height;
+            }
+            
+            draw() {
+                // Get block textures from texture manager
+                const buildingColor = textureManager.getBlockTexture('building');
+                const roofColor = textureManager.getBlockTexture('roof');
+                
+                // Draw building (Minecraft-style with blocks)
+                ctx.fillStyle = buildingColor;
+                
+                // Draw block pattern
+                for (let i = 0; i < this.width; i += 20) {
+                    for (let j = 0; j < this.height; j += 20) {
+                        ctx.fillRect(this.x + i, this.y + j, 20, 20);
+                        ctx.strokeStyle = '#7f8c8d';
+                        ctx.strokeRect(this.x + i, this.y + j, 20, 20);
+                    }
+                }
+                
+                // Draw roof
+                ctx.fillStyle = roofColor;
+                ctx.beginPath();
+                ctx.moveTo(this.x - 10, this.y);
+                ctx.lineTo(this.x, this.y - 10);
+                ctx.lineTo(this.x + this.width, this.y - 10);
+                ctx.lineTo(this.x + this.width + 10, this.y);
+                ctx.fill();
+            }
+        }
+        
+        // Create players with texture manager
+        const player1 = new Player(
+            200, 250, 30, 50, 'red',
+            { left: 65, right: 68, up: 87, shoot: 32 }, // A, D, W, Space
+            1  // Player 1
+        );
+        
+        const player2 = new Player(
+            600, 250, 30, 50, 'blue',
+            { left: 37, right: 39, up: 38, shoot: 13 }, // Left, Right, Up, Enter
+            2  // Player 2
+        );
+        
+        // Initialize the first level
+        function initializeLevel(levelIndex) {
+            currentLevel = levelIndex;
+            const level = levels[levelIndex];
+            levelInfo.textContent = `Level ${currentLevel + 1}: ${level.name} - ${textureManager.getThemeName()}`;
+            
+            // Clear existing buildings
+            buildings = [];
+            
+            // Create new buildings for the level
+            level.buildings.forEach(building => {
+                buildings.push(new Building(building.x, building.y, building.width, building.height));
+            });
+            
+            // Position players based on level
+            if (levelIndex === 0) {
+                // Level 1 - standard positions
+                player1.x = 200;
+                player1.y = 250;
+                player2.x = 600;
+                player2.y = 250;
+            } else if (levelIndex === 1) {
+                // Level 2 - higher platforms
+                player1.x = 100;
+                player1.y = 200;
+                player2.x = 610;
+                player2.y = 200;
+            } else if (levelIndex === 2) {
+                // Level 3 - uneven platforms
+                player1.x = 120;
+                player1.y = 230;
+                player2.x = 620;
+                player2.y = 220;
+            } else if (levelIndex === 3) {
+                // Level 4 - narrow platforms
+                player1.x = 130;
+                player1.y = 250;
+                player2.x = 630;
+                player2.y = 250;
+            } else {
+                // Level 5 - mixed heights
+                player1.x = 80;
+                player1.y = 270;
+                player2.x = 670;
+                player2.y = 270;
+            }
+        }
+        
+        // Key state tracking
+        const keys = {};
+        
+        // Fix for spacebar scrolling
+        window.addEventListener('keydown', (e) => {
+            // Prevent spacebar from scrolling the page
+            if (e.keyCode === 32) { // Spacebar
+                e.preventDefault();
+            }
+            keys[e.keyCode] = true;
+        });
+        
+        window.addEventListener('keyup', (e) => {
+            keys[e.keyCode] = false;
+        });
+        
+        // Game mode selection
+        pvpBtn.addEventListener('click', () => {
+            gameMode = 'pvp';
+            player2.isAI = false;
+            pvpBtn.classList.add('active');
+            pvaiBtn.classList.remove('active');
+            difficultyContainer.style.display = 'none';
+            resetGame();
+        });
+        
+        pvaiBtn.addEventListener('click', () => {
+            gameMode = 'pvai';
+            player2.isAI = true;
+            pvpBtn.classList.remove('active');
+            pvaiBtn.classList.add('active');
+            difficultyContainer.style.display = 'flex';
+            resetGame();
+        });
+        
+        // Difficulty selection
+        easyBtn.addEventListener('click', () => {
+            aiDifficulty = 'easy';
+            easyBtn.classList.add('active');
+            mediumBtn.classList.remove('active');
+            hardBtn.classList.remove('active');
+        });
+        
+        mediumBtn.addEventListener('click', () => {
+            aiDifficulty = 'medium';
+            easyBtn.classList.remove('active');
+            mediumBtn.classList.add('active');
+            hardBtn.classList.remove('active');
+        });
+        
+        hardBtn.addEventListener('click', () => {
+            aiDifficulty = 'hard';
+            easyBtn.classList.remove('active');
+            mediumBtn.classList.remove('active');
+            hardBtn.classList.add('active');
+        });
+        
+        // Texture selection
+        defaultBtn.addEventListener('click', () => {
+            textureManager.setTheme('default');
+            updateTextureButtons();
+            resetGame();
+        });
+        
+        creeperBtn.addEventListener('click', () => {
+            textureManager.setTheme('creeper');
+            updateTextureButtons();
+            resetGame();
+        });
+        
+        netherBtn.addEventListener('click', () => {
+            textureManager.setTheme('nether');
+            updateTextureButtons();
+            resetGame();
+        });
+        
+        enderBtn.addEventListener('click', () => {
+            textureManager.setTheme('end');
+            updateTextureButtons();
+            resetGame();
+        });
+        
+        function updateTextureButtons() {
+            defaultBtn.classList.remove('active');
+            creeperBtn.classList.remove('active');
+            netherBtn.classList.remove('active');
+            enderBtn.classList.remove('active');
+            
+            switch(textureManager.currentTheme) {
+                case 'default': defaultBtn.classList.add('active'); break;
+                case 'creeper': creeperBtn.classList.add('active'); break;
+                case 'nether': netherBtn.classList.add('active'); break;
+                case 'end': enderBtn.classList.add('active'); break;
+            }
+        }
+        
+        // Sound toggle
+        audioToggle.addEventListener('click', () => {
+            soundEnabled = !soundEnabled;
+            audioToggle.textContent = soundEnabled ? 'Sound: ON' : 'Sound: OFF';
+        });
+        
+        // Reset game positions
+        function resetGame() {
+            player1.velocityX = 0;
+            player1.velocityY = 0;
+            player1.alive = true;
+            player1.bullets = [];
+            
+            player2.velocityX = 0;
+            player2.velocityY = 0;
+            player2.alive = true;
+            player2.bullets = [];
+            
+            // Random level selection
+            const randomLevel = Math.floor(Math.random() * levels.length);
+            initializeLevel(randomLevel);
+            
+            gameStatus.textContent = "Get Ready! One Shot Wins!";
+            setTimeout(() => {
+                gameStatus.textContent = "Fight!";
+                gameRunning = true;
+            }, 1000);
+        }
+        
+        // Check for win condition
+        function checkWin() {
+            if (player1Score >= 5) {
+                gameStatus.textContent = "Player 1 Wins the Match!";
+                gameRunning = false;
+                if (soundEnabled) winSound.play();
+                
+                // Update high score
+                if (player1Score > highScore) {
+                    highScore = player1Score;
+                    highScoreElem.textContent = `High Score: ${highScore}`;
+                    localStorage.setItem('minecraftSnipersHighScore', highScore);
+                }
+                
+                setTimeout(() => {
+                    player1Score = 0;
+                    player2Score = 0;
+                    player1ScoreElem.textContent = player1Score;
+                    player2ScoreElem.textContent = player2Score;
+                    resetGame();
+                }, 3000);
+            } else if (player2Score >= 5) {
+                gameStatus.textContent = gameMode === 'pvp' ? "Player 2 Wins the Match!" : "AI Wins the Match!";
+                gameRunning = false;
+                if (soundEnabled) {
+                    if (gameMode === 'pvai') loseSound.play();
+                    else winSound.play();
+                }
+                
+                setTimeout(() => {
+                    player1Score = 0;
+                    player2Score = 0;
+                    player1ScoreElem.textContent = player1Score;
+                    player2ScoreElem.textContent = player2Score;
+                    resetGame();
+                }, 3000);
+            }
+        }
+        
+        // Draw the floor
+        function drawFloor() {
+            // Get floor textures from texture manager
+            const floorColor = textureManager.getBlockTexture('floor');
+            const grassColor = textureManager.getBlockTexture('grass');
+            
+            ctx.fillStyle = floorColor;
+            ctx.fillRect(0, canvas.height - 40, canvas.width, 40);
+            
+            // Add grass on top
+            ctx.fillStyle = grassColor;
+            ctx.fillRect(0, canvas.height - 40, canvas.width, 5);
+            
+            // Add some texture to the floor
+            ctx.strokeStyle = '#654321';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < canvas.width; i += 20) {
+                ctx.beginPath();
+                ctx.moveTo(i, canvas.height - 40);
+                ctx.lineTo(i, canvas.height);
+                ctx.stroke();
+            }
+        }
+        
+        // Game loop
+        function gameLoop() {
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw sky with gradient using texture manager
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, textureManager.getSkyColor('top'));
+            gradient.addColorStop(1, textureManager.getSkyColor('bottom'));
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw clouds
+            const cloudColor = textureManager.getBlockTexture('cloud');
+            ctx.fillStyle = cloudColor;
+            ctx.beginPath();
+            ctx.arc(100, 50, 20, 0, Math.PI * 2);
+            ctx.arc(120, 40, 25, 0, Math.PI * 2);
+            ctx.arc(140, 50, 20, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(600, 70, 20, 0, Math.PI * 2);
+            ctx.arc(620, 60, 25, 0, Math.PI * 2);
+            ctx.arc(640, 70, 20, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Draw floor
+            drawFloor();
+            
+            // Draw buildings
+            buildings.forEach(building => building.draw());
+            
+            if (gameRunning) {
+                // Update players
+                const p1Alive = player1.update(keys, buildings);
+                
+                // Update AI or human player 2
+                let p2Alive;
+                if (gameMode === 'pvai') {
+                    p2Alive = player2.updateAI(player1, buildings);
+                } else {
+                    p2Alive = player2.update(keys, buildings);
+                }
+                
+                // Check for hits
+                if (player1.checkHit(player2)) {
+                    player1Score++;
+                    player1ScoreElem.textContent = player1Score;
+                    gameStatus.textContent = "Player 1 Scores!";
+                    gameRunning = false;
+                    setTimeout(resetGame, 2000);
+                    checkWin();
+                }
+                
+                if (player2.checkHit(player1)) {
+                    player2Score++;
+                    player2ScoreElem.textContent = player2Score;
+                    gameStatus.textContent = gameMode === 'pvp' ? "Player 2 Scores!" : "AI Scores!";
+                    gameRunning = false;
+                    setTimeout(resetGame, 2000);
+                    checkWin();
+                }
+            }
+            
+            // Draw players
+            player1.draw();
+            player2.draw();
+            
+            // Draw score
+            ctx.fillStyle = '#2c3e50';
+            ctx.font = '20px Arial';
+            ctx.fillText(`Player 1: ${player1Score}`, 20, 30);
+            ctx.fillText(`Player 2: ${player2Score}`, canvas.width - 120, 30);
+            
+            // Draw game mode
+            ctx.fillText(`Mode: ${gameMode === 'pvp' ? 'Player vs Player' : 'Player vs AI'}`, canvas.width/2 - 100, 30);
+            
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Initialize the first level and start the game
+        initializeLevel(0);
+        gameLoop();
+    </script>
+
+
+<script type="text/javascript">
+   window.SDK_OPTIONS = {
+      gameId: "zt1aj4qazh57u87jr41yaycsfjwna8j5",
+      onEvent: function (a) {
+         switch (a.name) {
+            case "SDK_GAME_PAUSE":
+               // pause game logic / mute audio
+               break;
+            case "SDK_GAME_START":
+               // advertisement done, resume game logic and unmute audio
+               break;
+            case "SDK_READY":
+               if (typeof sdk !== 'undefined' && sdk.showBanner !== 'undefined') {
+sdk.showBanner();
+}
+               break;
+         }
+      }
+   };
+(function (a, b, c) {
+   var d = a.getElementsByTagName(b)[0];
+   a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+})(document, "script", "gamemonetize-sdk"); 
+</script>
+
+
+
+</body>
+</html>

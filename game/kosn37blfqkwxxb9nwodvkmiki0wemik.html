@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Little Cat Doctor</title>
+    <link rel="shortcut icon" href="TemplateData/favicon.ico">
+    <link rel="stylesheet" href="TemplateData/style.css">
+    <style>
+        /* 1. FORCE PURPLE BACKGROUND & CENTER LAYOUT */
+        html, body {
+            width: 100% !important;
+            height: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+            background: #2a1b3d !important;
+            background: radial-gradient(circle, #382150 0%, #150d1c 100%) !important;
+            /* Flexbox to center the game canvas */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 2. SPLASH SCREEN OVERLAY */
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: radial-gradient(circle, #382150 0%, #150d1c 100%) !important;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 99999;
+        }
+
+        .bounce-logo {
+            max-width: 280px;
+            height: auto;
+            margin-bottom: 40px;
+            animation: logoBounce 2s ease-in-out infinite;
+        }
+
+        /* 3. GLASS LOADING BOX */
+        .progress-container {
+            width: 380px;
+            background-color: rgba(90, 50, 120, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 15px;
+            padding: 20px 25px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+        }
+
+        .progress-info {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            color: #ffffff;
+            font-family: 'Arial Black', Gadget, sans-serif;
+            font-size: 12px;
+            letter-spacing: 1.5px;
+        }
+
+        .progress-bar-empty {
+            width: 100%;
+            height: 14px;
+            background: #140d1b;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.6);
+        }
+
+        .progress-bar-full {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #5b367e, #7c4dff);
+            transition: width 0.2s ease-out;
+            box-shadow: 0 0 10px rgba(124, 77, 255, 0.3);
+        }
+
+        /* 4. GAME CONTAINER & CANVAS */
+        /* Note: We remove fixed sizes here and let JS handle it */
+        .webgl-content {
+            position: relative; 
+            width: auto;
+            height: auto;
+            box-shadow: 0 0 40px rgba(0,0,0,0.6); /* Nice shadow behind game */
+        }
+
+        #gameContainer {
+            width: 100%;
+            height: 100%;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* ANIMATIONS */
+        #loading-overlay.fade-out {
+            animation: fadeOut 500ms ease forwards;
+        }
+
+        @keyframes logoBounce {
+            0%, 100% { transform: translateY(0); }
+            50%      { transform: translateY(-15px); }
+        }
+
+        @keyframes fadeOut {
+            to { opacity: 0; visibility: hidden; }
+        }
+    </style>
+    
+    <script src="TemplateData/UnityProgress.javascript"></script>
+    <script src="Build/UnityLoader.js"></script>
+    <script>
+        // --- 1. RESIZE LOGIC (Strict 350x600 Ratio) ---
+        function resizeGame() {
+            var container = document.getElementById("gameContainer");
+            // In Unity 2018, the canvas is created inside gameContainer
+            var canvas = container.querySelector('canvas'); 
+            
+            var gameWidth = 350;
+            var gameHeight = 600;
+            var targetRatio = gameWidth / gameHeight;
+
+            var windowWidth = window.innerWidth;
+            var windowHeight = window.innerHeight;
+            var windowRatio = windowWidth / windowHeight;
+
+            var finalWidth, finalHeight;
+
+            if (windowRatio > targetRatio) {
+                // Window is wider than game -> Fit Height
+                finalHeight = windowHeight;
+                finalWidth = finalHeight * targetRatio;
+            } else {
+                // Window is narrower than game -> Fit Width
+                finalWidth = windowWidth;
+                finalHeight = finalWidth / targetRatio;
+            }
+
+            // Apply size to the container wrapper
+            // We use .parentNode because Unity 2018 often wraps gameContainer
+            var wrapper = document.querySelector(".webgl-content");
+            if(wrapper) {
+                wrapper.style.width = finalWidth + "px";
+                wrapper.style.height = finalHeight + "px";
+            }
+            
+            // Ensure container fills wrapper
+            container.style.width = "100%";
+            container.style.height = "100%";
+
+            // Force canvas size
+            if (canvas) {
+                canvas.style.width = "100%";
+                canvas.style.height = "100%";
+            }
+        }
+
+        // --- 2. UNITY INSTANTIATION ---
+        var gameInstance = UnityLoader.instantiate("gameContainer", "Build/doctor.json", {
+            onProgress: function(gameInstance, progress) {
+                // Update Text & Bar
+                var pText = document.getElementById("progress-percent");
+                var pBar = document.getElementById("progress-fill");
+                
+                if (pText) pText.innerHTML = Math.round(progress * 100) + "%";
+                if (pBar) pBar.style.width = (progress * 100) + "%";
+
+                // Standard Unity Progress (optional, but good for compatibility)
+                if (typeof UnityProgress === 'function') UnityProgress(gameInstance, progress);
+                
+                // When Loaded
+                if (progress === 1) {
+                    var loader = document.getElementById("loading-overlay");
+                    loader.classList.add("fade-out");
+                    setTimeout(function() {
+                        if(loader.parentNode) loader.parentNode.removeChild(loader);
+                    }, 550);
+                    
+                    // Trigger Resize
+                    resizeGame();
+                }
+            }
+        });
+
+        // Listen for window resizing
+        window.addEventListener('resize', resizeGame);
+        // Trigger once on load just in case
+        window.addEventListener('load', resizeGame);
+    </script>
+</head>
+<body>
+    <div id="loading-overlay">
+        <img src="logo.png" class="bounce-logo" alt="Logo">
+
+        <div class="progress-container">
+            <div class="progress-info">
+                <span>LOADING</span>
+                <span id="progress-percent">0%</span>
+            </div>
+            <div class="progress-bar-empty">
+                <div id="progress-fill" class="progress-bar-full"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="webgl-content">
+        <div id="gameContainer"></div>
+    </div>
+</body>
+</html>

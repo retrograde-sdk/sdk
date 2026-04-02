@@ -1,0 +1,169 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Animal Bus Traffic Jam</title>
+  <meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1, minimum-scale=1,maximum-scale=1"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="full-screen" content="yes"/>
+  <meta name="x5-fullscreen" content="true"/>
+  <meta name="360-fullscreen" content="true"/>
+  <meta name="renderer" content="webkit"/>
+  <meta name="force-rendering" content="webkit"/>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
+  <link rel="icon" href="favicon.ico"/>
+  <link rel="preload" as="font" href="./JINGNANBOBOHEI-BOLD-2.TTF" type="font/woff2" crossorigin="anonymous">
+  <script src="https://api.gamemonetize.com/YYGGamesForGamemonetize.js"></script>
+<script>
+YYGGames.setConfig({
+    gm:"srinp50qip55glw9w2efsi4phsioa5qu"
+})
+     </script>
+  <script src="cc-resolution.js" charset="utf-8"></script>
+  <style type="text/css">
+    * {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+    }
+    @font-face {
+        font-family: "Arial";
+        src: url("JINGNANBOBOHEI-BOLD-2.TTF");
+    }
+    html {
+        touch-action: none
+    }
+    body {
+        overflow: hidden;
+        /* 页面背景颜色 */
+        background: #5b85da;
+    }
+    #Game {
+        position: absolute;
+        margin: 0;
+        overflow: hidden;
+        width:720px; 
+        height: 1280px;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+    }
+</style>
+</head>
+<body>
+<div id="Game">
+  <canvas id="GameCanvas" width="720" height="1280"></canvas>
+  <div id="splash" style="display: none;">
+    <div class="progress-bar stripes">
+      <span style="width: 0%"></span>
+    </div>
+  </div>
+</div>
+<script src="src/settings.js" charset="utf-8"></script>
+<script src="main.js" charset="utf-8"></script>
+<script type="text/javascript">
+    window["showMetheAuthor"] = function () {
+          const iframe = document.createElement("iframe");
+          iframe.style.display = 'none';
+          document.head.appendChild(iframe);
+          const logger = iframe.contentWindow["console"];
+          logger.log.apply(this, [
+                "%c %c %c YYGGAMES %c%s %c %c ",
+                "background: #fb8cb3",
+                "background: #d44a52",
+                "color: #ffffff; background: #871905",
+                "color: #ffffff;background: #871905;",
+                '116,104,101,32,103,97,109,101,32,105,115,32,112,111,119,101,114,101,100,32,98,121,32,121,121,103'.split(",").map(iter => { return String.fromCharCode(~~iter) }).join(""),
+                "background: #d44a52",
+                "background: #fb8cb3"]);
+                }
+
+    console.timeEnd = console.time = console.error = console.log = console.info = console.group = console.warn = function () { };
+
+    
+    //显示
+    YYGGames.showLoadingSourceScene()
+        .setAppName("Animal-Bus-Traffic-Jam")//需要设置appName
+        .setGameLogoUrl("./@base/logo.png") //设置游戏logo
+        .setGameBannerUrl("./@base/banner.jpg");//设置游戏banner
+    //隐藏
+    // YYGGames.hideLoadingSourceScene();
+    (function () {
+        // open web debugger console
+        if (typeof VConsole !== 'undefined') {
+            window.vConsole = new VConsole();
+        }
+        var debug = window._CCSettings.debug;
+        var splash = document.getElementById('splash');
+        splash.style.display = 'block';
+
+        function loadScript (moduleName, cb) {
+        function scriptLoaded () {
+            document.body.removeChild(domScript);
+            domScript.removeEventListener('load', scriptLoaded, false);
+            cb && cb();
+        };
+        var domScript = document.createElement('script');
+        domScript.async = true;
+        domScript.src = moduleName;
+        domScript.addEventListener('load', scriptLoaded, false);
+        document.body.appendChild(domScript);
+        }
+        //onCocosEngineGame
+          const scripts = YYGGames.scripts;
+          scripts.import(["./cocos2d-js-min.js", "./physics-min.js"]).then(() => {
+            scripts.require("./cocos2d-js-min.js");
+            scripts.require("./physics-min.js");
+            
+    
+            // if(cc.sys.isMobile){   
+            //     resolution_Mobile.init(resolution_Mobile.clientWidth, resolution_Mobile.clientHeight);
+            // }else{
+                resolution_No_Adapter.init(750, 1334);
+            // }
+            window.focusFlag = false;
+            window.addEventListener("focus", () => {
+                cc.audioEngine.setMusicVolume(window.musicVolume1);
+                cc.audioEngine.setEffectsVolume(window.effectVolume1);
+            });
+            window.addEventListener("blur", () => {
+                window.musicVolume1 = window.musicVolume == null ? cc.audioEngine._music.volume : 0;
+                window.effectVolume1 = window.effectVolume == null ? cc.audioEngine._effect.volume : 0;
+                cc.audioEngine.setMusicVolume(0);
+                cc.audioEngine.setEffectsVolume(0);
+            });
+            //开启解密功能
+            YYGGames.assetManager.enableVersionControl().then(window.boot)
+        });
+        // //onCocosEngineGame
+        //   const scripts = YYGGames.scripts;
+        //   scripts.import(["./cocos2d-js-min.js", "./physics-min.js"]).then(() => {
+        //     scripts.require("./cocos2d-js-min.js");
+        //     scripts.require("./physics-min.js");
+        //     //开启解密功能
+
+        //     if(cc.sys.isMobile){   
+        //         resolution_Mobile.init(resolution_Mobile.clientWidth, resolution_Mobile.clientHeight);
+        //     }else{
+        //         resolution_PC.init(720, 1280);
+        //     }
+        
+        //     window.focusFlag = false;
+        //     window.addEventListener("focus", () => {
+        //         cc.audioEngine.setMusicVolume(window.musicVolume1);
+        //         cc.audioEngine.setEffectsVolume(window.effectVolume1);
+        //     });
+        //     window.addEventListener("blur", () => {
+        //         window.musicVolume1 = window.musicVolume == null ? cc.audioEngine._music.volume : 0;
+        //         window.effectVolume1 = window.effectVolume == null ? cc.audioEngine._effect.volume : 0;
+        //         cc.audioEngine.setMusicVolume(0);
+        //         cc.audioEngine.setEffectsVolume(0);
+        //     });
+        //     YYGGames.assetManager.enableVersionControl().then(window.boot);
+           
+        // });
+    })();
+</script>
+</body>
+</html>

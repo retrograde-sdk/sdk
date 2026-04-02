@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Christmas Onet Connect</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, minimal-ui" />
+	<meta name="apple-mobile-web-app-capable" content="yes" />
+	<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+	<meta name="HandheldFriendly" content="true" />
+	<meta name="mobile-web-app-capable" content="yes" />
+	<link rel="stylesheet" href="style.css" type="text/css">
+	<script type="text/javascript" src="js/phaser.min.js"></script>
+	<script type="text/javascript" src="js/jquery-3.2.1.min.js"></script>
+</head>
+
+<body>
+	<script>
+		window.onblur = function () {
+			console.log("unloading window...");
+			// Game.saveGames();
+			// return;
+			// game.cache = new this.Phaser.Cache.CacheManager(game);
+			// game.textures.destroy()
+			// game.destroy(false);
+		}
+	</script>
+	<script type="text/javascript">
+		(function ($) {
+			$.fn.snow = function (options) {
+				var $flake = $('<div id="snowbox" />').css({ 'position': 'absolute', 'z-index': '9999', 'top': '-50px', 'pointer-events': 'none' }).html('❄'),
+					documentHeight = $(document).height(),
+					documentWidth = $(document).width(),
+					defaults = {
+						minSize: 10,
+						maxSize: 20,
+						newOn: 500,
+						flakeColor: "#ffffff" /*AFDAEF 此处可以定义雪花颜色，若要白色可以改为#FFFFFF */
+					},
+					options = $.extend({}, defaults, options);
+				var interval = setInterval(function () {
+					var startPositionLeft = Math.random() * documentWidth - 100,
+						startOpacity = 0.5 + Math.random(),
+						sizeFlake = options.minSize + Math.random() * options.maxSize,
+						endPositionTop = documentHeight - 200,
+						endPositionLeft = startPositionLeft - 500 + Math.random() * 500,
+						durationFall = documentHeight * 10 + Math.random() * 5000;
+					$flake.clone().appendTo('#gameContainer').css({
+						left: startPositionLeft,
+						opacity: startOpacity,
+						'font-size': sizeFlake,
+						color: options.flakeColor
+					}).animate({
+						top: endPositionTop,
+						left: endPositionLeft,
+						opacity: 0.2
+					}, durationFall, 'linear', function () {
+						$(this).remove()
+					});
+				}, options.newOn);
+			};
+		})(jQuery);
+		$(function () {
+			$.fn.snow({
+				minSize: 5, /* 定义雪花最小尺寸 */
+				maxSize: 50,/* 定义雪花最大尺寸 */
+				newOn: 300  /* 定义密集程度，数字越小越密集 */
+			});
+			$(document).on("contextmenu",function(e){
+			    return false;
+			});
+		});
+	</script>
+	<script type="text/javascript">
+		window.SDK_OPTIONS = {
+		   gameId: "d9nv7htz1ahz633c0vcjiv25qutmwyf2",
+		   onEvent: function (a) {
+			  switch (a.name) {
+				 case "SDK_GAME_PAUSE":
+					// pause game logic / mute audio
+					break;
+				 case "SDK_GAME_START":
+					// advertisement done, resume game logic and unmute audio
+					break;
+				 case "SDK_READY":
+					// when sdk is ready
+					break;
+			  }
+		   }
+		};
+	 (function (a, b, c) {
+		var d = a.getElementsByTagName(b)[0];
+		a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+	 })(document, "script", "gamemonetize-sdk"); 
+	 </script>
+	<script>
+		var gamesAPI = {
+			config:{
+				url: "https://www.ucoolgames.com/?utm_source=gd&utm_medium=christmas_onet_connect",
+				credits_text: 'Play U Cool Games at\nucoolgames.com',
+				credits_text_detail: 'Onet Winter Christmas Mahjong\n© 2021 UCoolGames.com. All rights reserved.\n\nThanks to all our fans to the support!',
+				show_more_btn: true,
+				myItems:['christmas_onet_connect_best', 'christmas_onet_connect_data', 'christmas_onet_connect_array']
+			},
+			show_ad: function(){
+				if (typeof sdk !== 'undefined' && sdk.showBanner !== 'undefined') {
+					sdk.showBanner();
+				}
+			}
+		}
+	</script>
+
+	<div id="gameContainer"></div>
+	<div style="font-family:robotomono; position:absolute; left:-1000px; visibility:hidden;">.</div>
+	<div style="font-family:PoetsenOne; position:absolute; left:-1000px; visibility:hidden;">.</div>
+	<div style="font-family:DS_Moster; position:absolute; left:-1000px; visibility:hidden;">.</div>
+	<script type="text/javascript" src="js/boot.js"></script>
+	<script type="text/javascript" src="js/preload.js"></script>
+	<script type="text/javascript" src="js/menu.js"></script>
+	<script type="text/javascript" src="js/game.js"></script>
+</body>
+
+</html>

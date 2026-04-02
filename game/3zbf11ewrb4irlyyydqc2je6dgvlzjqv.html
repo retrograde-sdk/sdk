@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bubble Shooter Aura</title>
+</head>
+<body>
+<style>
+    * {
+        font-family: sans-serif;
+    }
+
+    body {
+        overflow-y: hidden;
+        overflow-x: hidden;
+    }
+    #mainP {
+        text-align: center;
+        font-size: 28px;
+        color: #0073e1;
+        margin: 0;
+    }
+    #bg{
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image: linear-gradient(to right top, #fbfaff, #e8ff9c, #fce07d, #ecf848, #d4eaff);
+        z-index: -1;
+    }
+    #centerMessage {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-flow: column;
+    }
+    #maintMainImg {
+        max-width: 250px;
+        margin: 0px 20px 0px 20px;
+        width: 80%;
+    }
+
+    #mainP {
+        font-size: 13px;
+    }
+
+    a {
+        color: rgb(0, 0, 0);
+        text-decoration: none;
+        cursor: auto;
+        font-weight: 700;
+    }
+    @media only screen and (max-width: 900px){ 
+        #mainP {
+            font-size: 13px;
+        }
+        #maintMainImg {
+        max-width: 320px;
+        margin: 0px 20px 0px 20px;
+        width: 80%;
+    }
+    }
+</style>
+<div id="bg"></div>
+<div id="centerMessage">
+    <img id="maintMainImg" alt="skilli.net Free online games" title="סקילי משחקים" src="game/assets/skilli.net free online games.png">
+    <p id="mainP"><a id="textGame" href="https://skilli.net">Online casual games</a></p>
+</div>
+<script>
+    const maintanceOnOff = false;
+    document.getElementById("centerMessage").style.height= window.innerHeight+"px";
+    window.addEventListener("resize",()=>{
+        document.getElementById("centerMessage").style.height= window.innerHeight+"px";
+    })
+
+    function updateText(){
+        if( document.getElementById("textGame").getAttribute("href")!=null){
+            document.getElementById("textGame").removeAttribute("href");
+        } 
+    }
+    document.getElementById("textGame").addEventListener("mouseover",()=>{updateText()});
+    document.getElementById("textGame").addEventListener("click",()=>{updateText()});
+
+    setTimeout(function(){window.location.href = "game/index.html"},5000);
+
+</script>
+</body>
+</html>

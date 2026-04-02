@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tic Tac Toe with Score and AI</title>
+  <style>
+    body { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; font-family: sans-serif; background: #f0f0f0; }
+    h1 { margin-bottom: 10px; }
+    #controls { margin-bottom: 15px; }
+    #scoreboard { margin-bottom: 20px; font-size: 1.2rem; }
+    .board { display: grid; grid-template-columns: repeat(3, 100px); grid-template-rows: repeat(3, 100px); gap: 5px; }
+    .cell { display: flex; align-items: center; justify-content: center; width: 100px; height: 100px; background: #fff9c4; cursor: pointer; position: relative; }
+    .cell.x { color: red; font-size: 2rem; }
+    .cell.x img { width: 60px; height: 60px; }
+    .cell.o { color: blue; font-size: 2rem; }
+    .cell:hover:not(.disabled) { background: #fff176; }
+    .disabled { pointer-events: none; }
+    #message { margin-top: 20px; font-size: 1.2rem; }
+    button { margin-top: 10px; padding: 10px 20px; font-size: 1rem; }
+  </style>
+</head>
+<body>
+  <h1>Tic Tac Toe</h1>
+  <div id="controls">
+    Mode: <select id="mode">
+      <option value="pvp">Player vs Player</option>
+      <option value="pvc">Player vs Computer</option>
+    </select>
+  </div>
+  <div id="scoreboard">Player X: <span id="scoreX">0</span> | Player O: <span id="scoreO">0</span> | Draws: <span id="scoreDraw">0</span></div>
+  <div class="board" id="board">
+    <div class="cell" data-index="0"></div>
+    <div class="cell" data-index="1"></div>
+    <div class="cell" data-index="2"></div>
+    <div class="cell" data-index="3"></div>
+    <div class="cell" data-index="4"></div>
+    <div class="cell" data-index="5"></div>
+    <div class="cell" data-index="6"></div>
+    <div class="cell" data-index="7"></div>
+    <div class="cell" data-index="8"></div>
+  </div>
+  <div id="message"></div>
+  <button id="reset">Reset Game</button>
+
+  <script>
+    const modeSelect = document.getElementById('mode');
+    const cells = Array.from(document.getElementsByClassName('cell'));
+    const message = document.getElementById('message');
+    const resetBtn = document.getElementById('reset');
+    const scoreXEl = document.getElementById('scoreX');
+    const scoreOEl = document.getElementById('scoreO');
+    const scoreDrawEl = document.getElementById('scoreDraw');
+
+    let currentPlayer = 'X';
+    let boardState = Array(9).fill('');
+    let scores = { X: 0, O: 0, draw: 0 };
+    const winningCombos = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+
+    function handleCellClick(e) {
+      if (modeSelect.value === 'pvc' && currentPlayer === 'O') return;
+      const idx = +e.target.getAttribute('data-index');
+      if (boardState[idx] !== '') return;
+      makeMove(idx, currentPlayer);
+      if (!gameOver()) switchPlayer();
+      if (modeSelect.value === 'pvc' && currentPlayer === 'O' && !gameOver()) setTimeout(pcMove, 500);
+    }
+
+    function makeMove(idx, player) {
+      boardState[idx] = player;
+      const cell = cells[idx];
+      cell.innerHTML = '';
+      cell.classList.add('disabled', player.toLowerCase());
+      if (player === 'X') {
+        const img = document.createElement('img');
+        img.src = 'sprunki.png';
+        img.alt = 'X';
+        img.onerror = () => { cell.textContent = 'X'; };
+        cell.appendChild(img);
+      } else {
+        cell.textContent = 'O';
+      }
+      if (checkWin(player)) {
+        message.textContent = `Player ${player} wins!`;
+        scores[player]++;
+        updateScoreboard();
+        endGame();
+      } else if (boardState.every(c => c !== '')) {
+        message.textContent = 'Draw!';
+        scores.draw++;
+        updateScoreboard();
+      }
+    }
+
+    function checkWin(player) {
+      return winningCombos.some(combo => combo.every(i => boardState[i] === player));
+    }
+
+    function switchPlayer() {
+      currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+      message.textContent = `Turn: Player ${currentPlayer}`;
+    }
+
+    function gameOver() {
+      return checkWin('X') || checkWin('O') || boardState.every(c => c !== '');
+    }
+
+    function pcMove() {
+      const empty = boardState.map((v,i) => v === '' ? i : null).filter(i => i !== null);
+      if (!empty.length) return;
+      makeMove(empty[Math.floor(Math.random() * empty.length)], 'O');
+      if (!gameOver()) switchPlayer();
+    }
+
+    function endGame() { cells.forEach(cell => cell.classList.add('disabled')); }
+    function resetGame() {
+      boardState.fill('');
+      cells.forEach(cell => { cell.classList.remove('disabled','x','o'); cell.innerHTML = ''; });
+      currentPlayer = 'X';
+      message.textContent = `Turn: Player ${currentPlayer}`;
+    }
+    function updateScoreboard() { scoreXEl.textContent = scores.X; scoreOEl.textContent = scores.O; scoreDrawEl.textContent = scores.draw; }
+
+    cells.forEach(cell => cell.addEventListener('click', handleCellClick));
+    resetBtn.addEventListener('click', resetGame);
+    message.textContent = `Turn: Player ${currentPlayer}`;
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script type = "text/javascript" >
+   window.SDK_OPTIONS = {
+
+
+
+      gameId: "upf7jow3akcirma7ysj1ku0j2m0vn4fi", // Fill the game_id ADAUGA PE LINIA ASTA ID DE JOC
+
+
+
+      onEvent: function (a) {
+         switch (a.name) {
+            case "SDK_GAME_PAUSE":
+               // pause game logic / mute audio
+               break;
+            case "SDK_GAME_START":
+               // advertisement done, resume game logic and unmute audio
+               break;
+            case "SDK_READY":
+               // when sdk is ready
+               break;
+            case "SDK_ERROR":
+               // when sdk get error
+               break;
+         }
+      }
+   };
+(function (a, b, c) {
+   var d = a.getElementsByTagName(b)[0];
+   a.getElementById(c) || (a = a.createElement(b), a.id = c, 
+   a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+})(document, "script", "gamemonetize-sdk"); 
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>

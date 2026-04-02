@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Merge Me - Mon Jeu</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
+    <meta name="generator" content="Scirra Construct">
+    <meta name="author" content="Moi">
+    <meta name="description" content="Un super jeu de puzzle">
+    
+    <link rel="manifest" href="appmanifest.json">
+    <link rel="apple-touch-icon" sizes="128x128" href="icons/icon-128.png">
+    <link rel="apple-touch-icon" sizes="256x256" href="icons/icon-256.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="icons/icon-512.png">
+    <link rel="icon" type="image/png" href="icons/icon-512.png">
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        /* Styles pour Gamemonetize */
+        #gamemonetize-video, .gamemonetize-ad-container, .gamemonetize-ad, iframe[src*="gamemonetize"] {
+            position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 9999999 !important; pointer-events: all !important; background: #000;
+        }
+        body.ad-showing canvas { pointer-events: none !important; }
+
+        /* === STYLE DE L'ÉCRAN D'ACCUEIL PERSONNALISÉ === */
+        #start-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 999999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            
+            /* --- CONFIGURATION DU FOND --- */
+            background-color: #000; /* Couleur de secours si l'image ne charge pas */
+            
+            /* ICI : On charge ton image qui est dans le dossier images */
+            background-image: url('images/cover.jpg'); 
+            
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: cover; /* L'image couvre tout l'écran */
+        }
+
+        /* --- CONFIGURATION DU BOUTON --- */
+        #play-btn {
+            cursor: pointer;
+            transition: transform 0.1s;
+            
+            /* Taille du bouton (ajuste selon ton image) */
+            width: 200px; 
+            height: auto;
+        }
+
+        #play-btn:active {
+            transform: scale(0.95); /* Petit effet de clic */
+        }
+    </style>
+</head>
+<body>
+
+    <!-- === BOUTON PLAY AVEC IMAGES === -->
+    <div id="start-overlay">
+        <!-- ICI : On charge ton image de bouton Play -->
+        <img id="play-btn" src="images/play_button.png" alt="JOUER">
+    </div>
+    <!-- ============================== -->
+
+    <script>
+        if (location.protocol.substr(0, 4) === "file") {
+            alert("Les exports Web ne fonctionnent pas en local via file://. Utilisez un serveur local.");
+        }
+    </script>
+    
+    <noscript>
+        <div id="notSupportedWrap">
+            <h2 id="notSupportedTitle">This content requires JavaScript</h2>
+            <p class="notSupportedMessage">JavaScript appears to be disabled. Please enable it to view this content.</p>
+        </div>
+    </noscript>
+
+    <script src="scripts/supportcheck.js"></script>
+    <script src="scripts/offlineclient.js" type="module"></script>
+    <script src="scripts/main.js" type="module"></script>
+    <script src="scripts/register-sw.js" type="module"></script>
+
+    <!-- ==================================== -->
+    <!-- INTEGRATION GAMEMONETIZE             -->
+    <!-- ==================================== -->
+    <script type="text/javascript">
+        
+        const GAME_ID = "dct28y0h5hz5e5vu7ji6l5h1wuqlirr5"; 
+        const TEMPS_ENTRE_PUBS = 90 * 1000; 
+        let adInterval = null;
+
+        function setGamePaused(isPaused) {
+            try {
+                if (window.c3_runtimeInterface) {
+                    window.c3_runtimeInterface.SetSilent(isPaused);
+                    if (window.c3_runtimeInterface._localRuntime) {
+                        window.c3_runtimeInterface._localRuntime.SetSuspended(isPaused);
+                    }
+                    if (isPaused) {
+                        document.body.classList.add('ad-showing');
+                    } else {
+                        document.body.classList.remove('ad-showing');
+                    }
+                }
+            } catch (e) {
+                console.warn("Erreur pause C3 :", e);
+            }
+        }
+
+        // === GESTION DU CLIC ===
+        document.getElementById('play-btn').addEventListener('click', function() {
+            // 1. Cacher l'overlay
+            document.getElementById('start-overlay').style.display = 'none';
+
+            // 2. Lancer la pub
+            if (typeof sdk !== "undefined" && sdk) {
+                console.log("Clic Play : Lancement de la pub");
+                sdk.showBanner();
+            }
+
+            // 3. Lancer le timer
+            if (!adInterval) {
+                adInterval = setInterval(function () {
+                    if (typeof sdk !== "undefined" && sdk) {
+                        sdk.showBanner();
+                    }
+                }, TEMPS_ENTRE_PUBS);
+            }
+        });
+
+        document.addEventListener("visibilitychange", function () {
+            if (document.visibilityState === "hidden") {
+                setGamePaused(true);
+            }
+        });
+
+        window.SDK_OPTIONS = {
+            gameId: GAME_ID,
+            onEvent: function (event) {
+                switch (event.name) {
+                    case "SDK_GAME_PAUSE":
+                        setGamePaused(true);
+                        break;
+                    case "SDK_GAME_START":
+                        setGamePaused(false);
+                        break;
+                    case "SDK_READY":
+                        console.log("SDK Prêt. Attente clic.");
+                        break;
+                    case "SDK_ERROR":
+                        setGamePaused(false);
+                        break;
+                }
+            }
+        };
+
+        (function (d, s, id) {
+            if (d.getElementById(id)) return;
+            var js = d.createElement(s);
+            js.id = id;
+            js.src = "https://api.gamemonetize.com/sdk.js";
+            js.async = true;
+            d.getElementsByTagName("head")[0].appendChild(js);
+        })(document, "script", "gamemonetize-sdk");
+
+    </script>
+</body>
+</html>

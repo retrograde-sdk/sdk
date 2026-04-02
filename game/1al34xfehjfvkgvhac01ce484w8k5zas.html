@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Neon Tic Tac Toe: 69 Level Saga</title>
+<script type="text/javascript">
+   window.SDK_OPTIONS = {
+      gameId: "1al34xfehjfvkgvhac01ce484w8k5zas",
+      onEvent: function (a) {
+         switch (a.name) {
+            case "SDK_GAME_PAUSE": break;
+            case "SDK_GAME_START": break;
+            case "SDK_READY": break;
+         }
+      }
+   };
+(function (a, b, c) {
+   var d = a.getElementsByTagName(b)[0];
+   a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+})(document, "script", "gamemonetize-sdk"); 
+</script>
+
+    <style type="text/css">@font-face {font-family:Orbitron;font-style:normal;font-weight:400;src:url(/cf-fonts/v/orbitron/5.0.18/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Orbitron;font-style:normal;font-weight:700;src:url(/cf-fonts/v/orbitron/5.0.18/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Orbitron;font-style:normal;font-weight:900;src:url(/cf-fonts/v/orbitron/5.0.18/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}</style>
+
+    <style>
+        :root {
+            --bg-color: #0d0d1a; 
+            --neon-blue: #00f3ff;
+            --neon-pink: #ff00ff;
+            --neon-gold: #ffd700;
+            --neon-red: #ff3131;
+            --neon-purple: #9d00ff;
+        }
+
+        #space-bg {
+            position: fixed;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            z-index: 0;
+            background-image: url('https://i.ibb.co.com/LdYzbzJb/dark-planet-blue-nebula.jpg');
+            background-size: cover;
+            background-position: center;
+            animation: slowRotate 180s linear infinite; 
+        }
+        
+        @keyframes slowRotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        body {
+            margin: 0; padding: 0;
+            background-color: var(--bg-color);
+            color: white;
+            font-family: 'Orbitron', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh; width: 100vw;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .screen {
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            width: 100%; height: 100%;
+            position: absolute; top: 0; left: 0;
+            z-index: 5; padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .hidden { display: none !important; }
+
+        .main-title {
+            font-size: 2.2rem; margin: 0;
+            color: #fff;
+            text-shadow: 0 0 10px var(--neon-blue), 0 0 30px var(--neon-purple);
+            letter-spacing: 3px;
+            text-align: center;
+        }
+
+        .home-btn {
+            position: absolute; top: 15px; left: 15px;
+            background: rgba(0,0,0,0.6); border: 2px solid var(--neon-purple);
+            color: var(--neon-purple); padding: 8px 12px;
+            font-size: 0.7rem; border-radius: 8px; cursor: pointer;
+            z-index: 100;
+        }
+
+        .progress-wrapper {
+            width: 100%; max-width: 340px;
+            height: 6px; background: rgba(255,255,255,0.1);
+            border-radius: 10px; margin-bottom: 10px; overflow: hidden;
+        }
+        #progress-fill {
+            width: 0%; height: 100%;
+            background: linear-gradient(90deg, var(--neon-blue), var(--neon-purple));
+            box-shadow: 0 0 10px var(--neon-blue);
+            transition: width 0.5s ease;
+        }
+
+        .hud-container {
+            display: flex; justify-content: space-between; align-items: center;
+            width: 100%; max-width: 340px;
+            font-size: 0.8rem; color: var(--neon-blue);
+            margin-bottom: 8px; background: rgba(0,0,0,0.4);
+            padding: 8px; border-radius: 5px;
+            border: 1px solid rgba(0, 243, 255, 0.2);
+        }
+
+        h1.game-title { font-size: 1.2rem; margin: 5px 0; text-shadow: 0 0 10px var(--neon-blue); }
+
+        .status {
+            font-size: 1rem; margin-bottom: 10px; height: 24px;
+            font-weight: bold; text-transform: uppercase; letter-spacing: 1px;
+        }
+
+        .game--container {
+            display: grid; grid-template-columns: repeat(3, auto);
+            gap: 10px; padding: 12px;
+            background: rgba(255, 255, 255, 0.03); border-radius: 15px;
+            backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .cell {
+            width: 22vmin; height: 22vmin;
+            max-width: 80px; max-height: 80px;
+            background: rgba(0, 0, 0, 0.6); 
+            border: 2px solid #333; border-radius: 12px;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 2.5rem; cursor: pointer; transition: 0.2s;
+        }
+
+        .cell.x { color: var(--neon-pink); text-shadow: 0 0 15px var(--neon-pink), 0 0 30px var(--neon-pink); }
+        .cell.o { filter: drop-shadow(0 0 10px var(--neon-red)) drop-shadow(0 0 20px var(--neon-gold)); }
+
+        .controls-row { display: flex; gap: 10px; margin-top: 15px; }
+
+        .btn {
+            padding: 10px 20px; font-family: 'Orbitron', sans-serif;
+            background: rgba(0,0,0,0.5); color: var(--neon-blue);
+            border: 2px solid var(--neon-blue); border-radius: 8px;
+            cursor: pointer; text-transform: uppercase;
+        }
+        .btn:hover { background: var(--neon-blue); color: black; }
+        .btn-small { padding: 8px 12px; font-size: 0.75rem; }
+    </style>
+</head>
+<body>
+
+    <div id="space-bg"></div>
+
+    <div id="home-screen" class="screen">
+        <h1 class="main-title">NEON SAGA</h1>
+        <h2 id="home-subtitle" style="color: var(--neon-gold); font-size: 1rem; margin-top: 5px;">LEVEL 1 / 69</h2>
+        <button id="play-btn" class="btn" style="margin-top: 25px;">START MISSION</button>
+        <button id="sound-toggle-btn" class="btn btn-small" style="margin-top: 15px; border-color: var(--neon-purple); color: var(--neon-purple);">🔊 Sound: ON</button>
+    </div>
+
+    <div id="game-screen" class="screen hidden">
+        <button id="back-home-btn" class="home-btn">🏠 HOME</button>
+        <h1 class="game-title">NEON SAGA</h1>
+        <div class="progress-wrapper"><div id="progress-fill"></div></div>
+        <div class="hud-container">
+            <span id="level-display" style="font-weight: bold; color: var(--neon-pink);">LVL 1</span>
+            <span id="boss-name">ENEMY</span>
+            <span id="boss-icon" style="font-size: 1.2rem;">👾</span>
+        </div>
+        <div class="status" id="game-status">Your Turn</div>
+        <div class="game--container">
+            <div data-cell-index="0" class="cell"></div><div data-cell-index="1" class="cell"></div><div data-cell-index="2" class="cell"></div>
+            <div data-cell-index="3" class="cell"></div><div data-cell-index="4" class="cell"></div><div data-cell-index="5" class="cell"></div>
+            <div data-cell-index="6" class="cell"></div><div data-cell-index="7" class="cell"></div><div data-cell-index="8" class="cell"></div>
+        </div>
+        <div class="controls-row">
+            <button id="main-btn" class="btn btn-small">Restart</button>
+            <button id="fullscreen-btn" class="btn btn-small" style="border-color: var(--neon-purple); color: var(--neon-purple);">Fullscreen</button>
+        </div>
+    </div>
+
+    <script>
+        /* --- 69 UNIQUE ENEMIES --- */
+        const enemyIcons = ["🤖","👾","👻","💀","👽","👹","🤡","👺","🦁","🐯","🐲","🦂","🐙","🦇","🧛","🧟","🧞","🧜","🦄","🦅","🦖","🦈","🦍","🦏","👺","🔥","🧊","⚡","🌪️","🧿","🦠","🧪","📡","🛰️","🛸","⚔️","🛡️","💎","💊","🧨","👺","🪐","⭐","🌀","🌋","⛩️","🏰","🎭","🎰","🚀","🔭","🧬","💻","📀","🕹️","⛓️","🩸","🦴","💔","☢️","☣️","🏳️‍🌈","🏴‍☠️","🧿","🔱","⚜️","☯️","👑"];
+        const enemyNames = ["Scout","Drover","Creeper","Void","Spectre","Phantom","Striker","Rebel","Beast","Hunter","Slayer","Stinger","Abyss","Wing","Fang","Hulk","Genie","Tide","Myth","Talon","Rex","Fin","Kong","Horn","Mask","Blaze","Frost","Bolt","Gale","Eye","Plague","Vial","Array","Orbit","UFO","Blade","Guard","Shard","Dose","Fuse","Spirit","Nova","Core","Void","Magma","Zen","Fort","Mime","Jack","Pilot","Scope","Gene","Data","Disk","Gamer","Link","Gore","Marrow","Crush","Atom","Toxic","Neon","Jolly","Hex","Poseidon","Royal","Yin","ELDER"];
+
+        function getEnemy(lvl) {
+            const idx = (lvl - 1) % enemyIcons.length;
+            return { name: enemyNames[idx], icon: enemyIcons[idx] };
+        }
+
+        /* --- STATE --- */
+        let currentLvl = parseInt(localStorage.getItem('neonLevel')) || 1;
+        let gameActive = true;
+        let currentPlayer = "X";
+        let gameState = ["", "", "", "", "", "", "", "", ""];
+        let isSoundOn = localStorage.getItem('neonSound') !== 'false';
+
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSfx(freq, dur) {
+            if (!isSoundOn) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.frequency.value = freq;
+            gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+            osc.start(); osc.stop(audioCtx.currentTime + dur);
+        }
+
+        /* --- LOGIC --- */
+        function loadLevel() {
+            const enemy = getEnemy(currentLvl);
+            document.getElementById('level-display').innerText = `LVL ${currentLvl}`;
+            document.getElementById('boss-name').innerText = enemy.name.toUpperCase();
+            document.getElementById('boss-icon').innerText = enemy.icon;
+            document.getElementById('progress-fill').style.width = `${(currentLvl / 69) * 100}%`;
+            resetBoard();
+        }
+
+        function resetBoard() {
+            gameActive = true; currentPlayer = "X";
+            gameState = ["", "", "", "", "", "", "", "", ""];
+            document.getElementById('game-status').innerText = "Your Turn";
+            document.getElementById('game-status').style.color = "var(--neon-blue)";
+            document.querySelectorAll('.cell').forEach(c => { c.innerText = ""; c.className = 'cell'; });
+            document.getElementById('main-btn').innerText = "Restart";
+        }
+
+        /* --- AI ENGINE (SCALING DIFFICULTY) --- */
+        function aiTurn() {
+            if (!gameActive) return;
+            let move;
+
+            if (currentLvl <= 10) {
+                // EASY: Random
+                move = getRandomMove();
+            } else if (currentLvl <= 30) {
+                // MEDIUM: Block and Win
+                move = findWinningMove("O") || findWinningMove("X") || getRandomMove();
+            } else if (currentLvl <= 50) {
+                // HARD: Strategic (Corners/Center)
+                move = findWinningMove("O") || findWinningMove("X") || getStrategicMove();
+            } else {
+                // IMPOSSIBLE: Minimax
+                move = getBestMoveMinimax();
+            }
+
+            makeMove(move, "O");
+            if (checkWin("O")) endGame(false);
+            else if (!gameState.includes("")) { document.getElementById('game-status').innerText = "DRAW"; gameActive=false; }
+            else { currentPlayer = "X"; document.getElementById('game-status').innerText = "Your Turn"; }
+        }
+
+        function getRandomMove() {
+            const available = gameState.map((v,i) => v===""?i:null).filter(v=>v!==null);
+            return available[Math.floor(Math.random()*available.length)];
+        }
+
+        function findWinningMove(p) {
+            const wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+            for (let combo of wins) {
+                const vals = combo.map(i => gameState[i]);
+                if (vals.filter(v => v === p).length === 2 && vals.includes("")) return combo[vals.indexOf("")];
+            }
+            return null;
+        }
+
+        function getStrategicMove() {
+            if (gameState[4] === "") return 4;
+            const corners = [0,2,6,8].filter(i => gameState[i] === "");
+            if (corners.length > 0) return corners[Math.floor(Math.random()*corners.length)];
+            return getRandomMove();
+        }
+
+        // Minimax for Levels 51+
+        function getBestMoveMinimax() {
+            let bestScore = -Infinity;
+            let move;
+            for (let i = 0; i < 9; i++) {
+                if (gameState[i] === "") {
+                    gameState[i] = "O";
+                    let score = minimax(gameState, 0, false);
+                    gameState[i] = "";
+                    if (score > bestScore) { bestScore = score; move = i; }
+                }
+            }
+            return move;
+        }
+
+        function minimax(board, depth, isMaximizing) {
+            if (checkWin("O")) return 10 - depth;
+            if (checkWin("X")) return depth - 10;
+            if (!board.includes("")) return 0;
+
+            if (isMaximizing) {
+                let bestScore = -Infinity;
+                for(let i=0; i<9; i++) {
+                    if(board[i]==="") {
+                        board[i]="O";
+                        bestScore = Math.max(bestScore, minimax(board, depth+1, false));
+                        board[i]="";
+                    }
+                }
+                return bestScore;
+            } else {
+                let bestScore = Infinity;
+                for(let i=0; i<9; i++) {
+                    if(board[i]==="") {
+                        board[i]="X";
+                        bestScore = Math.min(bestScore, minimax(board, depth+1, true));
+                        board[i]="";
+                    }
+                }
+                return bestScore;
+            }
+        }
+
+        function makeMove(idx, player) {
+            gameState[idx] = player;
+            const cell = document.querySelector(`[data-cell-index="${idx}"]`);
+            cell.innerText = player === "X" ? "X" : getEnemy(currentLvl).icon;
+            cell.classList.add(player.toLowerCase());
+            playSfx(player === "X" ? 400 : 250, 0.1);
+        }
+
+        function checkWin(p) {
+            const wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+            return wins.some(c => c.every(i => gameState[i] === p));
+        }
+
+        function endGame(won) {
+            gameActive = false;
+            if (won) {
+                playSfx(600, 0.3);
+                document.getElementById('game-status').innerText = "CLEARED!";
+                document.getElementById('game-status').style.color = "var(--neon-gold)";
+                document.getElementById('main-btn').innerText = "NEXT LEVEL";
+                document.getElementById('main-btn').onclick = () => {
+                    currentLvl++;
+                    localStorage.setItem('neonLevel', currentLvl);
+                    loadLevel();
+                    document.getElementById('main-btn').onclick = resetBoard;
+                };
+            } else {
+                playSfx(150, 0.4);
+                document.getElementById('game-status').innerText = "FAILED";
+                document.getElementById('game-status').style.color = "var(--neon-red)";
+            }
+        }
+
+        /* --- HANDLERS --- */
+        document.querySelectorAll('.cell').forEach(cell => {
+            cell.onclick = () => {
+                const idx = cell.getAttribute('data-cell-index');
+                if (!gameActive || gameState[idx] !== "" || currentPlayer !== "X") return;
+                makeMove(idx, "X");
+                if (checkWin("X")) endGame(true);
+                else if (!gameState.includes("")) { document.getElementById('game-status').innerText = "DRAW"; gameActive=false; }
+                else { 
+                    currentPlayer = "O"; 
+                    document.getElementById('game-status').innerText = "Enemy thinking...";
+                    setTimeout(aiTurn, 600); 
+                }
+            };
+        });
+
+        document.getElementById('play-btn').onclick = () => {
+if (typeof sdk !== 'undefined' && sdk.showBanner !== 'undefined') {
+sdk.showBanner();
+}
+            document.getElementById('home-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+            loadLevel();
+        };
+
+        document.getElementById('back-home-btn').onclick = () => location.reload();
+        document.getElementById('main-btn').onclick = resetBoard;
+        document.getElementById('sound-toggle-btn').onclick = () => {
+            isSoundOn = !isSoundOn;
+            localStorage.setItem('neonSound', isSoundOn);
+            document.getElementById('sound-toggle-btn').innerText = `🔊 Sound: ${isSoundOn ? 'ON' : 'OFF'}`;
+        };
+        document.getElementById('fullscreen-btn').onclick = () => {
+            if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+            else document.exitFullscreen();
+        };
+
+        // UI Update for Home
+        document.getElementById('home-subtitle').innerText = `LEVEL ${currentLvl} / 69`;
+    </script>
+</body>
+</html>

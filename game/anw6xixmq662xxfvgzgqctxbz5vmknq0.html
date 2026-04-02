@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Gravity Well</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+        background: #000; min-height: 100vh; display: flex; 
+        flex-direction: column; align-items: center; justify-content: center; 
+        color: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+        overflow: hidden; user-select: none; touch-action: none;
+    }
+    h1 { 
+        position: fixed; top: 20px; font-size: 2rem; z-index: 100; 
+        background: linear-gradient(90deg, #ff6b35, #ffd93d); 
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent; 
+        pointer-events: none;
+    }
+    canvas { position: fixed; top: 0; left: 0; z-index: 1; }
+    
+    .hud { 
+        position: fixed; bottom: 30px; z-index: 100; 
+        font-size: 1.2rem; display: flex; gap: 20px;
+        background: rgba(0,0,0,0.6); padding: 10px 20px;
+        border-radius: 30px; border: 1px solid rgba(255,255,255,0.2);
+        pointer-events: none;
+    }
+    .hud span { font-weight: bold; }
+    .health-val { color: #ff4757; }
+    .score-val { color: #2ed573; }
+    .mass-val { color: #ffa502; }
+
+    /* Overlay / Menu UI */
+    #overlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.8); z-index: 200;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        backdrop-filter: blur(5px); transition: opacity 0.3s ease;
+    }
+    #overlay h2 { font-size: 4rem; margin-bottom: 10px; color: #fff; text-shadow: 0 0 20px #ff6b35; }
+    #overlay p { font-size: 1.2rem; margin-bottom: 30px; color: #ccc; text-align: center; max-width: 400px;}
+    
+    button {
+        background: linear-gradient(45deg, #ff6b35, #ff4757);
+        color: white; border: none; padding: 15px 40px;
+        font-size: 1.5rem; border-radius: 50px; cursor: pointer;
+        font-weight: bold; transition: transform 0.2s, box-shadow 0.2s;
+        box-shadow: 0 5px 15px rgba(255, 71, 87, 0.4);
+    }
+    button:hover { transform: scale(1.05); box-shadow: 0 8px 25px rgba(255, 71, 87, 0.6); }
+    button:active { transform: scale(0.95); }
+
+    .hidden { display: none !important; }
+
+    /* 手机端界面适配 */
+    @media (max-width: 600px) {
+        h1 { font-size: 1.5rem; top: 15px; }
+        .hud { font-size: 0.9rem; padding: 8px 15px; gap: 10px; bottom: 20px; }
+        #overlay h2 { font-size: 3rem; }
+        #overlay p { font-size: 1rem; padding: 0 20px; }
+    }
+</style>
+</head>
+<body>
+
+<h1>🕳️ Gravity Well</h1>
+
+<canvas id="c"></canvas>
+
+<div class="hud hidden" id="hud">
+    <div>❤️ Health: <span id="health" class="health-val">3</span></div>
+    <div>✨ Score: <span id="score" class="score-val">0</span></div>
+    <div>🕳️ Mass: <span id="mass" class="mass-val">500</span></div>
+</div>
+
+<div id="overlay">
+    <h2 id="menu-title">Gravity Well</h2>
+    <p id="menu-desc">Control the Black Hole with your mouse.<br><br>🟢 <b>Absorb</b> colorful energy to grow and score points.<br>🔴 <b>Avoid</b> red antimatter or lose health!</p>
+    <button id="start-btn">New Game</button>
+</div>
+
+<script>
+const c = document.getElementById('c');
+const x = c.getContext('2d');
+const overlay = document.getElementById('overlay');
+const hud = document.getElementById('hud');
+const startBtn = document.getElementById('start-btn');
+const menuTitle = document.getElementById('menu-title');
+const menuDesc = document.getElementById('menu-desc');
+
+// UI Elements
+const elScore = document.getElementById('score');
+const elHealth = document.getElementById('health');
+const elMass = document.getElementById('mass');
+
+// Resize canvas
+function resize() { c.width = window.innerWidth; c.height = window.innerHeight; }
+window.addEventListener('resize', resize);
+resize();
+
+// Game State
+let gameState = 'menu'; // 'menu', 'playing', 'gameover', 'paused'
+let pendingStart = false; // 判断是否在等待广告结束以开始游戏
+let orbs = [];
+let score = 0;
+let health = 3;
+let flashOpacity = 0; // For damage effect
+let blackHole = { x: c.width / 2, y: c.height / 2, mass: 500 };
+
+class Orb {
+    constructor(type) {
+        // Spawn at edges to avoid instantly killing the player
+        const edge = Math.floor(Math.random() * 4);
+        if (edge === 0) { this.x = Math.random() * c.width; this.y = -20; } // Top
+        else if (edge === 1) { this.x = c.width + 20; this.y = Math.random() * c.height; } // Right
+        else if (edge === 2) { this.x = Math.random() * c.width; this.y = c.height + 20; } // Bottom
+        else { this.x = -20; this.y = Math.random() * c.height; } // Left
+
+        this.type = type; // 'good' or 'bad'
+        this.vx = (Math.random() - 0.5) * 4;
+        this.vy = (Math.random() - 0.5) * 4;
+        this.size = type === 'bad' ? 10 : 6;
+        
+        if (type === 'bad') {
+            this.color = '#ff4757'; // Danger red
+        } else {
+            this.color = `hsl(${Math.random() * 360}, 80%, 60%)`; // Random bright color
+        }
+    }
+
+    update() {
+        const dx = blackHole.x - this.x;
+        const dy = blackHole.y - this.y;
+        const dist = Math.hypot(dx, dy);
+        
+        // Event Horizon Radius increases slightly with mass
+        const eventHorizon = Math.min(60, 20 + blackHole.mass / 40);
+
+        // Check Absorption
+        if (dist < eventHorizon) {
+            return { absorbed: true, type: this.type };
+        }
+
+        // Apply Gravity Force
+        // Good orbs are strongly affected, Bad orbs are slightly less affected so they sweep across
+        const massModifier = this.type === 'bad' ? 0.6 : 1; 
+        const force = (blackHole.mass * massModifier) / Math.max(dist * dist, 100); 
+        
+        this.vx += (dx / dist) * force;
+        this.vy += (dy / dist) * force;
+        
+        // Friction (Space dust)
+        this.vx *= 0.98;
+        this.vy *= 0.98;
+        
+        this.x += this.vx;
+        this.y += this.vy;
+        
+        // 扩大反弹边界，防止球体在进入屏幕前就被反弹飞向外太空
+        if (this.x < -50) { this.x = -50; this.vx *= -0.8; }
+        else if (this.x > c.width + 50) { this.x = c.width + 50; this.vx *= -0.8; }
+
+        if (this.y < -50) { this.y = -50; this.vy *= -0.8; }
+        else if (this.y > c.height + 50) { this.y = c.height + 50; this.vy *= -0.8; }
+
+        return { absorbed: false };
+    }
+
+    draw() {
+        x.beginPath();
+        x.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        x.fillStyle = this.color;
+        
+        // Glow effect for bad orbs
+        if (this.type === 'bad') {
+            x.shadowBlur = 15;
+            x.shadowColor = '#ff4757';
+        } else {
+            x.shadowBlur = 0;
+        }
+        
+        x.fill();
+        x.shadowBlur = 0; // Reset shadow
+
+        // Trail
+        x.beginPath();
+        x.moveTo(this.x, this.y);
+        x.lineTo(this.x - this.vx * 4, this.y - this.vy * 4);
+        x.strokeStyle = this.color;
+        x.lineWidth = this.type === 'bad' ? 3 : 2;
+        x.stroke();
+    }
+}
+
+function takeDamage() {
+    health--;
+    elHealth.textContent = health;
+    flashOpacity = 0.5; // Trigger red screen flash
+    
+    // Reduce mass slightly as penalty
+    blackHole.mass = Math.max(300, blackHole.mass - 100); 
+    elMass.textContent = Math.floor(blackHole.mass);
+
+    if (health <= 0) {
+        gameOver();
+    }
+}
+
+function addScore() {
+    score += 10;
+    blackHole.mass += 15; // Grow stronger!
+    elScore.textContent = score;
+    elMass.textContent = Math.floor(blackHole.mass);
+}
+
+// 实际开始游戏逻辑
+function actualStartGame() {
+    score = 0;
+    health = 3;
+    blackHole.mass = 300;
+    orbs = [];
+    gameState = 'playing';
+    
+    elScore.textContent = score;
+    elHealth.textContent = health;
+    elMass.textContent = blackHole.mass;
+    
+    overlay.classList.add('hidden');
+    hud.classList.remove('hidden');
+    startBtn.textContent = "New Game"; // 重置按钮文字
+}
+
+// 处理点击开始按钮（拦截去播放广告）
+function tryStartGame() {
+    if (typeof sdk !== 'undefined' && typeof sdk.showBanner !== 'undefined') {
+        startBtn.textContent = "Loading..."; 
+        pendingStart = true;
+        // 核心修复：立即隐藏主菜单面板，防止它自带的高 z-index 和 backdrop-filter 模糊/遮挡住广告层
+        overlay.classList.add('hidden'); 
+        sdk.showBanner();
+    } else {
+        // 如果 SDK 没有加载成功（比如开了广告拦截器），则直接开始游戏
+        actualStartGame();
+    }
+}
+
+function gameOver() {
+    gameState = 'gameover';
+    hud.classList.add('hidden');
+    overlay.classList.remove('hidden');
+    menuTitle.textContent = "Game Over";
+    menuTitle.style.color = "#ff4757";
+    menuDesc.innerHTML = `You absorbed too much antimatter!<br><br>Final Score: <b>${score}</b>`;
+    startBtn.textContent = "Try Again";
+}
+
+function draw() {
+    // Fading trail effect for space background
+    x.fillStyle = 'rgba(0,0,0,0.2)';
+    x.fillRect(0, 0, c.width, c.height);
+
+    if (gameState === 'playing' || gameState === 'paused') {
+        // Draw black hole
+        const radius = Math.min(80, 20 + blackHole.mass / 30);
+        const gradient = x.createRadialGradient(blackHole.x, blackHole.y, radius*0.2, blackHole.x, blackHole.y, radius*2);
+        gradient.addColorStop(0, '#000');
+        gradient.addColorStop(0.3, '#2a0a4a');
+        gradient.addColorStop(1, 'transparent');
+        
+        x.fillStyle = gradient;
+        x.beginPath();
+        x.arc(blackHole.x, blackHole.y, radius*2, 0, Math.PI * 2);
+        x.fill();
+
+        // Draw Event Horizon outline
+        x.beginPath();
+        x.arc(blackHole.x, blackHole.y, Math.min(60, 20 + blackHole.mass / 40), 0, Math.PI * 2);
+        x.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+        x.lineWidth = 2;
+        x.stroke();
+
+        // Update and draw orbs
+        for (let i = orbs.length - 1; i >= 0; i--) {
+            // 只有处于 playing 状态时才会更新物理引擎，paused 时只绘制画面
+            if (gameState === 'playing') {
+                const result = orbs[i].update();
+                if (result.absorbed) {
+                    if (result.type === 'bad') takeDamage();
+                    else addScore();
+                    orbs.splice(i, 1); // Remove absorbed orb
+                    continue; // 本帧不再绘制已经被吸收的球
+                }
+            }
+            orbs[i].draw();
+        }
+
+        // Spawn new orbs logic
+        if (gameState === 'playing' && orbs.length < 25 && Math.random() < 0.08) {
+            // 20% chance to spawn a bad orb, increasing slightly with score
+            const badChance = Math.min(0.4, 0.15 + (score / 2000));
+            const type = Math.random() < badChance ? 'bad' : 'good';
+            orbs.push(new Orb(type));
+        }
+
+        // Damage screen flash effect
+        if (flashOpacity > 0 && gameState === 'playing') {
+            x.fillStyle = `rgba(255, 0, 0, ${flashOpacity})`;
+            x.fillRect(0, 0, c.width, c.height);
+            flashOpacity -= 0.02;
+        }
+    }
+
+    requestAnimationFrame(draw);
+}
+
+// Track Mouse
+c.addEventListener('mousemove', e => {
+    if (gameState === 'playing') {
+        blackHole.x = e.clientX;
+        blackHole.y = e.clientY;
+    }
+});
+
+// Support Touch screens (优化移动端触控)
+const handleTouch = e => {
+    if (gameState === 'playing') {
+        e.preventDefault(); // 阻止手机浏览器默认的滑动行为
+        blackHole.x = e.touches[0].clientX;
+        blackHole.y = e.touches[0].clientY;
+    }
+};
+c.addEventListener('touchstart', handleTouch, { passive: false });
+c.addEventListener('touchmove', handleTouch, { passive: false });
+
+startBtn.addEventListener('click', tryStartGame);
+
+// ==============================================
+// GameMonetize.com - HTML5 SDK Integration
+// ==============================================
+window.SDK_OPTIONS = {
+    gameId: "anw6xixmq662xxfvgzgqctxbz5vmknq0", // 填写你的 game_id
+    onEvent: function (a) {
+        switch (a.name) {
+            case "SDK_GAME_PAUSE":
+                // 暂停游戏逻辑 / 如果有音频也在这里静音
+                if (gameState === 'playing') gameState = 'paused';
+                break;
+            case "SDK_GAME_START":
+                // 广告播放完毕，恢复游戏逻辑
+                if (pendingStart) {
+                    actualStartGame(); // 如果之前等待开始新游戏，此时进入
+                    pendingStart = false;
+                } else if (gameState === 'paused') {
+                    gameState = 'playing'; // 如果是在游戏中途暂停的，则恢复游玩
+                }
+                break;
+            case "SDK_READY":
+                // SDK准备就绪
+                break;
+            case "SDK_ERROR":
+                // 当SDK获取失败或被拦截时，兜底直接开始游戏
+                if (pendingStart) {
+                    actualStartGame();
+                    pendingStart = false;
+                } else if (gameState === 'paused') {
+                    gameState = 'playing';
+                }
+                break;
+        }
+    }
+};
+(function (a, b, c) {
+    var d = a.getElementsByTagName(b)[0];
+    a.getElementById(c) || (a = a.createElement(b), a.id = c, 
+    a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+})(document, "script", "gamemonetize-sdk");
+
+// Start render loop
+draw();
+</script>
+</body>
+</html>

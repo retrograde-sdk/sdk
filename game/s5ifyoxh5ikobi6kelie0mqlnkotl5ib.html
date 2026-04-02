@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dino Game Unblocked</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+
+        <div id="ui-layer">
+            <!-- Splash Screen -->
+            <div id="splash-screen" class="screen active">
+                <h1 class="game-title">DINO GAME<br><span class="subtitle">UNBLOCKED</span></h1>
+                <p class="instruction">Tap to Jump / Double Tap to Double Jump</p>
+                <div class="loading-text">Loading Assets...</div>
+                <button id="start-btn" class="btn hidden">PLAY NOW</button>
+            </div>
+
+            <!-- HUD -->
+            <div id="hud" class="hidden">
+                <div id="score">0</div>
+                <div id="shield-indicator"
+                    style="color: cyan; font-family: 'Press Start 2P'; font-size: 1rem; position: absolute; top: 50px; right: 20px;">
+                </div>
+                <div id="story-subtitle"></div>
+            </div>
+
+            <!-- Game Over Screen -->
+            <div id="game-over-screen" class="screen hidden">
+                <h2 class="game-over-title">EXTINCTION</h2>
+                <p id="final-score">Score: 0</p>
+                <p id="high-score">Best: 0</p>
+                <p class="bonus-hint">Share for a <strong>BONUS LIFE</strong>!</p>
+                <div class="button-row">
+                    <button id="restart-btn" class="btn">TRY AGAIN</button>
+                    <button id="share-btn" class="btn secondary">SHARE SCORE</button>
+                </div>
+                <!-- Prominent 'Challenge Friend' hook -->
+                <p class="viral-hook">Can your friends beat this?</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- GameMonetize SDK -->
+    <script type="text/javascript">
+        window.SDK_OPTIONS = {
+            gameId: "s5ifyoxh5ikobi6kelie0mqlnkotl5ib",
+            onEvent: function (a) {
+                switch (a.name) {
+                    case "SDK_GAME_PAUSE":
+                        // Pause game logic / mute audio
+                        if (window.gameInstance) window.gameInstance.pause();
+                        break;
+                    case "SDK_GAME_START":
+                        // Resume game logic and unmute audio
+                        if (window.gameInstance) window.gameInstance.resume();
+                        break;
+                    case "SDK_READY":
+                        // SDK ready
+                        console.log("SDK Ready");
+                        break;
+                }
+            }
+        };
+        (function (a, b, c) {
+            var d = a.getElementsByTagName(b)[0];
+            a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+        })(document, "script", "gamemonetize-sdk");
+    </script>
+
+    <script src="game.js"></script>
+</body>
+
+</html>

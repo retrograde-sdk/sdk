@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Skiing Downhill</title>
+  
+  <!-- GameMonetize SDK -->
+  <script type="text/javascript">
+    window.SDK_OPTIONS = {
+      gameId: "m8s2esn1r56013miafqgscnttn5upxzd",
+      onEvent: function (a) {
+        switch (a.name) {
+          case "SDK_GAME_PAUSE":
+            // Pause game and mute audio
+            if (typeof sdkPauseGame === 'function') sdkPauseGame();
+            break;
+          case "SDK_GAME_START":
+            // Ad done: resume game and unmute audio
+            if (typeof sdkResumeGame === 'function') sdkResumeGame();
+            break;
+          case "SDK_READY":
+            // SDK ready: show banner ad on game load
+            if (typeof sdk !== 'undefined' && sdk.showBanner) sdk.showBanner();
+            break;
+        }
+      }
+    };
+    (function (a, b, c) {
+      var d = a.getElementsByTagName(b)[0];
+      a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src =
+        "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+    })(document, "script", "gamemonetize-sdk");
+  </script>
+  
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- MAIN MENU -->
+  <div id="mainMenu" class="screen active">
+    <div class="menu-content">
+      <h1 class="game-title">⛷️ SKIING DOWNHILL ⛷️</h1>
+      <p style="font-size: 1.3rem; color: #87CEEB; font-style: italic;">Race Down the Mountain!</p>
+      
+      <div class="menu-buttons">
+        <button class="btn btn-primary" onclick="startGame()">
+          ▶ START GAME
+        </button>
+        <button class="btn btn-secondary" onclick="toggleSound()">
+          <span id="soundIcon">🔊</span> <span id="soundText">SOUND ON</span>
+        </button>
+      </div>
+      
+      <div class="controls-info">
+        <h3>HOW TO PLAY</h3>
+        <div class="control-row">SPACE / CLICK - Jump</div>
+        <div class="control-row">ESC / P - Pause</div>
+        <p style="color: #87CEEB; margin-top: 15px;">🏔️ Avoid the mountains!</p>
+      </div>
+      
+      <div class="best-score">
+        BEST SCORE: <span id="bestScoreMenu">0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- GAME SCREEN -->
+  <div id="gameScreen" class="screen">
+    <div class="game-hud">
+      <div class="hud-left">
+        <div class="score-display">
+          <span style="font-size: 0.9rem; opacity: 0.8;">SCORE</span>
+          <span class="value" id="score">0</span>
+        </div>
+        <div class="distance-display">
+          <span style="font-size: 0.9rem; opacity: 0.8;">DISTANCE</span>
+          <span class="value" id="distance">0m</span>
+        </div>
+      </div>
+      <div class="hud-right">
+        <button class="icon-btn" onclick="togglePause()">
+          <span id="pauseIcon">⏸</span>
+        </button>
+        <button class="icon-btn" onclick="toggleSound()">
+          <span id="soundIconGame">🔊</span>
+        </button>
+      </div>
+    </div>
+    
+    <canvas id="gameCanvas"></canvas>
+    
+    <div id="mobileControls" class="mobile-controls">
+      <button class="mobile-btn" ontouchstart="handleJump()" onclick="handleJump()">⬆️ JUMP</button>
+    </div>
+  </div>
+
+  <!-- PAUSE SCREEN -->
+  <div id="pauseScreen" class="screen overlay">
+    <div class="pause-content">
+      <h2 class="screen-title">⏸ PAUSED</h2>
+      <div class="pause-stats">
+        <div class="stat-item">
+          <span style="opacity: 0.7;">Current Score</span>
+          <span class="stat-value" id="pauseScore">0</span>
+        </div>
+        <div class="stat-item">
+          <span style="opacity: 0.7;">Best Score</span>
+          <span class="stat-value" id="pauseBestScore">0</span>
+        </div>
+      </div>
+      <div class="menu-buttons">
+        <button class="btn btn-primary" onclick="resumeGame()">▶ RESUME</button>
+        <button class="btn btn-secondary" onclick="restartFromPause()">🔄 RESTART</button>
+        <button class="btn btn-tertiary" onclick="backToMenu()">🏠 MAIN MENU</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- GAME OVER SCREEN -->
+  <div id="gameOverScreen" class="screen overlay">
+    <div class="gameover-content">
+      <h2 class="screen-title" style="color: #FF6B6B;">💥 GAME OVER 💥</h2>
+      <p style="font-size: 1.2rem; margin-bottom: 30px; opacity: 0.8;">You crashed into a mountain!</p>
+      
+      <div class="final-stats">
+        <div class="stat-box">
+          <span style="opacity: 0.7;">FINAL SCORE</span>
+          <span class="stat-value big" id="finalScore">0</span>
+        </div>
+        <div class="stat-box">
+          <span style="opacity: 0.7;">DISTANCE</span>
+          <span class="stat-value" id="finalDistance">0m</span>
+        </div>
+      </div>
+      
+      <div id="newRecordBanner" class="new-record hidden">
+        🏆 NEW RECORD! 🏆
+      </div>
+      
+      <div class="best-score" style="margin-bottom: 30px;">
+        BEST: <span id="bestScoreGameOver">0</span>
+      </div>
+      
+      <div class="menu-buttons">
+        <button class="btn btn-reward" id="continueBtn" onclick="watchAdToContinue()">
+          📺 WATCH AD TO CONTINUE
+        </button>
+        <button class="btn btn-primary" onclick="restartGame()">🔄 RESTART</button>
+        <button class="btn btn-tertiary" onclick="backToMenu()">🏠 MAIN MENU</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

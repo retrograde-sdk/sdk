@@ -1,0 +1,1491 @@
+<!DOCTYPE html>    
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Counterflow</title>
+
+  <!-- ================================
+       GameMonetize HTML5 SDK (공식 방식)
+       - gameId: 대시보드에서 복사한 값으로 교체 필수
+       - onEvent: 광고 시작/종료 이벤트 → 게임 일시정지/재개
+  ================================= -->
+  <script type="text/javascript">
+    // 게임 쪽에서 사용할 헬퍼 객체 (나중에 main 스크립트에서 핸들러 등록)
+    window.__counterflowSDK = window.__counterflowSDK || {
+      onPause: function(){},
+      onStart: function(){},
+      onReady: function(){}
+    };
+
+    window.SDK_OPTIONS = {
+      // TODO: 여기 너 게임 페이지에서 받은 실제 GameId로 바꿔 넣어라.
+      // 예) gameId: "d2c0f2f8be4c4ba9b5a4c7d8e1234567",
+      gameId: "YOUR_GAME_ID_HERE",
+      onEvent: function (e) {
+        switch (e.name) {
+          case "SDK_GAME_PAUSE":
+            // 광고 시작: 게임을 멈추고 음소거
+            if (window.__counterflowSDK.onPause) {
+              window.__counterflowSDK.onPause(e);
+            }
+            break;
+          case "SDK_GAME_START":
+            // 광고 종료: 게임 다시 시작
+            if (window.__counterflowSDK.onStart) {
+              window.__counterflowSDK.onStart(e);
+            }
+            break;
+          case "SDK_READY":
+            if (window.__counterflowSDK.onReady) {
+              window.__counterflowSDK.onReady(e);
+            }
+            break;
+        }
+      }
+    };
+
+    // 공식 README에 나온 방식대로 SDK 로드
+    (function (a, b, c) {
+      var d = a.getElementsByTagName(b)[0];
+      if (!a.getElementById(c)) {
+        var s = a.createElement(b);
+        s.id = c;
+        s.src = "https://api.gamemonetize.com/sdk.js";
+        d.parentNode.insertBefore(s, d);
+      }
+    })(document, "script", "gamemonetize-sdk");
+  </script>
+
+  <style>
+    /* ================================
+       공통 스타일 · 배경
+    ================================= */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(160deg, #050505 0%, #020202 40%, #050505 100%);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: #f5f5f5;
+      overflow: hidden;
+    }
+
+    /* 화면 중앙에 '폰 화면' 하나만 보여주기 */
+    #game-root {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* 논리 해상도 540 x 1440 (세로형 고정) */
+    #game-frame {
+      position: relative;
+      width: 540px;
+      height: 1440px;
+      transform-origin: center center;
+    }
+
+    /* 실제 게임 캔버스 (폰 화면 전체를 덮는 영역) */
+    #game {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      background: #111;
+      border-radius: 20px;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.04),
+        0 22px 45px rgba(0, 0, 0, 0.7);
+      display: block;
+      touch-action: none; /* 모바일에서 터치 스크롤 방지 */
+    }
+
+    /* ================================
+       NEW RECORD 배너 + HUD
+    ================================= */
+
+    /* 상단 중앙: NEW RECORD 배너 */
+    #new-record-banner {
+      position: absolute;
+      top: 5px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 25px;
+      font-weight: 100;
+      letter-spacing: 0.26em;
+      text-transform: uppercase;
+      color: #e3f0c0;
+      opacity: 0;
+      pointer-events: none;
+      text-align: center;
+    }
+
+    #new-record-banner.show {
+      opacity: 1;
+    }
+
+    /* NEW RECORD 텍스트 깜빡임 */
+    #new-record-banner.blink {
+      animation: newRecordBlink 0.5s step-end infinite;
+    }
+
+    @keyframes newRecordBlink {
+      0%, 50%   { opacity: 1; }
+      50.01%, 100% { opacity: 0; }
+    }
+
+    /* HUD (시간 / 베스트) – NEW RECORD 배너 아래 */
+    #hud {
+      position: absolute;
+      top: 42px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: opacity 0.2s ease-out;
+      pointer-events: none;
+    }
+
+    /* BEST 라인 (BEST 12.34s) */
+    .hud-best-line {
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      gap: 6px;
+      font-size: 35px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      opacity: 0.9;
+      font-feature-settings: "tnum" 1;
+      font-variant-numeric: tabular-nums;
+      color: #f5f5f5;
+      -webkit-text-stroke: 0.5px rgba(0, 0, 0, 0.6);
+      text-shadow:
+        0 0 3px rgba(0, 0, 0, 0.8),
+        0 0 10px rgba(0, 0, 0, 0.85);
+    }
+
+    .hud-best-line .label {
+      font-weight: 100;
+      opacity: 0.7;
+    }
+
+    .time-unit {
+      display: inline-block;
+      margin-left: 2px;
+    }
+
+    /* HUD의 현재 시간 s 글자 */
+    #hud-time .time-unit-current {
+      font-size: 0.5em;
+    }
+
+    /* HUD의 BEST 옆 s 글자 */
+    .hud-best-line .time-unit-best {
+      font-size: 0.4em;
+    }
+
+    /* GAME OVER 패널 안의 s 글자 */
+    #gameover-screen .time-unit-final {
+      font-size: 0.4em;
+    }
+
+    .hud-best-line .value {
+      font-weight: 100;
+      letter-spacing: 0.01em;
+      margin-left: 3px;
+    }
+
+    /* HUD의 현재 생존 시간 (크게 표시) */
+    #hud-time {
+      font-size: 60px;
+      font-weight: 100;
+      letter-spacing: 0.06em;
+      font-feature-settings: "tnum" 1;
+      font-variant-numeric: tabular-nums;
+      color: #f5f5f5;
+      -webkit-text-stroke: 0.6px rgba(0, 0, 0, 0.65);
+      text-shadow:
+        0 0 4px rgba(0, 0, 0, 0.85),
+        0 0 14px rgba(0, 0, 0, 0.9);
+    }
+
+    /* NEW BEST 상태일 때 시간/베스트 강조 */
+    #hud.new-best .value,
+    #hud.new-best #hud-time {
+      color: #f5f5f5;
+      -webkit-text-stroke: 1px #a5e8c5;
+      text-shadow: none;
+    }
+
+    /* ================================
+       시작 화면 (TITLE SCREEN)
+    ================================= */
+
+    #start-screen {
+      position: absolute;
+      inset: 0;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 408px;     /* 제목 위치 */
+      padding-bottom: 335px;  /* 버튼 위치 */
+      text-align: center;
+      pointer-events: auto;
+      color: #fdfdfd;
+    }
+
+    #start-screen.visible {
+      display: flex;
+    }
+
+    .start-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 256px;      /* 제목–컨트롤 간격 */
+      margin-bottom: 0;
+    }
+
+    .start-title {
+      font-size: 45px;
+      font-weight: 100;
+      letter-spacing: 0.34em;
+      text-transform: uppercase;
+      text-shadow:
+        0 12px 28px rgba(0, 0, 0, 0.95),
+        0 0 2px rgba(0, 0, 0, 0.6);
+    }
+
+    .howto-label {
+      font-size: 20px;
+      letter-spacing: 0.26em;
+      text-transform: uppercase;
+      opacity: 0.9;
+      margin-bottom: 6px;
+      text-shadow:
+        0 8px 20px rgba(0, 0, 0, 0.9),
+        0 0 1px rgba(0, 0, 0, 0.6);
+    }
+
+    .howto-text {
+      font-size: 14px;
+      letter-spacing: 0.08em;
+      opacity: 0.95;
+      margin: 0;
+      text-shadow:
+        0 6px 18px rgba(0, 0, 0, 0.85),
+        0 0 1px rgba(0, 0, 0, 0.6);
+    }
+
+    .start-buttons {
+      display: flex;
+      justify-content: center;
+      margin-top: 4px;
+    }
+
+    /* ================================
+       공통 버튼 스타일
+    ================================= */
+
+    .btn {
+      border: none;
+      border-radius: 999px;
+      padding: 20px 30px;
+      font-size: 25px;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      cursor: pointer;
+      background: #f5f5f5;
+      color: #050505;
+      min-width: 100px;
+      transform: translateY(0) scale(1);
+      transition:
+        transform 0.12s ease-out,
+        box-shadow 0.12s ease-out,
+        background 0.12s ease-out,
+        color 0.12s ease-out,
+        opacity 0.12s ease-out;
+    }
+
+    .btn.secondary {
+      background: transparent;
+      color: #f5f5f5;
+      box-shadow: 0 0 0 1px rgba(245, 245, 245, 0.3);
+      opacity: 0.9;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px) scale(1.05);
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.7);
+    }
+
+    .btn:active {
+      transform: translateY(2px) scale(1.0);
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.9);
+    }
+
+    /* 시작 화면 전용 START 버튼 – hover 때만 그림자 */
+    #start-screen .btn-start {
+      padding: 22px 38px;
+      font-size: 30px;
+      letter-spacing: 0.22em;
+      box-shadow: none;
+    }
+
+    #start-screen .btn-start:hover {
+      box-shadow:
+        0 18px 35px rgba(0, 0, 0, 0.9),
+        0 0 0 1px rgba(255, 255, 255, 0.15);
+    }
+
+    /* ================================
+       인게임 오버레이: PAUSE / GAME OVER
+    ================================= */
+
+    #overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    .screen-panel {
+      position: relative;
+      pointer-events: auto;
+      background: #232323;
+      border-radius: 26px;
+      padding: 50px 20px;
+      width: 90%;
+      max-width: 500px;
+
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.06),
+        0 22px 48px rgba(0, 0, 0, 0.8);
+      opacity: 0;
+      transform: translateY(-30px) scale(0.96);
+      transition:
+        opacity 0.2s ease-out,
+        transform 0.2s ease-out;
+    }
+
+    .screen-panel.visible {
+      display: flex;
+      opacity: 1;
+      transform: translateY(-10px) scale(1);
+    }
+
+    .gameover-title {
+      font-size: 50px;
+      font-weight: 100;
+      letter-spacing: 0.34em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+
+    .score-line {
+      font-size: 30px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      opacity: 0.85;
+      margin-bottom: 4px;
+    }
+
+    .score-line .value {
+      display: inline-block;
+      margin-left: 6px;
+      font-weight: 100;
+    }
+
+    .screen-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-top: 12px;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="game-root">
+    <div id="game-frame">
+      <!-- 메인 게임 캔버스 -->
+      <canvas id="game"></canvas>
+
+      <!-- NEW RECORD 배너 -->
+      <div id="new-record-banner">NEW RECORD!</div>
+
+      <!-- HUD (현재 시간 / 베스트 기록) -->
+      <div id="hud">
+        <div class="hud-best-line">
+          <span class="label">BEST</span>
+          <span id="hud-best" class="value">0.00s</span>
+        </div>
+        <div id="hud-time">0.00s</div>
+      </div>
+
+      <!-- 시작 화면 (TITLE) -->
+      <div id="start-screen">
+        <div class="start-header">
+          <div class="start-title">COUNTERFLOW</div>
+
+          <div>
+            <div class="howto-label">CONTROLS</div>
+            <p class="howto-text">
+              PC: Use &larr; / &rarr; or A / D to change lanes. Space to pause.<br/>
+              Mobile: Tap left / right side of the screen. Tap top area to pause.
+            </p>
+          </div>
+        </div>
+
+        <div class="start-buttons">
+          <button id="btn-play" class="btn btn-start">DRIVE!</button>
+        </div>
+      </div>
+
+      <!-- 인게임 오버레이: 일시정지 / 게임오버 -->
+      <div id="overlay">
+        <!-- PAUSE 화면 -->
+        <div id="pause-screen" class="screen-panel">
+          <div class="gameover-title">PAUSED</div>
+          <div class="screen-buttons">
+            <button id="btn-continue" class="btn">CONTINUE</button>
+            <button id="btn-pause-menu" class="btn secondary">TITLE</button>
+          </div>
+        </div>
+
+        <!-- GAME OVER 화면 -->
+        <div id="gameover-screen" class="screen-panel">
+          <div class="gameover-title">GAME OVER</div>
+
+          <div class="score-line">
+            TIME
+            <span id="final-time" class="value">0.00 s</span>
+          </div>
+          <div class="score-line" style="margin-bottom:10px;">
+            BEST
+            <span id="final-best" class="value">0.00 s</span>
+          </div>
+
+          <div class="screen-buttons">
+            <button id="btn-retry" class="btn">RETRY</button>
+            <button id="btn-menu" class="btn secondary">TITLE</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================
+       오디오 리소스 (같은 폴더에 음원 파일 필요)
+  ================================= -->
+
+  <audio id="sfx-click" src="sfx_click.mp3" preload="auto"></audio>
+  <audio id="sfx-hover" src="sfx_hover.mp3" preload="auto"></audio>
+  <audio id="sfx-engine" src="sfx_engine_loop.mp3" preload="auto" loop></audio>
+  <audio id="sfx-crash" src="sfx_crash.mp3" preload="auto"></audio>
+  <audio id="sfx-newrecord" src="sfx_newrecord.mp3" preload="auto"></audio>
+
+  <script>
+  (function () {
+    /* ================================
+       0. GameMonetize SDK 연동 (광고 중 게임 일시정지)
+    ================================= */
+    const gmSDK = window.__counterflowSDK || (window.__counterflowSDK = {});
+    let isAdPaused = false;
+
+    gmSDK.onPause = function () {
+      isAdPaused = true;
+      stopEngine({ resetTime: false });
+      console.log("SDK_GAME_PAUSE: game paused for ad");
+    };
+    gmSDK.onStart = function () {
+      if (isAdPaused) {
+        isAdPaused = false;
+        startEngine();
+        console.log("SDK_GAME_START: game resumed after ad");
+      }
+    };
+    gmSDK.onReady = gmSDK.onReady || function () {
+      console.log("SDK_READY: GameMonetize SDK ready");
+    };
+
+    /* ================================
+       1. 캔버스 / 해상도 설정
+    ================================= */
+
+    const LOGICAL_WIDTH = 540;
+    const LOGICAL_HEIGHT = 1440;
+
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+    const dpr = window.devicePixelRatio || 1;
+
+    canvas.style.width = LOGICAL_WIDTH + "px";
+    canvas.style.height = LOGICAL_HEIGHT + "px";
+    canvas.width = LOGICAL_WIDTH * dpr;
+    canvas.height = LOGICAL_HEIGHT * dpr;
+
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.scale(dpr, dpr);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+
+    const gameFrame = document.getElementById("game-frame");
+
+    /* ================================
+       2. DOM 요소 및 HUD 참조
+    ================================= */
+
+    const newRecordBanner = document.getElementById("new-record-banner");
+    const hud = document.getElementById("hud");
+    const hudTime = document.getElementById("hud-time");
+    const hudBest = document.getElementById("hud-best");
+
+    const startScreen = document.getElementById("start-screen");
+    const overlay = document.getElementById("overlay");
+    const pauseScreen = document.getElementById("pause-screen");
+    const gameOverScreen = document.getElementById("gameover-screen");
+
+    const btnPlay = document.getElementById("btn-play");
+    const btnRetry = document.getElementById("btn-retry");
+    const btnMenu = document.getElementById("btn-menu");
+    const btnContinue = document.getElementById("btn-continue");
+    const btnPauseMenu = document.getElementById("btn-pause-menu");
+
+    const finalTimeEl = document.getElementById("final-time");
+    const finalBestEl = document.getElementById("final-best");
+
+    /* ================================
+       3. 사운드 관련 설정 (HTMLAudio + WebAudio)
+    ================================= */
+
+    const sfxClick = document.getElementById("sfx-click");
+    const sfxHover = document.getElementById("sfx-hover");
+    const sfxEngine = document.getElementById("sfx-engine");
+    const sfxCrash = document.getElementById("sfx-crash");
+    const sfxNewRecord = document.getElementById("sfx-newrecord");
+
+    const VOLUME = {
+      uiClick: 0.03,
+      uiHover: 0.0015,
+      engine: 0.15,
+      crash: 0.1,
+      newRecord: 0.05
+    };
+
+    if (sfxClick) sfxClick.volume = VOLUME.uiClick;
+    if (sfxHover) sfxHover.volume = VOLUME.uiHover;
+    if (sfxEngine) sfxEngine.volume = VOLUME.engine;
+    if (sfxCrash) sfxCrash.volume = VOLUME.crash;
+    if (sfxNewRecord) sfxNewRecord.volume = VOLUME.newRecord;
+
+    const isMobile = /Android|iPhone|iPad|iPod|Windows Phone/i.test(navigator.userAgent);
+
+    // HTMLAudio 레퍼런스 맵
+    const audioTagMap = {
+      click: sfxClick,
+      hover: sfxHover,
+      engine: sfxEngine,
+      crash: sfxCrash,
+      newrecord: sfxNewRecord
+    };
+
+    // WebAudio용
+    let audioCtx = null;
+    let sfxBuffers = {};      // key -> AudioBuffer
+    let engineSource = null;  // 현재 엔진 loop Source
+    let engineGain = null;
+
+    const AUDIO_FILES = {
+      click: "sfx_click.mp3",
+      hover: "sfx_hover.mp3",
+      engine: "sfx_engine_loop.mp3",
+      crash: "sfx_crash.mp3",
+      newrecord: "sfx_newrecord.mp3"
+    };
+
+    const SFX_GAIN = {
+      click: VOLUME.uiClick,
+      hover: VOLUME.uiHover,
+      crash: VOLUME.crash,
+      newrecord: VOLUME.newRecord
+    };
+
+    function initMobileAudioOnce() {
+      if (!isMobile) return;
+      if (audioCtx) return;
+
+      try {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) {
+          return; // WebAudio 지원 안 하면 그냥 HTMLAudio만 사용
+        }
+        audioCtx = new AC();
+        audioCtx.resume().catch(() => {});
+      } catch (e) {
+        audioCtx = null;
+        return;
+      }
+
+      // 효과음/엔진 버퍼 비동기 로드 (백그라운드)
+      Object.entries(AUDIO_FILES).forEach(([key, url]) => {
+        fetch(url)
+          .then(r => r.arrayBuffer())
+          .then(buf => new Promise((res, rej) => {
+            audioCtx.decodeAudioData(buf, res, rej);
+          }))
+          .then(decoded => {
+            sfxBuffers[key] = decoded;
+          })
+          .catch(() => { /* 실패해도 HTMLAudio로 fallback */ });
+      });
+    }
+
+    function playSfxKey(key, { reset = true } = {}) {
+      // 1) 모바일 + WebAudio 준비 완료 → WebAudio 재생 (딜레이 최소화)
+      if (isMobile && audioCtx && sfxBuffers[key]) {
+        const src = audioCtx.createBufferSource();
+        src.buffer = sfxBuffers[key];
+
+        const gain = audioCtx.createGain();
+        const g = SFX_GAIN[key] != null ? SFX_GAIN[key] : 1.0;
+        gain.gain.value = g;
+
+        src.connect(gain).connect(audioCtx.destination);
+        try {
+          src.start(0);
+        } catch (e) {}
+        return;
+      }
+
+      // 2) 그 외 → 기존 HTMLAudio
+      const audio = audioTagMap[key];
+      if (!audio) return;
+      try {
+        if (reset) audio.currentTime = 0;
+        audio.play().catch(() => {});
+      } catch (e) {}
+    }
+
+    function startEngine() {
+      // 모바일 + WebAudio 버퍼 준비 시 → WebAudio loop
+      if (isMobile && audioCtx && sfxBuffers.engine) {
+        if (engineSource) return; // 이미 재생 중
+        const src = audioCtx.createBufferSource();
+        src.buffer = sfxBuffers.engine;
+        src.loop = true;
+
+        engineGain = audioCtx.createGain();
+        engineGain.gain.value = VOLUME.engine;
+
+        src.connect(engineGain).connect(audioCtx.destination);
+        try {
+          src.start(0);
+          engineSource = src;
+        } catch (e) {}
+        return;
+      }
+
+      // 그 외 → HTMLAudio loop
+      const audio = audioTagMap.engine;
+      if (!audio) return;
+      try {
+        audio.loop = true;
+        audio.volume = VOLUME.engine;
+        if (audio.paused) {
+          audio.currentTime = 0;
+          audio.play().catch(() => {});
+        }
+      } catch (e) {}
+    }
+
+    function stopEngine({ resetTime = true } = {}) {
+      // WebAudio 쪽 정지
+      if (engineSource) {
+        try {
+          engineSource.stop();
+        } catch (e) {}
+        engineSource.disconnect();
+        engineSource = null;
+        engineGain = null;
+      }
+
+      // HTMLAudio 쪽 정지
+      const audio = audioTagMap.engine;
+      if (!audio) return;
+      try {
+        audio.pause();
+        if (resetTime) audio.currentTime = 0;
+      } catch (e) {}
+    }
+
+    /* ================================
+       4. 게임 상수 및 상태 변수
+    ================================= */
+
+    const LANE_COUNT = 4;
+
+    const ROAD_SCROLL_SPEED_MULT = 1.0;
+    const ENEMY_BASE_SPEED_MULT = 1.1;
+    const ENEMY_SPEED_PER_SEC = 0.01;
+
+    let state = "menu";
+
+    let lastTimestamp = 0;
+    let survivalTime = 0;
+    let bestTime = parseFloat(localStorage.getItem("rd_bestTime") || "0");
+
+    let roadOffset = 0;
+    let spawnTimer = 0;
+    let spawnInterval = 1.0;
+    const MIN_SPAWN_INTERVAL = 0.3;
+    const MAX_SPAWN_INTERVAL = 0.3;
+
+    let player = null;
+    let obstacles = [];
+
+    let crashFlash = 0;
+    let shakeTime = 0;
+
+    let runBaseBest = 0;
+    let newBestActive = false;
+
+    let laneUsage = new Array(LANE_COUNT).fill(0);
+
+    const playerImg = new Image();
+    const enemyImg = new Image();
+    playerImg.src = "player_car.png";
+    enemyImg.src = "enemy_car.png";
+
+    /* ================================
+       5. 화면 스케일링
+    ================================= */
+
+    function resizeGame() {
+      const availW = window.innerWidth;
+      const availH = window.innerHeight;
+      const scale = Math.min(availW / LOGICAL_WIDTH, availH / LOGICAL_HEIGHT);
+      gameFrame.style.transform = `scale(${scale})`;
+    }
+
+    window.addEventListener("resize", resizeGame);
+    resizeGame();
+
+    /* ================================
+       6. 도로 / 차선 계산 유틸
+    ================================= */
+
+    function computeRoad() {
+      const w = LOGICAL_WIDTH;
+      const h = LOGICAL_HEIGHT;
+
+      const roadX = 0;
+      const roadY = 0;
+      const roadWidth = w;
+      const roadHeight = h;
+
+      const laneWidth = roadWidth / LANE_COUNT;
+      const laneCenters = [];
+
+      for (let i = 0; i < LANE_COUNT; i++) {
+        laneCenters.push(roadX + laneWidth * (i + 0.5));
+      }
+
+      return {
+        x: roadX,
+        y: roadY,
+        width: roadWidth,
+        height: roadHeight,
+        laneWidth,
+        laneCenters
+      };
+    }
+
+    /* ================================
+       7. 월드 초기화 / 타이틀 연출
+    ================================= */
+
+    function resetWorld() {
+      const road = computeRoad();
+
+      const baseWidth = road.laneWidth * 0.55;
+      const startLane = 1;
+
+      player = {
+        laneIndex: startLane,
+        x: road.laneCenters[startLane],
+        y: road.y + road.height * 0.86,
+        width: baseWidth,
+        height: baseWidth * 1.9,
+        laneChangeStartX: road.laneCenters[startLane],
+        laneChangeEndX: road.laneCenters[startLane],
+        laneChangeProgress: 1,
+        laneChangeDuration: 0.02,
+        alive: true
+      };
+
+      obstacles = [];
+      roadOffset = 0;
+      spawnTimer = 0;
+      spawnInterval = 1.0;
+      crashFlash = 0;
+      shakeTime = 0;
+      laneUsage = new Array(LANE_COUNT).fill(0);
+    }
+
+    function setupTitleScene() {
+      resetWorld();
+      const road = computeRoad();
+
+      obstacles = [];
+
+      const upperY = road.y + road.height * 0.18;
+      const midY = road.y + road.height * 0.38;
+      const lowerY = road.y + road.height * 0.60;
+
+      spawnObstacleAt(0, upperY);
+      spawnObstacleAt(2, midY);
+      spawnObstacleAt(3, lowerY);
+    }
+
+    /* ================================
+       8. HUD / 화면 전환
+    ================================= */
+
+    function updateHud() {
+      const currentStr = survivalTime.toFixed(2);
+      const bestStr = bestTime.toFixed(2);
+
+      hudTime.innerHTML = `${currentStr}<span class="time-unit time-unit-current">s</span>`;
+      hudBest.innerHTML = `${bestStr}<span class="time-unit time-unit-best">s</span>`;
+    }
+
+    function showStartScreen() {
+      state = "menu";
+
+      setupTitleScene();
+      survivalTime = 0;
+      updateHud();
+
+      overlay.style.pointerEvents = "none";
+      startScreen.classList.add("visible");
+      pauseScreen.classList.remove("visible");
+      gameOverScreen.classList.remove("visible");
+
+      hud.style.opacity = "0";
+
+      hud.classList.remove("new-best");
+      newBestActive = false;
+      newRecordBanner.classList.remove("show", "blink");
+
+      stopEngine({ resetTime: true });
+    }
+
+    function showPauseScreen() {
+      state = "paused";
+
+      overlay.style.pointerEvents = "auto";
+      pauseScreen.classList.add("visible");
+      startScreen.classList.remove("visible");
+      gameOverScreen.classList.remove("visible");
+
+      stopEngine({ resetTime: false });
+    }
+
+    function hideScreens() {
+      overlay.style.pointerEvents = "none";
+      startScreen.classList.remove("visible");
+      pauseScreen.classList.remove("visible");
+      gameOverScreen.classList.remove("visible");
+    }
+
+    function showGameOver() {
+      state = "gameover";
+
+      overlay.style.pointerEvents = "auto";
+      startScreen.classList.remove("visible");
+      pauseScreen.classList.remove("visible");
+      gameOverScreen.classList.add("visible");
+
+      const timeStr = survivalTime.toFixed(2);
+      const bestStr = bestTime.toFixed(2);
+
+      finalTimeEl.innerHTML = `${timeStr}<span class="time-unit time-unit-final">s</span>`;
+      finalBestEl.innerHTML = `${bestStr}<span class="time-unit time-unit-final">s</span>`;
+    }
+
+    function startGame() {
+      resetWorld();
+
+      runBaseBest = bestTime;
+      newBestActive = false;
+      hud.classList.remove("new-best");
+      newRecordBanner.classList.remove("show", "blink");
+
+      survivalTime = 0;
+      updateHud();
+
+      state = "playing";
+      hideScreens();
+      hud.style.opacity = "1";
+
+      startEngine();
+      // 광고는 여기서 호출 안 함. (테스터 요구: "게임 FAIL 시"만)
+    }
+
+    function resumeGame() {
+      if (state !== "paused") return;
+      state = "playing";
+      hideScreens();
+      startEngine();
+    }
+
+    /* ================================
+       9. 버튼 이벤트 + UI 사운드
+    ================================= */
+
+    btnPlay.addEventListener("click", () => {
+      initMobileAudioOnce();
+      playSfxKey("click");
+      startGame();
+    });
+
+    btnRetry.addEventListener("click", () => {
+      initMobileAudioOnce();
+      playSfxKey("click");
+      startGame();
+    });
+
+    btnMenu.addEventListener("click", () => {
+      initMobileAudioOnce();
+      playSfxKey("click");
+      showStartScreen();
+    });
+
+    btnPauseMenu.addEventListener("click", () => {
+      initMobileAudioOnce();
+      playSfxKey("click");
+      showStartScreen();
+    });
+
+    btnContinue.addEventListener("click", () => {
+      initMobileAudioOnce();
+      playSfxKey("click");
+      resumeGame();
+    });
+
+    const allButtons = document.querySelectorAll(".btn");
+    allButtons.forEach(btn => {
+      btn.addEventListener("mouseenter", () => {
+        playSfxKey("hover");
+      });
+    });
+
+    /* ================================
+       10. 입력 처리 (키보드 + 터치)
+    ================================= */
+
+    // 키보드
+    window.addEventListener("keydown", (e) => {
+      initMobileAudioOnce();
+      const key = e.key;
+
+      // Space: 일시정지 / 재개
+      if (key === " " || key === "Spacebar") {
+        e.preventDefault();
+        if (state === "playing") {
+          showPauseScreen();
+        } else if (state === "paused") {
+          resumeGame();
+        }
+        return;
+      }
+
+      if (state !== "playing") return;
+      if (isAdPaused) return; // 광고 중에는 입력 무시
+
+      // 좌우 이동: ← / → / A / D
+      if (key === "ArrowLeft" || key === "a" || key === "A") {
+        e.preventDefault();
+        movePlayer(-1);
+      } else if (key === "ArrowRight" || key === "d" || key === "D") {
+        e.preventDefault();
+        movePlayer(1);
+      }
+    });
+
+    // 모바일 터치:
+    // - 상단 영역 탭: 일시정지/재개
+    // - 좌/우 영역 탭: 차선 이동
+    function handleTouchStart(e) {
+      if (!e.touches || e.touches.length === 0) return;
+      e.preventDefault();
+
+      initMobileAudioOnce();
+
+      const touch = e.touches[0];
+      const rect = canvas.getBoundingClientRect();
+      const x = touch.clientX - rect.left;
+      const y = touch.clientY - rect.top;
+      const mid = rect.width / 2;
+      const pauseAreaHeight = rect.height * 0.16; // 상단 16% 영역을 '정지 영역'으로 사용
+
+      // 메뉴 상태에서 터치하면 바로 게임 시작
+      if (state === "menu") {
+        startGame();
+        return;
+      }
+
+      // 상단 터치: 일시정지 / 재개
+      if (y <= pauseAreaHeight) {
+        if (state === "playing") {
+          showPauseScreen();
+        } else if (state === "paused") {
+          resumeGame();
+        }
+        return;
+      }
+
+      if (state !== "playing") return;
+      if (isAdPaused) return; // 광고 중에는 입력 무시
+
+      // 좌/우 터치로 lane 이동
+      if (x < mid) {
+        movePlayer(-1);
+      } else {
+        movePlayer(1);
+      }
+    }
+
+    canvas.addEventListener("touchstart", handleTouchStart, { passive: false });
+
+    function movePlayer(deltaLane) {
+      if (!player || !player.alive) return;
+      if (player.laneChangeProgress < 1) return;
+
+      const road = computeRoad();
+      const newLane = player.laneIndex + deltaLane;
+      if (newLane < 0 || newLane >= LANE_COUNT) return;
+
+      player.laneIndex = newLane;
+      player.laneChangeStartX = player.x;
+      player.laneChangeEndX = road.laneCenters[newLane];
+      player.laneChangeProgress = 0;
+    }
+
+    /* ================================
+       11. 적 차량 스폰 / 배치
+    ================================= */
+
+    function spawnObstacleAt(lane, y) {
+      const road = computeRoad();
+
+      const baseWidth = road.laneWidth * 0.55;
+      const baseHeight = baseWidth * 1.9;
+
+      const o = {
+        laneIndex: lane,
+        x: road.laneCenters[lane],
+        y: y,
+        width: baseWidth,
+        height: baseHeight
+      };
+
+      obstacles.push(o);
+      laneUsage[lane] += 1;
+      return o;
+    }
+
+    function spawnGroup() {
+      const road = computeRoad();
+      const baseWidth = road.laneWidth * 0.55;
+      const baseHeight = baseWidth * 1.9;
+
+      const baseY = road.y - baseHeight;
+
+      const roll = Math.random();
+      let carCount = (roll < 0.5) ? 1 : 2;
+
+      let candidates = [];
+      for (let i = 0; i < LANE_COUNT; i++) {
+        const usageScore = -laneUsage[i];
+        const distFromPlayer = player ? Math.abs(i - player.laneIndex) : 0;
+        const distScore = distFromPlayer * 0.2;
+        const totalScore = usageScore * 1.3 + distScore;
+        candidates.push({ lane: i, score: totalScore });
+      }
+      candidates.sort((a, b) => b.score - a.score);
+
+      const chosenLanes = [];
+      for (let i = 0; i < candidates.length && chosenLanes.length < carCount; i++) {
+        chosenLanes.push(candidates[i].lane);
+      }
+      if (chosenLanes.length === 0) {
+        chosenLanes.push(candidates[0].lane);
+      }
+
+      const spacingLevelsTightAllowed = [1.0, 1.6, 2.4, 3.2];
+      const spacingLevelsNoTight = [1.6, 2.4, 3.2];
+
+      const spacingLevels =
+        chosenLanes.length >= 3 ? spacingLevelsNoTight : spacingLevelsTightAllowed;
+
+      const groupYs = [];
+      const minSpacing = baseHeight;
+      const maxAttempts = 25;
+
+      for (let i = 0; i < chosenLanes.length; i++) {
+        const lane = chosenLanes[i];
+
+        const level = spacingLevels[Math.floor(Math.random() * spacingLevels.length)];
+        const maxRange = baseHeight * level;
+
+        let yChosen = null;
+        let attempts = 0;
+
+        while (attempts < maxAttempts && yChosen === null) {
+          const offset = minSpacing + Math.random() * Math.max(0, maxRange - minSpacing);
+          const y = baseY - offset;
+
+          let ok = true;
+
+          for (let k = 0; k < obstacles.length; k++) {
+            const o = obstacles[k];
+            if (Math.abs(y - o.y) < minSpacing) {
+              ok = false;
+              break;
+            }
+          }
+
+          if (ok) {
+            for (let k = 0; k < groupYs.length; k++) {
+              if (Math.abs(y - groupYs[k]) < minSpacing) {
+                ok = false;
+                break;
+              }
+            }
+          }
+
+          if (ok) {
+            yChosen = y;
+            groupYs.push(y);
+            break;
+          }
+
+          attempts++;
+        }
+
+        if (yChosen !== null) {
+          spawnObstacleAt(lane, yChosen);
+        }
+      }
+    }
+
+    function countObstaclesAhead() {
+      if (!player) return 0;
+
+      const h = LOGICAL_HEIGHT;
+      const windowBottom = player.y - h * 0.05;
+      const windowTop = player.y - h * 0.75;
+
+      let count = 0;
+      for (const o of obstacles) {
+        if (o.y >= windowTop && o.y <= windowBottom) {
+          count++;
+        }
+      }
+      return count;
+    }
+
+    function canSpawnGroup() {
+      return countObstaclesAhead() < 4;
+    }
+
+    /* ================================
+       12. 게임 업데이트
+       (광고 중일 때는 isAdPaused로 완전 정지)
+    ================================= */
+
+    function update(delta) {
+      const road = computeRoad();
+      const h = LOGICAL_HEIGHT;
+
+      if (state === "playing" && !isAdPaused) {
+        survivalTime += delta;
+
+        if (survivalTime > bestTime) {
+          bestTime = survivalTime;
+        }
+
+        updateHud();
+
+        if (!newBestActive && survivalTime > runBaseBest) {
+          newBestActive = true;
+          hud.classList.add("new-best");
+          newRecordBanner.classList.add("show", "blink");
+          playSfxKey("newrecord");
+
+          setTimeout(() => {
+            newRecordBanner.classList.remove("blink");
+          }, 3000);
+        }
+
+        const baseInterval = Math.max(MIN_SPAWN_INTERVAL, 1.0 - survivalTime * 0.04);
+
+        const roadSpeed = h * ROAD_SCROLL_SPEED_MULT;
+        roadOffset += roadSpeed * delta;
+
+        if (player.laneChangeProgress < 1) {
+          player.laneChangeProgress += delta / player.laneChangeDuration;
+          if (player.laneChangeProgress > 1) player.laneChangeProgress = 1;
+
+          const t = player.laneChangeProgress;
+          const ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+
+          const startX = player.laneChangeStartX;
+          const endX = player.laneChangeEndX;
+          player.x = startX + (endX - startX) * ease;
+        } else {
+          player.x = computeRoad().laneCenters[player.laneIndex];
+        }
+
+        player.width = road.laneWidth * 0.55;
+        player.height = player.width * 1.9;
+
+        const enemySpeed = h * (ENEMY_BASE_SPEED_MULT + ENEMY_SPEED_PER_SEC * survivalTime);
+
+        for (let i = obstacles.length - 1; i >= 0; i--) {
+          const o = obstacles[i];
+          o.y += enemySpeed * delta;
+          if (o.y - o.height > road.y + road.height) {
+            obstacles.splice(i, 1);
+          }
+        }
+
+        spawnTimer += delta;
+        if (spawnTimer >= spawnInterval) {
+          if (canSpawnGroup()) {
+            spawnGroup();
+
+            const factor = 0.9 + Math.random() * 0.7;
+            const rawInterval = baseInterval * factor;
+            spawnInterval = Math.min(
+              MAX_SPAWN_INTERVAL,
+              Math.max(MIN_SPAWN_INTERVAL, rawInterval)
+            );
+            spawnTimer = 0;
+          }
+        }
+
+        for (let i = 0; i < obstacles.length; i++) {
+          if (rectsOverlapRelaxed(player, obstacles[i])) {
+            handleCrash();
+            break;
+          }
+        }
+      }
+
+      if (crashFlash > 0) {
+        crashFlash -= delta * 2.0;
+        if (crashFlash < 0) crashFlash = 0;
+      }
+      if (shakeTime > 0) {
+        shakeTime -= delta;
+        if (shakeTime < 0) shakeTime = 0;
+      }
+    }
+
+    function rectsOverlapRelaxed(a, b) {
+      const shrinkX = 0.2;
+      const shrinkY = 0.2;
+
+      const aw = a.width * (1 - shrinkX);
+      const ah = a.height * (1 - shrinkY);
+      const bw = b.width * (1 - shrinkX);
+      const bh = b.height * (1 - shrinkY);
+
+      const ax = a.x - aw / 2;
+      const ay = a.y - ah / 2;
+      const bx = b.x - bw / 2;
+      const by = b.y - bh / 2;
+
+      return (
+        ax < bx + bw &&
+        ax + aw > bx &&
+        ay < by + bh &&
+        ay + ah > by
+      );
+    }
+
+    function handleCrash() {
+      if (!player.alive) return;
+      player.alive = false;
+      state = "gameover";
+
+      crashFlash = 1;
+      shakeTime = 0.45;
+
+      stopEngine({ resetTime: false });
+      playSfxKey("crash");
+
+      localStorage.setItem("rd_bestTime", String(bestTime));
+      updateHud();
+
+      // *** 여기서만 광고 호출: "게임 실패 시 광고" 요구사항 충족 ***
+      try {
+        if (typeof sdk !== "undefined" && typeof sdk.showBanner === "function") {
+          sdk.showBanner();
+          console.log("GameMonetize: showBanner called on game over");
+        } else {
+          console.log("GameMonetize SDK not available or showBanner is not a function.");
+        }
+      } catch (err) {
+        console.log("Ad Error on game over:", err);
+      }
+
+      setTimeout(showGameOver, 1000);
+    }
+
+    /* ================================
+       13. 렌더링
+    ================================= */
+
+    function drawCar(car, img) {
+      if (!car || !img || img.naturalWidth <= 0) return;
+
+      const w = car.width;
+      const h = car.height;
+      const x = car.x - w / 2;
+      const y = car.y - h / 2;
+
+      ctx.drawImage(img, x, y, w, h);
+    }
+
+    function draw() {
+      const w = LOGICAL_WIDTH;
+      const h = LOGICAL_HEIGHT;
+      const road = computeRoad();
+
+      ctx.save();
+
+      ctx.fillStyle = "#050505";
+      ctx.fillRect(0, 0, w, h);
+
+      if (shakeTime > 0 && state !== "menu") {
+        const magnitude = 22 * (shakeTime / 0.45);
+        const dx = (Math.random() - 0.5) * magnitude;
+        const dy = (Math.random() - 0.5) * magnitude;
+        ctx.translate(dx, dy);
+      }
+
+      const roadBase = ctx.createLinearGradient(
+        0,
+        road.y,
+        0,
+        road.y + road.height
+      );
+      roadBase.addColorStop(0, "#2f2f2f");
+      roadBase.addColorStop(0.4, "#343434");
+      roadBase.addColorStop(0.6, "#363636");
+      roadBase.addColorStop(1, "#313131");
+      ctx.fillStyle = roadBase;
+      ctx.beginPath();
+      ctx.rect(road.x, road.y, road.width, road.height);
+      ctx.fill();
+
+      const vignette = ctx.createLinearGradient(
+        road.x,
+        0,
+        road.x + road.width,
+        0
+      );
+      vignette.addColorStop(0, "rgba(0,0,0,0.55)");
+      vignette.addColorStop(0.08, "rgba(0,0,0,0.2)");
+      vignette.addColorStop(0.5, "rgba(255,255,255,0.04)");
+      vignette.addColorStop(0.92, "rgba(0,0,0,0.2)");
+      vignette.addColorStop(1, "rgba(0,0,0,0.55)");
+      ctx.fillStyle = vignette;
+      ctx.fillRect(road.x, road.y, road.width, road.height);
+
+      ctx.strokeStyle = "rgba(235,235,235,0.7)";
+      ctx.lineWidth = 2.2;
+      const dashLength = 80;
+      const dashGap = 80;
+      const segment = dashLength + dashGap;
+      const dashCount = Math.ceil(road.height / segment) + 2;
+
+      for (let lane = 1; lane < LANE_COUNT; lane++) {
+        const x = road.x + road.laneWidth * lane;
+        let y = road.y + (roadOffset % segment) - segment;
+
+        for (let i = 0; i < dashCount; i++) {
+          ctx.beginPath();
+          ctx.moveTo(x, y);
+          ctx.lineTo(x, y + dashLength);
+          ctx.stroke();
+          y += segment;
+        }
+      }
+
+      for (const o of obstacles) {
+        drawCar(o, enemyImg);
+      }
+
+      drawCar(player, playerImg);
+
+      if (crashFlash > 0) {
+        ctx.fillStyle = "rgba(255,0,0," + (0.5 * crashFlash) + ")";
+        ctx.fillRect(0, 0, w, h);
+      }
+
+      ctx.restore();
+    }
+
+    /* ================================
+       14. 메인 루프
+    ================================= */
+
+    function loop(timestamp) {
+      if (!lastTimestamp) lastTimestamp = timestamp;
+      const delta = Math.min(0.033, (timestamp - lastTimestamp) / 1000);
+      lastTimestamp = timestamp;
+
+      update(delta);
+      draw();
+
+      requestAnimationFrame(loop);
+    }
+
+    /* ================================
+       15. 초기 진입
+    ================================= */
+
+    setupTitleScene();
+    updateHud();
+    showStartScreen();
+    requestAnimationFrame(loop);
+  })();
+  </script>
+</body>
+</html>

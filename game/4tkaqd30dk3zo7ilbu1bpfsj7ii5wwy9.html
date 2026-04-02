@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THE MAZE</title>
+    
+    
+    <style type="text/css">@font-face {font-family:Orbitron;font-style:normal;font-weight:400;src:url(/cf-fonts/v/orbitron/5.0.18/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Orbitron;font-style:normal;font-weight:700;src:url(/cf-fonts/v/orbitron/5.0.18/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}</style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <style>
+        body {
+            background-color: #0a0a1a;
+            color: #e0e0e0;
+            font-family: 'Orbitron', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            margin: 0;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .game-container {
+            position: relative;
+            border: 2px solid #00ffff;
+            box-shadow: 0 0 20px #00ffff, inset 0 0 20px #00ffff;
+            background-color: #000;
+            border-radius: 15px;
+            padding: 10px;
+            flex-grow: 1; /* Allow container to grow */
+            width: 100%;
+            box-sizing: border-box;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 0; /* Important for flexbox in some browsers */
+        }
+
+        canvas {
+            display: block;
+            background-color: #050510;
+            border-radius: 8px;
+        }
+
+        .ui-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            padding: 5px 20px;
+            box-sizing: border-box;
+            font-size: 1em;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 5px;
+            flex-shrink: 0;
+        }
+
+        .ui-panel span {
+            text-shadow: 0 0 5px #ff00ff, 0 0 10px #ff00ff;
+        }
+        
+        #livesDisplay {
+            display: flex;
+            align-items: center;
+        }
+        
+        .life-icon {
+            width: 20px;
+            height: 20px;
+            background-color: #00ffff;
+            border-radius: 50%;
+            margin-left: 8px;
+            box-shadow: 0 0 8px #00ffff;
+        }
+
+        .game-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            text-align: center;
+            color: #fff;
+            font-size: 1em; /* Reduced from 2em */
+            z-index: 10;
+            border-radius: 15px;
+            overflow-y: auto; /* Allow vertical scrolling if content overflows */
+            padding-top: 20px; /* Add some padding to the top */
+            padding-bottom: 20px; /* Add some padding to the bottom */
+            box-sizing: border-box;
+        }
+
+        .game-overlay h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px; /* Reduced from 20px */
+            color: #00ffff;
+            text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
+        }
+
+        .game-overlay p {
+            margin: 2px 0 8px 0; /* Reduced from 5px 0 15px 0 */
+            font-size: 0.8em;
+            color: #e0e0e0;
+            text-shadow: 0 0 3px #e0e0e0;
+            letter-spacing: 1px;
+        }
+
+        .game-overlay button {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.8em;
+            padding: 8px 15px; /* Reduced from 15px 30px */
+            background-color: transparent;
+            color: #ff00ff;
+            border: 2px solid #ff00ff;
+            border-radius: 10px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            box-shadow: 0 0 10px #ff00ff, inset 0 0 10px #ff00ff;
+            transition: all 0.3s ease;
+            margin: 4px 0; /* Reduced from 8px 0 */
+        }
+
+        .game-overlay button:hover {
+            background-color: #ff00ff;
+            color: #000;
+            box-shadow: 0 0 20px #ff00ff, inset 0 0 15px #ff00ff;
+            transform: scale(1.05);
+        }
+
+        .instructions {
+            margin-top: 10px; /* Reduced from 20px */
+            margin-bottom: 12px; /* Reduced from 25px */
+            font-size: 0.7em;
+            background-color: rgba(0, 255, 255, 0.05);
+            padding: 8px 12px; /* Reduced from 15px 25px */
+            border-radius: 10px;
+            border: 1px solid #00ffff;
+            box-shadow: 0 0 15px #00ffff, inset 0 0 10px #00ffff;
+            text-align: left;
+        }
+        
+        .instructions p {
+            margin: 8px 0;
+        }
+
+        #message {
+            font-size: 1.5em;
+            color: #ffff00;
+            text-shadow: 0 0 8px #ffff00;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: none;
+            text-align: center;
+            z-index: 11;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="ui-panel">
+        <div id="score">Score: 0</div>
+        <div id="gameTitle">THE MAZE</div>
+        <div id="livesDisplay">Lives: </div>
+    </div>
+
+    <div class="game-container">
+        <div id="message"></div>
+        <div id="startScreen" class="game-overlay">
+            <h1>THE MAZE</h1>
+            <p>Collect 3 Stars to unlock the exit.</p>
+            <p>Avoid the Wardens!</p>
+            <div class="instructions">
+                <p><strong>MOVE:</strong> Arrow Keys or WASD</p>
+                <p><strong>PAUSE:</strong> P Key</p>
+                <p><strong>MOBILE:</strong> Swipe to Move</p>
+            </div>
+            <button id="startButton">Start Game</button>
+        </div>
+        <div id="gameOverScreen" class="game-overlay" style="display: none;">
+            <h1>Game Over</h1>
+            <button id="restartButton">Play Again</button>
+        </div>
+        <div id="pauseScreen" class="game-overlay" style="display: none;">
+            <h1>Paused</h1>
+            <button id="resumeButton">Resume</button>
+        </div>
+        <div id="levelCompleteScreen" class="game-overlay" style="display: none;">
+            <h1>Level Complete!</h1>
+            <button id="nextLevelButton">Next Level</button>
+        </div>
+        <canvas id="gameCanvas"></canvas>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // --- UI Elements ---
+        const scoreEl = document.getElementById('score');
+        const livesDisplayEl = document.getElementById('livesDisplay');
+        const messageEl = document.getElementById('message');
+        const startScreen = document.getElementById('startScreen');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        const startButton = document.getElementById('startButton');
+        const restartButton = document.getElementById('restartButton');
+        const pauseScreen = document.getElementById('pauseScreen');
+        const resumeButton = document.getElementById('resumeButton');
+        const levelCompleteScreen = document.getElementById('levelCompleteScreen');
+        const nextLevelButton = document.getElementById('nextLevelButton');
+
+        // --- Sound Manager ---
+        const sounds = {
+            isInitialized: false,
+            synths: {},
+            init: function() {
+                if (this.isInitialized) return;
+                this.synths.node = new Tone.PolySynth(Tone.FMSynth, { volume: -22, harmonicity: 5, modulationIndex: 12, envelope: { attack: 0.001, decay: 0.05, sustain: 0, release: 0.1 }, modulationEnvelope: { attack: 0.001, decay: 0.01, sustain: 0, release: 0.1 } }).toDestination();
+                this.synths.star = new Tone.PolySynth(Tone.FMSynth, { volume: -15, harmonicity: 2, modulationIndex: 5, envelope: { attack: 0.01, decay: 0.4, sustain: 0.1, release: 0.4 } }).toDestination();
+                this.synths.powerup = new Tone.PolySynth(Tone.FMSynth, { volume: -12, harmonicity: 1.5, modulationIndex: 3, envelope: { attack: 0.01, decay: 0.2, sustain: 0.2, release: 0.8 }, modulationEnvelope: { attack: 0.01, decay: 0.5, sustain: 0, release: 0.8 } }).toDestination();
+                this.synths.eatWarden = new Tone.PolySynth(Tone.Synth, { volume: -12, oscillator: { type: 'pulse' }, envelope: { attack: 0.01, decay: 0.3, sustain: 0, release: 0.3 } }).toDestination();
+                this.synths.death = new Tone.NoiseSynth({ volume: -10, noise: { type: 'brown' }, envelope: { attack: 0.005, decay: 0.5, sustain: 0, release: 0.5 } }).toDestination();
+                this.isInitialized = true;
+            },
+            play: function(sound, note, duration = '8n') {
+                if (!this.isInitialized) return;
+                try {
+                    if (sound === 'death') {
+                        this.synths.death.triggerAttackRelease('2n');
+                    } else if (this.synths[sound]) {
+                        this.synths[sound].triggerAttackRelease(note, duration);
+                    }
+                } catch (e) {
+                    console.error("Sound play error:", e);
+                }
+            },
+            toggleMute: function(muteState) {
+                if (!this.isInitialized) return;
+                Tone.Master.mute = muteState;
+            }
+        };
+
+        // --- Swipe Control Variables ---
+        let touchStartX = 0, touchStartY = 0, touchEndX = 0, touchEndY = 0;
+        const swipeThreshold = 5;
+
+        let tileSize = 20;
+        
+        // --- Game Maze Definitions ---
+        // 1: wall, 2: energy node, 3: star, 4: power-up, 5: player start, 6: enemy spawn/house, 7: exit, 0: path
+        const levels = [
+             [ // Level 1 (Only one level for now, more can be added)
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                [1,5,2,2,1,2,2,2,2,2,1,3,2,2,1],
+                [1,2,1,2,1,2,1,1,1,2,1,2,1,2,1],
+                [1,4,1,2,2,2,2,3,2,2,2,2,1,4,1],
+                [1,2,1,1,1,1,2,1,1,1,1,2,1,2,1],
+                [1,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+                [1,1,1,2,1,2,1,1,1,2,1,2,1,1,1],
+                [1,2,2,2,1,2,1,6,1,2,1,2,2,2,1],
+                [1,1,1,2,1,2,1,0,1,2,1,2,1,1,1],
+                [1,2,2,2,2,2,1,0,1,2,2,2,2,2,1],
+                [1,2,1,1,1,1,1,0,1,1,1,1,1,2,1],
+                [1,2,1,2,2,2,2,3,2,2,2,2,1,2,1],
+                [1,2,1,2,1,2,1,1,1,2,1,2,1,2,1],
+                [1,4,2,2,1,2,2,2,2,2,1,2,2,4,1],
+                [1,2,2,2,1,1,2,2,2,1,1,2,2,2,1],
+                [1,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+                [1,2,1,2,1,1,1,2,1,1,1,2,1,2,1],
+                [1,2,2,2,2,2,1,2,1,2,2,2,2,2,1],
+                [1,1,1,1,1,2,1,2,1,2,1,1,1,1,1],
+                [1,2,2,2,2,2,1,2,1,2,2,2,2,2,1],
+                [1,2,1,1,1,1,1,2,1,1,1,1,1,2,1],
+                [1,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+                [1,1,1,2,1,1,1,1,1,1,1,1,2,1,1],
+                [1,2,2,2,2,2,2,2,2,2,2,2,2,7,1],
+                [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+            ],
+        ];
+        
+        let maze;
+
+        // --- Game State ---
+        let player, wardens, keyGlyphs, powerUps, energyNodes, exit, spawnPoint;
+        let score, lives, level, keysCollected;
+        window.gameState = 'start';
+        let animationFrameId;
+        window.sdkPaused = false; // Flag for SDK-initiated pause
+
+        // --- AI Global State ---
+        let globalMode = 'scatter'; // scatter, chase
+        let modeTimer = 0;
+        let modeIndex = 0;
+        const modeCycle = [
+            { mode: 'scatter', duration: 7 * 60 }, { mode: 'chase', duration: 20 * 60 },
+            { mode: 'scatter', duration: 7 * 60 }, { mode: 'chase', duration: 20 * 60 },
+            { mode: 'scatter', duration: 5 * 60 }, { mode: 'chase', duration: 20 * 60 },
+            { mode: 'scatter', duration: 5 * 60 }, { mode: 'chase', duration: Infinity },
+        ];
+        let frightenedTimer = 0;
+
+        class Character {
+            constructor(x, y, radius, color) {
+                this.x = x; this.y = y; this.radius = radius; this.color = color;
+                this.speed = 2; this.dx = 0; this.dy = 0; this.nextDx = 0; this.nextDy = 0;
+            }
+
+            draw() {
+                ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.color; ctx.shadowColor = this.color; ctx.shadowBlur = 15;
+                ctx.fill(); ctx.shadowBlur = 0;
+            }
+
+            getGridPos() { return { col: Math.floor(this.x / tileSize), row: Math.floor(this.y / tileSize) }; }
+            
+            isAtCenterOfTile() {
+                const errorMargin = this.speed;
+                const centerX = (this.getGridPos().col * tileSize) + tileSize / 2;
+                const centerY = (this.getGridPos().row * tileSize) + tileSize / 2;
+                return Math.abs(this.x - centerX) < errorMargin && Math.abs(this.y - centerY) < errorMargin;
+            }
+
+            move() {
+                if (this.isAtCenterOfTile()) {
+                    const { col, row } = this.getGridPos();
+                    this.x = col * tileSize + tileSize / 2;
+                    this.y = row * tileSize + tileSize / 2;
+                    
+                    if (this.nextDx !== 0 || this.nextDy !== 0) {
+                        const nextCol = col + this.nextDx;
+                        const nextRow = row + this.nextDy;
+                        if (maze[nextRow] && maze[nextRow][nextCol] !== 1) {
+                            this.dx = this.nextDx;
+                            this.dy = this.nextDy;
+                            this.nextDx = 0;
+                            this.nextDy = 0;
+                        }
+                    }
+
+                    const currentCol = col + this.dx;
+                    const currentRow = row + this.dy;
+                    if (!maze[currentRow] || maze[currentRow][currentCol] === 1) {
+                        this.dx = 0;
+                        this.dy = 0;
+                    }
+                }
+
+                const proposedX = this.x + this.dx * this.speed;
+                if (this.dx !== 0) {
+                    const checkCol = this.dx > 0 ? Math.floor((proposedX + this.radius) / tileSize) : Math.floor((proposedX - this.radius) / tileSize);
+                    const topRow = Math.floor((this.y - this.radius) / tileSize); const bottomRow = Math.floor((this.y + this.radius) / tileSize);
+                    if (maze[topRow][checkCol] === 1 || maze[bottomRow][checkCol] === 1) { this.x = this.dx > 0 ? checkCol * tileSize - this.radius - 0.01 : (checkCol + 1) * tileSize + this.radius + 0.01; this.dx = 0; } else { this.x = proposedX; }
+                }
+                const proposedY = this.y + this.dy * this.speed;
+                if (this.dy !== 0) {
+                    const checkRow = this.dy > 0 ? Math.floor((proposedY + this.radius) / tileSize) : Math.floor((proposedY - this.radius) / tileSize);
+                    const leftCol = Math.floor((this.x - this.radius) / tileSize); const rightCol = Math.floor((this.x + this.radius) / tileSize);
+                    if (maze[checkRow][leftCol] === 1 || maze[checkRow][rightCol] === 1) { this.y = this.dy > 0 ? checkRow * tileSize - this.radius - 0.01 : (checkRow + 1) * tileSize + this.radius + 0.01; this.dy = 0; } else { this.y = proposedY; }
+                }
+            }
+        }
+
+        class Player extends Character {
+            constructor(x, y) { super(x, y, tileSize / 2 - 2, '#00ffff'); this.speed = 1.5; }
+        }
+        
+        class Warden extends Character {
+            constructor(x, y, personality) {
+                const specs = {
+                    hunter: { color: '#ff4444', scatterCorner: { col: 13, row: 1 } },
+                    ambusher: { color: '#ff69b4', scatterCorner: { col: 1, row: 1 } },
+                    vectorist: { color: '#00ffff', scatterCorner: { col: 13, row: 23 } },
+                    scatterer: { color: '#ffa500', scatterCorner: { col: 1, row: 23 } }
+                };
+                super(x, y, tileSize / 2 - 2, specs[personality].color);
+                this.personality = personality;
+                this.scatterCorner = specs[personality].scatterCorner;
+                this.mode = 'scatter';
+                this.originalColor = this.color;
+                this.path = []; // To store the pre-calculated path when eaten
+            }
+
+            draw() {
+                if (this.mode === 'eaten') {
+                    ctx.beginPath();
+                    ctx.arc(this.x - this.radius/2, this.y, this.radius/3, 0, Math.PI * 2);
+                    ctx.arc(this.x + this.radius/2, this.y, this.radius/3, 0, Math.PI * 2);
+                    ctx.fillStyle = 'white';
+                    ctx.fill();
+                } else {
+                    this.color = this.mode === 'frightened' ? '#0000ff' : this.originalColor;
+                    if (frightenedTimer > 0 && frightenedTimer < 180 && frightenedTimer % 30 < 15) {
+                         this.color = this.mode === 'frightened' ? 'white' : this.originalColor;
+                    }
+                    super.draw();
+
+                    // --- Draw Eyes ---
+                    const eyeRadius = this.radius / 3;
+                    const eyeOffsetX = this.radius / 2.5;
+                    const pupilRadius = eyeRadius / 2;
+                    
+                    // Eye whites
+                    ctx.fillStyle = 'white';
+                    ctx.beginPath();
+                    ctx.arc(this.x - eyeOffsetX, this.y, eyeRadius, 0, Math.PI * 2);
+                    ctx.arc(this.x + eyeOffsetX, this.y, eyeRadius, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Pupils that look in the direction of movement
+                    let pupilDx = this.dx;
+                    let pupilDy = this.dy;
+
+                    // If not moving, make pupils look forward (up) by default
+                    if (pupilDx === 0 && pupilDy === 0) {
+                        pupilDy = -1;
+                    }
+
+                    const pupilOffsetX = pupilDx * (eyeRadius - pupilRadius);
+                    const pupilOffsetY = pupilDy * (eyeRadius - pupilRadius);
+                    
+                    ctx.fillStyle = 'black';
+                    ctx.beginPath();
+                    ctx.arc(this.x - eyeOffsetX + pupilOffsetX, this.y + pupilOffsetY, pupilRadius, 0, Math.PI * 2);
+                    ctx.arc(this.x + eyeOffsetX + pupilOffsetX, this.y + pupilOffsetY, pupilRadius, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+
+            update() {
+                if (this.mode === 'eaten') {
+                    // "GPS Brain" active: Follow the pre-calculated path back to spawn
+                    if (this.isAtCenterOfTile()) {
+                        const myPos = this.getGridPos();
+                        if (myPos.col === spawnPoint.col && myPos.row === spawnPoint.row) {
+                            this.mode = globalMode; // Respawned
+                            this.path = [];
+                        } else if (this.path.length > 0) {
+                            const nextMove = this.path.shift();
+                            this.dx = nextMove.dx;
+                            this.dy = nextMove.dy;
+                        } else {
+                            // Path is empty but not at spawn, recalculate as a fallback.
+                            this.planReturnToSpawn();
+                        }
+                    }
+                } else {
+                    // Normal behavior
+                    if (this.isAtCenterOfTile()) {
+                        this.mode = frightenedTimer > 0 ? 'frightened' : globalMode;
+                        this.getNewDirection();
+                    }
+                }
+
+                this.speed = this.mode === 'frightened' ? 0.75 : (this.mode === 'eaten' ? 2 : 1);
+                this.move();
+            }
+            
+            planReturnToSpawn() {
+                const myPos = this.getGridPos();
+                const returnPath = findPath(myPos, spawnPoint);
+                this.path = returnPath || [];
+                // Immediately take the first step
+                if (this.path.length > 0) {
+                    const firstStep = this.path.shift();
+                    this.dx = firstStep.dx;
+                    this.dy = firstStep.dy;
+                }
+            }
+
+            getNewDirection() {
+                const myPos = this.getGridPos();
+                let targetTile = this.computeTargetTile();
+                
+                const possibleMoves = [];
+                if (myPos.row > 0 && maze[myPos.row-1][myPos.col] !== 1) possibleMoves.push({dx: 0, dy: -1});
+                if (myPos.row < maze.length - 1 && maze[myPos.row+1][myPos.col] !== 1) possibleMoves.push({dx: 0, dy: 1});
+                if (myPos.col > 0 && maze[myPos.row][myPos.col-1] !== 1) possibleMoves.push({dx: -1, dy: 0});
+                if (myPos.col < maze[0].length - 1 && maze[myPos.row][myPos.col+1] !== 1) possibleMoves.push({dx: 1, dy: 0});
+                
+                if (possibleMoves.length === 0) return;
+                
+                let validMoves = possibleMoves;
+                if (this.mode !== 'eaten' && possibleMoves.length > 1) {
+                    const nonReversing = possibleMoves.filter(m => !(m.dx === -this.dx && m.dy === -this.dy));
+                    if (nonReversing.length > 0) validMoves = nonReversing;
+                }
+                
+                let bestMove = validMoves[0];
+                if (this.mode === 'frightened') {
+                    bestMove = validMoves[Math.floor(Math.random() * validMoves.length)];
+                } else {
+                    let minDistance = Infinity;
+                    for(const move of validMoves) {
+                        const nextPos = { col: myPos.col + move.dx, row: myPos.row + move.dy };
+                        const dist = Math.hypot(nextPos.col - targetTile.col, nextPos.row - targetTile.row);
+                        if (dist < minDistance) {
+                            minDistance = dist;
+                            bestMove = move;
+                        }
+                    }
+                }
+                this.dx = bestMove.dx; this.dy = bestMove.dy;
+            }
+
+            computeTargetTile() {
+                if (this.mode === 'scatter') return this.scatterCorner;
+                
+                const playerPos = player.getGridPos();
+                
+                let facingDx = player.dx, facingDy = player.dy;
+                if (player.nextDx !== 0 || player.nextDy !== 0) {
+                    facingDx = player.nextDx;
+                    facingDy = player.nextDy;
+                }
+                if (facingDx === 0 && facingDy === 0) {
+                    facingDy = -1; // Default to 'up'
+                }
+                const playerDir = {dx: facingDx, dy: facingDy};
+
+                switch(this.personality) {
+                    case 'hunter':
+                        return playerPos;
+                    case 'ambusher':
+                        return { col: playerPos.col + playerDir.dx * 4, row: playerPos.row + playerDir.dy * 4 };
+                    case 'vectorist': {
+                        const redWarden = wardens.find(w => w.personality === 'hunter');
+                        if (!redWarden) return playerPos;
+                        const pivot = { col: playerPos.col + playerDir.dx * 2, row: playerPos.row + playerDir.dy * 2 };
+                        const redPos = redWarden.getGridPos();
+                        return { col: pivot.col + (pivot.col - redPos.col), row: pivot.row + (pivot.row - redPos.row) };
+                    }
+                    case 'scatterer': {
+                        const dist = Math.hypot(this.getGridPos().col - playerPos.col, this.getGridPos().row - playerPos.row);
+                        return dist > 8 ? playerPos : this.scatterCorner;
+                    }
+                }
+                return playerPos;
+            }
+        }
+        
+        // --- Drawing Functions ---
+        function drawMaze() {
+            ctx.strokeStyle = '#00ffff';
+            ctx.lineWidth = 2;
+            ctx.shadowColor = '#00ffff';
+            ctx.shadowBlur = 10;
+            for (let row = 0; row < maze.length; row++) {
+                for (let col = 0; col < maze[row].length; col++) {
+                    if (maze[row][col] === 1) {
+                        if (col > 0 && maze[row][col-1] !== 1) { ctx.beginPath(); ctx.moveTo(col * tileSize, row * tileSize); ctx.lineTo(col * tileSize, (row + 1) * tileSize); ctx.stroke(); }
+                        if (col < maze[row].length - 1 && maze[row][col+1] !== 1) { ctx.beginPath(); ctx.moveTo((col + 1) * tileSize, row * tileSize); ctx.lineTo((col + 1) * tileSize, (row + 1) * tileSize); ctx.stroke(); }
+                        if (row > 0 && maze[row-1][col] !== 1) { ctx.beginPath(); ctx.moveTo(col * tileSize, row * tileSize); ctx.lineTo((col + 1) * tileSize, row * tileSize); ctx.stroke(); }
+                        if (row < maze.length - 1 && maze[row+1][col] !== 1) { ctx.beginPath(); ctx.moveTo(col * tileSize, (row + 1) * tileSize); ctx.lineTo((col + 1) * tileSize, (row + 1) * tileSize); ctx.stroke(); }
+                    }
+                }
+            }
+            ctx.shadowBlur = 0;
+        }
+
+        function drawCollectibles() {
+            energyNodes.forEach(node => {
+                ctx.beginPath(); ctx.arc(node.x, node.y, 2, 0, Math.PI * 2);
+                ctx.fillStyle = '#ff00ff'; ctx.shadowColor = '#ff00ff'; ctx.shadowBlur = 8; ctx.fill();
+            });
+            powerUps.forEach(orb => {
+                ctx.beginPath(); ctx.arc(orb.x, orb.y, tileSize / 3, 0, Math.PI * 2);
+                ctx.fillStyle = '#ffff00'; ctx.shadowColor = '#ffff00'; ctx.shadowBlur = 15; ctx.fill();
+            });
+            keyGlyphs.forEach((glyph) => {
+                ctx.fillStyle = glyph.color; ctx.shadowColor = glyph.color; ctx.shadowBlur = 15;
+                ctx.save(); ctx.translate(glyph.x, glyph.y);
+                ctx.beginPath();
+                const spikes = 5, outerRadius = tileSize / 2.5, innerRadius = tileSize / 5;
+                let rot = Math.PI / 2 * 3, x, y, step = Math.PI / spikes;
+                ctx.moveTo(0, -outerRadius);
+                for (let i = 0; i < spikes; i++) {
+                    x = Math.cos(rot) * outerRadius; y = Math.sin(rot) * outerRadius; ctx.lineTo(x, y); rot += step;
+                    x = Math.cos(rot) * innerRadius; y = Math.sin(rot) * innerRadius; ctx.lineTo(x, y); rot += step;
+                }
+                ctx.lineTo(0, -outerRadius); ctx.closePath(); ctx.fill();
+                ctx.restore();
+            });
+            if (exit.visible) {
+                ctx.beginPath(); ctx.arc(exit.x, exit.y, tileSize/2, 0, Math.PI * 2);
+                ctx.fillStyle = '#00ff00'; ctx.shadowColor = '#00ff00'; ctx.shadowBlur = 20; ctx.fill();
+            }
+            ctx.shadowBlur = 0;
+        }
+        
+        // --- Game Logic ---
+        function findPath(startPos, endPos) {
+            const queue = [{...startPos, path: []}];
+            const visited = new Set([`${startPos.col},${startPos.row}`]);
+            const directions = [
+                { dx: 0, dy: -1 }, { dx: 0, dy: 1 }, { dx: -1, dy: 0 }, { dx: 1, dy: 0 }
+            ];
+
+            while (queue.length > 0) {
+                const { col, row, path } = queue.shift();
+
+                if (col === endPos.col && row === endPos.row) {
+                    return path;
+                }
+
+                for (const dir of directions) {
+                    const nextCol = col + dir.dx;
+                    const nextRow = row + dir.dy;
+                    const nextKey = `${nextCol},${nextRow}`;
+
+                    if (nextRow >= 0 && nextRow < maze.length &&
+                        nextCol >= 0 && nextCol < maze[0].length &&
+                        maze[nextRow][nextCol] !== 1 &&
+                        !visited.has(nextKey)) {
+                        
+                        visited.add(nextKey);
+                        const newPath = [...path, dir];
+                        queue.push({ col: nextCol, row: nextRow, path: newPath });
+                    }
+                }
+            }
+            return null; // No path found
+        }
+        
+        function findGridPoint(charType) {
+            for (let row = 0; row < maze.length; row++) {
+                for (let col = 0; col < maze[row].length; col++) {
+                    if (maze[row][col] === charType) return { col, row };
+                }
+            }
+            return {col: 1, row: 1}; // Fallback
+        }
+        
+        function toCanvasCoords(gridPos) { return { x: gridPos.col * tileSize + tileSize / 2, y: gridPos.row * tileSize + tileSize / 2 }; }
+
+        function initLevel() {
+            maze = JSON.parse(JSON.stringify(levels[level - 1] || levels[0]));
+            keysCollected = 0;
+            energyNodes = []; powerUps = []; keyGlyphs = []; exit = { visible: false };
+
+            for (let r=0; r<maze.length; r++) for (let c=0; c<maze[r].length; c++) {
+                const coords = toCanvasCoords({col: c, row: r});
+                switch (maze[r][c]) {
+                    case 2: energyNodes.push({x: coords.x, y: coords.y, col: c, row: r}); break;
+                    case 3: keyGlyphs.push({x: coords.x, y: coords.y, col: c, row: r, color: '#ffff00'}); break;
+                    case 4: powerUps.push({x: coords.x, y: coords.y, col: c, row: r}); break;
+                    case 7: exit = {x: coords.x, y: coords.y, col: c, row: r, visible: false}; break;
+                }
+            }
+            
+            const playerPos = toCanvasCoords(findGridPoint(5));
+            player = new Player(playerPos.x, playerPos.y);
+            
+            spawnPoint = findGridPoint(6);
+            const spawnCoords = toCanvasCoords(spawnPoint);
+            wardens = [
+                new Warden(spawnCoords.x, spawnCoords.y, 'hunter'),
+                new Warden(spawnCoords.x, spawnCoords.y, 'ambusher'),
+                new Warden(spawnCoords.x, spawnCoords.y, 'vectorist'),
+                new Warden(spawnCoords.x, spawnCoords.y, 'scatterer'),
+            ];
+            
+            modeIndex = 0;
+            globalMode = modeCycle[0].mode;
+            modeTimer = modeCycle[0].duration;
+            frightenedTimer = 0;
+        }
+
+        function initGame(startLevel = 1) {
+            score = 0; lives = 3; level = startLevel; window.gameState = 'playing';
+            gameOverScreen.style.display = 'none';
+            gameOverScreen.querySelector('h1').textContent = "Game Over"; // Reset the title
+            startScreen.style.display = 'none';
+            levelCompleteScreen.style.display = 'none';
+            initLevel();
+            updateUI();
+            sounds.play('star', 'C4', '4n'); // Level start sound
+            showMessage("Get Ready!", 1000);
+        }
+
+        function checkCollisions() {
+            const pPos = player.getGridPos();
+            
+            const nodeIndex = energyNodes.findIndex(n => n.col === pPos.col && n.row === pPos.row);
+            if (nodeIndex > -1) { 
+                energyNodes.splice(nodeIndex, 1); 
+                score += 10; 
+                sounds.play('node', 'C6', '32n');
+            }
+            
+            const keyIndex = keyGlyphs.findIndex(k => k.col === pPos.col && k.row === pPos.row);
+            if (keyIndex > -1) { 
+                keyGlyphs.splice(keyIndex, 1); 
+                keysCollected++; 
+                score += 100; 
+                sounds.play('star', ['G4', 'B4', 'D5'], '4n');
+                if (keysCollected === 3) exit.visible = true; 
+            }
+            
+            const powerUpIndex = powerUps.findIndex(p => p.col === pPos.col && p.row === pPos.row);
+            if (powerUpIndex > -1) {
+                powerUps.splice(powerUpIndex, 1);
+                frightenedTimer = 8 * 60;
+                wardens.forEach(w => { if(w.mode !== 'eaten') {w.mode = 'frightened'; w.dx *= -1; w.dy *= -1;} });
+                sounds.play('powerup', ['C4', 'E4', 'G4'], '4n');
+            }
+
+            if (exit.visible && pPos.col === exit.col && pPos.row === exit.row) levelUp();
+
+            wardens.forEach(warden => {
+                const dist = Math.hypot(player.x - warden.x, player.y - warden.y);
+                if (dist < player.radius + warden.radius) {
+                    if (warden.mode === 'frightened') {
+                        warden.mode = 'eaten'; 
+                        warden.planReturnToSpawn(); // Activate the "GPS Brain"
+                        score += 200;
+                        sounds.play('eatWarden', 'A2', '8n');
+                    } else if (warden.mode !== 'eaten') {
+                        playerDeath();
+                    }
+                }
+            });
+        }
+        
+        function playerDeath() {
+            if (window.gameState !== 'playing') return;
+            window.gameState = 'paused'; 
+            lives--; 
+            updateUI();
+            sounds.play('death');
+            if (lives <= 0) {
+                window.gameState = 'gameOver'; 
+                gameOverScreen.style.display = 'flex';
+                cancelAnimationFrame(animationFrameId); 
+                return;
+            }
+            showMessage("Caught!", 1500, () => {
+                const playerPos = toCanvasCoords(findGridPoint(5));
+                player.x = playerPos.x; player.y = playerPos.y; player.dx = 0; player.dy = 0; player.nextDx = 0; player.nextDy = 0;
+                const spawnCoords = toCanvasCoords(spawnPoint);
+                wardens.forEach(w => { w.x = spawnCoords.x; w.y = spawnCoords.y; w.mode = globalMode; w.path = []; });
+                frightenedTimer = 0;
+                setTimeout(() => { window.gameState = 'playing'; showMessage("Respawning...", 1000); }, 500);
+            });
+        }
+        
+        function levelUp() {
+            window.gameState = 'levelComplete';
+            cancelAnimationFrame(animationFrameId);
+            score += 1000;
+            updateUI();
+            sounds.play('star', ['C5', 'E5', 'G5'], '2n');
+            if (level >= levels.length) {
+                gameOverScreen.querySelector('h1').textContent = "YOU WIN!";
+                gameOverScreen.style.display = 'flex';
+            } else {
+                levelCompleteScreen.style.display = 'flex';
+            }
+        }
+        
+        function updateUI() {
+            scoreEl.textContent = `Score: ${score}`;
+            let lifeIconsHTML = 'Lives: ';
+            for (let i = 0; i < lives; i++) lifeIconsHTML += '<div class="life-icon"></div>';
+            livesDisplayEl.innerHTML = lifeIconsHTML;
+        }
+
+        function showMessage(text, duration, callback) {
+            messageEl.textContent = text; messageEl.style.display = 'block';
+            setTimeout(() => { messageEl.style.display = 'none'; if (callback) callback(); }, duration);
+        }
+
+        window.togglePause = function() {
+            if (window.gameState === 'playing') {
+                window.gameState = 'paused'; pauseScreen.style.display = 'flex';
+            } else if (window.gameState === 'paused' && pauseScreen.style.display === 'flex') {
+                window.gameState = 'playing'; pauseScreen.style.display = 'none';
+            }
+        }
+
+        function handleInput(e) {
+            if (window.gameState === 'playing') {
+                switch(e.key.toLowerCase()) {
+                    case 'arrowup': case 'w': player.nextDx = 0; player.nextDy = -1; break;
+                    case 'arrowdown': case 's': player.nextDx = 0; player.nextDy = 1; break;
+                    case 'arrowleft': case 'a': player.nextDx = -1; player.nextDy = 0; break;
+                    case 'arrowright': case 'd': player.nextDx = 1; player.nextDy = 0; break;
+                }
+            }
+            if(e.key.toLowerCase() === 'p') { togglePause(); }
+        }
+
+        function handleSwipe() {
+            const dx = touchEndX - touchStartX; const dy = touchEndY - touchStartY;
+            if (Math.abs(dx) > Math.abs(dy)) {
+                if (Math.abs(dx) > swipeThreshold) { player.nextDx = dx > 0 ? 1 : -1; player.nextDy = 0; }
+            } else {
+                if (Math.abs(dy) > swipeThreshold) { player.nextDy = dy > 0 ? 1 : -1; player.nextDx = 0; }
+            }
+        }
+
+        // --- Main Game Loop ---
+        function gameLoop() {
+            if (window.gameState === 'playing') {
+                if (frightenedTimer > 0) {
+                    frightenedTimer--;
+                } else {
+                    modeTimer--;
+                    if (modeTimer <= 0) {
+                        modeIndex = (modeIndex + 1) % modeCycle.length;
+                        globalMode = modeCycle[modeIndex].mode;
+                        modeTimer = modeCycle[modeIndex].duration;
+                        wardens.forEach(w => { if(w.mode !== 'eaten') { w.dx *= -1; w.dy *= -1; } });
+                    }
+                }
+                player.move();
+                wardens.forEach(w => w.update());
+                checkCollisions();
+                updateUI();
+            }
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawMaze();
+            drawCollectibles();
+            wardens.forEach(w => w.draw());
+            player.draw();
+
+            animationFrameId = requestAnimationFrame(gameLoop);
+        }
+        
+        function resizeCanvas() {
+            const mazeHeight = levels[0].length; const mazeWidth = levels[0][0].length;
+            const container = document.querySelector('.game-container');
+            const containerWidth = container.clientWidth - 20;
+            const containerHeight = container.clientHeight - 20;
+            const scaleX = containerWidth / (mazeWidth * 20);
+            const scaleY = containerHeight / (mazeHeight * 20);
+            const scale = Math.min(scaleX, scaleY);
+            tileSize = Math.floor(20 * scale);
+            if (tileSize < 1) tileSize = 1;
+            canvas.width = mazeWidth * tileSize;
+            canvas.height = mazeHeight * tileSize;
+             if (window.gameState !== 'start') {
+                initLevel(); // Re-init to adjust positions based on new tile size
+            }
+        }
+
+        // --- Event Listeners and Setup ---
+        async function startAudio() {
+            if (!sounds.isInitialized) {
+                await Tone.start();
+                sounds.init();
+                console.log('Audio context started');
+            }
+        }
+
+        window.addEventListener('keydown', handleInput);
+        startButton.addEventListener('click', async () => {
+            await startAudio();
+            if (window.sdk && typeof window.sdk.showBanner === 'function') {
+                window.sdk.showBanner();
+            }
+            cancelAnimationFrame(animationFrameId);
+            initGame();
+            animationFrameId = requestAnimationFrame(gameLoop);
+        });
+        restartButton.addEventListener('click', async () => {
+            await startAudio();
+            if (window.sdk && typeof window.sdk.showBanner === 'function') {
+                window.sdk.showBanner();
+            }
+            cancelAnimationFrame(animationFrameId);
+            initGame();
+            animationFrameId = requestAnimationFrame(gameLoop);
+        });
+        resumeButton.addEventListener('click', togglePause);
+        nextLevelButton.addEventListener('click', () => {
+            cancelAnimationFrame(animationFrameId);
+            level++;
+            levelCompleteScreen.style.display = 'none';
+            initLevel();
+            window.gameState = 'playing';
+            animationFrameId = requestAnimationFrame(gameLoop);
+        });
+
+        canvas.addEventListener('touchstart', (e) => { touchStartX = e.changedTouches[0].screenX; touchStartY = e.changedTouches[0].screenY; }, false);
+        canvas.addEventListener('touchend', (e) => { touchEndX = e.changedTouches[0].screenX; touchEndY = e.changedTouches[0].screenY; handleSwipe(); }, false);
+        
+        window.addEventListener('resize', resizeCanvas);
+        
+        resizeCanvas();
+    </script>
+
+    <script type = "text/javascript" >
+        window.SDK_OPTIONS = {
+            gameId: "4tkaqd30dk3zo7ilbu1bpfsj7ii5wwy9",
+            onEvent: function (a) {
+                switch (a.name) {
+                    case "SDK_GAME_PAUSE":
+                        // pause game logic / mute audio
+                        sounds.toggleMute(true);
+                        if (window.gameState === 'playing') {
+                            window.togglePause();
+                            window.sdkPaused = true;
+                        }
+                        break;
+                    case "SDK_GAME_START":
+                        // advertisement done, resume game logic and unmute audio
+                        sounds.toggleMute(false);
+                        if (window.gameState === 'paused' && window.sdkPaused) {
+                            window.togglePause();
+                            window.sdkPaused = false;
+                        }
+                        break;
+                    case "SDK_READY":
+                        // when sdk is ready
+                        break;
+                    case "SDK_ERROR":
+                        // when sdk get error
+                        break;
+                }
+            }
+        };
+        (function (a, b, c) {
+            var d = a.getElementsByTagName(b)[0];
+            a.getElementById(c) || (a = a.createElement(b), a.id = c, 
+            a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+        })(document, "script", "gamemonetize-sdk"); 
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+

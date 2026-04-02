@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+  <title>Fruit Drop</title>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+  <!-- SPLASH SCREEN -->
+  <div id="screenSplash" class="screen active">
+    <img src="images/splash.jpg" id="splashImg" alt="Fruit Drop"/>
+    <div id="tapToPlay">
+      <span class="tap-dot"></span>
+      <span class="tap-dot"></span>
+      <span class="tap-dot"></span>
+      <span>TAP TO PLAY</span>
+      <span class="tap-dot"></span>
+      <span class="tap-dot"></span>
+      <span class="tap-dot"></span>
+    </div>
+  </div>
+
+  <!-- MAIN MENU -->
+  <div id="screenMenu" class="screen">
+    <div class="floating-fruits" id="floatingFruits"></div>
+    <div class="menu-box">
+      <div class="title-wrap">
+        <h1 class="game-title">
+          <span class="t-fruit">Fruit</span>
+          <span class="t-drop">Drop</span>
+        </h1>
+        <p class="subtitle">✨ Stack · Merge · Grow! ✨</p>
+      </div>
+      <button class="btn primary kawaii-btn" id="btnStart">
+        <span class="kawaii-icon">🍉</span>
+        <span class="kawaii-label">Play!</span>
+        <span class="kawaii-sparkle">✦</span>
+      </button>
+      <button class="btn secondary kawaii-btn" id="btnLB">
+        <span class="kawaii-icon">🏆</span>
+        <span class="kawaii-label">Leaderboard</span>
+      </button>
+      <button class="btn secondary kawaii-btn" id="btnHowTo">
+        <span class="kawaii-icon">📖</span>
+        <span class="kawaii-label">How to Play</span>
+      </button>
+      <button class="btn secondary kawaii-btn" id="btnMusicPicker">
+        <span class="kawaii-icon">🎵</span>
+        <span class="kawaii-label">Music</span>
+      </button>
+      <button class="btn secondary kawaii-btn" id="btnSound">
+        <span class="kawaii-icon" id="soundIcon">🔊</span>
+        <span class="kawaii-label" id="soundLabel">Sound: ON</span>
+      </button>
+      <button class="btn danger kawaii-btn" id="btnReset">
+        <span class="kawaii-icon">🗑️</span>
+        <span class="kawaii-label">Reset All</span>
+      </button>
+    </div>
+    <!-- decorative fruits row -->
+    <div class="menu-fruits-row" id="menuFruitsRow"></div>
+    <div class="mapi-footer">MAPI GAMES</div>
+  </div>
+
+  <!-- LEADERBOARD -->
+  <div id="screenLB" class="screen">
+    <div class="menu-box">
+      <h2>🏆 Top Scores</h2>
+      <div id="lbList" class="lb-list"></div>
+      <button class="btn secondary" id="btnBackLB">
+        <span class="btn-icon">🍓</span> Back
+      </button>
+    </div>
+    <div class="mapi-footer">MAPI GAMES</div>
+  </div>
+
+  <!-- HOW TO PLAY SCREEN -->
+  <div id="screenHowTo" class="screen">
+    <div class="menu-box howto-box">
+      <div class="howto-title">📖 How to Play</div>
+      <div class="tut-steps">
+        <div class="tut-step">
+          <span class="tut-num">1</span>
+          <span class="tut-text">🖱️ Move mouse / tap to aim the fruit</span>
+        </div>
+        <div class="tut-step">
+          <span class="tut-num">2</span>
+          <span class="tut-text">🍎 Click / tap to drop it in the jar</span>
+        </div>
+        <div class="tut-step">
+          <span class="tut-num">3</span>
+          <span class="tut-text">✨ Two identical fruits merge into a bigger one!</span>
+        </div>
+        <div class="tut-step">
+          <span class="tut-num">4</span>
+          <span class="tut-text">🔄 CHANGE swaps current & next fruit (3 uses)</span>
+        </div>
+        <div class="tut-step">
+          <span class="tut-num">5</span>
+          <span class="tut-text">🫙 SHAKE rattles the jar — fruits may merge by luck!</span>
+        </div>
+        <div class="tut-step">
+          <span class="tut-num">6</span>
+          <span class="tut-text">⚠️ Don't let fruits overflow above the red line!</span>
+        </div>
+        <div class="tut-step">
+          <span class="tut-num">7</span>
+          <span class="tut-text">🏆 Score as high as possible — no time limit!</span>
+        </div>
+      </div>
+      <button class="btn primary kawaii-btn" id="btnHowToBack">
+        <span class="kawaii-icon">🍓</span>
+        <span class="kawaii-label">Got it!</span>
+      </button>
+    </div>
+    <div class="mapi-footer">MAPI GAMES</div>
+  </div>
+
+  <!-- MUSIC PICKER SCREEN -->
+  <div id="screenMusic" class="screen">
+    <div class="menu-box music-box">
+      <div class="howto-title">🎵 Choose Music</div>
+      <div class="music-list" id="musicList"></div>
+      <button class="btn primary kawaii-btn" id="btnMusicBack">
+        <span class="kawaii-icon">🍓</span>
+        <span class="kawaii-label">Save & Back</span>
+      </button>
+    </div>
+    <div class="mapi-footer">MAPI GAMES</div>
+  </div>
+
+  <!-- RESET CONFIRM SCREEN -->
+  <div id="screenReset" class="screen">
+    <div class="floating-fruits" id="floatingFruitsReset"></div>
+    <div class="menu-box reset-box">
+      <div class="reset-icon">🗑️</div>
+      <div class="reset-title">Reset Everything?</div>
+      <div class="reset-desc">
+        <div class="reset-item">🏆 All leaderboard scores</div>
+        <div class="reset-item">⭐ Your best score</div>
+        <div class="reset-item">🎵 Music preference</div>
+        <div class="reset-item">📖 Tutorial progress</div>
+      </div>
+      <p class="reset-warning">( ˘•ω•˘ ) This cannot be undone!</p>
+      <div class="reset-btns">
+        <button class="btn danger kawaii-btn" id="btnResetConfirm">
+          <span class="kawaii-icon">💥</span>
+          <span class="kawaii-label">Yes, Reset!</span>
+        </button>
+        <button class="btn secondary kawaii-btn" id="btnResetCancel">
+          <span class="kawaii-icon">🍓</span>
+          <span class="kawaii-label">Cancel</span>
+        </button>
+      </div>
+    </div>
+    <div class="mapi-footer">MAPI GAMES</div>
+  </div>
+
+  <!-- RESET DONE OVERLAY -->
+  <div id="screenResetDone" class="overlay" style="display:none">
+    <div class="modal">
+      <div class="reset-done-icon">✨</div>
+      <div class="modal-title">All Reset!</div>
+      <p class="reset-done-msg">(◕‿◕✿) Fresh start!</p>
+      <button class="btn primary kawaii-btn" id="btnResetDoneOk">
+        <span class="kawaii-icon">🍉</span>
+        <span class="kawaii-label">Let's Play!</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- FIRST-RUN TUTORIAL OVERLAY (shown only at first play) -->
+  <div id="screenTutorial" class="overlay" style="display:none">
+    <div class="modal tutorial-modal">
+      <div class="tut-title">🍉 First Time?</div>
+      <div class="tut-steps">
+        <div class="tut-step">
+          <span class="tut-num">1</span>
+          <span class="tut-text">🖱️ Aim &amp; click to drop fruits</span>
+        </div>
+        <div class="tut-step">
+          <span class="tut-num">2</span>
+          <span class="tut-text">✨ Same fruits merge into bigger ones!</span>
+        </div>
+        <div class="tut-step">
+          <span class="tut-num">3</span>
+          <span class="tut-text">⚠️ Don't let them overflow!</span>
+        </div>
+      </div>
+      <button class="btn primary kawaii-btn" id="btnTutOk">
+        <span class="kawaii-icon">🍉</span>
+        <span class="kawaii-label">Let's Go!</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- GAME SCREEN -->
+  <div id="screenGame" class="screen">
+    <div id="panelLeft">
+      <button class="hud-btn" id="btnPause">⏸</button>
+    </div>
+
+    <div id="canvasWrap">
+      <canvas id="gameCanvas"></canvas>
+      <div id="evoBar">
+        <div id="evoInner"></div>
+        <div class="evo-arrow">▶</div>
+      </div>
+    </div>
+
+    <div id="panelRight">
+      <div class="hud-card" id="nextCard">
+        <div class="hud-card-label">N E X T</div>
+        <canvas id="nextCanvas" width="70" height="70"></canvas>
+      </div>
+      <div class="hud-card" id="scoreCard">
+        <div class="hud-card-label">S C O R E</div>
+        <div class="score-val" id="scoreVal">0</div>
+        <div class="hud-divider"></div>
+        <div class="hud-card-label">B E S T</div>
+        <div class="score-val best-color" id="bestVal">0</div>
+      </div>
+      <div class="hud-card hud-action" id="changeCard">
+        <canvas id="changeCanvas" width="52" height="52"></canvas>
+        <div class="action-label">CHANGE</div>
+        <div class="action-uses" id="changeUses">3 left</div>
+      </div>
+      <div class="hud-card hud-action" id="shakeCard">
+        <div class="shake-icon">🫙</div>
+        <div class="action-label">SHAKE</div>
+        <div class="action-uses" id="shakeCounter">50 left</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAUSE OVERLAY -->
+  <div id="screenPause" class="overlay" style="display:none">
+    <div class="modal">
+      <div class="modal-title">( ˘ω˘ )zzZ Paused</div>
+      <button class="btn primary" id="btnResume">
+        <span class="btn-icon">▶️</span> Resume
+      </button>
+      <button class="btn secondary" id="btnPauseMenu">
+        <span class="btn-icon">🏠</span> Menu
+      </button>
+    </div>
+  </div>
+
+  <!-- GAME OVER OVERLAY -->
+  <div id="screenOver" class="overlay" style="display:none">
+    <div class="modal">
+      <div class="modal-title">( T_T ) Game Over!</div>
+      <div class="big-score" id="finalScore">0</div>
+      <div id="hsMsg" style="display:none" class="hs-msg">🎉 New High Score!</div>
+      <div id="nameRow" style="display:none" class="name-row">
+        <input id="nameInput" type="text" placeholder="Your name…" maxlength="12"/>
+        <button class="btn primary small" id="btnSave">💾 Save</button>
+      </div>
+      <button class="btn primary" id="btnRestart">
+        <span class="btn-icon">🔄</span> Restart
+      </button>
+      <button class="btn secondary" id="btnOverMenu">
+        <span class="btn-icon">🏠</span> Menu
+      </button>
+    </div>
+  </div>
+
+  <div id="comboPopup"></div>
+  <div id="actionToast"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+
+  <!-- GameMonetize SDK -->
+  <script type="text/javascript">
+    window.SDK_OPTIONS = {
+      gameId: "t1b2yzq19fs21emhb53gbegjig436ltq",
+      onEvent: function(a) {
+        switch(a.name) {
+          case "SDK_GAME_PAUSE":
+            // Ad started — pause game and mute audio
+            if (window.gameSDKPause) window.gameSDKPause();
+            break;
+          case "SDK_GAME_START":
+            // Ad finished — resume game and unmute audio
+            if (window.gameSDKResume) window.gameSDKResume();
+            break;
+          case "SDK_READY":
+            window.sdkReady = true;
+            break;
+          case "SDK_ERROR":
+            // SDK error — start game anyway
+            window.sdkReady = true;
+            if (window.gameSDKResume) window.gameSDKResume();
+            break;
+        }
+      }
+    };
+    (function(a,b,c){
+      var d=a.getElementsByTagName(b)[0];
+      a.getElementById(c)||(a=a.createElement(b),a.id=c,
+      a.src="https://api.gamemonetize.com/sdk.js",d.parentNode.insertBefore(a,d))
+    })(document,"script","gamemonetize-sdk");
+  </script>
+
+  <script src="game.js"></script>
+</body>
+</html>

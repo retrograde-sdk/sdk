@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Hybrid Puzzle – Candy Map</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- TOP BAR -->
+  <header class="topbar">
+    <div class="left">
+      <button id="openMapBtn" class="map-toggle">☰ Levels</button>
+    </div>
+    <div class="center">
+      <h1 id="levelTitle">Level 1</h1>
+    </div>
+    <div class="right">
+      <div id="movesText">Moves: 0</div>
+    </div>
+  </header>
+
+  <!-- PROGRESS MAP -->
+  <section id="progressMap" class="map-wrapper hidden">
+    <button id="closeMapBtn" class="close-map">✕</button>
+    <div class="cloud-layer">
+      <img src="clouds/cloud1.png" class="cloud c1">
+      <img src="clouds/cloud2.PNG" class="cloud c2">
+      <img src="clouds/cloud3.png" class="cloud c3">
+    </div>
+    <div class="map-scroll" id="mapScroll"></div>
+    <div class="map-bottom-hint">Tap an unlocked bubble to jump to that level</div>
+  </section>
+
+  <!-- MAIN GAME AREA -->
+  <main id="gameArea" class="game-area">
+    <div id="boardWrap">
+      <div id="board"></div>
+    </div>
+
+    <!-- POWERUPS -->
+    <div class="powerups">
+      <button class="pbtn" id="swapBtn">🔁 Swap</button>
+      <button class="pbtn" id="hintBtn">💡 Hint</button>
+      <button class="pbtn" id="autoBtn">✨ Auto-Fix</button>
+    </div>
+
+    <!-- BOTTOM CONTROLS -->
+    <div class="controls">
+      <button id="shuffleBtn" class="big">Shuffle</button>
+      <button id="nextBtn" class="big hidden">Next Level</button>
+    </div>
+  </main>
+
+  <!-- TOAST -->
+  <div id="toast" class="toast hidden"></div>
+
+  <!-- GameMonetize SDK -->
+  <script type="text/javascript">
+    window.SDK_OPTIONS = {
+      gameId: "dpq6e4s4f3ieccpufdsmq2c6xiams70t",
+      onEvent: function (a) {
+        switch (a.name) {
+          case "SDK_GAME_PAUSE":
+            // pause game logic / mute audio
+            break;
+          case "SDK_GAME_START":
+            // advertisement done, resume game logic and unmute audio
+            break;
+          case "SDK_READY":
+            break;
+          case "SDK_ERROR":
+            console.error("GameMonetize SDK Error", a);
+            break;
+        }
+      }
+    };
+    (function(a,b,c){
+      var d=a.getElementsByTagName(b)[0];
+      a.getElementById(c)||(a=document.createElement(b),a.id=c,a.src="https://api.gamemonetize.com/sdk.js",d.parentNode.insertBefore(a,d))
+    })(document,"script","gamemonetize-sdk");
+  </script>
+
+  <script src="script.js"></script>
+</body>
+</html>

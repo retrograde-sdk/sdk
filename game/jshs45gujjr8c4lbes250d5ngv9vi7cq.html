@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<title>Idle Cat</title>
+	<link rel="stylesheet" href="TemplateData/style.css">
+	<style>
+		/* IMPORTS */
+		@import url('https://fonts.googleapis.com/css2?family=Heebo:wght@200;500&display=swap');
+		@import url('https://fonts.googleapis.com/css2?family=Heebo:wght@200;500&family=MuseoModerno:wght@600&display=swap');
+
+		/* 1. FORCE PURPLE BACKGROUND (Overrides Unity Settings) */
+		html, body {
+			background: #2a1b3d !important;
+			background: radial-gradient(circle, #382150 0%, #150d1c 100%) !important;
+			width: 100%;
+			height: 100%;
+			padding: 0;
+			margin: 0;
+			overflow: hidden; /* Prevents scrollbars */
+		}
+
+		/* 2. SPLASH SCREEN OVERLAY */
+		#splash {
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100vw;
+			height: 100vh;
+			background: radial-gradient(circle, #382150 0%, #150d1c 100%) !important;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			z-index: 99999; /* on top of everything */
+		}
+
+		#splash img {
+			max-width: 260px;
+			height: auto;
+			margin-bottom: 30px;
+			animation: logoBounce 2s ease-in-out infinite;
+		}
+
+		/* 3. THE GLASS LOADING BOX */
+		.loading-container {
+			width: 380px;
+			background-color: rgba(90, 50, 120, 0.25);
+			border: 1px solid rgba(255, 255, 255, 0.08);
+			border-radius: 15px;
+			padding: 20px 25px;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			backdrop-filter: blur(5px);
+			box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+		}
+
+		.loading-header {
+			width: 100%;
+			display: flex;
+			justify-content: space-between;
+			margin-bottom: 10px;
+			color: #ffffff;
+			font-family: 'Arial Black', Gadget, sans-serif;
+			font-size: 12px;
+			letter-spacing: 1.5px;
+		}
+
+		.progress-track {
+			width: 100%;
+			height: 14px;
+			background: #140d1b;
+			border-radius: 10px;
+			overflow: hidden;
+			box-shadow: inset 0 2px 5px rgba(0,0,0,0.6);
+		}
+
+		.progress-fill {
+			width: 0%;
+			height: 100%;
+			background: linear-gradient(90deg, #5b367e, #7c4dff);
+			transition: width 0.2s ease-out;
+			box-shadow: 0 0 10px rgba(124, 77, 255, 0.3);
+		}
+
+		/* 4. GAME CANVAS STYLES */
+		div#gameContainer {
+			background: transparent !important;
+			position: absolute;
+		}
+
+		div#gameContainer canvas {
+			position: absolute;
+			display: block;
+		}
+
+		/* ANIMATIONS */
+		#splash.fade-out {
+			animation: fadeOut 500ms ease forwards;
+		}
+
+		@keyframes logoBounce {
+			0%, 100% { transform: translateY(0); }
+			50%      { transform: translateY(-15px); }
+		}
+
+		@keyframes fadeOut {
+			to { opacity: 0; visibility: hidden; }
+		}
+	</style>
+</head>
+
+<body>
+	<script>
+		document.body.style.background = "radial-gradient(circle, #382150 0%, #150d1c 100%)";
+		document.body.style.backgroundColor = "#2a1b3d";
+	</script>
+
+	<div id="splash">
+		<img src="logo.png" alt="Logo">
+		
+		<div class="loading-container">
+			<div class="loading-header">
+				<span>LOADING</span>
+				<span id="progress-text">0%</span>
+			</div>
+			<div class="progress-track">
+				<div id="progress-fill" class="progress-fill"></div>
+			</div>
+		</div>
+	</div>
+
+	<div id="gameContainer">
+		<canvas id="unity-canvas" data-pixel-art=""></canvas>
+	</div>
+
+	<script src="Build/idle.loader.js"></script>
+	<script>
+		var canvas = document.querySelector("#unity-canvas");
+		var config = {
+			dataUrl: "Build/idle.data.unityweb",
+			frameworkUrl: "Build/idle.framework.js.unityweb",
+			codeUrl: "Build/idle.wasm.unityweb",
+			streamingAssetsUrl: "StreamingAssets",
+			companyName: "gvt",
+			productName: "Idle Cat",
+			productVersion: "0.1",
+		};
+		
+		var scaleToFit;
+		try {
+			scaleToFit = !!JSON.parse("");
+		} catch (e) {
+			scaleToFit = true;
+		}
+
+		// --- NEW PROGRESS HANDLER ---
+		function progressHandler(progress) {
+			var fill = document.getElementById("progress-fill");
+			var text = document.getElementById("progress-text");
+
+			if (fill) fill.style.width = (progress * 100) + '%';
+			if (text) text.innerHTML = Math.round(progress * 100) + '%';
+		}
+
+		function onResize() {
+			var container = canvas.parentElement;
+			var w;
+			var h;
+
+			if (scaleToFit) {
+				w = window.innerWidth;
+				h = window.innerHeight;
+
+				var r = 600 / 350;
+
+				if (w * r > window.innerHeight) {
+					w = Math.min(w, Math.ceil(h / r));
+				}
+				h = Math.floor(w * r);
+			} else {
+				w = 350;
+				h = 600;
+			}
+
+			container.style.width = canvas.style.width = w + "px";
+			container.style.height = canvas.style.height = h + "px";
+			container.style.top = Math.floor((window.innerHeight - h) / 2) + "px";
+			container.style.left = Math.floor((window.innerWidth - w) / 2) + "px";
+		}
+
+		createUnityInstance(canvas, config, progressHandler).then(function (instance) {
+			canvas = instance.Module.canvas;
+			onResize();
+			
+			// --- HIDE SPLASH SCREEN WHEN LOADED ---
+			var splash = document.getElementById("splash");
+			if (splash) {
+				splash.classList.add("fade-out");
+				setTimeout(function() {
+					if (splash.parentNode) splash.parentNode.removeChild(splash);
+				}, 550);
+			}
+		});
+
+		window.addEventListener('resize', onResize);
+		onResize();
+
+		if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+			// Mobile optimizations
+			var container = document.getElementById("gameContainer");
+			container.className = "unity-mobile";
+			config.devicePixelRatio = 1.5;
+		}
+	</script>
+</body>
+
+</html>

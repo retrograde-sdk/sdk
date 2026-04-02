@@ -1,0 +1,2624 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,height=device-height,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/>
+<!-- IMPORTANT (Moderation): keep the game title IDENTICAL in the game and in the Yandex draft fields (RU/EN).
+     If you change the title in the draft, change it here too (both RU and EN strings in the script). -->
+<title>Зимняя сказка: Пазлы</title>
+<style>
+  :root{ --green:#0a6a3a; --green2:#0b7a41; --orange:#f3a63a; --shadow:rgba(0,0,0,.35); --w:100vw; --h:100vh; --uiTop:24px; }
+  html,body{height:100%; margin:0; overflow:hidden; font-family: "Trebuchet MS", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; -webkit-tap-highlight-color: transparent; }
+  body{ background: var(--green); color:#fff; -webkit-user-select:none; user-select:none; }
+  /* jigsaw-pattern background via inline SVG */
+  .bg{
+    position:fixed; inset:0;
+    background:
+      radial-gradient(900px 650px at 50% 0%, rgba(255,255,255,.14), transparent 60%),
+      repeating-linear-gradient(45deg, rgba(0,0,0,.10) 0 14px, rgba(0,0,0,.14) 14px 28px),
+      linear-gradient(#0a6a3a, #0b7a41);
+    opacity:1;
+  }
+  .screen{ position:fixed; inset:0; display:none; overflow:hidden; }
+  .screen.active{ display:block; }
+  /* No scrollbars: UI screens are auto-scaled to always fit the window */
+  .screenInner{ height:calc(var(--vh, 1vh) * 100); width:100%; box-sizing:border-box; display:flex; flex-direction:column; align-items:center; justify-content:center; padding: calc(84px + env(safe-area-inset-top, 0px)) 14px calc(36px + env(safe-area-inset-bottom, 0px)); overflow:hidden; overscroll-behavior: none; }
+  .screenContent{ transform-origin: top center; width:100%; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; max-width:1100px; padding: 6px 10px; box-sizing:border-box; }
+
+  .panel{
+    width:min(980px, calc(100vw - 40px));
+    display:grid;
+    grid-template-columns: 1.15fr .85fr;
+    gap:24px;
+    align-items:center;
+  }
+  .card{
+    background: rgba(0,0,0,.20);
+    border: 3px solid rgba(255,255,255,.20);
+    box-shadow: 0 14px 40px rgba(0,0,0,.35);
+    border-radius: 18px;
+    padding: 22px;
+    backdrop-filter: blur(2px);
+  }
+  .title{ font-size:52px; letter-spacing:1px; margin:0 0 10px; text-transform:uppercase; }
+  .sub{ margin:0 0 18px; opacity:.9; font-size:18px; line-height:1.4; }
+  .gameName{ font-size: clamp(24px, 3.2vw, 44px); font-weight:1000; letter-spacing:2px; color:#e8fff3; text-shadow: 0 4px 0 rgba(0,0,0,.25); }
+  .bigTitle{ font-size: clamp(20px, 3.6vw, 40px); font-weight:1000; letter-spacing:2px; color:#ffffff; text-shadow: 0 6px 0 rgba(0,0,0,.25); margin:10px 0 12px; }
+  .footerBrand{ margin-top:18px; opacity:.9; font-weight:900; letter-spacing:.6px; }
+
+  .btn{
+    display:inline-flex; gap:10px; align-items:center; justify-content:center;
+    border:none; cursor:pointer; user-select:none;
+    background: var(--orange);
+    color:#4b2200;
+    font-weight:900;
+    padding: 16px 22px;
+    border-radius: 14px;
+    box-shadow: 0 10px 0 rgba(0,0,0,.25);
+    transform: translateY(0);
+    font-size:20px;
+  }
+  .btn:active{ transform: translateY(2px); box-shadow: 0 8px 0 rgba(0,0,0,.25); }
+  .btn.secondary{
+    background: rgba(255,255,255,.14);
+    color:#fff;
+    box-shadow:none;
+    border:2px solid rgba(255,255,255,.22);
+  }
+
+  /* choose image */
+  .chooseWrap{ display:flex; align-items:center; justify-content:center; gap:18px; }
+  .arrow{
+    width:74px; height:74px; border-radius:16px;
+    background: rgba(255,255,255,.12);
+    border:2px solid rgba(255,255,255,.22);
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+  }
+  .arrow:active{ transform: translateY(1px); }
+  .arrow span{ font-size:38px; line-height:1; }
+  .thumb{
+    width:min(700px, calc(100vw - 220px));
+    max-width:720px;
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap:18px;
+    align-items:stretch;
+   margin:0 auto; }
+  .thumb .item{
+    background: rgba(255,255,255,.12);
+    border:4px solid rgba(255,255,255,.85);
+    border-radius:16px;
+    padding:10px;
+    cursor:pointer;
+    box-shadow: 0 12px 0 rgba(0,0,0,.20);
+  }
+  .thumb .item.selected{ outline: 5px solid rgba(243,166,58,.95); }
+  .thumb img{ width:100%; height:190px; object-fit:cover; border-radius:10px; display:block; }
+  .topIcons{
+    position:fixed;
+    top:calc(var(--uiTop) + env(safe-area-inset-top, 0px));
+    left:calc(14px + env(safe-area-inset-left, 0px));
+    display:flex; gap:10px; z-index:50;
+  }
+  .iconBtn{
+    width:70px; height:70px; border-radius:14px;
+    background: var(--orange);
+    display:flex; align-items:center; justify-content:center;
+    box-shadow: 0 10px 0 rgba(0,0,0,.25);
+    cursor:pointer; user-select:none;
+    color:#4b2200; font-weight:900;
+  }
+  .iconBtn:active{ transform: translateY(2px); box-shadow: 0 8px 0 rgba(0,0,0,.25); }
+
+  .rightIcons{
+    position:fixed;
+    top:calc(var(--uiTop) + env(safe-area-inset-top, 0px));
+    right:calc(14px + env(safe-area-inset-right, 0px));
+    display:flex; gap:10px; z-index:50;
+  }
+
+  /* pieces choose */
+  .grid4{ width:min(820px, calc(100vw - 48px)); margin: 0 auto; display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap: clamp(10px, 1.8vw, 18px); }
+  .pieceCard{ background: rgba(255,255,255,.10); border:4px solid rgba(255,255,255,.80); border-radius:18px; padding: clamp(10px, 1.6vw, 14px); cursor:pointer; box-shadow: 0 12px 0 rgba(0,0,0,.20); display:flex; flex-direction:column; gap:8px; align-items:center; }
+  .pieceCard .label{ font-size: clamp(16px, 2.2vw, 22px); font-weight:1000; letter-spacing:.5px; }
+  .miniGrid{ width: min(18.5vw, 18.5vh, 210px); height: min(18.5vw, 18.5vh, 210px); border-radius:10px; border:3px solid rgba(255,255,255,.55); background: rgba(0,0,0,.14); display:grid; place-items:center; }
+  .miniGrid svg{ width:86%; height:86%; opacity:.9; }
+
+  /* Game */
+  #game{ position:fixed; inset:0; display:none; }
+  #game.active{ display:block; }
+  #c{ position:absolute; inset:0; width:100%; height:100%; }
+  .hudTop{
+    position:absolute; top:12px; left:110px; right:110px;
+    display:flex; align-items:center; justify-content:center; gap:30px;
+    pointer-events:none;
+    z-index:30;
+  }
+  .hudTop .stat{ font-weight:900; font-size:26px; letter-spacing:1px; text-shadow: 0 2px 0 rgba(0,0,0,.35); pointer-events:none;}
+  .hudBottom{
+    position:absolute; bottom:calc(16px + env(safe-area-inset-bottom, 0px)); right:14px; display:flex; gap:12px; z-index:40;
+  }
+  /* Bottom in-game buttons (Hint / Shuffle)
+     Slightly smaller so small pieces have more room and are less likely to hide under them. */
+  .hudBottom .iconBtn{ width:80px; height:80px; border-radius:16px; font-size:22px; }
+  .hintBadge{
+    position:absolute; bottom:18px; left:14px; z-index:40; 
+    background: rgba(0,0,0,.22); border:2px solid rgba(255,255,255,.18);
+    border-radius:14px; padding:10px 12px; font-weight:800;
+  }
+  .toast{
+    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    z-index:60;
+    background: rgba(0,0,0,.40);
+    border:3px solid rgba(255,255,255,.25);
+    border-radius:18px; padding:18px 18px 16px;
+    min-width:min(520px, calc(100vw - 60px));
+    box-shadow:0 20px 60px rgba(0,0,0,.45);
+    display:none;
+  }
+  .toast.show{ display:block; }
+  .toast h3{ margin:0 0 8px; font-size:34px; text-align:center; }
+  .toast p{ margin:0; text-align:center; opacity:.92; font-size:18px; }
+  .toast .row{ display:flex; justify-content:center; gap:12px; margin-top:14px; flex-wrap:wrap; }
+  .toast .closeX{
+    position:absolute; right:12px; top:12px;
+    width:44px; height:44px; border-radius:12px;
+    background: rgba(255,255,255,.12);
+    border:2px solid rgba(255,255,255,.20);
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+    font-size:22px; font-weight:900;
+  }
+
+  /* small screens */
+  @media (max-width:860px){
+    .panel{ grid-template-columns:1fr; }
+    .title{ font-size:38px; }
+    .bigTitle{ font-size: clamp(20px, 6vw, 34px); }
+    .gameName{ font-size: clamp(22px, 5vw, 34px); }
+    .thumb{ grid-template-columns:1fr; width:min(520px, calc(100vw - 120px)); }
+    .thumb img{ height:200px; }
+    .hudTop{ left:90px; right:90px; gap:16px; }
+    .hudTop .stat{ font-size:22px; }
+    /* on small screens trays move to bottom, so move extra buttons up */
+    .hudBottom{ top:132px; bottom:auto; right:14px; }
+    .hintBadge{ top:132px; bottom:auto; left:14px; }
+  }
+
+  .footerBrand a{ color:rgba(255,255,255,.92); text-decoration:none; }
+  .footerBrand a:hover{ text-decoration:underline; }
+
+  @media (max-height: 700px){
+  .bigTitle{ font-size: clamp(18px, 4.6vw, 30px); }
+  .gameName{ font-size: clamp(18px, 4.4vw, 30px); }
+  .grid4{ gap: 12px; }
+  .pieceCard{ padding: 12px; }
+  .miniGrid{ width: min(18vw, 18vh, 180px); height: min(18vw, 18vh, 180px); }
+}
+
+  /* Fit piece selection on short screens (no scroll) */
+  #screenChoosePieces .bigTitle{ font-size: clamp(22px, 3.6vw, 38px); }
+  #screenChoosePieces .gameName{ font-size: clamp(16px, 2.4vw, 22px); }
+  @media (max-height: 820px){
+    .screenInner{ padding-top: calc(74px + env(safe-area-inset-top, 0px)); padding-bottom: calc(26px + env(safe-area-inset-bottom, 0px)); }
+    #screenChoosePieces .bigTitle{ font-size: clamp(20px, 3.2vw, 34px); }
+  }
+  @media (max-height: 760px){
+    .grid4{ width:min(760px, calc(100vw - 40px)); gap: 10px; }
+    .pieceCard{ padding: 10px; }
+    .pieceCard .label{ font-size: clamp(14px, 2.0vw, 20px); }
+    .miniGrid{ width: min(16vw, 16vh, 180px); height: min(16vw, 16vh, 180px); }
+  }
+
+
+@media (max-width: 420px){
+  .iconBtn{ width:52px; height:52px; font-size:26px; border-radius:14px; }
+  .topIcons, .topRight{ gap:10px; }
+  .titleRow{ margin-top: 0; }
+}
+
+
+    
+  @media (max-height: 760px){
+    .thumb img{ height:160px; }
+    .starsBar{ margin-top:6px; }
+    .bigTitle{ margin:8px 0 10px; }
+    .thumb{ gap:14px; }
+  }
+
+/* Igrolis link on start menu only */
+    .menu-igrolis {
+      margin-top: 14px;
+      display: flex;
+      justify-content: center;
+    }
+    .menu-igrolis a{
+      font: 14px/1.2 Arial, sans-serif;
+      color: #ffffff;
+      text-decoration: none;
+      background: rgba(0,0,0,0.35);
+      padding: 8px 14px;
+      border-radius: 999px;
+      opacity: .9;
+    }
+    .menu-igrolis a:hover{ opacity: 1; }
+
+
+  /* ===== Stars + locks + rewards + confetti ===== */
+  .starsBar{ margin-top:8px; font-weight:900; font-size:18px; letter-spacing:.2px; opacity:.95; }
+  .starsBar.center{ text-align:center; }
+  .thumb .item{ position:relative; }
+  .thumb .item.locked{ opacity:.58; cursor:not-allowed; }
+  .lockBadge{
+    position:absolute; inset:auto 10px 10px 10px;
+    background: rgba(0,0,0,.55);
+    border:1px solid rgba(255,255,255,.22);
+    border-radius:14px;
+    padding:8px 10px;
+    display:flex; align-items:center; justify-content:center; gap:10px;
+    font-weight:1000;
+    backdrop-filter: blur(4px);
+  }
+  .lockBadge span{ font-variant-numeric: tabular-nums; }
+  .label .rewardBadge{ display:inline-block; margin-left:10px; font-size:16px; opacity:.95; padding:2px 10px; border-radius:999px; background: rgba(255,255,255,.18); border:1px solid rgba(255,255,255,.22); }
+  .miniToast{
+    position:fixed; left:50%; bottom:18px; transform:translateX(-50%);
+    background: rgba(0,0,0,.72);
+    border:1px solid rgba(255,255,255,.18);
+    padding:10px 14px; border-radius:14px;
+    font-weight:900;
+    opacity:0; pointer-events:none;
+    transition:opacity .2s ease;
+    z-index:9999;
+    max-width:min(520px, calc(100vw - 28px));
+    text-align:center;
+  }
+  .miniToast.show{ opacity:1; }
+
+  .confetti-root{ position:fixed; inset:0; pointer-events:none; overflow:hidden; z-index:9999; }
+  .confetti{ position:absolute; top:-14px; width:10px; height:14px; border-radius:2px; animation-name: confettiFall; animation-timing-function: ease-in; animation-fill-mode: forwards; opacity:.98; }
+  @keyframes confettiFall{
+    to{ transform: translate3d(var(--dx), 110vh, 0) rotate(var(--rot)); opacity: 0.92; }
+  }
+
+
+/* ===== Layout tweaks (make Igrolis link always visible) ===== */
+#screenChooseImage .screenContent{ transform-origin: top center;
+  justify-content:flex-start;
+  gap:10px;
+  padding-top:14px;
+}
+#screenChooseImage .gameName{
+  font-size: clamp(20px, 2.8vw, 36px);
+  margin:0 0 2px;
+}
+#screenChooseImage .starsBar.center{
+  margin-top:0;
+  margin-bottom:0;
+}
+#screenChooseImage .bigTitle{
+  font-size: clamp(20px, 3.0vw, 34px);
+  margin:6px 0 6px;
+}
+#screenChooseImage .menu-igrolis{
+  margin-top:8px;
+}
+#screenChooseImage .menu-igrolis a{
+  display:inline-block;
+  padding:6px 12px;
+  border-radius:14px;
+  background: rgba(0,0,0,.32);
+  border:1px solid rgba(255,255,255,.22);
+}
+@media (max-height: 740px){
+  #screenChooseImage .screenContent{ transform-origin: top center; gap:8px; padding-top:10px; }
+  #screenChooseImage .bigTitle{ margin:4px 0 4px; }
+}
+
+/*
+  В Яндекс.Играх верхняя панель может становиться толще, а снизу иногда появляется панель с играми.
+  При меньшей доступной высоте кнопки в меню (в т.ч. "Дальше") визуально оказываются слишком близко
+  к нижнему краю. Даем чуть больше "воздуха" снизу только для экранов выбора.
+*/
+#screenChooseImage .screenInner,
+#screenChoosePieces .screenInner{
+  padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px));
+}
+
+/*
+  FIX: В Яндекс.Играх верхняя панель иногда становится заметно выше и может перекрывать верхнюю строку
+  на экранах выбора. Чтобы не менять базовую геометрию игры, добавляем небольшой фиксированный
+  запас сверху ТОЛЬКО для экранов выбора. Без JS, чтобы не было рывков при зуме/ресайзе.
+*/
+#screenChooseImage .screenInner,
+#screenChoosePieces .screenInner{
+  padding-top: calc(128px + env(safe-area-inset-top, 0px));
+}
+@media (max-height: 740px){
+  #screenChooseImage .screenInner,
+  #screenChoosePieces .screenInner{
+    padding-top: calc(120px + env(safe-area-inset-top, 0px));
+  }
+}
+
+</style>
+<!-- GameMonetize SDK -->
+<script type="text/javascript">
+window.SDK_OPTIONS = {
+    gameId: "dn3ayyfdxhdum8l6dygmnbj1t2ip90wb",
+    onEvent: function (a) {
+      switch (a.name) {
+        case "SDK_GAME_PAUSE":
+          window.__gmPause && window.__gmPause();
+          break;
+        case "SDK_GAME_START":
+          window.__gmResume && window.__gmResume();
+          break;
+        case "SDK_READY":
+          break;
+        case "SDK_ERROR":
+          break;
+      }
+    }
+  };
+  (function (a, b, c) {
+    var d = a.getElementsByTagName(b)[0];
+    a.getElementById(c) || (a = a.createElement(b), a.id = c,
+      a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+  })(document, "script", "gamemonetize-sdk");
+</script>
+</head>
+<body>
+<div class="bg"></div>
+<!-- Fullscreen button (GM) -->
+<div class="topIcons">
+  <div class="iconBtn" id="btnFs" title="Fullscreen">⛶</div>
+</div>
+
+<!-- Global icons (sound, close) -->
+<div class="rightIcons">
+<div class="iconBtn" id="btnSound" title="Sound">🔊</div>
+<div class="iconBtn" id="btnClose" title="Home">🏠</div>
+</div>
+<!-- MENU -->
+<section class="screen" id="screenMenu" style="display:none">
+<div class="panel">
+<div class="card">
+<h1 class="title" id="menuTitle">Зимняя сказка: Пазлы</h1>
+<p class="sub" id="menuSub">Put the picture together piece by piece. Choose an image, pick the number of pieces, and start assembling.</p>
+<div class="starsBar center"><span id="starsLabelMenu">Stars</span>: ⭐ <b id="starsValMenu">0</b></div>
+<button class="btn" id="goChooseImage">▶ Play</button>
+<div class="menu-igrolis"><a href="https://igrolis.ru" target="_blank" rel="noopener">igrolis.ru</a></div>
+</div>
+<div class="card" style="text-align:center">
+<div id="menuPreviewTitle" style="font-weight:900; font-size:22px; margin-bottom:10px">Preview</div>
+<img alt="preview" id="menuPreview" src="assets/images/img1.webp" style="width:100%; border-radius:14px; border:3px solid rgba(255,255,255,.25); max-height:420px; object-fit:cover"/>
+<div style="margin-top:10px; opacity:.9"><span id="menuPiecesLabel">Pieces:</span> <b id="menuPieces">64</b></div>
+</div>
+</div>
+</section>
+<!-- CHOOSE IMAGE -->
+<section class="screen" id="screenChooseImage">
+<div class="screenInner"><div class="screenContent">
+<div class="gameName" id="gameNameImg">Зимняя сказка: Пазлы</div>
+<div class="starsBar center"><span id="starsLabelChoose">Stars</span>: ⭐ <b id="starsValChoose">0</b></div>
+<div class="bigTitle" id="chooseImgTitle">CHOOSE A PICTURE</div>
+<div class="chooseWrap">
+<div aria-label="Back" class="arrow" id="imgPrev"><span>◀</span></div>
+<div class="thumb" id="thumbGrid"></div>
+<div aria-label="Next" class="arrow" id="imgNext"><span>▶</span></div>
+</div>
+<div style="margin-top:18px;">
+<button class="btn" id="goChoosePieces">Next ▶</button>
+</div>
+<div class="menu-igrolis"><a href="https://igrolis.ru" target="_blank" rel="noopener">igrolis.ru</a></div>
+</div>
+</div>
+</section>
+<!-- CHOOSE PIECES -->
+<section class="screen" id="screenChoosePieces">
+<div class="screenInner"><div class="screenContent">
+<div class="gameName" id="gameNamePieces">Зимняя сказка: Пазлы</div>
+<div class="bigTitle" id="choosePiecesTitle">CHOOSE NUMBER OF PIECES</div>
+<div class="grid4">
+<div class="pieceCard" data-n="16">
+<div aria-hidden="true" class="miniGrid">
+<svg viewbox="0 0 100 100">
+<path d="M10 10H90V90H10Z" fill="none" stroke="rgba(255,255,255,.9)" stroke-width="4"></path>
+<path d="M10 35H90M10 60H90M35 10V90M60 10V90" fill="none" stroke="rgba(255,255,255,.9)" stroke-width="3"></path>
+</svg>
+</div>
+<div class="label"><span class="labelText">16 PIECES</span><span class="rewardBadge">+2⭐</span></div>
+</div>
+<div class="pieceCard" data-n="36">
+<div aria-hidden="true" class="miniGrid">
+<svg viewbox="0 0 100 100">
+<path d="M10 10H90V90H10Z" fill="none" stroke="rgba(255,255,255,.9)" stroke-width="4"></path>
+<g fill="none" stroke="rgba(255,255,255,.9)" stroke-width="2">
+<path d="M10 23H90M10 36H90M10 49H90M10 62H90M10 75H90"></path>
+<path d="M23 10V90M36 10V90M49 10V90M62 10V90M75 10V90"></path>
+</g>
+</svg>
+</div>
+<div class="label"><span class="labelText">36 PIECES</span><span class="rewardBadge">+3⭐</span></div>
+</div>
+<div class="pieceCard" data-n="64">
+<div aria-hidden="true" class="miniGrid">
+<svg viewbox="0 0 100 100">
+<path d="M10 10H90V90H10Z" fill="none" stroke="rgba(255,255,255,.9)" stroke-width="4"></path>
+<g fill="none" stroke="rgba(255,255,255,.9)" stroke-width="1.6">
+<path d="M10 20H90"></path>
+<path d="M10 30H90"></path>
+<path d="M10 40H90"></path>
+<path d="M10 50H90"></path>
+<path d="M10 60H90"></path>
+<path d="M10 70H90"></path>
+<path d="M10 80H90"></path>
+<path d="M20 10V90"></path>
+<path d="M30 10V90"></path>
+<path d="M40 10V90"></path>
+<path d="M50 10V90"></path>
+<path d="M60 10V90"></path>
+<path d="M70 10V90"></path>
+<path d="M80 10V90"></path>
+</g>
+</svg>
+</div>
+<div class="label"><span class="labelText">64 PIECES</span><span class="rewardBadge">+5⭐</span></div>
+</div>
+<div class="pieceCard" data-n="100">
+<div aria-hidden="true" class="miniGrid">
+<svg viewbox="0 0 100 100">
+<path d="M10 10H90V90H10Z" fill="none" stroke="rgba(255,255,255,.9)" stroke-width="4"></path>
+<g fill="none" stroke="rgba(255,255,255,.9)" stroke-width="1.2">
+<path d="M10 18H90"></path>
+<path d="M10 26H90"></path>
+<path d="M10 34H90"></path>
+<path d="M10 42H90"></path>
+<path d="M10 50H90"></path>
+<path d="M10 58H90"></path>
+<path d="M10 66H90"></path>
+<path d="M10 74H90"></path>
+<path d="M10 82H90"></path>
+<path d="M18 10V90"></path>
+<path d="M26 10V90"></path>
+<path d="M34 10V90"></path>
+<path d="M42 10V90"></path>
+<path d="M50 10V90"></path>
+<path d="M58 10V90"></path>
+<path d="M66 10V90"></path>
+<path d="M74 10V90"></path>
+<path d="M82 10V90"></path>
+</g>
+</svg>
+</div>
+<div class="label"><span class="labelText">100 PIECES</span><span class="rewardBadge">+7⭐</span></div>
+</div>
+</div>
+<div style="margin-top:18px;">
+<button class="btn secondary" id="backToImages">← Back</button>
+<div id="autoStartNote" style="margin-top:10px; opacity:.9;">After choosing, the puzzle starts automatically.</div>
+</div>
+</div>
+</div>
+</section>
+<!-- GAME -->
+<section class="screen" id="game">
+<canvas id="c"></canvas>
+<div class="hudTop">
+<div class="stat"><span id="lblTime">TIME</span> <span id="t">00:00</span></div>
+<div class="stat"><span id="lblMoves">MOVES</span> <span id="m">0</span></div>
+<div class="stat"><span id="starsLabel">STARS</span> ⭐ <span id="starsVal">0</span></div>
+</div>
+<div class="hudBottom">
+<div class="iconBtn" id="btnHint" title="Hint">🧩</div>
+<div class="iconBtn" id="btnShuffle" title="Shuffle">🔄</div>
+</div>
+<div class="hintBadge" id="hintState">Hint: OFF</div>
+<div aria-modal="true" class="toast" id="winToast" role="dialog">
+<div class="closeX" id="winClose">✕</div>
+<h3 id="winTitle">DONE! 🎉</h3>
+<p id="winCongratsLine">Congratulations! 🎊</p>
+<p id="winTimeMovesLine">Time: <b id="winTime">00:00</b> · Moves: <b id="winMoves">0</b></p>
+<p id="winStarsLine">Stars earned: <b id="winStars">+0⭐</b></p>
+<p id="winBonusLine" style="display:none">First completion bonus: <b id="winBonus">+0⭐</b></p>
+<div class="row">
+<button class="btn" id="winMore">More puzzles</button>
+<button class="btn secondary" id="winReplay">Replay</button>
+</div>
+</div>
+</section>
+<div class="miniToast" id="miniToast"></div>
+<script>
+(() => {
+  // Корректный "vh" для мобильных браузеров (адресная строка / вырезы)
+  function setVh(){
+    const vh = window.innerHeight * 0.01;
+    document.documentElement.style.setProperty('--vh', `${vh}px`);
+  }
+  // Небольшой "безопасный" отступ сверху для кнопок (в Яндекс.Играх верхняя панель иногда становится толще).
+  // В full-screen делаем отступ меньше, чтобы не съедать высоту.
+  function setUiTop(){
+    const h = window.innerHeight || 0;
+    const isFs = !!document.fullscreenElement;
+    let top = 24;
+    if (h && h < 680) top = 16;
+    if (isFs) top = 14;
+    document.documentElement.style.setProperty('--uiTop', `${top}px`);
+  }
+  setVh();
+  setUiTop();
+  window.addEventListener('resize', setVh, {passive:true});
+  window.addEventListener('resize', setUiTop, {passive:true});
+  window.addEventListener('orientationchange', setVh, {passive:true});
+  window.addEventListener('orientationchange', setUiTop, {passive:true});
+  document.addEventListener('fullscreenchange', setUiTop, {passive:true});
+
+  // Block text selection / context menu inside the WebApp (Yandex requirement 1.6.2.7)
+  document.addEventListener("contextmenu", (e) => { e.preventDefault(); }, {capture:true});
+  document.addEventListener("selectstart", (e) => { e.preventDefault(); }, {capture:true});
+  document.addEventListener("dragstart", (e) => { e.preventDefault(); }, {capture:true});
+
+  // Fit UI screens to any window height/width so elements never get clipped (Yandex requirement 1.6.2.3)
+  function fitActiveScreen(){
+    try{
+      const active = document.querySelector('.screen.active');
+      if (!active) return;
+      if (active.id === 'game') return;
+      const content = active.querySelector('.screenContent') || active.querySelector('.panel');
+      if (!content) return;
+      // reset transform for measurement
+      content.style.transform = 'scale(1)';
+      const pad = 18;
+      const inner = active.querySelector('.screenInner');
+      const availW = inner ? inner.clientWidth : window.innerWidth;
+      const availH = inner ? inner.clientHeight : window.innerHeight;
+      const maxW = Math.max(280, availW - pad*2);
+      const maxH = Math.max(280, availH - pad*2);
+      const r = content.getBoundingClientRect();
+      let s = 1;
+      if (r.width > maxW) s = Math.min(s, maxW / r.width);
+      if (r.height > maxH) s = Math.min(s, maxH / r.height);
+      s = Math.max(0.66, Math.min(1, s));
+      content.style.transform = `scale(${s})`;
+    }catch(e){}
+  }
+  window.addEventListener('resize', () => requestAnimationFrame(fitActiveScreen), {passive:true});
+
+  // ====== helpers ======
+  const $ = (id) => document.getElementById(id);
+  const screens = {
+    menu: $("screenMenu"),
+    img: $("screenChooseImage"),
+    pieces: $("screenChoosePieces"),
+    game: $("game"),
+  };
+
+
+  // ====== Yandex Games SDK (init + mandatory events) ======
+  // For successful moderation: connect SDK, call LoadingAPI.ready(), and send Gameplay start/stop events.
+  let ysdk = null;
+  let ysdkInitPromise = null;
+  let gameReadySent = false;
+
+  function initYsdk(){
+    if (ysdkInitPromise) return ysdkInitPromise;
+    ysdkInitPromise = new Promise((resolve) => {
+      if (!window.YaGames || typeof window.YaGames.init !== "function") {
+        console.warn("YaGames SDK not found (local run?).");
+        resolve(null);
+        return;
+      }
+      window.YaGames.init()
+        .then((sdk) => {
+          ysdk = sdk;
+          window.ysdk = sdk;
+          resolve(sdk);
+        })
+        .catch((e) => {
+          console.warn("YaGames.init error:", e);
+          resolve(null);
+        });
+    });
+    return ysdkInitPromise;
+  }
+
+  function sendGameReady(){
+    if (gameReadySent) return;
+    initYsdk().then((sdk) => {
+      if (!sdk) return;
+      try { sdk.features.LoadingAPI?.ready(); } catch(e) {}
+      gameReadySent = true;
+    });
+  }
+
+  function gameplayStartEvent(){
+    initYsdk().then((sdk) => {
+      if (!sdk) return;
+      try { sdk.features.GameplayAPI?.start(); } catch(e) {}
+    });
+  }
+
+  function gameplayStopEvent(){
+    initYsdk().then((sdk) => {
+      if (!sdk) return;
+      try { sdk.features.GameplayAPI?.stop(); } catch(e) {}
+    });
+  }
+
+  // ====== Player data (save progress in Yandex Cloud, not only localStorage) ======
+  let yPlayer = null;
+  let yPlayerInitPromise = null;
+
+  function initPlayer(){
+    if (yPlayerInitPromise) return yPlayerInitPromise;
+    yPlayerInitPromise = initYsdk().then(async (sdk) => {
+      if (!sdk || typeof sdk.getPlayer !== 'function') return null;
+      try{
+        // scopes:false -> doesn't request permissions prompt
+        yPlayer = await sdk.getPlayer({ scopes: false });
+        return yPlayer;
+      }catch(e){
+        console.warn('getPlayer error:', e);
+        return null;
+      }
+    });
+    return yPlayerInitPromise;
+  }
+
+  // Init early (doesn't block the game if SDK is absent)
+  initYsdk();
+
+  // ====== core runtime flags ======
+  let running = false; // gameplay loop flag
+
+  // ====== i18n + music ======
+  // IMPORTANT (Moderation): these titles must match the Yandex draft fields exactly (RU/EN).
+  // If you change the title in the draft, change it here too.
+  const GAME_TITLES = {
+    ru: "Зимняя сказка: Пазлы",
+    en: "Winter Fairytale: Jigsaw Puzzles",
+  };
+  const I18N = {
+    en: {
+      menuTitle: GAME_TITLES.en,
+      menuSub: "Put the picture together piece by piece. Choose an image, pick the number of pieces, and start assembling.",
+      play: "▶ Play",
+      gameName: GAME_TITLES.en,
+      choosePicture: "CHOOSE A PICTURE",
+      choosePieces: "CHOOSE NUMBER OF PIECES",
+      next: "Next ▶",
+      back: "← Back",
+      autoStart: "After choosing, the puzzle starts automatically.",
+      time: "TIME",
+      moves: "MOVES",
+      hintTitle: "Hint",
+      shuffleTitle: "Shuffle",
+      hintOn: "Hint: ON",
+      hintOff: "Hint: OFF",
+      done: "DONE! 🎉",
+      more: "More puzzles",
+      replay: "Replay",
+      fullscreenTitle: "Fullscreen",
+      soundTitle: "Sound",
+      exitTitle: "Exit",
+      prevAria: "Back",
+      nextAria: "Next",
+      timeWord: "Time",
+      movesWord: "Moves",
+    },
+    ru: {
+      menuTitle: GAME_TITLES.ru,
+      menuSub: "Соберите картинку из деталей. Сначала выберите изображение, потом количество деталей — и начинайте складывать.",
+      play: "▶ Играть",
+      gameName: GAME_TITLES.ru,
+      choosePicture: "ВЫБЕРИТЕ КАРТИНКУ",
+      choosePieces: "ВЫБЕРИТЕ КОЛИЧЕСТВО ДЕТАЛЕЙ",
+      next: "Дальше ▶",
+      back: "← Назад",
+      autoStart: "После выбора пазл начнётся автоматически.",
+      time: "ВРЕМЯ",
+      moves: "ХОДЫ",
+      hintTitle: "Подсказка",
+      shuffleTitle: "Перемешать",
+      hintOn: "Подсказка: ВКЛ",
+      hintOff: "Подсказка: ВЫКЛ",
+      done: "ГОТОВО! 🎉",
+      more: "Ещё пазлы",
+      replay: "Повторить",
+      fullscreenTitle: "Полный экран",
+      soundTitle: "Звук",
+      exitTitle: "Выход",
+      prevAria: "Назад",
+      nextAria: "Вперёд",
+      timeWord: "Время",
+      movesWord: "Ходы",
+    }
+  };
+  const urlLang = (new URLSearchParams(location.search).get("lang") || "").toLowerCase();
+  const hasUrlLang = !!urlLang;
+  let LANG = "en"; // будет определён в boot()
+
+  function normalizeLang(val){
+    val = (val || "en").toLowerCase();
+    return val.startsWith("ru") ? "ru" : "en";
+  }
+
+  function setLang(next){
+    LANG = normalizeLang(next);
+    document.documentElement.lang = LANG;
+    // Keep browser tab title identical to the in-game title for this language
+    document.title = (I18N[LANG].gameName || I18N[LANG].menuTitle);
+    try{ applyI18n(); }catch(e){}
+    try{ renderThumbs(); }catch(e){}
+    try{ updateStarsUI(); }catch(e){}
+  }
+function applyI18n(){
+    const L = I18N[LANG] || I18N.en;
+    const setText = (id, value) => { const el = $(id); if (el) el.textContent = value; };
+
+    setText("menuTitle", L.menuTitle);
+    setText("menuSub", L.menuSub);
+    setText("goChooseImage", L.play);
+    setText("menuPreviewTitle", (LANG === "ru" ? "Пример" : "Preview"));
+    setText("menuPiecesLabel", (LANG === "ru" ? "Детали:" : "Pieces:"));
+
+    // difficulty cards: update only the text part, keep reward badge
+    document.querySelectorAll(".pieceCard").forEach(card => {
+      const n = card.getAttribute("data-n") || "";
+      const lblText = card.querySelector(".labelText");
+      if (lblText) lblText.textContent = n + (LANG === "ru" ? " ДЕТАЛЕЙ" : " PIECES");
+    });
+
+    document.querySelectorAll(".gameName").forEach(el => el.textContent = L.gameName);
+
+    setText("chooseImgTitle", L.choosePicture);
+    setText("choosePiecesTitle", L.choosePieces);
+
+    setText("goChoosePieces", L.next);
+    setText("backToImages", L.back);
+    setText("autoStartNote", L.autoStart);
+
+    setText("lblTime", L.time);
+    setText("lblMoves", L.moves);
+
+    // stars labels
+    setText("starsLabelMenu", (LANG === "ru" ? "Звёзды" : "Stars"));
+    setText("starsLabelChoose", (LANG === "ru" ? "Звёзды" : "Stars"));
+    setText("starsLabel", (LANG === "ru" ? "ЗВЁЗДЫ" : "STARS"));
+
+    const fs = $("btnFs"), snd = $("btnSound"), cl = $("btnClose");
+    if (fs) fs.title = L.fullscreenTitle;
+    if (snd) snd.title = L.soundTitle;
+    if (cl) cl.title = L.exitTitle;
+
+    const hintBtn = $("btnHint"), shBtn = $("btnShuffle");
+    if (hintBtn) hintBtn.title = L.hintTitle;
+    if (shBtn) shBtn.title = L.shuffleTitle;
+
+    const prev = $("imgPrev"), next = $("imgNext");
+    if (prev) prev.setAttribute("aria-label", L.prevAria);
+    if (next) next.setAttribute("aria-label", L.nextAria);
+
+    // Win toast texts (keep dynamic numbers)
+    setText("winTitle", L.done);
+    setText("winCongratsLine", (LANG === "ru" ? "Поздравляем! 🎊" : "Congratulations! 🎊"));
+
+    const tml = $("winTimeMovesLine"), wt = $("winTime"), wm = $("winMoves");
+    if (tml && wt && wm){
+      tml.textContent = "";
+      tml.append((LANG === "ru" ? "Время: " : "Time: "));
+      tml.appendChild(wt);
+      tml.append((LANG === "ru" ? " · Ходы: " : " · Moves: "));
+      tml.appendChild(wm);
+    }
+
+    const wsLine = $("winStarsLine"), ws = $("winStars");
+    if (wsLine && ws){
+      wsLine.textContent = "";
+      wsLine.append((LANG === "ru" ? "Звёзды получены: " : "Stars earned: "));
+      wsLine.appendChild(ws);
+    }
+
+    const wbLine = $("winBonusLine"), wb = $("winBonus");
+    if (wbLine && wb){
+      wbLine.textContent = "";
+      wbLine.append((LANG === "ru" ? "Бонус за первую победу: " : "First completion bonus: "));
+      wbLine.appendChild(wb);
+    }
+
+    setText("winMore", L.more);
+    setText("winReplay", L.replay);
+
+    // Initial hint badge
+    const hs = $("hintState");
+    if (hs) hs.textContent = L.hintOff;
+  }
+
+  // ---- background music (quiet, loop, no autoplay) ----
+    const BGM_URLS = [
+  "assets/audio/bgm.mp3",
+  "assets/audio/bgm2.mp3",
+  "assets/audio/bgm3.mp3",
+  "assets/audio/bgm4.mp3",
+  "assets/audio/bgm5.mp3",
+  "assets/audio/bgm6.mp3",
+  "assets/audio/bgm7.mp3",
+  "assets/audio/bgm8.mp3",
+  "assets/audio/bgm9.mp3",
+  "assets/audio/bgm10.mp3",
+];
+    let bgmIndex = 0;
+    let audioCtx = null;
+    let bgmBufs = [];
+    let bgmSrc = null;
+    let bgmGain = null;
+    let audioUnlocked = false;
+    let manualStop = false;
+
+    async function ensureAudio(){
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === "suspended") await audioCtx.resume();
+
+      const url = BGM_URLS[bgmIndex] || BGM_URLS[0];
+      if (!bgmBufs[bgmIndex]){
+        const res = await fetch(url, {cache:"force-cache"});
+        const arr = await res.arrayBuffer();
+        bgmBufs[bgmIndex] = await audioCtx.decodeAudioData(arr);
+      }
+    }
+
+    async function startBgm(){
+      if (!soundOn) return;
+      manualStop = false; // reset manual stop flag (prevents playlist getting stuck)
+      try{
+        await ensureAudio();
+        if (bgmSrc) return;
+
+        bgmSrc = audioCtx.createBufferSource();
+        bgmSrc.buffer = bgmBufs[bgmIndex];
+        bgmSrc.loop = false;
+
+        bgmGain = audioCtx.createGain();
+        bgmGain.gain.value = 0.15; // quiet
+
+        bgmSrc.connect(bgmGain).connect(audioCtx.destination);
+
+        bgmSrc.onended = () => {
+          const wasManual = manualStop;
+          manualStop = false;
+          try{ bgmSrc && bgmSrc.disconnect(); }catch(e){}
+          bgmSrc = null;
+          if (wasManual) return;
+          if (!soundOn) return;
+          bgmIndex = (bgmIndex + 1) % BGM_URLS.length;
+          startBgm();
+        };
+
+        bgmSrc.start(0);
+      }catch(e){}
+    }
+
+    function stopBgm(){
+      try{
+        manualStop = true;
+        if (bgmSrc){
+          try{ bgmSrc.onended = null; }catch(e){}
+          try{ bgmSrc.stop(0); }catch(e){}
+          try{ bgmSrc.disconnect(); }catch(e){}
+        }
+      }catch(e){}
+      bgmSrc = null;
+      manualStop = false;
+    }
+
+  function unlockAudio(){
+    if (audioUnlocked) return;
+    audioUnlocked = true;
+    startBgm();
+  }
+
+  // No autoplay: start only after first user gesture
+  document.addEventListener("pointerdown", unlockAudio, {once:true, passive:true});
+  document.addEventListener("keydown", unlockAudio, {once:true});
+
+// Auto-resume music after tab/app returns (many browsers suspend AudioContext when hidden)
+async function resumeBgmIfNeeded(){
+  try{
+    if (!soundOn) return;
+    if (adPaused) return;
+    if (!audioUnlocked) return; // needs a user gesture first
+    // some browsers suspend the audio context in background
+    if (audioCtx && audioCtx.state === "suspended") await audioCtx.resume();
+    // if track stopped while hidden, restart playlist
+    if (!bgmSrc) startBgm();
+  }catch(e){}
+}
+
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden){
+    // Stop gameplay/music when the tab/app is hidden (required by Yandex Games).
+    try{ gameplayStopEvent(); }catch(e){}
+    try{ stopBgm(); }catch(e){}
+    try{ if (audioCtx && audioCtx.state === "running") audioCtx.suspend(); }catch(e){}
+  } else {
+    // Resume only if we are in gameplay
+    try{ if (running) gameplayStartEvent(); }catch(e){}
+    resumeBgmIfNeeded();
+  }
+});
+window.addEventListener("blur", () => { try{ gameplayStopEvent(); }catch(e){} try{ stopBgm(); }catch(e){} });
+window.addEventListener("focus", () => { try{ if (running) gameplayStartEvent(); }catch(e){} resumeBgmIfNeeded(); });
+window.addEventListener("pageshow", () => { try{ if (running) gameplayStartEvent(); }catch(e){} resumeBgmIfNeeded(); });
+window.addEventListener("pagehide", () => { try{ gameplayStopEvent(); }catch(e){} try{ stopBgm(); }catch(e){} });
+
+// Best-effort save on leaving the page
+window.addEventListener("beforeunload", () => {
+  try{ saveProgress(); }catch(e){}
+});
+// applyI18n/loadProgress are called in boot()
+
+  function showScreen(which){
+    Object.values(screens).forEach(s => s.classList?.remove("active"));
+    if (which === "game") screens.game.classList.add("active");
+    else screens[which].classList.add("active");
+    updateStarsUI();
+    requestAnimationFrame(fitActiveScreen);
+  }
+  function pad2(n){ return String(n).padStart(2,"0"); }
+  function fmtTime(sec){
+    sec = Math.max(0, sec|0);
+    const m = (sec/60)|0, s = sec%60;
+    return pad2(m)+":"+pad2(s);
+  }
+
+  // ====== sound (simple, optional) ======
+  var soundOn = true;
+  function blip(){ if(!soundOn) return; /* silent by default */ }
+     // ====== Ads (GameMonetize SDK) ======
+// Show ads only at natural breaks (before game start, after completion actions).
+// Policy:
+// - not earlier than user action (no startup delay)
+// - not more often than once per minute
+  let adPaused = false;
+  let wasRunningBeforeAd = false;
+  let pendingAction = null;
+
+  const AdsPlan = {
+    t0: Date.now(),
+    startupDelayMs: 0,
+    minIntervalMs: 60000,
+    lastAdTs: 0,
+    canShow(){
+      return !!(window.sdk && typeof window.sdk.showBanner === "function");
+    },
+    canShowNow(){
+      const now = Date.now();
+      if (now - this.t0 < this.startupDelayMs) return false;
+      if (this.minIntervalMs > 0 && this.lastAdTs && (now - this.lastAdTs) < this.minIntervalMs) return false;
+      return true;
+    },
+    markShown(){ this.lastAdTs = Date.now(); }
+  };
+
+  // "Ad actually started" guard: if SDK doesn't pause the game quickly, we don't block the user.
+  let adStarted = false;
+  let adStartGuardTimer = null;
+
+  function gmShowAd(){
+    if (!AdsPlan.canShow()) return false;
+    if (!AdsPlan.canShowNow()) return false;
+
+    try{
+      adStarted = false;
+      AdsPlan.markShown();
+      window.sdk.showBanner();
+
+      if (adStartGuardTimer) clearTimeout(adStartGuardTimer);
+      adStartGuardTimer = setTimeout(() => {
+        if (!adStarted && pendingAction){
+          const fn = pendingAction;
+          pendingAction = null;
+          fn();
+        }
+      }, 1500);
+
+      return true;
+    }catch(e){
+      console.warn("sdk.showBanner error", e);
+      return false;
+    }
+  }
+
+  function runAfterAd(fn){
+    if (typeof fn !== "function") return;
+
+    // If ad can't be shown now — run action immediately
+    if (!gmShowAd()){
+      fn();
+      return;
+    }
+
+    // Otherwise — run after the SDK resumes the game
+    pendingAction = fn;
+  }
+
+  // Called by GameMonetize SDK (see window.SDK_OPTIONS in <head>)
+  window.__gmPause = function(){
+    adPaused = true;
+    adStarted = true;
+    if (adStartGuardTimer){ clearTimeout(adStartGuardTimer); adStartGuardTimer = null; }
+
+    wasRunningBeforeAd = !!running;
+    if (wasRunningBeforeAd) stopTimer();
+    gameplayStopEvent();
+
+    // Pause audio during ads
+    try{ if (audioCtx && audioCtx.state === "running") audioCtx.suspend(); }catch(e){}
+  };
+
+  window.__gmResume = function(){
+    adPaused = false;
+
+    // If we were waiting to run something after the ad — do it now
+    if (pendingAction){
+      const fn = pendingAction;
+      pendingAction = null;
+      fn();
+    }
+
+    // Resume gameplay state
+    if (wasRunningBeforeAd){
+      wasRunningBeforeAd = false;
+      startTimer();
+      redraw();
+      gameplayStartEvent();
+    }
+
+    // Restore music if allowed
+    if (soundOn && audioUnlocked && !document.hidden){
+      try{ resumeBgmIfNeeded(); }catch(e){}
+      setTimeout(() => { try{ resumeBgmIfNeeded(); }catch(e){} }, 140);
+      setTimeout(() => { try{ resumeBgmIfNeeded(); }catch(e){} }, 420);
+    }
+  };
+
+  // ====== stars / unlocks / progress (from Relax_UIFIX5) ======
+  const STORAGE_KEY = "wf_puzzles_completed_v1";
+  const STORAGE_STARS_KEY  = "wf_puzzles_stars_v1";
+  const STORAGE_UNLOCK_KEY = "wf_puzzles_unlocks_v1";
+  const STORAGE_FIRST_BONUS_KEY = "wf_puzzles_first_bonus_v1";
+
+  var completed = {};          // rewards claimed (key: src|pieces)
+  var stars = 0;               // currency
+  var unlocks = {};            // {"3":true}
+  var firstBonusGiven = false;
+
+  function completedKey(src, pieces){
+    return String(src||'') + '|' + String(pieces||'');
+  }
+
+  // migrate legacy saves where completed[src] = true (no difficulty)
+  // We assume legacy completion was on the easiest mode (16 pieces), so players
+  // don't accidentally get double reward for the same run, but can still earn
+  // rewards on harder difficulties.
+  function normalizeCompleted(){
+    try{
+      if (!completed || typeof completed !== 'object') completed = {};
+      const keys = Object.keys(completed);
+      for (const k of keys){
+        if (k.indexOf('|') !== -1) continue;
+        if (completed[k] === true){
+          completed[completedKey(k, 16)] = true;
+          delete completed[k];
+        }
+      }
+    }catch(e){}
+  }
+
+  function getSaveObject(){
+    return { completed, stars, unlocks, firstBonusGiven, v: 1 };
+  }
+
+  function applySaveObject(obj){
+    try{
+      if (!obj || typeof obj !== 'object') return;
+      if (obj.completed && typeof obj.completed === 'object') completed = obj.completed;
+      if (typeof obj.stars === 'number') stars = obj.stars|0;
+      normalizeCompleted();
+      if (obj.unlocks && typeof obj.unlocks === 'object') unlocks = obj.unlocks;
+      if (typeof obj.firstBonusGiven === 'boolean') firstBonusGiven = obj.firstBonusGiven;
+    }catch(e){}
+  }
+
+  function loadProgressLocal(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) completed = JSON.parse(raw) || {};
+    }catch(e){ completed = {}; }
+
+    normalizeCompleted();
+
+    try{
+      stars = parseInt(localStorage.getItem(STORAGE_STARS_KEY) || '0', 10) || 0;
+    }catch(e){ stars = 0; }
+
+    try{
+      const rawU = localStorage.getItem(STORAGE_UNLOCK_KEY);
+      if (rawU) unlocks = JSON.parse(rawU) || {};
+    }catch(e){ unlocks = {}; }
+
+    try{
+      firstBonusGiven = (localStorage.getItem(STORAGE_FIRST_BONUS_KEY) === '1');
+    }catch(e){ firstBonusGiven = false; }
+  }
+
+  function saveProgressLocal(){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(completed)); }catch(e){}
+    try{ localStorage.setItem(STORAGE_STARS_KEY, String(stars)); }catch(e){}
+    try{ localStorage.setItem(STORAGE_UNLOCK_KEY, JSON.stringify(unlocks)); }catch(e){}
+    try{ localStorage.setItem(STORAGE_FIRST_BONUS_KEY, firstBonusGiven ? '1' : '0'); }catch(e){}
+  }
+
+  let playerSaveTimer = null;
+  function schedulePlayerSave(){
+    if (playerSaveTimer) clearTimeout(playerSaveTimer);
+    playerSaveTimer = setTimeout(() => {
+      flushPlayerSave();
+    }, 450);
+  }
+
+  async function flushPlayerSave(){
+    try{
+      const p = await initPlayer();
+      if (!p || typeof p.setData !== 'function') return;
+      await p.setData(getSaveObject());
+    }catch(e){
+      console.warn('player.setData error:', e);
+    }
+  }
+
+  async function loadProgress(){
+    // 1) local fallback
+    loadProgressLocal();
+
+    // 2) Yandex cloud save (persists even when the game is hosted on a changing origin)
+    try{
+      const p = await initPlayer();
+      if (p && typeof p.getData === 'function'){
+        const data = await p.getData();
+        applySaveObject(data);
+        // keep local in sync too
+        saveProgressLocal();
+      }
+    }catch(e){
+      console.warn('player.getData error:', e);
+    }
+
+    updateStarsUI();
+    requestAnimationFrame(fitActiveScreen);
+  }
+
+  function saveProgress(){
+    saveProgressLocal();
+    schedulePlayerSave();
+  }
+
+
+  function updateStarsUI(){
+    const vMenu = $("starsValMenu"); if (vMenu) vMenu.textContent = String(stars);
+    const vChoose = $("starsValChoose"); if (vChoose) vChoose.textContent = String(stars);
+    const vHud = $("starsVal"); if (vHud) vHud.textContent = String(stars);
+  }
+
+  function spendStars(n){
+    n = Math.max(0, n|0);
+    if (stars < n) return false;
+    stars -= n;
+    updateStarsUI();
+    saveProgress();
+    return true;
+  }
+  function earnStars(n){
+    n = Math.max(0, n|0);
+    stars += n;
+    updateStarsUI();
+    saveProgress();
+  }
+
+  function isUnlocked(idx){
+    return idx === 0 || !!unlocks[String(idx)];
+  }
+  function unlockItem(idx){
+    unlocks[String(idx)] = true;
+    saveProgress();
+  }
+  function getUnlockCost(idx){
+    if (idx <= 0) return 0;
+    return Math.min(12, idx + 1); // 2,3,4...
+  }
+
+  const REWARD_BY_PIECES = {16:2, 36:3, 64:5, 100:7};
+  const FIRST_BONUS_AMOUNT = 3;
+
+  // reward per image + difficulty (so a harder mode can still be rewarded) + 1-time newcomer bonus
+  function markCompleted(src, piecesCount, baseReward){
+    if (!src) return {earned:0, bonus:0, first:false};
+    const key = completedKey(src, piecesCount);
+    if (completed[key]) return {earned:0, bonus:0, first:false};
+
+    completed[key] = true;
+
+    const earned = Math.max(0, baseReward|0);
+    let bonus = 0;
+
+    if (!firstBonusGiven){
+      bonus = FIRST_BONUS_AMOUNT;
+      firstBonusGiven = true;
+    }
+
+    if (earned) earnStars(earned);
+    if (bonus) earnStars(bonus);
+
+    saveProgress();
+    return {earned, bonus, first:true};
+  }
+
+  function showMiniToast(msg){
+    const el = $("miniToast");
+    if (!el) return;
+    el.textContent = msg;
+    el.classList.add("show");
+    clearTimeout(showMiniToast._t);
+    showMiniToast._t = setTimeout(() => el.classList.remove("show"), 1400);
+  }
+
+  function startConfetti(durationMs=1300){
+    try{
+      const root = document.createElement('div');
+      root.className = 'confetti-root';
+      document.body.appendChild(root);
+
+      const colors = ['#ff3b30','#ffcc00','#34c759','#007aff','#af52de','#ff2d55'];
+      const end = performance.now() + durationMs;
+
+      function spawn(){
+        for (let i=0;i<12;i++){
+          const p = document.createElement('div');
+          p.className = 'confetti';
+          p.style.left = (Math.random()*100) + 'vw';
+          p.style.background = colors[(Math.random()*colors.length)|0];
+
+          const dx = ((Math.random()*2-1) * 40).toFixed(1) + 'vw';
+          const rot = ((Math.random()*2-1) * 540).toFixed(0) + 'deg';
+          p.style.setProperty('--dx', dx);
+          p.style.setProperty('--rot', rot);
+
+          const dur = 900 + Math.random()*600;
+          p.style.animationDuration = dur.toFixed(0) + 'ms';
+
+          root.appendChild(p);
+          setTimeout(() => p.remove(), dur + 220);
+        }
+        if (performance.now() < end) requestAnimationFrame(spawn);
+        else setTimeout(() => root.remove(), 1200);
+      }
+      spawn();
+    }catch(e){}
+  }
+
+// ====== assets ======
+    const IMAGE_TITLES = {
+    en: ['Picture 1', 'Picture 2', 'Picture 3', 'Picture 4', 'Picture 5', 'Picture 6', 'Picture 7', 'Picture 8', 'Picture 9', 'Picture 10', 'Picture 11', 'Picture 12'],
+    ru: ['Картинка 1', 'Картинка 2', 'Картинка 3', 'Картинка 4', 'Картинка 5', 'Картинка 6', 'Картинка 7', 'Картинка 8', 'Картинка 9', 'Картинка 10', 'Картинка 11', 'Картинка 12']
+  };
+
+  const IMAGES = [
+    {src:"assets/images/img1.webp"},
+    {src:"assets/images/img2.webp"},
+    {src:"assets/images/img3.webp"},
+    {src:"assets/images/img4.webp"},
+    {src:"assets/images/img5.webp"},
+    {src:"assets/images/img6.webp"},
+    {src:"assets/images/img7.webp"},
+    {src:"assets/images/img8.webp"},
+    {src:"assets/images/img9.webp"},
+    {src:"assets/images/img10.webp"},
+    {src:"assets/images/img11.webp"},
+    {src:"assets/images/img12.webp"},
+  ];
+
+  // ====== UI: thumbnails ======
+  let page = 0;
+  let selectedIndex = 0;
+  const pageSize = 6;
+  const thumbGrid = $("thumbGrid");
+
+  function getImageTitle(idx){
+    const arr = IMAGE_TITLES[LANG] || IMAGE_TITLES.en;
+    return arr[idx] || (LANG === "ru" ? ("Картинка " + (idx+1)) : ("Picture " + (idx+1)));
+  }
+
+    function renderThumbs(){
+    thumbGrid.innerHTML = "";
+    const start = page*pageSize;
+    const slice = IMAGES.slice(start, start+pageSize);
+
+    slice.forEach((it, i) => {
+      const idx = start+i;
+      const locked = !isUnlocked(idx);
+      const cost = getUnlockCost(idx);
+
+      const div = document.createElement("div");
+      div.className = "item" + (idx===selectedIndex ? " selected" : "") + (locked ? " locked" : "");
+      div.innerHTML = `<img src="${it.src}" alt="${getImageTitle(idx)}">` + (locked ? `<div class="lockBadge"><span>🔒</span><span>${cost}⭐</span></div>` : "");
+
+      div.addEventListener("click", () => {
+        if (locked){
+          if (!spendStars(cost)){
+            showMiniToast(LANG === "ru" ? "Не хватает звёзд ⭐" : "Not enough stars ⭐");
+            return;
+          }
+          unlockItem(idx);
+        }
+        selectedIndex = idx;
+        page = Math.floor(selectedIndex / pageSize);
+        renderThumbs();
+        $("menuPreview").src = IMAGES[selectedIndex].src;
+      });
+
+      thumbGrid.appendChild(div);
+    });
+
+    updateStarsUI();
+    requestAnimationFrame(fitActiveScreen);
+  }
+  $("imgPrev").addEventListener("click", () => { page = (page-1+Math.ceil(IMAGES.length/pageSize))%Math.ceil(IMAGES.length/pageSize); renderThumbs(); });
+  $("imgNext").addEventListener("click", () => { page = (page+1)%Math.ceil(IMAGES.length/pageSize); renderThumbs(); });
+
+  // ====== global buttons ======
+  $("btnClose").addEventListener("click", () => { showScreen("img"); stopGame(); });
+  $("goChooseImage").addEventListener("click", () => { showScreen("img"); renderThumbs(); });
+  const backToMenu1 = $("backToMenu1");
+  if (backToMenu1) backToMenu1.addEventListener("click", () => showScreen("img"));
+  $("goChoosePieces").addEventListener("click", () => showScreen("pieces"));
+  $("backToImages").addEventListener("click", () => showScreen("img"));
+
+  $("btnSound").addEventListener("click", () => {
+    soundOn = !soundOn;
+    $("btnSound").textContent = soundOn ? "🔊" : "🔇";
+    if (soundOn) { unlockAudio(); startBgm(); }
+    else { stopBgm(); }
+  });
+
+  $("btnFs") && $("btnFs").addEventListener("click", async () => {
+    const el = document.documentElement;
+    try {
+      if (!document.fullscreenElement) await el.requestFullscreen();
+      else await document.exitFullscreen();
+    } catch(e) {}
+  });
+
+
+
+  // ====== choose pieces -> start game ======
+  let chosenPieces = 64;
+  let currentSrc = "";
+  document.querySelectorAll(".pieceCard").forEach(card => {
+    card.addEventListener("click", () => {
+      chosenPieces = parseInt(card.dataset.n, 10);
+      $("menuPieces").textContent = String(chosenPieces);
+      runAfterAd(() => startGame());
+    });
+  });
+
+  // ====== Canvas game ======
+  const canvas = $("c");
+  const ctx = canvas.getContext("2d");
+  let dpr = 1;
+  function resize(){
+  dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+  const w = Math.floor(window.innerWidth);
+  const h = Math.floor(window.innerHeight);
+  canvas.width = Math.floor(w * dpr);
+  canvas.height = Math.floor(h * dpr);
+  canvas.style.width = w+"px";
+  canvas.style.height = h+"px";
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+
+// --- IMPORTANT: keep layout centered on fullscreen/resize WITHOUT resetting progress ---
+let _relayoutRAF = 0;
+let _relayoutTO  = 0;
+
+function pointInRect(x,y,r){ return x>=r.x && x<=r.x+r.w && y>=r.y && y<=r.y+r.h; }
+
+function captureStateForRelayout(){
+  const state = new Map();
+  const W = window.innerWidth, H = window.innerHeight;
+  const cellW = board.w/cols, cellH = board.h/rows;
+
+  pieces.forEach(p => {
+    const key = p.r + "_" + p.c;
+    const cx = p.x + cellW/2;
+    const cy = p.y + cellH/2;
+
+    let zone = "G";
+    let rect = {x:0,y:0,w:W,h:H};
+
+    if (pointInRect(cx,cy,leftTray)) { zone = "L"; rect = leftTray; }
+    else if (pointInRect(cx,cy,rightTray)) { zone = "R"; rect = rightTray; }
+    else if (pointInRect(cx,cy,board)) { zone = "B"; rect = board; }
+
+    const ex = p.extra || 0;
+    const margin = 18;
+
+    let minX = rect.x + margin + ex;
+    let maxX = rect.x + rect.w - margin - ex - cellW;
+    let minY = rect.y + margin + ex;
+    let maxY = rect.y + rect.h - margin - ex - cellH;
+
+    if (maxX <= minX) { minX = rect.x + (rect.w - cellW)/2; maxX = minX; }
+    if (maxY <= minY) { minY = rect.y + (rect.h - cellH)/2; maxY = minY; }
+
+    let relX = 0.5, relY = 0.5;
+    if (!p.locked){
+      if (maxX > minX) relX = (p.x - minX) / (maxX - minX);
+      if (maxY > minY) relY = (p.y - minY) / (maxY - minY);
+    }
+    relX = Math.max(0, Math.min(1, relX));
+    relY = Math.max(0, Math.min(1, relY));
+
+    state.set(key, {
+      locked: !!p.locked,
+      zone,
+      relX,
+      relY,
+      gid: (typeof p.gid === 'number') ? p.gid : null,
+    });
+  });
+
+  return state;
+}
+
+function applyStateAfterRelayout(state){
+  const W = window.innerWidth, H = window.innerHeight;
+  const cellW = board.w/cols, cellH = board.h/rows;
+  let maxGid = 0;
+
+  pieces.forEach(p => {
+    const key = p.r + "_" + p.c;
+    const s = state.get(key);
+    if (!s) return;
+
+    p.locked = !!s.locked;
+
+    if (s.gid != null){
+      p.gid = s.gid;
+      if (s.gid > maxGid) maxGid = s.gid;
+    }
+
+    if (p.locked){
+      p.x = p.tx;
+      p.y = p.ty;
+      return;
+    }
+
+    let rect;
+    if (s.zone === "L") rect = leftTray;
+    else if (s.zone === "R") rect = rightTray;
+    else if (s.zone === "B") rect = board;
+    else rect = {x:0,y:0,w:W,h:H};
+
+    const ex = p.extra || 0;
+    const margin = 18;
+
+    const minX = rect.x + margin + ex;
+    const maxX = rect.x + rect.w - margin - ex - cellW;
+    const minY = rect.y + margin + ex;
+    const maxY = rect.y + rect.h - margin - ex - cellH;
+
+    if (maxX <= minX) p.x = rect.x + (rect.w - cellW)/2;
+    else p.x = minX + s.relX * (maxX - minX);
+
+    if (maxY <= minY) p.y = rect.y + (rect.h - cellH)/2;
+    else p.y = minY + s.relY * (maxY - minY);
+  });
+
+  if (maxGid) nextGid = Math.max(nextGid, maxGid + 1);
+
+  // cancel dragging safely
+  dragging = null;
+  draggingGroup = null;
+  dragLead = null;
+}
+
+function relayoutKeepProgress(){
+  // only when game screen is visible and image is loaded
+  if (!running) { resize(); return; }
+  if (!screens.game.classList.contains("active")) { resize(); return; }
+  if (!img || !img.naturalWidth) { resize(); return; }
+
+  const state = captureStateForRelayout();
+
+  resize();
+  layout();
+  // rebuild piece canvases to match new size, but keep same tabsMap and restore progress
+  buildPieces();
+  applyStateAfterRelayout(state);
+
+  // UI may shift during fullscreen/resizes (Yandex panels), ensure nothing becomes ungrabbable.
+  sanitizeAllGroupsUI();
+
+  redraw();
+}
+
+function scheduleRelayout(){
+  if (_relayoutRAF) cancelAnimationFrame(_relayoutRAF);
+  _relayoutRAF = requestAnimationFrame(() => {
+    _relayoutRAF = 0;
+    relayoutKeepProgress();
+  });
+
+  // some browsers update innerWidth/innerHeight a moment later on fullscreenchange
+  clearTimeout(_relayoutTO);
+  _relayoutTO = setTimeout(() => relayoutKeepProgress(), 120);
+}
+
+window.addEventListener("resize", scheduleRelayout);
+window.addEventListener("orientationchange", scheduleRelayout);
+document.addEventListener("fullscreenchange", scheduleRelayout);
+
+  // puzzle state
+  let img = new Image();
+  img.crossOrigin = "anonymous";
+  let cols=8, rows=8, total=64;
+  let board = {x:0,y:0,w:0,h:0};
+  let leftTray = {x:0,y:0,w:0,h:0};
+  let rightTray = {x:0,y:0,w:0,h:0};
+  let pieces = []; // {r,c,x,y,tx,ty,locked,path,maskCanvas,w,h,tab}
+  let tabsMap = null; // сохраняем форму "ушек" для пазла, чтобы при ресайзе/фулскрине не менялась
+  let finalReveal = false;
+  let finalStart = 0;
+  let finalAnim = 0;
+  let dragging = null;
+  let draggingGroup = null; // array of pieces being dragged together
+  let dragLead = null;       // piece that was initially grabbed
+  let dragOff = {x:0,y:0};
+  let hintOn = false;
+  let moves = 0;
+  let startedAt = 0;
+  let tickTimer = null;
+  let sec = 0;
+  running = false;
+
+  function computeGrid(n){
+    // prefer near-square grids: 16=4x4,36=6x6,64=8x8,100=10x10
+    const s = Math.round(Math.sqrt(n));
+    return {rows:s, cols:s};
+  }
+
+  function layout(){
+    const W = window.innerWidth, H = window.innerHeight;
+    const pad = 18;
+    const topHud = (W < 860 ? 84 : 96);
+    const ar = img.naturalWidth / img.naturalHeight;
+
+    const narrow = W < 820;
+
+    if (narrow){
+      // Mobile/tablet: trays at the bottom (2 columns)
+      const trayH = Math.max(160, Math.floor(H * 0.28));
+      const trayY = H - trayH - pad;
+      const trayW = (W - pad*3) / 2;
+
+      leftTray  = { x: pad,          y: trayY, w: trayW, h: trayH };
+      rightTray = { x: pad*2+trayW,  y: trayY, w: trayW, h: trayH };
+
+      const boardMaxW = W - pad*2;
+      const boardMaxH = trayY - topHud - pad;
+
+      let bw = Math.min(boardMaxW, boardMaxH * ar);
+      let bh = bw / ar;
+      if (bh > boardMaxH){ bh = boardMaxH; bw = bh * ar; }
+
+      board = { x: (W - bw)/2, y: topHud + (boardMaxH - bh)/2, w:bw, h:bh };
+      return;
+    }
+
+    // Desktop: trays on the sides
+    const trayW = Math.max(190, Math.min(320, Math.floor(W * 0.18)));
+    leftTray  = { x: pad,              y: topHud, w: trayW, h: H - topHud - pad };
+    rightTray = { x: W - pad - trayW,  y: topHud, w: trayW, h: H - topHud - pad };
+
+    const boardMaxW = W - (trayW*2 + pad*4);
+    // Reserve a smaller bottom margin: Yandex UI already reduces viewport in many cases
+    // (keeping this modest prevents pieces from being hidden under overlays)
+    const boardMaxH = H - topHud - 60;
+
+    let bw = Math.min(boardMaxW, boardMaxH * ar);
+    let bh = bw / ar;
+    if (bh > boardMaxH){ bh = boardMaxH; bw = bh * ar; }
+    board = { x: (W - bw)/2, y: topHud + (boardMaxH - bh)/2, w:bw, h:bh };
+  }
+
+  function randIn(rect, margin=10){
+    return {
+      x: rect.x + margin + Math.random()*(rect.w - margin*2),
+      y: rect.y + margin + Math.random()*(rect.h - margin*2),
+    };
+  }
+
+  // --- Safe spawn + safe drag: never allow pieces under UI (Hint label, Hint/Shuffle, Sound/Home) ---
+  let _uiAvoidCache = null;
+  let _uiAvoidCacheAt = 0;
+  function getUiAvoidRects(insetPx=14){
+    // Soft avoid zones: we only protect the *central* part of UI controls.
+    // Pieces are allowed to go *partially* under buttons so the player can pull them out.
+    const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+    if (_uiAvoidCache && (now - _uiAvoidCacheAt) < 120) return _uiAvoidCache;
+
+    const canvasRect = canvas.getBoundingClientRect();
+    const ids = ['btnFs','btnSound','btnClose','btnHint','btnShuffle','hintState'];
+    const rects = [];
+    ids.forEach(id => {
+      const el = document.getElementById(id);
+      if(!el) return;
+      const st = getComputedStyle(el);
+      if (st.display === 'none' || st.visibility === 'hidden') return;
+      const r = el.getBoundingClientRect();
+      if(r.width <= 0 || r.height <= 0) return;
+
+      const w = r.width;
+      const h = r.height;
+      // shrink to inner area (up to ~35%)
+      const inset = Math.min(insetPx, w*0.35, h*0.35);
+      const x0 = (r.left - canvasRect.left) + inset;
+      const y0 = (r.top  - canvasRect.top ) + inset;
+      const w0 = Math.max(0, w - inset*2);
+      const h0 = Math.max(0, h - inset*2);
+      if (w0 <= 0 || h0 <= 0) return;
+      rects.push({ x:x0, y:y0, w:w0, h:h0 });
+    });
+    _uiAvoidCache = rects;
+    _uiAvoidCacheAt = now;
+    return rects;
+  }
+
+
+  // Full UI rects (for preventing pieces from being completely hidden under buttons)
+  let _uiFullCache = null;
+  let _uiFullCacheAt = 0;
+  function getUiFullRects(padPx=0){
+    const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+    if (_uiFullCache && (now - _uiFullCacheAt) < 120) return _uiFullCache;
+    const canvasRect = canvas.getBoundingClientRect();
+    // Include fullscreen button too (GM): prevent pieces from being fully hidden under it.
+    const ids = ['btnFs','btnSound','btnClose','btnHint','btnShuffle','hintState'];
+    const rects = [];
+    for (const id of ids){
+      const el = document.getElementById(id);
+      if(!el) continue;
+      const st = getComputedStyle(el);
+      if (st.display === 'none' || st.visibility === 'hidden') continue;
+      const r = el.getBoundingClientRect();
+      if (r.width <= 0 || r.height <= 0) continue;
+      const obj = {
+        x: (r.left - canvasRect.left) - padPx,
+        y: (r.top  - canvasRect.top ) - padPx,
+        w: r.width  + padPx*2,
+        h: r.height + padPx*2,
+      };
+      // Fullscreen button: allow only a small overlap so tiny pieces cannot become ungrabbable.
+      if (id === 'btnFs') {
+        obj.maxOverlap = 0.22;
+        obj.centerOverlap = 0.18;
+      }
+      rects.push(obj);
+    }
+
+    // Prevent pieces from getting trapped BETWEEN paired buttons.
+    // Even if a tiny piece can visually appear in the gap, pointer events are often captured
+    // by the buttons' boxes/shadows, making the piece impossible to grab.
+    function addSeamRect(idA, idB){
+      const aEl = document.getElementById(idA);
+      const bEl = document.getElementById(idB);
+      if (!aEl || !bEl) return;
+      const sa = getComputedStyle(aEl);
+      const sb = getComputedStyle(bEl);
+      if (sa.display === 'none' || sa.visibility === 'hidden') return;
+      if (sb.display === 'none' || sb.visibility === 'hidden') return;
+      const ra = aEl.getBoundingClientRect();
+      const rb = bEl.getBoundingClientRect();
+      if (ra.width <= 0 || ra.height <= 0 || rb.width <= 0 || rb.height <= 0) return;
+
+      const a = {
+        x: (ra.left - canvasRect.left) - padPx,
+        y: (ra.top  - canvasRect.top ) - padPx,
+        w: ra.width  + padPx*2,
+        h: ra.height + padPx*2,
+      };
+      const b = {
+        x: (rb.left - canvasRect.left) - padPx,
+        y: (rb.top  - canvasRect.top ) - padPx,
+        w: rb.width  + padPx*2,
+        h: rb.height + padPx*2,
+      };
+
+      const L = (a.x <= b.x) ? a : b;
+      const R = (a.x <= b.x) ? b : a;
+      const y = Math.min(L.y, R.y);
+      const h = Math.max(L.y + L.h, R.y + R.h) - y;
+      const gapL = L.x + L.w;
+      const gapR = R.x;
+
+      // A "seam" barrier: either the real gap (expanded) or a small strip at the join.
+      const seamPad = 10;
+      let seamX, seamW;
+      const gapW = gapR - gapL;
+      if (gapW > 2){
+        seamX = gapL - seamPad;
+        seamW = gapW + seamPad*2;
+      } else {
+        const cx = (gapL + gapR) / 2;
+        seamW = seamPad * 2;
+        seamX = cx - seamW/2;
+      }
+      rects.push({
+        x: seamX,
+        y: y - seamPad,
+        w: seamW,
+        h: h + seamPad*2,
+        hard: true,
+      });
+    }
+
+    // Pairs on the right side
+    addSeamRect('btnSound','btnClose');
+    addSeamRect('btnHint','btnShuffle');
+
+    _uiFullCache = rects;
+    _uiFullCacheAt = now;
+    return rects;
+  }
+
+  function boxInside(box, r){
+    return box.x >= r.x && box.y >= r.y && (box.x + box.w) <= (r.x + r.w) && (box.y + box.h) <= (r.y + r.h);
+  }
+
+  function rectsOverlap(a,b){
+    return !(a.x + a.w <= b.x || b.x + b.w <= a.x || a.y + a.h <= b.y || b.y + b.h <= a.y);
+  }
+
+  function randInSafe(rect, margin=10, w=0, h=0){
+    const avoid = getUiAvoidRects();
+    // If we have no avoid rects, fallback to normal rand.
+    if(!avoid || !avoid.length) return randIn(rect, margin);
+    for(let i=0;i<250;i++){
+      const xy = randIn(rect, margin);
+      const box = {x: xy.x, y: xy.y, w: w||0, h: h||0};
+      let ok = true;
+      for(const ar of avoid){ if(rectsOverlap(box, ar)){ ok=false; break; } }
+      if(ok) return xy;
+    }
+    return randIn(rect, margin);
+  }
+  // --- /Safe spawn ---
+
+
+  // Place TOP-LEFT of piece cell strictly inside tray (taking tabs/extra into account)
+  function randInTraySafe(tray, margin, cellW, cellH, extra){
+    const avoid = getUiAvoidRects();
+    const ex = extra || 0;
+    const Wc = canvas.width || window.innerWidth;
+    const Hc = canvas.height || window.innerHeight;
+    const clampVal = (v, a, b) => Math.max(a, Math.min(b, v));
+
+    const minX = tray.x + margin + ex;
+    const maxX = tray.x + tray.w - margin - ex - cellW;
+    const minY = tray.y + margin + ex;
+    const maxY = tray.y + tray.h - margin - ex - cellH;
+
+    // If tray is too small, center the piece in it
+    if (maxX <= minX || maxY <= minY){
+      const cx = tray.x + (tray.w - cellW)/2;
+      const cy = tray.y + (tray.h - cellH)/2;
+      return { x: clampVal(cx, margin + ex, Wc - margin - ex - cellW), y: clampVal(cy, margin + ex, Hc - margin - ex - cellH) };
+    }
+
+    for (let i=0;i<260;i++){
+      const x = minX + Math.random()*(maxX - minX);
+      const y = minY + Math.random()*(maxY - minY);
+
+      // piece draw box (including tabs)
+      const box = { x: x - ex, y: y - ex, w: cellW + ex*2, h: cellH + ex*2 };
+
+      let ok = true;
+      for(const ar of avoid){
+        if(rectsOverlap(box, ar)) { ok = false; break; }
+      }
+      if(ok) return {x: clampVal(x, margin + ex, Wc - margin - ex - cellW), y: clampVal(y, margin + ex, Hc - margin - ex - cellH)};
+    }
+
+    const rx = minX + Math.random()*(maxX - minX);
+    const ry = minY + Math.random()*(maxY - minY);
+    return { x: clampVal(rx, margin + ex, Wc - margin - ex - cellW), y: clampVal(ry, margin + ex, Hc - margin - ex - cellH) };
+  }
+
+  function groupBox(group){
+    const b = groupBounds(group);
+    return { x: b.left, y: b.top, w: (b.right - b.left), h: (b.bottom - b.top) };
+  }
+
+  function pushOutDelta(box, ar){
+    const dxL = ar.x - (box.x + box.w);
+    const dxR = (ar.x + ar.w) - box.x;
+    const dyU = ar.y - (box.y + box.h);
+    const dyD = (ar.y + ar.h) - box.y;
+    const cand = [
+      {dx: dxL, dy: 0,  abs: Math.abs(dxL)},
+      {dx: dxR, dy: 0,  abs: Math.abs(dxR)},
+      {dx: 0,  dy: dyU, abs: Math.abs(dyU)},
+      {dx: 0,  dy: dyD, abs: Math.abs(dyD)},
+    ].sort((a,b)=>a.abs-b.abs);
+    return cand;
+  }
+
+  
+  function rectContainsPoint(r, x, y){
+    return x >= r.x && x <= (r.x + r.w) && y >= r.y && y <= (r.y + r.h);
+  }
+  function overlapArea(a,b){
+    const x1 = Math.max(a.x, b.x);
+    const y1 = Math.max(a.y, b.y);
+    const x2 = Math.min(a.x + a.w, b.x + b.w);
+    const y2 = Math.min(a.y + a.h, b.y + b.h);
+    const w = Math.max(0, x2 - x1);
+    const h = Math.max(0, y2 - y1);
+    return w * h;
+  }
+
+  function keepGroupOutOfUI(group, isDragging=false){
+    // Soft protection: allow pieces to slide *partially* under UI,
+    // but never allow them to become hidden more than ~half (especially small pieces on 64/100).
+    // A small padding makes hit-safe zones closer to what the user actually can click/grab,
+    // especially with shadows / rounded corners.
+    const avoid = getUiFullRects(4);
+    if (!avoid || !avoid.length) return;
+
+    // Allow partial overlap, but limit how deep the piece/group can go under UI.
+    // This is important because UI elements capture pointer events: the player must always
+    // have a visible area to grab the piece back.
+    //
+    // maxOverlap: max allowed UI-covered area relative to the group's bbox.
+    // While dragging we keep it slightly looser to avoid jitter.
+    // Allow up to ~half of the bbox under UI, but never more.
+    // (Needed because UI captures pointer events — the player must always have something to grab.)
+    const maxOverlap = isDragging ? 0.50 : 0.48;
+    const centerOverlap = isDragging ? 0.45 : 0.40;
+
+    for (let it=0; it<3; it++){
+      let box = groupBox(group);
+      let moved = false;
+      const areaBox = Math.max(1, box.w * box.h);
+      const cx = box.x + box.w/2;
+      const cy = box.y + box.h/2;
+
+      for (const ar of avoid){
+        const a = overlapArea(box, ar);
+        if (a <= 0) continue;
+
+        const ratio = a / areaBox;
+        const fully = boxInside(box, ar);
+        const centerIn = rectContainsPoint(ar, cx, cy);
+
+        // allow about half overlap, but not more than that (some controls can override thresholds)
+        const hard = !!ar.hard;
+        const maxO = (typeof ar.maxOverlap === 'number') ? ar.maxOverlap : maxOverlap;
+        const centO = (typeof ar.centerOverlap === 'number') ? ar.centerOverlap : centerOverlap;
+        // For "seam" barriers (between paired buttons) we push out as soon as the group's center
+        // gets inside the seam. This prevents tiny pieces from becoming ungrabbable between buttons.
+        const deep = hard ? centerIn : (fully || (ratio > maxO) || (centerIn && ratio > centO));
+        if (!deep) continue;
+
+        const options = pushOutDelta(box, ar);
+        let applied = false;
+        for (const opt of options){
+          const res = applyGroupDeltaClamped(group, opt.dx, opt.dy);
+          if (res && (res.dx !== 0 || res.dy !== 0)) { applied = true; break; }
+        }
+        moved = moved || applied;
+        box = groupBox(group);
+      }
+      if (!moved) break;
+    }
+  }
+
+  // If a piece/group ended up inside UI "seams" (between buttons) and became ungrabbable,
+  // this will nudge it back to a playable area without changing any layout metrics.
+  function sanitizeAllGroupsUI(){
+    if (!pieces || !pieces.length) return;
+    const groups = new Map();
+    for (const p of pieces){
+      if (!p || p.locked) continue;
+      if (typeof p.gid !== 'number') p.gid = nextGid++;
+      if (!groups.has(p.gid)) groups.set(p.gid, []);
+      groups.get(p.gid).push(p);
+    }
+    for (const grp of groups.values()){
+      keepGroupOutOfUI(grp, false);
+    }
+  }
+
+  // --- Group (glued pieces) support ---
+  let nextGid = 1;
+
+  function getGroup(p){
+    if (!p || p.locked) return [p];
+    if (typeof p.gid !== 'number') p.gid = nextGid++;
+    const gid = p.gid;
+    const arr = [];
+    for (const x of pieces){
+      if (!x.locked && x.gid === gid) arr.push(x);
+    }
+    return arr.length ? arr : [p];
+  }
+
+  function bringGroupToFront(group){
+    // keep relative order but move all to the end
+    for (const gp of group){
+      const i = pieces.indexOf(gp);
+      if (i >= 0) pieces.splice(i, 1);
+    }
+    for (const gp of group) pieces.push(gp);
+  }
+
+  function groupBounds(group){
+    let left = 1e9, top = 1e9, right = -1e9, bottom = -1e9;
+    for (const p of group){
+      const l = p.x - p.extra;
+      const t = p.y - p.extra;
+      const r = l + p.offW;
+      const b = t + p.offH;
+      if (l < left) left = l;
+      if (t < top) top = t;
+      if (r > right) right = r;
+      if (b > bottom) bottom = b;
+    }
+    return {left, top, right, bottom};
+  }
+
+  function applyGroupDeltaClamped(group, dx, dy){
+    const W = window.innerWidth, H = window.innerHeight;
+    const b = groupBounds(group);
+    const minDx = -b.left;
+    const maxDx = W - b.right;
+    const minDy = -b.top;
+    const maxDy = H - b.bottom;
+    const cdx = Math.max(minDx, Math.min(maxDx, dx));
+    const cdy = Math.max(minDy, Math.min(maxDy, dy));
+    if (cdx === 0 && cdy === 0) return {dx:0, dy:0};
+    for (const p of group){ p.x += cdx; p.y += cdy; }
+    return {dx:cdx, dy:cdy};
+  }
+
+  function tryGlueGroup(group, snapDist){
+    // Try to snap the dragged group to another group (or to a locked anchor piece).
+    const cellW = board.w/cols, cellH = board.h/rows;
+    const byKey = new Map();
+    for (const p of pieces) byKey.set(p.r + ',' + p.c, p);
+
+    let best = null;
+    for (const p of group){
+      const nbs = [
+        {r:p.r-1, c:p.c, dx:0,      dy:-cellH},
+        {r:p.r+1, c:p.c, dx:0,      dy: cellH},
+        {r:p.r,   c:p.c-1, dx:-cellW, dy:0},
+        {r:p.r,   c:p.c+1, dx: cellW, dy:0},
+      ];
+      for (const nb of nbs){
+        const q = byKey.get(nb.r + ',' + nb.c);
+        if (!q) continue;
+        if (!q.locked){
+          if (typeof q.gid !== 'number') q.gid = nextGid++;
+          if (q.gid === p.gid) continue;
+        }
+        const alignX = q.x - nb.dx;
+        const alignY = q.y - nb.dy;
+        const dist = Math.hypot(alignX - p.x, alignY - p.y);
+        if (dist <= snapDist){
+          if (!best || dist < best.dist){
+            best = {dist, shiftX: alignX - p.x, shiftY: alignY - p.y, target: q, anchor: q.locked};
+          }
+        }
+      }
+    }
+
+    if (!best) return false;
+
+    applyGroupDeltaClamped(group, best.shiftX, best.shiftY);
+
+    // Merge only with an unlocked target group
+    if (!best.anchor){
+      const targetGid = best.target.gid;
+      for (const p of group) p.gid = targetGid;
+    }
+    blip();
+    return true;
+  }
+
+  function snapGroupToBoardAndLock(group, snapDist){
+    // If any piece in the group is close to its target slot, snap whole group into place
+    // and lock all pieces that end up exactly on their slots.
+    let best = null;
+    for (const p of group){
+      const dist = Math.hypot(p.x - p.tx, p.y - p.ty);
+      if (dist <= snapDist){
+        if (!best || dist < best.dist) best = {p, dist};
+      }
+    }
+    if (!best) return false;
+
+    applyGroupDeltaClamped(group, best.p.tx - best.p.x, best.p.ty - best.p.y);
+
+    const eps = 1.2;
+    for (const p of group){
+      const d = Math.hypot(p.x - p.tx, p.y - p.ty);
+      if (d <= eps){
+        p.x = p.tx;
+        p.y = p.ty;
+        p.locked = true;
+        p.gid = -1;
+      }
+    }
+    return true;
+  }
+  // --- /Group support ---
+
+
+
+  function piecePath(px, py, pw, ph, tabs){
+    // tabs: {top,right,bottom,left} values -1/0/1 (in/out)
+    const size = Math.min(pw, ph);
+    const tab = size*0.22;
+    const neck = tab*0.55;
+    const midx = px + pw/2;
+    const midy = py + ph/2;
+    const p = new Path2D();
+    p.moveTo(px, py);
+
+    // TOP
+    if (tabs.top !== 0){
+      const dir = tabs.top;
+      p.lineTo(midx - neck, py);
+      p.bezierCurveTo(midx - neck, py - dir*tab, midx + neck, py - dir*tab, midx + neck, py);
+    }
+    p.lineTo(px + pw, py);
+
+    // RIGHT
+    if (tabs.right !== 0){
+      const dir = tabs.right;
+      p.lineTo(px + pw, midy - neck);
+      p.bezierCurveTo(px + pw + dir*tab, midy - neck, px + pw + dir*tab, midy + neck, px + pw, midy + neck);
+    }
+    p.lineTo(px + pw, py + ph);
+
+    // BOTTOM
+    if (tabs.bottom !== 0){
+      const dir = tabs.bottom;
+      p.lineTo(midx + neck, py + ph);
+      p.bezierCurveTo(midx + neck, py + ph + dir*tab, midx - neck, py + ph + dir*tab, midx - neck, py + ph);
+    }
+    p.lineTo(px, py + ph);
+
+    // LEFT
+    if (tabs.left !== 0){
+      const dir = tabs.left;
+      p.lineTo(px, midy + neck);
+      p.bezierCurveTo(px - dir*tab, midy + neck, px - dir*tab, midy - neck, px, midy - neck);
+    }
+    p.closePath();
+    return p;
+  }
+
+  function buildPieces(){
+    pieces = [];
+    nextGid = 1;
+    const cellW = board.w / cols;
+    const cellH = board.h / rows;
+
+    // tabs map
+    let tabs;
+if (tabsMap && tabsMap.length === rows && tabsMap[0] && tabsMap[0].length === cols){
+  tabs = tabsMap; // используем прежние "ушки" (важно при фулскрине/ресайзе)
+} else {
+  tabs = Array.from({length: rows}, () => Array.from({length: cols}, () => ({top:0,right:0,bottom:0,left:0})));
+  for (let r=0; r<rows; r++){
+    for (let c=0; c<cols; c++){
+      // edges: 0, internal: random +/-1 with matching neighbors
+      tabs[r][c].top = (r===0) ? 0 : -tabs[r-1][c].bottom;
+      tabs[r][c].left = (c===0) ? 0 : -tabs[r][c-1].right;
+      tabs[r][c].right = (c===cols-1) ? 0 : (Math.random()<0.5 ? 1 : -1);
+      tabs[r][c].bottom = (r===rows-1) ? 0 : (Math.random()<0.5 ? 1 : -1);
+    }
+  }
+  tabsMap = tabs;
+}
+
+    // create per-piece mask canvas (for clipped draw)
+    const srcW = img.naturalWidth, srcH = img.naturalHeight;
+    for (let r=0; r<rows; r++){
+      for (let c=0; c<cols; c++){
+        const tx = board.x + c*cellW;
+        const ty = board.y + r*cellH;
+        const pw = cellW;
+        const ph = cellH;
+        // Offscreen size includes tab extra
+        const extra = Math.min(pw,ph)*0.26;
+        const offW = Math.ceil(pw + extra*2);
+        const offH = Math.ceil(ph + extra*2);
+        const off = document.createElement("canvas");
+        off.width = Math.ceil(offW*dpr);
+        off.height = Math.ceil(offH*dpr);
+        const octx = off.getContext("2d");
+        octx.setTransform(dpr,0,0,dpr,0,0);
+
+        const localX = extra, localY = extra;
+        const path = piecePath(localX, localY, pw, ph, tabs[r][c]);
+
+        // clip
+        octx.save();
+        octx.clip(path);
+
+        // draw image portion with matching scaling
+        // map board rect -> image rect
+        // draw the full image aligned to the puzzle board, so tabs contain real pixels (без пустот)
+        const bleed = 1.5;
+        octx.drawImage(
+          img,
+          0, 0, srcW, srcH,
+          localX - c*pw - bleed,
+          localY - r*ph - bleed,
+          pw*cols + bleed*2,
+          ph*rows + bleed*2
+        );
+        octx.restore();
+
+        // border highlight
+        octx.strokeStyle = "rgba(0,0,0,.35)";
+        octx.lineWidth = 3;
+        octx.stroke(path);
+        octx.strokeStyle = "rgba(255,255,255,.25)";
+        octx.lineWidth = 2;
+        octx.stroke(path);
+
+        // place in trays (left/right alternating)
+        const tray = ((r*cols+c) % 2 === 0) ? leftTray : rightTray;
+        // scatter in trays strictly inside bounds (consider tabs/extra)
+        const pos = randInTraySafe(tray, 24, pw, ph, extra);
+        pieces.push({
+          r,c, tx,ty, locked:false,
+          x: pos.x, y: pos.y,
+          off, offW, offH, extra,
+          pathLocal: path, // in offscreen coords
+          tabs: tabs[r][c],
+          gid: nextGid++,
+        });
+      }
+    }
+    shufflePieces(false);
+  }
+
+  function shufflePieces(countMove=true){
+    // Shuffle only free single pieces that are currently in the SIDE TRAYS.
+    // Glued groups (gid with >1 pieces) are NOT moved.
+    // Pieces already pulled onto the board stay in place.
+    const groups = new Map();
+
+    for (const p of pieces){
+      if (p.locked) continue;
+      if (typeof p.gid !== 'number') p.gid = nextGid++;
+      if (!groups.has(p.gid)) groups.set(p.gid, []);
+      groups.get(p.gid).push(p);
+    }
+
+    for (const [gid, grp] of groups){
+      if (grp.length !== 1) continue; // keep glued groups in place
+
+      const box = groupBox(grp);
+      const cx = box.x + box.w/2;
+      const cy = box.y + box.h/2;
+      let tray = null;
+      if (pointInRect(cx,cy,leftTray)) tray = leftTray;
+      else if (pointInRect(cx,cy,rightTray)) tray = rightTray;
+      else continue; // not in trays -> don't shuffle
+
+      const margin = 34;
+      let minX = tray.x + margin;
+      let maxX = tray.x + tray.w - margin - box.w;
+      let minY = tray.y + margin;
+      let maxY = tray.y + tray.h - margin - box.h;
+
+      let nx, ny;
+      if (maxX <= minX) nx = tray.x + (tray.w - box.w)/2;
+      else nx = minX + Math.random()*(maxX - minX);
+      if (maxY <= minY) ny = tray.y + (tray.h - box.h)/2;
+      else ny = minY + Math.random()*(maxY - minY);
+
+      const dx = nx - box.x;
+      const dy = ny - box.y;
+      applyGroupDeltaClamped(grp, dx, dy);
+      // keep piece from becoming fully hidden under UI
+      keepGroupOutOfUI(grp, false);
+    }
+
+    // If something got stuck between UI buttons earlier, nudge it out (without moving groups).
+    sanitizeAllGroupsUI();
+
+    if (countMove) moves++;
+    updateHud();
+    redraw();
+  }
+
+  function updateHud(){
+    $("m").textContent = String(moves);
+    $("t").textContent = fmtTime(sec);
+    $("hintState").textContent = (hintOn ? I18N[LANG].hintOn : I18N[LANG].hintOff);
+  }
+
+  function startTimer(){
+    stopTimer();
+    sec = 0;
+    startedAt = Date.now();
+    tickTimer = setInterval(() => {
+      if(!running) return;
+      sec = Math.floor((Date.now()-startedAt)/1000);
+      updateHud();
+    }, 250);
+  }
+  function stopTimer(){
+    if (tickTimer){ clearInterval(tickTimer); tickTimer=null; }
+  }
+
+  function redraw(){
+    if (!screens.game.classList.contains("active")) return;
+    const W = window.innerWidth, H = window.innerHeight;
+    ctx.clearRect(0,0,W,H);
+
+    // background pattern already in CSS; we just draw translucent frame
+    // trays
+    ctx.save();
+    ctx.fillStyle = "rgba(0,0,0,.20)";
+    roundRect(ctx, leftTray.x, leftTray.y, leftTray.w, leftTray.h, 18, true, false);
+    roundRect(ctx, rightTray.x, rightTray.y, rightTray.w, rightTray.h, 18, true, false);
+    // board frame
+    ctx.fillStyle = "rgba(0,0,0,.18)";
+    roundRect(ctx, board.x-10, board.y-10, board.w+20, board.h+20, 16, true, false);
+    ctx.restore();
+
+    // board hint image
+    if (hintOn){
+      ctx.save();
+      ctx.globalAlpha = 0.22;
+      ctx.drawImage(img, board.x, board.y, board.w, board.h);
+      ctx.restore();
+    }
+
+    // draw locked pieces on the board (normal brightness)
+    pieces.forEach(p => {
+      if (!p.locked) return;
+      ctx.drawImage(p.off, p.tx - p.extra, p.ty - p.extra, p.offW, p.offH);
+    });
+    // If solved, fade in a clean full image on top (no seams)
+    if (finalReveal){
+      const t = Math.min(1, (performance.now() - finalStart) / 450);
+      ctx.save();
+      ctx.globalAlpha = t;
+      ctx.drawImage(img, board.x, board.y, board.w, board.h);
+      ctx.restore();
+      if (t < 1){
+        cancelAnimationFrame(finalAnim);
+        finalAnim = requestAnimationFrame(redraw);
+      }
+    }
+
+
+    // draw pieces (unlocked; if a group is being dragged, draw it on top with stronger shadow)
+    const topSet = (draggingGroup && draggingGroup.length) ? new Set(draggingGroup) : null;
+    // first pass: all other unlocked pieces
+    pieces.forEach(p => {
+      if (p.locked) return;
+      if (topSet && topSet.has(p)) return;
+      drawPiece(p);
+    });
+    // second pass: dragged group
+    if (topSet){
+      pieces.forEach(p => {
+        if (p.locked) return;
+        if (!topSet.has(p)) return;
+        drawPiece(p, true);
+      });
+    }
+  }
+
+  function drawPiece(p, onTop=false){
+    ctx.save();
+    if (onTop){
+      ctx.shadowColor = "rgba(0,0,0,.45)";
+      ctx.shadowBlur = 22;
+      ctx.shadowOffsetY = 10;
+    } else {
+      ctx.shadowColor = "rgba(0,0,0,.28)";
+      ctx.shadowBlur = 14;
+      ctx.shadowOffsetY = 8;
+    }
+    ctx.drawImage(p.off, p.x - p.extra, p.y - p.extra, p.offW, p.offH);
+    ctx.restore();
+  }
+
+  function roundRect(ctx,x,y,w,h,r,fill,stroke){
+    const rr = Math.min(r, w/2, h/2);
+    ctx.beginPath();
+    ctx.moveTo(x+rr,y);
+    ctx.arcTo(x+w,y,x+w,y+h,rr);
+    ctx.arcTo(x+w,y+h,x,y+h,rr);
+    ctx.arcTo(x,y+h,x,y,rr);
+    ctx.arcTo(x,y,x+w,y,rr);
+    ctx.closePath();
+    if(fill) ctx.fill();
+    if(stroke) ctx.stroke();
+  }
+
+  // hit testing with offscreen path
+  function hitPiece(px, py){
+    // iterate from topmost to bottom
+    for (let i=pieces.length-1; i>=0; i--){
+      const p = pieces[i];
+      if (p.locked) continue;
+      // point in offscreen local coords
+      const lx = (px - (p.x - p.extra));
+      const ly = (py - (p.y - p.extra));
+      if (lx < 0 || ly < 0 || lx > p.offW || ly > p.offH) continue;
+      // use pathLocal (in offscreen CSS coords)
+      if (ctx.isPointInPath(p.pathLocal, lx, ly)){
+        return p;
+      }
+    }
+    return null;
+  }
+
+  function pointerPos(ev){
+    const rect = canvas.getBoundingClientRect();
+    const x = (ev.clientX - rect.left);
+    const y = (ev.clientY - rect.top);
+    return {x,y};
+  }
+
+  function onDown(ev){
+    if (adPaused) return;
+    ev.preventDefault();
+    const pos = pointerPos(ev);
+    const p = hitPiece(pos.x, pos.y);
+    if (!p) return;
+
+    // drag whole glued group
+    dragging = p;
+    dragLead = p;
+    draggingGroup = getGroup(p);
+    bringGroupToFront(draggingGroup);
+
+    dragOff.x = pos.x - p.x;
+    dragOff.y = pos.y - p.y;
+    canvas.setPointerCapture(ev.pointerId);
+    redraw();
+  }
+  function onMove(ev){
+    if (adPaused) return;
+    if (!dragging || !draggingGroup || !dragLead) return;
+    ev.preventDefault();
+    const pos = pointerPos(ev);
+
+    const desiredX = pos.x - dragOff.x;
+    const desiredY = pos.y - dragOff.y;
+    const dx = desiredX - dragLead.x;
+    const dy = desiredY - dragLead.y;
+
+    applyGroupDeltaClamped(draggingGroup, dx, dy);
+    // Allow partial overlap, but prevent the group from becoming fully hidden under UI controls
+    keepGroupOutOfUI(draggingGroup, true);
+    redraw();
+  }
+  function onUp(ev){
+    if (adPaused) return;
+    if (!dragging || !draggingGroup || !dragLead) return;
+    ev.preventDefault();
+    try{ canvas.releasePointerCapture(ev.pointerId); }catch(e){}
+
+    // take a snapshot of the originally dragged pieces
+    const draggedSnapshot = draggingGroup.slice();
+
+    dragging = null;
+    draggingGroup = null;
+    dragLead = null;
+
+    const snap = Math.min(board.w/cols, board.h/rows) * 0.25;
+    moves++; updateHud();
+
+    // 1) Glue to nearby groups (repeat until no more snaps)
+    // We always move the group that the player dragged; after a merge we keep using the merged gid.
+    let anchorPiece = null;
+    for (const p of draggedSnapshot){
+      if (!p.locked){ anchorPiece = p; break; }
+    }
+    if (anchorPiece){
+      let safety = 0;
+      while (safety++ < 10){
+        const g = getGroup(anchorPiece);
+        if (!g.length) break;
+        const changed = tryGlueGroup(g, snap);
+        if (!changed) break;
+        // after merge, anchorPiece keeps its gid; getGroup() will return the merged group
+      }
+
+      // 2) Snap the glued group to the board and lock pieces
+      const g2 = getGroup(anchorPiece);
+      snapGroupToBoardAndLock(g2, snap);
+      // Safety: if UI shifted (Yandex panels), keep the moved group out from under buttons
+      keepGroupOutOfUI(g2, false);
+    } else {
+      // fallback for safety
+      const p = draggedSnapshot[0];
+      if (p && !p.locked){
+        const dist = Math.hypot(p.x - p.tx, p.y - p.ty);
+        if (dist < snap){
+          p.x = p.tx;
+          p.y = p.ty;
+          p.locked = true;
+          p.gid = -1;
+          blip();
+        }
+      }
+    }
+
+    // win?
+    if (pieces.every(pp => pp.locked)){
+      win();
+    }
+    redraw();
+  }
+
+    function win(){
+    // Reveal the final image first, then show the "Done" dialog
+    if (finalReveal) return;
+    finalReveal = true;
+    finalStart = performance.now();
+    hintOn = false;
+    updateHud();
+    redraw();
+
+    // rewards (same logic as Relax_UIFIX5)
+    const baseReward = (REWARD_BY_PIECES[chosenPieces] || 0);
+    const res = markCompleted(currentSrc, chosenPieces, baseReward);
+
+    // Give the player a moment to enjoy the final picture
+    setTimeout(() => {
+      running = false;
+      gameplayStopEvent();
+      stopTimer();
+$("winTime").textContent = fmtTime(sec);
+      $("winMoves").textContent = String(moves);
+
+      const ws = $("winStars");
+      if (ws) ws.textContent = `+${res.earned}⭐`;
+
+      const wbLine = $("winBonusLine");
+      const wb = $("winBonus");
+      if (wb && wbLine){
+        if (res.bonus > 0){
+          wb.textContent = `+${res.bonus}⭐`;
+          wbLine.style.display = "";
+        } else {
+          wbLine.style.display = "none";
+        }
+      }
+
+      $("winToast").classList.add("show");
+      startConfetti(1400);
+    }, 650);
+  }
+
+  function hideWin(){ $("winToast").classList.remove("show"); }
+
+  $("winClose").addEventListener("click", hideWin);
+  $("winMore").addEventListener("click", () => runAfterAd(() => { hideWin(); showScreen("img"); }));
+  $("winReplay").addEventListener("click", () => runAfterAd(() => { hideWin(); startGame(true); }));
+
+  // game buttons
+  $("btnHint").addEventListener("click", () => { hintOn = !hintOn; updateHud(); redraw(); });
+  $("btnShuffle").addEventListener("click", () => shufflePieces(true));
+
+  // keys (ESC exits)
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape"){
+      if ($("winToast").classList.contains("show")) hideWin();
+      else { showScreen("img"); stopGame(); }
+    }
+  });
+
+  function stopGame(){
+    running = false;
+    gameplayStopEvent();
+    stopTimer();
+canvas.removeEventListener("pointerdown", onDown);
+    canvas.removeEventListener("pointermove", onMove);
+    canvas.removeEventListener("pointerup", onUp);
+    canvas.removeEventListener("pointercancel", onUp);
+  }
+
+  function startGame(replay=false){ 
+    tabsMap = null; // новый пазл — новые "ушки"
+    finalReveal = false;
+    finalStart = 0;
+
+    showScreen("game");
+    resize();
+    hintOn = false;
+    moves = 0;
+    updateHud();
+    hideWin();
+
+    const grid = computeGrid(chosenPieces);
+    rows = grid.rows; cols = grid.cols; total = rows*cols;
+
+    // load image
+    const src = IMAGES[selectedIndex].src;
+    currentSrc = src;
+    img = new Image();
+    img.onload = () => {
+      layout();
+      buildPieces();
+      running = true;
+       startTimer();
+       gameplayStartEvent();
+canvas.addEventListener("pointerdown", onDown, {passive:false});
+      canvas.addEventListener("pointermove", onMove, {passive:false});
+      canvas.addEventListener("pointerup", onUp, {passive:false});
+      canvas.addEventListener("pointercancel", onUp, {passive:false});
+      redraw();
+    };
+    img.onerror = () => {
+      // if image fails, just go back
+      alert("Не удалось загрузить картинку. Проверьте папку assets/images.");
+      showScreen("img");
+    };
+    img.src = src + "?v=" + Date.now(); // bypass cache
+  }
+  // init (wait for SDK language + load cloud save before showing UI)
+  async function boot(){
+    // 1) language (GameMonetize): same logic as the approved GM build
+    const preferred = urlLang.startsWith("ru") ? "ru" : "en"; // default: EN
+    setLang(preferred);
+
+    // 2) progress
+    await loadProgress();
+
+    // 3) UI
+    renderThumbs();
+    const mp = $("menuPreview");
+    if (mp) mp.src = IMAGES[selectedIndex].src;
+
+    showScreen("img");
+    gameplayStopEvent();
+    sendGameReady();
+
+    // ensure fit after first render
+    requestAnimationFrame(fitActiveScreen);
+  }
+
+  boot();
+})();
+</script>
+</body>
+</html>

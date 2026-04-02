@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Niche Shift - Mobile Optimized</title>
+    
+    <script type="text/javascript">
+        window.SDK_OPTIONS = {
+            gameId: "2nyi42eoickamix42wswu2vm27vxwbsl",
+            onEvent: function (a) {
+                switch (a.name) {
+                    case "SDK_GAME_PAUSE":
+                        // Mute audio and pause game logic
+                        if (window.game) window.game.togglePause(true);
+                        break;
+                    case "SDK_GAME_START":
+                        // Unmute audio and resume game logic
+                        // In this game, an ad triggers a fresh start/restart
+                        if (window.game) {
+                            window.game.togglePause(false);
+                            window.game.performReset();
+                        }
+                        break;
+                    case "SDK_READY":
+                        console.log("SDK Ready");
+                        break;
+                }
+            }
+        };
+        (function (a, b, c) {
+            var d = a.getElementsByTagName(b)[0];
+            a.getElementById(c) || (a = a.createElement(b), a.id = c, 
+            a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+        })(document, "script", "gamemonetize-sdk");
+    </script>
+    <style>
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            position: fixed;
+        }
+
+        body {
+            margin: 0;
+            padding: 10px;
+            background-color: #0f172a;
+            color: #fff;
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .header {
+            width: 100%;
+            max-width: 450px;
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            margin-bottom: 10px; 
+            z-index: 5;
+            flex-shrink: 0; 
+        }
+
+        .stat-box {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(4px);
+            padding: 8px 10px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+            text-align: center;
+            flex: 1;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+
+        /* Restart Button Style */
+        .btn-restart {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #22d3ee;
+            border-radius: 12px;
+            width: 50px;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 8px !important;
+            padding: 0 !important;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            flex-shrink: 0;
+        }
+
+        .btn-restart:active {
+            transform: scale(0.95);
+            background: #1e293b;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: #94a3b8;
+            margin-bottom: 2px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-value {
+            font-size: 22px;
+            font-weight: bold;
+            color: #22d3ee;
+        }
+
+        #game-container {
+            position: relative;
+            box-shadow: 0 0 30px rgba(6, 182, 212, 0.15);
+            border-radius: 8px;
+            touch-action: none;
+            flex-shrink: 0; 
+        }
+
+        canvas {
+            background: #1e293b;
+            border-radius: 8px;
+            display: block;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent; 
+        }
+
+        #msg-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15, 23, 42, 0.92);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            text-align: center;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        
+        .btn-main {
+            margin-top: 20px;
+            padding: 12px 40px;
+            font-size: 18px;
+            cursor: pointer;
+            background: linear-gradient(135deg, #06b6d4, #3b82f6);
+            color: #fff;
+            border: none;
+            border-radius: 30px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(6, 182, 212, 0.4);
+            transition: transform 0.1s;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .btn-main:active {
+            transform: scale(0.95);
+        }
+
+        .legend {
+            margin-top: 15px;
+            font-size: 12px;
+            color: #64748b;
+            text-align: center;
+            max-width: 96%;
+            line-height: 1.5;
+            flex-shrink: 0;
+        }
+        
+        .warn { color: #f87171; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="stat-box">
+            <div class="stat-label">SCORE</div>
+            <div class="stat-value" id="score">0</div>
+        </div>
+        
+        <button class="btn-restart" onclick="game.requestStart()" title="Restart Game">↻</button>
+
+        <div class="stat-box">
+            <div class="stat-label">ECO-HEALTH</div>
+            <div class="stat-value" id="eco" style="color:#22c55e">100%</div>
+        </div>
+    </div>
+
+    <div id="game-container">
+        <canvas id="canvas" width="400" height="400"></canvas>
+        <div id="msg-overlay">
+            <h2 id="msg-title" style="font-size: 28px; margin-bottom: 10px; background: linear-gradient(to right, #22d3ee, #818cf8); -webkit-background-clip: text; color: transparent;">Niche Shift</h2>
+            <p style="color:#cbd5e1; font-size:14px; margin:0 10px; line-height: 1.6;">
+                Swipe to merge.<br>
+                Maintain balance.<br>
+                Don't starve.
+            </p>
+            <button class="btn-main" onclick="game.requestStart()">Dive In</button>
+        </div>
+    </div>
+
+    <div class="legend">
+        🦠Plankton 🦐Krill 🐟Fish 🦈Shark 🐋Whale 🐲Apex<br>
+        <span class="warn">Tip: Lvl 3+ creatures gain hunger when moving.<br>Merge to feed.</span>
+    </div>
+
+<script>
+const CONFIG = {
+    SIZE: 4,
+    GAP: 10, 
+    CELL: 0, 
+    MAX_HUNGER: 7
+};
+
+const THEME = {
+    1: { name: "Plankton", emoji: "🦠", bg: ["#0891b2", "#155e75"], shadow: "#22d3ee" },
+    2: { name: "Krill", emoji: "🦐", bg: ["#db2777", "#9d174d"], shadow: "#f472b6" },
+    3: { name: "Fish", emoji: "🐟", bg: ["#ca8a04", "#854d0e"], shadow: "#facc15" },
+    4: { name: "Tuna", emoji: "🐡", bg: ["#ea580c", "#9a3412"], shadow: "#fb923c" },
+    5: { name: "Shark", emoji: "🦈", bg: ["#dc2626", "#991b1b"], shadow: "#f87171" },
+    6: { name: "Whale", emoji: "🐋", bg: ["#9333ea", "#6b21a8"], shadow: "#c084fc" },
+    7: { name: "Kraken", emoji: "🦑", bg: ["#4f46e5", "#3730a3"], shadow: "#818cf8" },
+    8: { name: "Leviathan", emoji: "🐲", bg: ["#b45309", "#78350f"], shadow: "#fbbf24" },
+    9: { name: "Bones", emoji: "☠️", bg: ["#334155", "#1e293b"], shadow: "#475569" }
+};
+
+class Game {
+    constructor() {
+        this.canvas = document.getElementById('canvas');
+        this.ctx = this.canvas.getContext('2d');
+        
+        this.grid = Array(CONFIG.SIZE).fill().map(() => Array(CONFIG.SIZE).fill(null));
+        this.deadZones = [];
+        this.score = 0;
+        this.eco = 100;
+        this.gameOver = false;
+        this.isPaused = false; // Input lock for SDK
+        
+        this.assets = {}; 
+        this.generateAllAssets(); 
+
+        this.inputStartX = 0;
+        this.inputStartY = 0;
+        this.isDragging = false;
+
+        this.bindEvents();
+        this.resize();
+        window.addEventListener('resize', () => this.resize());
+    }
+
+    generateAllAssets() {
+        const size = 200; 
+        const tmpCanvas = document.createElement('canvas');
+        tmpCanvas.width = size;
+        tmpCanvas.height = size;
+        const tCtx = tmpCanvas.getContext('2d');
+
+        for (let lv in THEME) {
+            const item = THEME[lv];
+            tCtx.clearRect(0, 0, size, size);
+
+            // Background
+            const grad = tCtx.createLinearGradient(0, 0, size, size);
+            grad.addColorStop(0, item.bg[0]);
+            grad.addColorStop(1, item.bg[1]);
+            
+            tCtx.fillStyle = grad;
+            tCtx.beginPath();
+            this.roundRect(tCtx, 10, 10, size-20, size-20, 30);
+            tCtx.fill();
+
+            // Shine
+            tCtx.fillStyle = "rgba(255,255,255,0.1)";
+            tCtx.beginPath();
+            tCtx.ellipse(size/2, size*0.3, size*0.6, size*0.25, 0, 0, Math.PI*2);
+            tCtx.fill();
+
+            // Emoji
+            tCtx.font = "100px Arial"; 
+            tCtx.textAlign = "center";
+            tCtx.textBaseline = "middle";
+            tCtx.fillStyle = "#fff";
+            tCtx.fillText(item.emoji, size/2, size/2 + 10);
+
+            // Level Badge
+            if (lv < 9) {
+                tCtx.fillStyle = "rgba(0,0,0,0.3)";
+                tCtx.beginPath();
+                tCtx.arc(size-45, 45, 25, 0, Math.PI*2);
+                tCtx.fill();
+                tCtx.font = "bold 24px Arial";
+                tCtx.fillStyle = "#fff";
+                tCtx.fillText(lv, size-45, 47);
+            }
+
+            const img = new Image();
+            img.src = tmpCanvas.toDataURL();
+            this.assets[lv] = img;
+        }
+    }
+
+    roundRect(ctx, x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y);
+        ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        ctx.lineTo(x + r, y + h);
+        ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
+    }
+
+    bindEvents() {
+        this.canvas.addEventListener('touchmove', e => { e.preventDefault(); }, {passive: false});
+
+        this.canvas.addEventListener('touchstart', e => {
+            if(this.isPaused) return;
+            this.handleInputStart(e.touches[0].clientX, e.touches[0].clientY);
+            e.preventDefault(); 
+        }, {passive: false});
+
+        this.canvas.addEventListener('touchend', e => {
+            if(this.isPaused) return;
+            this.handleInputEnd(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+        });
+
+        this.canvas.addEventListener('mousedown', e => {
+            if(this.isPaused) return;
+            this.handleInputStart(e.clientX, e.clientY);
+        });
+        window.addEventListener('mouseup', e => { 
+            if(this.isPaused) return;
+            this.handleInputEnd(e.clientX, e.clientY);
+        });
+
+        document.addEventListener('keydown', e => {
+            if(this.gameOver || this.isPaused) return;
+            const map = {'ArrowUp':0, 'w':0, 'ArrowRight':1, 'd':1, 'ArrowDown':2, 's':2, 'ArrowLeft':3, 'a':3};
+            if(map[e.key] !== undefined) this.move(map[e.key]);
+        });
+    }
+
+    handleInputStart(x, y) {
+        this.inputStartX = x;
+        this.inputStartY = y;
+        this.isDragging = true;
+    }
+
+    handleInputEnd(x, y) {
+        if (!this.isDragging || this.gameOver || this.isPaused) return;
+        this.isDragging = false;
+        const dx = x - this.inputStartX;
+        const dy = y - this.inputStartY;
+        
+        if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 30) this.move(dx > 0 ? 1 : 3);
+        else if (Math.abs(dy) > 30) this.move(dy > 0 ? 2 : 0);
+    }
+
+    resize() {
+        const size = Math.min(window.innerWidth * 0.96, 500);
+        this.canvas.width = size;
+        this.canvas.height = size;
+        CONFIG.GAP = size < 350 ? 8 : 12;
+        CONFIG.CELL = (size - CONFIG.GAP * (CONFIG.SIZE + 1)) / CONFIG.SIZE;
+        this.draw(); 
+    }
+
+    // Called by Buttons
+    requestStart() {
+        if (typeof sdk !== 'undefined' && typeof sdk.showBanner !== 'undefined') {
+            // Try to show ad. Logic continues in SDK_GAME_START event.
+            sdk.showBanner();
+        } else {
+            // Fallback if SDK fails to load (e.g. adblock)
+            this.performReset();
+        }
+    }
+
+    // SDK Helpers
+    togglePause(state) {
+        this.isPaused = state;
+    }
+
+    // Actual Game Logic
+    performReset() {
+        this.grid = Array(CONFIG.SIZE).fill().map(() => Array(CONFIG.SIZE).fill(null));
+        this.deadZones = [];
+        this.score = 0;
+        this.eco = 100;
+        this.gameOver = false;
+        
+        document.getElementById('msg-overlay').style.display = 'none';
+        document.getElementById('msg-title').innerText = "Niche Shift";
+        this.updateUI();
+        
+        this.spawn(); this.spawn();
+        this.draw();
+    }
+
+    spawn() {
+        let empty = [];
+        for(let r=0; r<CONFIG.SIZE; r++) {
+            for(let c=0; c<CONFIG.SIZE; c++) {
+                if(!this.grid[r][c] && !this.isDead(r,c)) empty.push({r,c});
+            }
+        }
+        if(empty.length) {
+            let p = empty[Math.floor(Math.random() * empty.length)];
+            this.grid[p.r][p.c] = { val: Math.random() < 0.9 ? 1 : 2, hunger: 0, merged: false };
+        }
+    }
+
+    isDead(r, c) { return this.deadZones.some(z => z.r === r && z.c === c); }
+
+    move(dir) {
+        let moved = false;
+        const dr = [-1, 0, 1, 0];
+        const dc = [0, 1, 0, -1];
+        let rList = [0,1,2,3], cList = [0,1,2,3];
+        
+        if(dir === 1) cList.reverse();
+        if(dir === 2) rList.reverse();
+
+        for(let r=0; r<4; r++) for(let c=0; c<4; c++) if(this.grid[r][c]) this.grid[r][c].merged = false;
+
+        for(let r of rList) {
+            for(let c of cList) {
+                if(!this.grid[r][c] || this.grid[r][c].val === 9) continue;
+                let cell = this.grid[r][c];
+                let nr = r, nc = c;
+                
+                while(true) {
+                    let tr = nr + dr[dir], tc = nc + dc[dir];
+                    if(tr<0 || tr>=4 || tc<0 || tc>=4 || this.isDead(tr, tc)) break;
+                    let target = this.grid[tr][tc];
+                    if(!target) { nr = tr; nc = tc; }
+                    else if(target.val === cell.val && !target.merged && target.val < 8) { nr = tr; nc = tc; break; }
+                    else break;
+                }
+
+                if(nr !== r || nc !== c) {
+                    let target = this.grid[nr][nc];
+                    if(target && target.val === cell.val) {
+                        target.val++; target.hunger = 0; target.merged = true;
+                        this.score += Math.pow(2, target.val);
+                        this.grid[r][c] = null;
+                        moved = true;
+                    } else {
+                        this.grid[nr][nc] = cell;
+                        this.grid[r][c] = null;
+                        moved = true;
+                    }
+                }
+            }
+        }
+        if(moved) { this.step(); this.draw(); }
+    }
+
+    step() {
+        for(let r=0; r<4; r++) for(let c=0; c<4; c++) {
+            let cell = this.grid[r][c];
+            if(cell && cell.val >= 3 && cell.val < 9) {
+                if(!cell.merged) cell.hunger++;
+                if(cell.hunger >= CONFIG.MAX_HUNGER) { cell.val = 9; cell.hunger = 0; }
+            }
+        }
+        
+        let low = 0;
+        for(let r=0; r<4; r++) for(let c=0; c<4; c++) if(this.grid[r][c] && this.grid[r][c].val <= 2) low++;
+        this.eco = Math.min(100, low * 20);
+        
+        if(low < 2 && Math.random() < 0.3) {
+            let empty = [];
+            for(let r=0; r<4; r++) for(let c=0; c<4; c++) if(!this.grid[r][c] && !this.isDead(r,c)) empty.push({r,c});
+            if(empty.length) {
+                let p = empty[Math.floor(Math.random()*empty.length)];
+                this.deadZones.push({r: p.r, c: p.c, time: 10});
+            }
+        }
+        
+        this.deadZones = this.deadZones.map(z => ({...z, time: z.time-1})).filter(z => z.time > 0);
+        this.spawn();
+        this.updateUI();
+        this.checkOver();
+    }
+
+    checkOver() {
+        let full = true;
+        for(let r=0; r<4; r++) {
+            for(let c=0; c<4; c++) {
+                if(!this.grid[r][c] && !this.isDead(r,c)) {
+                    full = false;
+                    break;
+                }
+            }
+        }
+        
+        if(full) {
+             let canMove = false;
+             for(let r=0; r<4; r++) for(let c=0; c<4; c++) {
+                 let v = this.grid[r][c]?.val;
+                 if(v && v<9) {
+                     if(c<3 && this.grid[r][c+1]?.val === v) canMove = true;
+                     if(r<3 && this.grid[r+1][c]?.val === v) canMove = true;
+                 }
+             }
+             if(!canMove) {
+                this.gameOver = true;
+                document.getElementById('msg-title').innerText = "Eco Collapse!";
+                document.querySelector('#msg-overlay button').innerText = "Try Again";
+                document.getElementById('msg-overlay').style.display = 'flex';
+             }
+        }
+    }
+
+    updateUI() {
+        document.getElementById('score').innerText = this.score;
+        const e = document.getElementById('eco');
+        e.innerText = this.eco + "%";
+        e.style.color = this.eco < 30 ? "#f87171" : "#22c55e";
+    }
+
+    draw() {
+        this.ctx.fillStyle = "#1e293b";
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+        for(let r=0; r<CONFIG.SIZE; r++) {
+            for(let c=0; c<CONFIG.SIZE; c++) {
+                const x = c * (CONFIG.CELL + CONFIG.GAP) + CONFIG.GAP;
+                const y = r * (CONFIG.CELL + CONFIG.GAP) + CONFIG.GAP;
+                
+                this.ctx.fillStyle = "rgba(15, 23, 42, 0.6)";
+                this.ctx.beginPath();
+                this.roundRect(this.ctx, x, y, CONFIG.CELL, CONFIG.CELL, 8);
+                this.ctx.fill();
+
+                if(this.isDead(r, c)) {
+                    this.ctx.save();
+                    this.ctx.clip();
+                    this.ctx.fillStyle = "#0f172a";
+                    this.ctx.fill();
+                    this.ctx.strokeStyle = "#334155";
+                    this.ctx.lineWidth = 2;
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(x, y); this.ctx.lineTo(x+CONFIG.CELL, y+CONFIG.CELL);
+                    this.ctx.moveTo(x+CONFIG.CELL, y); this.ctx.lineTo(x, y+CONFIG.CELL);
+                    this.ctx.stroke();
+                    this.ctx.restore();
+                    continue;
+                }
+
+                let cell = this.grid[r][c];
+                if(cell) {
+                    const img = this.assets[cell.val];
+                    if (img) {
+                        this.ctx.drawImage(img, x, y, CONFIG.CELL, CONFIG.CELL);
+                    }
+
+                    if(cell.val >= 3 && cell.val < 9 && cell.hunger > 0) {
+                        const r = 10;
+                        const cx = x + CONFIG.CELL - 15;
+                        const cy = y + CONFIG.CELL - 15;
+                        
+                        this.ctx.beginPath();
+                        this.ctx.arc(cx, cy, r, 0, Math.PI*2);
+                        this.ctx.fillStyle = "rgba(0,0,0,0.6)";
+                        this.ctx.fill();
+
+                        const pct = cell.hunger / CONFIG.MAX_HUNGER;
+                        this.ctx.beginPath();
+                        this.ctx.arc(cx, cy, r, -Math.PI/2, -Math.PI/2 + (Math.PI*2*pct));
+                        this.ctx.strokeStyle = pct > 0.7 ? "#ef4444" : "#22c55e";
+                        this.ctx.lineWidth = 3;
+                        this.ctx.stroke();
+                    }
+                }
+            }
+        }
+    }
+}
+
+const game = new Game();
+window.game = game;
+</script>
+</body>
+</html>

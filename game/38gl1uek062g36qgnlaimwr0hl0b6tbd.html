@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Clicker</title>
+    <link rel="icon" href="1.png" type="image/png" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-auth-compat.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.3.2/css/flag-icons.min.css">
+    <link rel="stylesheet" href="styles.css">
+
+
+</head>
+<body>
+    <!-- Loading screen -->
+    <div id="loadingScreen">
+        <div class="loader">
+            <div class="spinner"></div>
+            <div class="inner-spinner"></div>
+        </div>
+        <div class="loading-text">Loading....</div>
+    </div>
+    
+    <!-- Starry background -->
+    <canvas id="starCanvas"></canvas>
+    
+    <!-- Falling stars effect -->
+    <canvas id="fallingStarsCanvas"></canvas>
+    
+    <!-- Left panel -->
+    <div class="left-panel" id="leftPanel">
+        <div id="privacy-icon">❓</div>
+        <div id="privacy-popup">
+            <h3>Privacy Notice</h3>
+            <p>
+                Registration is not required.<br>
+                If you choose to register, using your real name is not necessary.<br>
+                The name and country are used only for showing your position on the leaderboard.<br>
+                No sensitive data is collected or sold.
+            </p>
+        </div> 
+        <h2>Dominant Ten</h2>
+        <hr>
+        <div class="tab-container-leaderboard" >
+            <div class="tab-leaderboard active" data-leaderboard="players">Players</div>
+            <div class="tab-leaderboard" data-leaderboard="countries">Countries</div>
+        </div>
+        <div class="leaderboard-container" id="playersLeaderboard">
+            <table class="leaderboard-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Name</th>
+                        <th>From</th>
+                        <th>Gold</th>
+                    </tr>
+                </thead>
+                <tbody id="playersTable">
+                    <tr><td colspan="4" style="text-align: center;">Click Refresh to load</td></tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="leaderboard-container" id="countriesLeaderboard" style="display: none;">
+            <table class="leaderboard-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Country</th>
+                        <th>Gold</th>
+                    </tr>
+                </thead>
+                <tbody id="countriesTable">
+                    <tr><td colspan="3" style="text-align: center;">Click Refresh to load</td></tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="registration-panel" id="registrationPanel">
+            
+            <h3>Join</h3>      
+            <div class="registration-form">
+                <input type="text" id="playerName" placeholder="Player name" maxlength="10">
+                <input type="text" id="selectedCountry" placeholder="No country selected" readonly>
+                <button class="country-select-btn" id="selectCountryBtn">Select Country</button>
+                <button class="register-btn" id="registerBtn">Register</button>
+            </div>
+        </div>
+        
+        <div class="player-info" id="playerInfo">
+            <h4>Info</h4>
+            <div id="playerCountryInfo"></div>
+            <div class="player-gold">Total Gold: <span id="playerGoldAmount">0</span></div>
+        </div>
+        <button class="refresh-btn" id="refreshLeaderboardBtn">
+            <i class="fas fa-sync-alt"></i> Refresh Leaderboard
+        </button>
+        <button class="panel-reset-btn" id="panelResetBtn">Reset All Data <i class="bi bi-trash"></i></button>        
+    </div>
+    
+    <!-- Right panel -->
+    <div class="right-panel" id="rightPanel">
+        <div class="tab-container">
+            <div class="tab active" data-tab="clickUpgrades">Click</div>
+            <div class="tab" data-tab="autoUpgrades">Production</div>
+            <div class="tab" data-tab="goldUpgrades">Gold</div>
+            <div class="tab" data-tab="criticalUpgrades">Critical</div>
+            <div class="tab" data-tab="energyUpgrades">Energy</div>
+            <div class="tab" data-tab="skins">Skins</div>
+            <div class="tab" data-tab="settings">Settings</div>
+        </div>
+        
+        <!-- Tab content -->
+        <div class="tab-content active" id="clickUpgradesTab">
+            <div class="panel-section">
+                <h3>Click Upgrades</h3>
+                <div class="upgrades-container" id="clickUpgrades">
+                    <!-- Click upgrades will be added dynamically -->
+                </div>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="autoUpgradesTab">
+            <div class="panel-section">
+                <h3>Production Upgrades</h3>
+                <div class="upgrades-container" id="autoUpgrades">
+                    <!-- Auto upgrades will be added dynamically -->
+                </div>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="goldUpgradesTab">
+            <div class="panel-section">
+                <h3>Gold Upgrades</h3>
+                <div class="upgrades-container" id="goldUpgrades">
+                    <!-- Gold upgrades will be added dynamically -->
+                </div>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="criticalUpgradesTab">
+            <div class="panel-section">
+                <h3>Critical Upgrades</h3>
+                <div class="upgrades-container" id="criticalUpgrades">
+                    <!-- Critical upgrades will be added dynamically -->
+                </div>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="energyUpgradesTab">
+            <div class="panel-section">
+                <h3>Energy Upgrades</h3>
+                <div class="upgrades-container" id="energyUpgrades">
+                    <!-- Energy upgrades will be added dynamically -->
+                </div>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="skinsTab">
+            <div class="panel-section">
+                <h3>Skins</h3>
+                <div class="skins-container" id="skinsContainer">
+                    <!-- Skins will be added dynamically -->
+                </div>
+            </div>
+        </div>
+                        
+        <div class="tab-content" id="settingsTab">
+            <div class="panel-section">
+                <h3><i class="bi bi-gear-fill"></i> Settings</h3>
+                <div class="volume-control-container">
+                    <div class="volume-control-title">Sound Settings</div>
+                    <div class="volume-slider-container">
+                        <i class="bi bi-volume-up-fill"></i>
+                        <input type="range" min="0" max="100" value="50" class="volume-slider" id="volumeSlider">
+                    </div>
+                </div>
+                <button class="panel-reset-btn" id="settingsResetBtn">Reset All Data <i class="bi bi-trash"></i></button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main content -->
+    <div class="main-content">
+        <!-- Panel toggle buttons for small screens -->
+        <div class="panel-toggle left-toggle" id="leftToggle">
+            <i class="bi bi-trophy"></i>
+        </div>
+        
+        <div class="panel-toggle right-toggle" id="rightToggle">
+            <i class="bi bi-graph-up-arrow"></i>
+        </div>
+        
+        <div class="game-header">            
+            <div class="stats-container">
+                <div class="stat-box">
+                    <div class="stat-label">Points</div>
+                    <div class="stat-value" id="score">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Click Power</div>
+                    <div class="stat-value" id="clickPower">1</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Production/s</div>
+                    <div class="stat-value" id="autoPower">0</div>
+                </div>
+                <div class="stat-box gold-box">
+                    <div class="stat-label gold-label">Gold </div>
+                    <div class="stat-value gold-value" id="goldAmount">0</div>
+                </div>
+                <button class="ad-button" id="adButton">
+                    <i class="bi bi-badge-ad-fill"></i> Watch ad to double points
+                </button>
+            </div>
+        </div>
+        <div class="click-container">
+            <div class="click-area" id="clickArea">
+                <div class="main-clicker">
+                    <img id="clickerImage" src="img/1.png" alt="Clicker">
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Energy bar -->
+    <div class="energy-container">
+        <div class="energy-bonus" id="energyBonus">
+            <div class="double-points">Points×2</div>
+            <div class="gold-icon"><i class="bi bi-coin"></i></div>
+        </div>
+        <div class="energy-bar-container">
+            <div class="energy-bar" id="energyBar"></div>
+            <div class="energy-text" id="energyText">0%</div>
+        </div>
+        <div class="energy-multiplier" id="energyMultiplier">Gold +1</div>
+    </div>
+
+    
+    <!-- Reset confirmation modal -->
+    <div class="reset-modal" id="resetModal">
+        <div class="reset-modal-content">
+            <h2>Confirm Reset</h2>
+            <p>Are you sure you want to reset all game data? This action cannot be undone and will delete all your progress and upgrades.</p>
+            <div class="reset-modal-buttons">
+                <button class="reset-confirm" id="resetConfirm">Yes, Reset</button>
+                <button class="reset-cancel" id="resetCancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Country selection modal -->
+    <div class="country-modal" id="countryModal">
+        <div class="country-modal-content">
+            <div class="country-modal-header">
+                <h2>Select Country</h2>
+                <button class="close-modal" id="closeCountryModal">&times;</button>
+            </div>
+            <input type="text" class="country-search" id="countrySearch" placeholder="Search country...">
+            <div class="countries-list" id="countriesList">
+                <!-- Country list will be populated dynamically -->
+            </div>
+        </div>
+    </div>
+    
+    <div class="notification" id="notification">Upgrade purchased successfully!</div>
+    
+    <!-- Audio elements -->
+    <audio id="clickSound" preload="auto">
+        <source src="S/2.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="purchaseSound" preload="auto">
+        <source src="S/1.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="backgroundMusic" preload="auto" loop>
+         <source src="S/bg.mp3?v=1234" type="audio/mpeg">
+    </audio>
+
+        <script src="app.js"></script>
+
+</body>
+</html>

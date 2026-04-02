@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+	<meta charset='utf-8' />
+	<meta name='renderer' content='webkit' />
+	<meta name='viewport'
+		content='width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no' />
+
+	<meta name='apple-mobile-web-app-capable' content='yes' />
+	<meta name='full-screen' content='true' />
+	<meta name='x5-fullscreen' content='true' />
+	<meta name='360-fullscreen' content='true' />
+	<meta name='laya' screenorientation='landscape' />
+	<meta http-equiv='expires' content='0' />
+	<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1' />
+	<meta http-equiv='expires' content='0' />
+	<meta http-equiv='Cache-Control' content='no-siteapp' />
+	<title>Arcade Empire Tycoon</title>
+	<link rel="preload" as="font" href="./rrzzhh.ttf" type="font/ttf" crossorigin="anonymous">
+	<style>
+		@font-face {
+			font-family: "Arial";
+			src: url("rrzzhh.ttf");
+		}
+
+		/* @font-face {
+			font-family: "Arial1";
+			src: url("rrzzhh.ttf");
+		} */
+		/* @font-face {
+			font-family: "SimSun";
+			src: url("rrzzhh.ttf");
+		} */
+
+		* {
+			margin: 0;
+			padding: 0;
+			overflow: hidden;
+		}
+
+		body {
+			overflow: 'hidden';
+			/* 页面背景颜色 */
+			background: #ffd580
+		}
+
+		#unity-container {
+			z-index: 1000;
+			background: #ffd580;
+			position: absolute;
+			overflow: hidden;
+		}
+
+		#LoadingView {
+			position: absolute;
+			left: 50%;
+			top: 50%;
+			height: 100%;
+			width: 100%;
+			overflow: hidden;
+			transform: translate(-50%, -50%);
+
+			text-align: center;
+		}
+
+		#top-container {
+			flex: 0;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			/* 距离顶部位置 */
+			margin-top: 10%;
+		}
+
+		#progress {
+			flex: 0;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			position: absolute;
+			bottom: 10%;
+		}
+
+		div {
+			text-align: center;
+		}
+	</style>
+	 <script type="text/javascript">
+        window.SDK_OPTIONS = {
+            gameId: "7ce5hyriesc246z20xfta8pmdgb98kix",
+            onEvent: function (a) {
+                switch (a.name) {
+                    case "SDK_GAME_PAUSE":
+                        // pause game logic / mute audio
+                        Laya.timer.scale = 0;     // 暂停所有定时器
+                        Laya.SoundManager.stopAll();
+                        break;
+                    case "SDK_GAME_START":
+                        Laya.timer.scale = 1;     // 恢复定时器
+                     
+                        // advertisement done, resume game logic and unmute audio
+                        break;
+                    case "SDK_READY":
+                        // when sdk is ready
+			StartGame();
+
+                        console.error("SDK_READY");
+                        break;
+                }
+            }
+        };
+        (function (a, b, c) {
+            var d = a.getElementsByTagName(b)[0];
+            a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+        })(document, "script", "gamemonetize-sdk"); 
+    </script> 
+</head>
+
+<body>
+
+
+	<script>
+		
+		const keysToBlockWhenFramed = [32, 33, 34, 35, 36, 37, 38, 39, 40, 44];
+		document.addEventListener('keydown', function (info) {
+			if (window != window.top && keysToBlockWhenFramed.indexOf(info.which) > -1) {
+				info.preventDefault();
+				info.stopPropagation();
+			}
+		}, true)
+		document.addEventListener("mousedown", function () {
+			window.focus();
+		}, true);
+		document.addEventListener("touchstart", function () {
+			window.focus();
+		}, true);
+
+		//游戏加载时关闭触控
+		document.addEventListener('gesturestart', function (event) {
+			event.preventDefault()
+		})
+
+		function StartGame(url) {
+            var s = document.createElement('script');
+            s.src = 'index.js';  // ← 如果你的入口不是 index.js，这里改掉
+            s.async = false;
+            document.body.appendChild(s);
+        }
+		function loadLib(url) {
+			var script = document.createElement("script");
+			script.async = false;
+			script.src = url;
+			document.body.appendChild(script);
+		}
+	</script>
+	
+
+
+
+	<!-- 引类库 -->
+	<script type="text/javascript" src="https://h5gamessdk.yyggames.com/sdk/laya/2.13.1/laya.core.js"></script>
+
+	<script type="text/javascript" src="https://h5gamessdk.yyggames.com/sdk/laya/2.13.1/laya.ui.js"></script>
+
+	<!-- <script type="text/javascript" src="https://h5gamessdk.yyggames.com/sdk/laya/2.13.1/laya.d3.js"></script> -->
+
+	<!-- <script type="text/javascript" src="https://h5gamessdk.yyggames.com/sdk/laya/2.13.0/laya.physics3D.js"></script> -->
+
+	<!-- <script type="text/javascript" src="https://h5gamessdk.yyggames.com/sdk/laya/2.13.1/laya.physics3D.js"></script> -->
+
+
+
+
+
+	<!-- <script type="text/javascript" src="index.js"></script> -->
+
+</body>
+
+</html>

@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flappy Bird 2026 | Next-Gen Edition</title>
+    
+    
+    <style type="text/css">@font-face {font-family:Orbitron;font-style:normal;font-weight:400;src:url(/cf-fonts/v/orbitron/5.0.18/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Orbitron;font-style:normal;font-weight:700;src:url(/cf-fonts/v/orbitron/5.0.18/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Orbitron;font-style:normal;font-weight:900;src:url(/cf-fonts/v/orbitron/5.0.18/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Rajdhani;font-style:normal;font-weight:300;src:url(/cf-fonts/s/rajdhani/5.0.11/latin-ext/300/normal.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:Rajdhani;font-style:normal;font-weight:300;src:url(/cf-fonts/s/rajdhani/5.0.11/latin/300/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Rajdhani;font-style:normal;font-weight:300;src:url(/cf-fonts/s/rajdhani/5.0.11/devanagari/300/normal.woff2);unicode-range:U+0900-097F,U+1CD0-1CF9,U+200C-200D,U+20A8,U+20B9,U+25CC,U+A830-A839,U+A8E0-A8FF;font-display:swap;}@font-face {font-family:Rajdhani;font-style:normal;font-weight:500;src:url(/cf-fonts/s/rajdhani/5.0.11/latin-ext/500/normal.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:Rajdhani;font-style:normal;font-weight:500;src:url(/cf-fonts/s/rajdhani/5.0.11/latin/500/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Rajdhani;font-style:normal;font-weight:500;src:url(/cf-fonts/s/rajdhani/5.0.11/devanagari/500/normal.woff2);unicode-range:U+0900-097F,U+1CD0-1CF9,U+200C-200D,U+20A8,U+20B9,U+25CC,U+A830-A839,U+A8E0-A8FF;font-display:swap;}@font-face {font-family:Rajdhani;font-style:normal;font-weight:700;src:url(/cf-fonts/s/rajdhani/5.0.11/latin/700/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Rajdhani;font-style:normal;font-weight:700;src:url(/cf-fonts/s/rajdhani/5.0.11/latin-ext/700/normal.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:Rajdhani;font-style:normal;font-weight:700;src:url(/cf-fonts/s/rajdhani/5.0.11/devanagari/700/normal.woff2);unicode-range:U+0900-097F,U+1CD0-1CF9,U+200C-200D,U+20A8,U+20B9,U+25CC,U+A830-A839,U+A8E0-A8FF;font-display:swap;}</style>
+    <style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Rajdhani',sans-serif;overflow:hidden;background:linear-gradient(135deg,#FF9800 0%,#9C27B0 50%,#F44336 100%);display:flex;justify-content:center;align-items:center;min-height:100vh;color:#fff}
+#gameContainer{position:relative;max-width:100vw;max-height:100vh;box-shadow:0 30px 90px #00000080;border-radius:20px;overflow:hidden;border:3px solid #ffffff4d}
+#gameCanvas{display:block;cursor:pointer}
+.screen{position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#0f0c29f2 0%,#302b63f2 50%,#24243ef2 100%);display:flex;flex-direction:column;justify-content:flex-start;align-items:center;backdrop-filter:blur(20px);z-index:10;overflow-y:auto;padding:30px 20px}
+h1{font-family:'Orbitron',sans-serif;font-size:clamp(2.5rem,10vw,4rem);font-weight:900;margin-bottom:.5rem;text-shadow:0 0 30px #667eeacc 0 0 60px #764ba299;background:linear-gradient(45deg,#00f2fe,#4facfe,#00f2fe);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:glow 3s ease-in-out infinite;text-align:center}
+@keyframes glow {
+0%,100%{filter:brightness(1) drop-shadow(0 0 20px #4facfe99)}
+50%{filter:brightness(1.3) drop-shadow(0 0 40px #00f2fecc)}
+}
+h2{font-family:'Orbitron',sans-serif;font-size:clamp(1.8rem,7vw,3rem);margin-bottom:1.5rem;text-shadow:0 0 20px #ffffff80;letter-spacing:2px}
+.subtitle{font-size:clamp(1rem,3vw,1.4rem);margin-bottom:2rem;opacity:.9;text-transform:uppercase;letter-spacing:3px;font-weight:500}
+.btn{padding:15px 40px;margin:10px;font-size:clamp(1rem,3vw,1.3rem);font-weight:700;font-family:'Rajdhani',sans-serif;border:none;border-radius:15px;cursor:pointer;transition:all .3s ease;text-transform:uppercase;letter-spacing:2px;position:relative;overflow:hidden}
+.btn::before{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,#ffffff4d,transparent);transition:left .5s}
+.btn:hover::before{left:100%}
+.btn:hover:not(:disabled){transform:translateY(-3px) scale(1.05);box-shadow:0 10px 30px #0006}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-primary{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;box-shadow:0 5px 20px #667eea66}
+.btn-neon{background:linear-gradient(135deg,#00f2fe 0%,#4facfe 100%);color:#0f0c29;box-shadow:0 5px 20px #00f2fe80;font-weight:900}
+.menu-buttons{display:flex;flex-wrap:wrap;justify-content:center;gap:15px;margin:2rem 0}
+.hidden{display:none!important}
+.hud-element{position:absolute;background:linear-gradient(135deg,#0f0c29cc 0%,#302b63cc 100%);padding:12px 20px;border-radius:15px;font-size:clamp(1rem,3vw,1.5rem);font-weight:700;font-family:'Orbitron',sans-serif;z-index:5;border:2px solid #00f2fe4d;box-shadow:0 5px 20px #00000080;pointer-events:none}
+#scoreBoard{top:20px;left:50%;transform:translateX(-50%);font-size:clamp(2rem,6vw,3rem);background:linear-gradient(135deg,#00f2fe33 0%,#4facfe33 100%);border:3px solid #00f2fe80;text-shadow:0 0 20px #00f2fecc;color:#00f2fe}
+#powerupDisplay{top:20px;left:20px;min-width:150px}
+#statsPanel{top:90px;left:20px;font-size:clamp(0.9rem,2.5vw,1.1rem)}
+#comboDisplay{top:20px;right:20px;background:linear-gradient(135deg,#ff6b6b33 0%,#ee5a6f33 100%);border:3px solid #ff6b6b80;color:#FF6B6B;font-size:clamp(1.2rem,4vw,1.8rem)}
+#pauseBtn{position:absolute;bottom:20px;right:20px;width:60px;height:60px;background:linear-gradient(135deg,#00f2fe4d 0%,#4facfe4d 100%);border:3px solid #00f2fe80;border-radius:50%;font-size:28px;cursor:pointer;z-index:5;transition:all .3s ease;pointer-events:auto}
+#pauseBtn:hover{background:linear-gradient(135deg,#00f2fe80 0%,#4facfe80 100%);transform:scale(1.1);box-shadow:0 0 30px #00f2fecc}
+#particles{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:3}
+.settings-grid{display:grid;gap:20px;width:100%;max-width:500px;margin:2rem 0}
+.setting-card{background:linear-gradient(135deg,#667eea1a 0%,#764ba21a 100%);border:2px solid #00f2fe33;border-radius:15px;padding:20px;display:flex;justify-content:space-between;align-items:center;transition:all .3s ease}
+.setting-card:hover{border-color:#00f2fe80;transform:translateY(-3px)}
+.setting-label{font-size:clamp(1rem,3vw,1.3rem);font-weight:700;display:flex;align-items:center;gap:10px}
+.toggle-switch{position:relative;width:70px;height:35px;background:#ffffff1a;border-radius:35px;cursor:pointer;transition:all .3s;border:2px solid #fff3}
+.toggle-switch.active{background:linear-gradient(135deg,#00f2fe 0%,#4facfe 100%);box-shadow:0 0 20px #00f2fe80}
+.toggle-slider{position:absolute;top:4px;left:4px;width:23px;height:23px;background:#fff;border-radius:50%;transition:transform .3s;box-shadow:0 2px 5px #0000004d}
+.toggle-switch.active .toggle-slider{transform:translateX(35px)}
+.slider-control{width:200px;height:8px;background:#ffffff1a;border-radius:10px;position:relative;cursor:pointer}
+.slider-fill{height:100%;background:linear-gradient(90deg,#667eea 0%,#764ba2 100%);border-radius:10px;transition:width .2s}
+.mode-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px;width:100%;max-width:900px;margin:2rem 0}
+.mode-card{background:linear-gradient(135deg,#667eea26 0%,#764ba226 100%);border:3px solid #00f2fe4d;border-radius:20px;padding:10px;cursor:pointer;transition:all .3s ease;text-align:center;position:relative;overflow:hidden}
+.mode-card::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle,#00f2fe1a 0%,transparent 70%);opacity:0;transition:opacity .3s}
+.mode-card:hover::before{opacity:1}
+.mode-card:hover{transform:translateY(-8px);border-color:#00f2fecc;box-shadow:0 15px 40px #00f2fe4d}
+.mode-icon{font-size:2rem;margin-bottom:5px;filter:drop-shadow(0 0 10px #00f2fe80)}
+.mode-title{font-family:'Orbitron',sans-serif;font-size:1.8rem;font-weight:700;margin-bottom:10px;color:#00f2fe}
+.mode-desc{font-size:1rem;opacity:.8;margin-bottom:15px;line-height:1.5}
+.powerup-showcase{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:15px;width:100%;max-width:700px;margin:2rem 0}
+.powerup-card{background:linear-gradient(135deg,#667eea33 0%,#764ba233 100%);border:2px solid #00f2fe4d;border-radius:15px;padding:20px;text-align:center;transition:all .3s ease}
+.powerup-card:hover{transform:scale(1.05);border-color:#00f2fe99;box-shadow:0 10px 30px #00f2fe4d}
+.powerup-icon{font-size:3rem;margin-bottom:10px;filter:drop-shadow(0 0 10px #ffffff80)}
+.powerup-name{font-weight:700;font-size:1.1rem;margin-bottom:5px;color:#00f2fe}
+.powerup-desc{font-size:.9rem;opacity:.7}
+@keyframes float {
+0%,100%{transform:translateY(0px)}
+50%{transform:translateY(-10px)}
+}
+.float{animation:float 3s ease-in-out infinite}
+@keyframes pulse {
+0%,100%{transform:scale(1)}
+50%{transform:scale(1.05)}
+}
+.pulse{animation:pulse 2s ease-in-out infinite}
+.score-display{margin:2rem 0;font-size:clamp(1.2rem,4vw,1.8rem);line-height:2}
+.score-display p{margin:10px 0}
+.notification{position:absolute;top:120px;right:20px;background:linear-gradient(135deg,#00f2fef2 0%,#4facfef2 100%);padding:15px 25px;border-radius:15px;font-size:clamp(1rem,3vw,1.3rem);font-weight:700;font-family:'Rajdhani',sans-serif;color:#0f0c29;z-index:20;pointer-events:none;box-shadow:0 5px 25px #00f2fe99;border:2px solid #ffffff80;animation:notificationSlide .4s ease-out}
+@keyframes notificationSlide {
+0%{transform:translateX(150px);opacity:0}
+100%{transform:translateX(0);opacity:1}
+}
+@media (max-width: 768px) {
+#gameContainer{border-radius:0;border:none}
+#statsPanel {top: 20px;left: 10px;}
+#scoreBoard {top: 60px;left: 57%;}
+#powerupDisplay {top: 85px;left: 10px;}
+.mode-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+        <canvas id="particles"></canvas>
+        
+        <!-- HUD Elements -->
+        <div id="scoreBoard" class="hud-element hidden">0</div>
+        <div id="powerupDisplay" class="hud-element hidden">⚡ None</div>
+        <div id="statsPanel" class="hud-element hidden">
+            <div>High Score: <span id="highScore">0</span></div>
+            <div>Mode: <span id="currentMode">Normal</span></div>
+        </div>
+        <div id="comboDisplay" class="hud-element hidden">🔥 0x</div>
+        <button id="pauseBtn" class="hidden">⏸</button>
+        
+        <!-- Main Menu -->
+        <div id="menuScreen" class="screen">
+            <h1 class="pulse">⚡ FLAPPY BIRD 2026</h1>
+            <p class="subtitle">Next-Gen Edition</p>
+            <div class="menu-buttons">
+                <button class="btn btn-neon" id="playBtn">🎮 Start Game</button>
+                <button class="btn btn-primary" id="powerupsBtn">⚡ Power-Ups</button>
+                <button class="btn btn-primary" id="modesBtn">🎯 Game Modes</button>
+                <button class="btn btn-primary" id="settingsBtn">⚙️ Settings</button>
+            </div>
+        </div>
+
+        <!-- Game Modes Screen -->
+        <div id="modesScreen" class="screen hidden">
+            <h2>🎯 SELECT MODE</h2>
+            <div class="mode-grid">
+                <div class="mode-card" data-mode="classic">
+                    <div class="mode-icon">⭐</div>
+                    <div class="mode-title">CLASSIC</div>
+                    <div class="mode-desc">Pure retro experience with modern graphics</div>
+                    <div style="color: #00f2fe; font-weight: 700;">Best: <span id="classic-score">0</span></div>
+                </div>
+                <div class="mode-card" data-mode="powerup">
+                    <div class="mode-icon">⚡</div>
+                    <div class="mode-title">POWER-UP</div>
+                    <div class="mode-desc">Collect power-ups for special abilities</div>
+                    <div style="color: #00f2fe; font-weight: 700;">Best: <span id="powerup-score">0</span></div>
+                </div>
+                <div class="mode-card" data-mode="extreme">
+                    <div class="mode-icon">🔥</div>
+                    <div class="mode-title">EXTREME</div>
+                    <div class="mode-desc">Maximum speed and smaller gaps</div>
+                    <div style="color: #00f2fe; font-weight: 700;">Best: <span id="extreme-score">0</span></div>
+                </div>
+                <div class="mode-card" data-mode="zen">
+                    <div class="mode-icon">🧘</div>
+                    <div class="mode-title">ZEN</div>
+                    <div class="mode-desc">Relaxed mode with infinite lives</div>
+                    <div style="color: #00f2fe; font-weight: 700;">Best: <span id="zen-score">0</span></div>
+                </div>
+            </div>
+            <button class="btn btn-primary" id="modesBackBtn">← Back</button>
+        </div>
+
+        <!-- Power-Ups Screen -->
+        <div id="powerupsScreen" class="screen hidden">
+            <h2>⚡ POWER-UPS</h2>
+            <p class="subtitle" style="margin-bottom: 1rem;">Collect these in Power-Up mode!</p>
+            <div class="powerup-showcase">
+                <div class="powerup-card">
+                    <div class="powerup-icon">🛡️</div>
+                    <div class="powerup-name">SHIELD</div>
+                    <div class="powerup-desc">Protect from one collision</div>
+                </div>
+                <div class="powerup-card">
+                    <div class="powerup-icon">⚡</div>
+                    <div class="powerup-name">SPEED BOOST</div>
+                    <div class="powerup-desc">Slow down time</div>
+                </div>
+                <div class="powerup-card">
+                    <div class="powerup-icon">💎</div>
+                    <div class="powerup-name">SCORE x2</div>
+                    <div class="powerup-desc">Double points for 10s</div>
+                </div>
+                <div class="powerup-card">
+                    <div class="powerup-icon">👻</div>
+                    <div class="powerup-name">GHOST</div>
+                    <div class="powerup-desc">Pass through pipes</div>
+                </div>
+                <div class="powerup-card">
+                    <div class="powerup-icon">🧲</div>
+                    <div class="powerup-name">MAGNET</div>
+                    <div class="powerup-desc">Attract score items</div>
+                </div>
+                <div class="powerup-card">
+                    <div class="powerup-icon">🌟</div>
+                    <div class="powerup-name">STAR</div>
+                    <div class="powerup-desc">Invincibility for 5s</div>
+                </div>
+            </div>
+            <button class="btn btn-primary" id="powerupsBackBtn">← Back</button>
+        </div>
+
+        <!-- Settings Screen -->
+        <div id="settingsScreen" class="screen hidden">
+            <h2>⚙️ SETTINGS</h2>
+            <div class="settings-grid">
+                <div class="setting-card">
+                    <div class="setting-label">
+                        <span>🔊</span>
+                        <span>Sound Effects</span>
+                    </div>
+                    <div class="toggle-switch active" id="soundToggle">
+                        <div class="toggle-slider"></div>
+                    </div>
+                </div>
+                <div class="setting-card">
+                    <div class="setting-label">
+                        <span>🎵</span>
+                        <span>Background Music</span>
+                    </div>
+                    <div class="toggle-switch" id="musicToggle">
+                        <div class="toggle-slider"></div>
+                    </div>
+                </div>
+                <div class="setting-card">
+                    <div class="setting-label">
+                        <span>✨</span>
+                        <span>Particle Effects</span>
+                    </div>
+                    <div class="toggle-switch  active" id="particlesToggle">
+                        <div class="toggle-slider"></div>
+                    </div>
+                </div>
+                <div class="setting-card">
+                    <div class="setting-label">
+                        <span>📳</span>
+                        <span>Vibration</span>
+                    </div>
+                    <div class="toggle-switch" id="vibrationToggle">
+                        <div class="toggle-slider"></div>
+                    </div>
+                </div>
+                <div class="setting-card">
+                    <div class="setting-label">
+                        <span>🌈</span>
+                        <span>Neon Mode</span>
+                    </div>
+                    <div class="toggle-switch" id="neonToggle">
+                        <div class="toggle-slider"></div>
+                    </div>
+                </div>
+            </div>
+            <button class="btn btn-neon" id="resetBtn">🔄 Reset Progress</button>
+            <button class="btn btn-primary" id="settingsBackBtn">← Back</button>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div id="gameOverScreen" class="screen hidden">
+            <h2>GAME OVER</h2>
+            <div class="score-display">
+                <p>Score: <span id="finalScore" style="color: #00f2fe; font-weight: 900;">0</span></p>
+                <p>High Score: <span id="finalHighScore" style="color: #FFD700; font-weight: 900;">0</span></p>
+                <p id="newRecordText" class="hidden" style="color: #00ff00; font-size: 1.5em; animation: pulse 1s infinite;">🎉 NEW RECORD! 🎉</p>
+            </div>
+            <div class="menu-buttons">
+                <button class="btn btn-neon" id="restartBtn">🔄 Play Again</button>
+                <button class="btn btn-primary" id="menuBtn">🏠 Main Menu</button>
+            </div>
+        </div>
+    </div>
+
+<script type="text/javascript">
+window.SDK_OPTIONS = {
+    gameId: "lgyrd454mjci4dzalk9fzpvc9t2iq9hu", // Replace with your actual ID
+    onEvent: function (a) {
+        switch (a.name) {
+            case "SDK_GAME_PAUSE":
+                // Logic to pause the game and mute audio
+                if (game) game.externalPause(); 
+                break;
+            case "SDK_GAME_START":
+                // Logic to resume the game and unmute
+                if (game) game.externalResume();
+                break;
+            case "SDK_READY":
+                console.log("SDK Ready");
+                break;
+        }
+    }
+};
+
+(function (a, b, c) {
+    var d = a.getElementsByTagName(b)[0];
+    a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+})(document, "script", "gamemonetize-sdk");
+        </script>
+
+    <script>
+        class FlappyBird2026 {
+            constructor() {
+                this.canvas = document.getElementById('gameCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.particleCanvas = document.getElementById('particles');
+                this.particleCtx = this.particleCanvas.getContext('2d');
+                
+                this.resizeCanvas();
+                window.addEventListener('resize', () => this.resizeCanvas());
+                
+                // Game state
+                this.bird = { x: 80, y: 0, velocity: 0, radius: 18, rotation: 0 };
+                this.pipes = [];
+                this.powerups = [];
+                this.particles = [];
+                this.stars = [];
+                this.score = 0;
+                this.combo = 0;
+                this.isPaused = false; // Add this line
+                this.gameRunning = false;
+                this.gameStarted = false;
+                
+                this.frameCount = 0;
+                this.currentMode = 'classic';
+                
+                // Power-ups
+                this.activePowerup = null;
+                this.powerupTimer = 0;
+                this.isShielded = false;
+                this.isGhost = false;
+                this.isInvincible = false;
+                this.scoreMultiplier = 1;
+                
+                // Settings
+                this.settings = {
+                    sound: true,
+                    music: false,
+                    particles: true,
+                    vibration: false,
+                    neon: false
+                };
+                
+                this.loadGameData();
+                this.initStars();
+                this.setupControls();
+                this.setupButtons();
+                this.initAudio();
+                this.animateBackground();
+            }
+
+            resizeCanvas() {
+                const maxWidth = 600;
+                const maxHeight = 800;
+                const padding = 20;
+                
+                let width = Math.min(window.innerWidth - padding, maxWidth);
+                let height = Math.min(window.innerHeight - padding, maxHeight);
+                
+                if (window.innerWidth < 768) {
+                    width = window.innerWidth;
+                    height = window.innerHeight;
+                }
+                
+                this.canvas.width = width;
+                this.canvas.height = height;
+                this.particleCanvas.width = width;
+                this.particleCanvas.height = height;
+                
+                if (this.bird) {
+                    this.bird.y = height / 2;
+                }
+            }
+
+            loadGameData() {
+                const defaultData = {
+                    highscores: { classic: 0, powerup: 0, extreme: 0, zen: 0 }
+                };
+                
+                try {
+                    const saved = localStorage.getItem('flappyBird2026');
+                    this.gameData = saved ? JSON.parse(saved) : defaultData;
+                } catch(e) {
+                    this.gameData = defaultData;
+                }
+            }
+
+            saveGameData() {
+                try {
+                    localStorage.setItem('flappyBird2026', JSON.stringify(this.gameData));
+                } catch(e) {
+                    console.log('Save failed');
+                }
+            }
+
+            initStars() {
+                this.stars = [];
+                for (let i = 0; i < 50; i++) {
+                    this.stars.push({
+                        x: Math.random() * this.canvas.width,
+                        y: Math.random() * this.canvas.height,
+                        size: Math.random() * 2,
+                        speed: 0.1 + Math.random() * 0.3,
+                        opacity: Math.random()
+                    });
+                }
+            }
+
+            initAudio() {
+                try {
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                } catch (e) {
+                    console.log('Audio not supported');
+                }
+            }
+
+            playSound(type) {
+                if (!this.audioContext || !this.settings.sound) return;
+                
+                try {
+                    const osc = this.audioContext.createOscillator();
+                    const gain = this.audioContext.createGain();
+                    osc.connect(gain);
+                    gain.connect(this.audioContext.destination);
+                    
+                    const now = this.audioContext.currentTime;
+                    
+                    switch(type) {
+                        case 'flap':
+                            osc.type = 'sine';
+                            osc.frequency.setValueAtTime(400, now);
+                            osc.frequency.exponentialRampToValueAtTime(800, now + 0.1);
+                            gain.gain.setValueAtTime(0.2, now);
+                            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                            osc.start(now);
+                            osc.stop(now + 0.1);
+                            break;
+                        case 'score':
+                            osc.type = 'square';
+                            osc.frequency.setValueAtTime(800, now);
+                            osc.frequency.setValueAtTime(1000, now + 0.05);
+                            gain.gain.setValueAtTime(0.15, now);
+                            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                            osc.start(now);
+                            osc.stop(now + 0.15);
+                            break;
+                        case 'powerup':
+                            osc.type = 'sine';
+                            osc.frequency.setValueAtTime(600, now);
+                            osc.frequency.exponentialRampToValueAtTime(1200, now + 0.2);
+                            gain.gain.setValueAtTime(0.2, now);
+                            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                            osc.start(now);
+                            osc.stop(now + 0.2);
+                            break;
+                        case 'hit':
+                            osc.type = 'sawtooth';
+                            osc.frequency.setValueAtTime(150, now);
+                            osc.frequency.exponentialRampToValueAtTime(50, now + 0.3);
+                            gain.gain.setValueAtTime(0.3, now);
+                            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                            osc.start(now);
+                            osc.stop(now + 0.3);
+                            break;
+                    }
+                } catch(e) {}
+            }
+
+            vibrate(pattern) {
+                if (this.settings.vibration && navigator.vibrate) {
+                    navigator.vibrate(pattern);
+                }
+            }
+
+            setupControls() {
+                const handleInput = (e) => {
+                    e.preventDefault();
+                 if (!this.gameRunning || this.isPaused) return; // Add isPaused check
+                    
+                    if (!this.gameStarted) {
+                        this.gameStarted = true;
+                    }
+                    this.flap();
+                };
+                
+                this.canvas.addEventListener('click', handleInput);
+                this.canvas.addEventListener('touchstart', handleInput);
+                
+                document.addEventListener('keydown', (e) => {
+                    if ((e.code === 'Space' || e.code === 'ArrowUp') && this.gameRunning && !e.repeat) {
+                        e.preventDefault();
+                        if (!this.gameStarted) {
+                            this.gameStarted = true;
+                        }
+                        this.flap();
+                    }
+                });
+            }
+
+            setupButtons() {
+                // Inside setupButtons()
+document.getElementById('pauseBtn').addEventListener('click', (e) => {
+    e.stopPropagation(); // Prevents the click from triggering a 'flap'
+    this.togglePause();
+});
+                document.getElementById('playBtn').addEventListener('click', () => this.showModes());
+                document.getElementById('modesBtn').addEventListener('click', () => this.showModes());
+                document.getElementById('powerupsBtn').addEventListener('click', () => this.showPowerups());
+                document.getElementById('settingsBtn').addEventListener('click', () => this.showSettings());
+                
+                document.getElementById('modesBackBtn').addEventListener('click', () => this.showMenu());
+                document.getElementById('powerupsBackBtn').addEventListener('click', () => this.showMenu());
+                document.getElementById('settingsBackBtn').addEventListener('click', () => this.showMenu());
+                
+                document.getElementById('restartBtn').addEventListener('click', () => this.startGame(this.currentMode));
+                document.getElementById('menuBtn').addEventListener('click', () => this.showMenu());
+                
+                document.querySelectorAll('.mode-card').forEach(card => {
+                    card.addEventListener('click', () => {
+                        const mode = card.getAttribute('data-mode');
+                        this.startGame(mode);
+                    });
+                });
+
+                // Settings toggles
+                ['sound', 'music', 'particles', 'vibration', 'neon'].forEach(setting => {
+                    const toggle = document.getElementById(`${setting}Toggle`);
+                    if (toggle) {
+                        toggle.addEventListener('click', () => {
+                            this.settings[setting] = !this.settings[setting];
+                            toggle.classList.toggle('active');
+                        });
+                    }
+                });
+
+                document.getElementById('resetBtn').addEventListener('click', () => {
+                    if (confirm('Reset all progress? This cannot be undone!')) {
+                        localStorage.removeItem('flappyBird2026');
+                        location.reload();
+                    }
+                });
+            }
+
+            showMenu() {
+                this.gameRunning = false;
+                document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+                document.getElementById('menuScreen').classList.remove('hidden');
+                document.getElementById('scoreBoard').classList.add('hidden');
+                document.getElementById('powerupDisplay').classList.add('hidden');
+                document.getElementById('statsPanel').classList.add('hidden');
+                document.getElementById('comboDisplay').classList.add('hidden');
+                document.getElementById('pauseBtn').classList.add('hidden');
+            }
+
+            showModes() {
+                document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+                document.getElementById('modesScreen').classList.remove('hidden');
+                
+                ['classic', 'powerup', 'extreme', 'zen'].forEach(mode => {
+                    const el = document.getElementById(`${mode}-score`);
+                    if (el) el.textContent = this.gameData.highscores[mode] || 0;
+                });
+            }
+
+            showPowerups() {
+                document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+                document.getElementById('powerupsScreen').classList.remove('hidden');
+            }
+
+            showSettings() {
+                document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+                document.getElementById('settingsScreen').classList.remove('hidden');
+            }
+
+            getModeSettings() {
+                const settings = {
+                    classic: {
+                        gravity: 0.5,
+                        flapPower: -9,
+                        pipeGap: 180,
+                        pipeSpeed: 2.5,
+                        pipeFrequency: 120,
+                        powerups: false
+                    },
+                    powerup: {
+                        gravity: 0.5,
+                        flapPower: -9,
+                        pipeGap: 170,
+                        pipeSpeed: 2.8,
+                        pipeFrequency: 110,
+                        powerups: true
+                    },
+                    extreme: {
+                        gravity: 0.65,
+                        flapPower: -10,
+                        pipeGap: 140,
+                        pipeSpeed: 3.5,
+                        pipeFrequency: 90,
+                        powerups: true
+                    },
+                    zen: {
+                        gravity: 0.4,
+                        flapPower: -8,
+                        pipeGap: 220,
+                        pipeSpeed: 2,
+                        pipeFrequency: 140,
+                        powerups: false,
+                        infiniteLives: true
+                    }
+                };
+                return settings[this.currentMode] || settings.classic;
+            }
+
+            startGame(mode) {
+                this.currentMode = mode;
+                this.bird.y = this.canvas.height / 2;
+                this.bird.velocity = 0;
+                this.bird.rotation = 0;
+                this.pipes = [];
+                this.powerups = [];
+                this.particles = [];
+                this.score = 0;
+                this.combo = 0;
+                this.gameRunning = true;
+                this.gameStarted = false;
+                this.frameCount = 0;
+                
+                this.activePowerup = null;
+                this.powerupTimer = 0;
+                this.isShielded = false;
+                this.isGhost = false;
+                this.isInvincible = false;
+                this.scoreMultiplier = 1;
+                
+                document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+                document.getElementById('scoreBoard').classList.remove('hidden');
+                document.getElementById('scoreBoard').textContent = '0';
+                document.getElementById('statsPanel').classList.remove('hidden');
+                document.getElementById('currentMode').textContent = mode.charAt(0).toUpperCase() + mode.slice(1);
+                document.getElementById('highScore').textContent = this.gameData.highscores[mode] || 0;
+                document.getElementById('comboDisplay').classList.remove('hidden');
+                document.getElementById('comboDisplay').textContent = '🔥 0x';
+                document.getElementById('pauseBtn').classList.remove('hidden');
+                
+                if (mode === 'powerup' || mode === 'extreme') {
+                    document.getElementById('powerupDisplay').classList.remove('hidden');
+                    document.getElementById('powerupDisplay').textContent = '⚡ None';
+                }
+                
+                this.gameLoop();
+            }
+
+            flap() {
+                if (!this.gameRunning) return;
+                const settings = this.getModeSettings();
+                this.bird.velocity = settings.flapPower;
+                this.playSound('flap');
+                this.vibrate(50);
+                
+                if (this.settings.particles) {
+                    this.createParticles(this.bird.x - 10, this.bird.y, 8, '#00f2fe');
+                }
+            }
+
+            createParticles(x, y, count, color) {
+                if (!this.settings.particles) return;
+                
+                for (let i = 0; i < count; i++) {
+                    this.particles.push({
+                        x: x,
+                        y: y,
+                        vx: (Math.random() - 0.5) * 5,
+                        vy: (Math.random() - 0.5) * 5,
+                        life: 1,
+                        color: color,
+                        size: 2 + Math.random() * 4
+                    });
+                }
+            }
+
+            spawnPowerup() {
+                const types = ['shield', 'slow', 'double', 'ghost', 'magnet', 'star'];
+                const type = types[Math.floor(Math.random() * types.length)];
+                const icons = {
+                    shield: '🛡️',
+                    slow: '⚡',
+                    double: '💎',
+                    ghost: '👻',
+                    magnet: '🧲',
+                    star: '🌟'
+                };
+                
+                // Find a random pipe to place powerup between
+                if (this.pipes.length > 0) {
+                    const randomPipe = this.pipes[Math.floor(Math.random() * this.pipes.length)];
+                    const centerY = randomPipe.top + (randomPipe.bottom - randomPipe.top) / 2;
+                    
+                    this.powerups.push({
+                        x: randomPipe.x + randomPipe.width / 2,
+                        y: centerY,
+                        type: type,
+                        icon: icons[type],
+                        size: 20,
+                        collected: false
+                    });
+                }
+            }
+
+            collectPowerup(powerup) {
+                this.activePowerup = powerup.type;
+                this.powerupTimer = 0;
+                this.playSound('powerup');
+                this.vibrate([100, 50, 100]);
+                
+                const display = document.getElementById('powerupDisplay');
+                
+                switch(powerup.type) {
+                    case 'shield':
+                        this.isShielded = true;
+                        display.textContent = '🛡️ Shield Active';
+                        this.showNotification('🛡️ SHIELD!');
+                        break;
+                    case 'slow':
+                        display.textContent = '⚡ Slow Motion';
+                        this.showNotification('⚡ SLOW-MO!');
+                        break;
+                    case 'double':
+                        this.scoreMultiplier = 2;
+                        display.textContent = '💎 Score x2';
+                        this.showNotification('💎 DOUBLE SCORE!');
+                        setTimeout(() => {
+                            if (this.gameRunning) this.scoreMultiplier = 1;
+                        }, 10000);
+                        break;
+                    case 'ghost':
+                        this.isGhost = true;
+                        display.textContent = '👻 Ghost Mode';
+                        this.showNotification('👻 GHOST MODE!');
+                        setTimeout(() => {
+                            if (this.gameRunning) this.isGhost = false;
+                        }, 5000);
+                        break;
+                    case 'magnet':
+                        display.textContent = '🧲 Magnet Active';
+                        this.showNotification('🧲 MAGNET!');
+                        setTimeout(() => {
+                            if (this.gameRunning && display) {
+                                display.textContent = '⚡ None';
+                            }
+                        }, 8000);
+                        break;
+                    case 'star':
+                        this.isInvincible = true;
+                        display.textContent = '🌟 Invincible';
+                        this.showNotification('🌟 INVINCIBLE!');
+                        setTimeout(() => {
+                            if (this.gameRunning) this.isInvincible = false;
+                        }, 5000);
+                        break;
+                }
+                
+                this.createParticles(powerup.x, powerup.y, 20, '#FFD700');
+            }
+
+            showNotification(text) {
+                // Remove any existing notification
+                const existing = document.querySelector('.notification');
+                if (existing) existing.remove();
+                
+                const notif = document.createElement('div');
+                notif.className = 'notification';
+                notif.textContent = text;
+                document.getElementById('gameContainer').appendChild(notif);
+                
+                setTimeout(() => notif.remove(), 2000);
+            }
+
+   update() {
+    if (!this.gameRunning || this.isPaused) return;
+    
+    const settings = this.getModeSettings();
+    const speedMod = (this.activePowerup === 'slow') ? 0.5 : 1;
+    
+    if (this.gameStarted) {
+        this.bird.velocity += settings.gravity;
+        this.bird.y += this.bird.velocity;
+        this.bird.rotation = Math.min(Math.max(this.bird.velocity * 3, -30), 90);
+        
+        const infiniteLives = settings.infiniteLives || this.isGhost || this.isInvincible;
+        
+        // Floor and Ceiling Collision
+        if (!infiniteLives && (this.bird.y + this.bird.radius > this.canvas.height || this.bird.y - this.bird.radius < 0)) {
+            // Even with a shield, hitting the ground usually ends the game
+            this.gameOver();
+            return;
+        }
+        
+        // Boundary clamping for Ghost/Zen modes
+        if (this.bird.y + this.bird.radius > this.canvas.height) {
+            this.bird.y = this.canvas.height - this.bird.radius;
+            this.bird.velocity = 0;
+        }
+        if (this.bird.y - this.bird.radius < 0) {
+            this.bird.y = this.bird.radius;
+            this.bird.velocity = 0;
+        }
+    }
+    
+    // Background stars
+    for (let star of this.stars) {
+        star.x -= star.speed * speedMod;
+        if (star.x < 0) star.x = this.canvas.width;
+    }
+    
+    // Particles
+    for (let i = this.particles.length - 1; i >= 0; i--) {
+        const p = this.particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.2;
+        p.life -= 0.02;
+        if (p.life <= 0) this.particles.splice(i, 1);
+    }
+    
+    if (this.gameStarted) {
+        this.frameCount++;
+        
+        // Pipe Spawning
+        if (this.frameCount % settings.pipeFrequency === 0) {
+            const minHeight = 80;
+            const maxHeight = this.canvas.height - settings.pipeGap - 80;
+            const height = Math.random() * (maxHeight - minHeight) + minHeight;
+            
+            this.pipes.push({
+                x: this.canvas.width,
+                top: height,
+                bottom: height + settings.pipeGap,
+                scored: false,
+                width: 70,
+                shieldBroken: false // NEW: Track if this pipe already hit a shield
+            });
+        }
+        
+        // Power-up Spawning
+        if (settings.powerups && this.frameCount % 300 === 0) {
+            this.spawnPowerup();
+        }
+        
+        // Pipe Processing
+        for (let i = this.pipes.length - 1; i >= 0; i--) {
+            const pipe = this.pipes[i];
+            pipe.x -= settings.pipeSpeed * speedMod;
+            
+            if (pipe.x + pipe.width < 0) {
+                this.pipes.splice(i, 1);
+                continue;
+            }
+            
+            // Scoring
+            if (!pipe.scored && pipe.x + pipe.width < this.bird.x) {
+                pipe.scored = true;
+                const points = 1 * this.scoreMultiplier;
+                this.score += points;
+                this.combo++;
+                document.getElementById('scoreBoard').textContent = this.score;
+                document.getElementById('comboDisplay').textContent = `🔥 ${this.combo}x`;
+                this.playSound('score');
+                this.createParticles(pipe.x + pipe.width / 2, this.canvas.height / 2, 15, '#00ff00');
+            }
+            
+            // Collision Detection
+            const canCollide = !this.isGhost && !this.isInvincible && !settings.infiniteLives;
+            
+            // Check if bird hits pipe AND pipe hasn't already broken a shield
+            if (canCollide && !pipe.shieldBroken && this.checkCollision(pipe)) {
+                if (this.isShielded) {
+                    // FIX: Break the shield and mark THIS pipe as "spent"
+                    this.isShielded = false;
+                    pipe.shieldBroken = true; 
+                    document.getElementById('powerupDisplay').textContent = '⚡ None';
+                    this.playSound('powerup');
+                    this.createParticles(this.bird.x, this.bird.y, 40, '#3498DB');
+                    this.showNotification('🛡️ SHIELD BROKEN!');
+                } else {
+                    this.gameOver();
+                    return;
+                }
+            }
+        }
+        
+        // Power-up Collection
+        for (let i = this.powerups.length - 1; i >= 0; i--) {
+            this.powerups[i].x -= settings.pipeSpeed * speedMod;
+            
+            if (this.powerups[i].x + this.powerups[i].size < 0) {
+                this.powerups.splice(i, 1);
+                continue;
+            }
+            
+            const dx = this.powerups[i].x - this.bird.x;
+            const dy = this.powerups[i].y - this.bird.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            
+            if (dist < this.bird.radius + this.powerups[i].size) {
+                this.collectPowerup(this.powerups[i]);
+                this.powerups.splice(i, 1);
+            }
+        }
+    }
+}
+
+            checkCollision(pipe) {
+                const birdLeft = this.bird.x - this.bird.radius;
+                const birdRight = this.bird.x + this.bird.radius;
+                const birdTop = this.bird.y - this.bird.radius;
+                const birdBottom = this.bird.y + this.bird.radius;
+                
+                if (birdRight > pipe.x && birdLeft < pipe.x + pipe.width) {
+                    if (birdTop < pipe.top || birdBottom > pipe.bottom) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            externalPause() {
+    this.isPaused = true;
+    if (this.audioContext) this.audioContext.suspend();
+    document.getElementById('pauseBtn').textContent = '▶️';
+}
+
+externalResume() {
+    this.isPaused = false;
+    if (this.audioContext) this.audioContext.resume();
+    document.getElementById('pauseBtn').textContent = '⏸';
+    this.gameLoop(); // Restart the loop after the ad
+}
+
+            togglePause() {
+    if (!this.gameRunning || !this.gameStarted) return;
+
+    this.isPaused = !this.isPaused;
+    const pauseBtn = document.getElementById('pauseBtn');
+    
+    if (this.isPaused) {
+        pauseBtn.textContent = '▶️';
+        this.showNotification('GAME PAUSED');
+    } else {
+        pauseBtn.textContent = '⏸';
+        this.gameLoop(); // Re-start the loop
+    }
+}
+
+            gameOver() {
+                this.gameRunning = false;
+                this.gameStarted = false;
+                this.playSound('hit');
+                this.vibrate([200, 100, 200]);
+                this.createParticles(this.bird.x, this.bird.y, 30, '#FF4444');
+                // --- SDK AD INTEGRATION ---
+    if (typeof sdk !== 'undefined' && sdk.showBanner !== 'undefined') {
+        sdk.showBanner();
+    }
+    // ---------------------------
+                const isNewRecord = this.score > (this.gameData.highscores[this.currentMode] || 0);
+                if (isNewRecord) {
+                    this.gameData.highscores[this.currentMode] = this.score;
+                    this.saveGameData();
+                }
+                
+                document.getElementById('finalScore').textContent = this.score;
+                document.getElementById('finalHighScore').textContent = this.gameData.highscores[this.currentMode] || 0;
+                
+                const newRecordText = document.getElementById('newRecordText');
+                if (isNewRecord && this.score > 0) {
+                    newRecordText.classList.remove('hidden');
+                } else {
+                    newRecordText.classList.add('hidden');
+                }
+                
+                setTimeout(() => {
+                    document.getElementById('gameOverScreen').classList.remove('hidden');
+                }, 500);
+            }
+
+            draw() {
+                // Neon background
+                const bgGradient = this.ctx.createLinearGradient(0, 0, 0, this.canvas.height);
+                if (this.settings.neon) {
+                    bgGradient.addColorStop(0, '#0f0c29');
+                    bgGradient.addColorStop(0.5, '#302b63');
+                    bgGradient.addColorStop(1, '#24243e');
+                } else {
+                    bgGradient.addColorStop(0, '#1e3c72');
+                    bgGradient.addColorStop(1, '#2a5298');
+                }
+                this.ctx.fillStyle = bgGradient;
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Stars
+                for (const star of this.stars) {
+                    this.ctx.fillStyle = `rgba(255, 255, 255, ${star.opacity})`;
+                    this.ctx.beginPath();
+                    this.ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    
+                    if (this.settings.neon) {
+                        this.ctx.shadowBlur = 10;
+                        this.ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
+                        this.ctx.fill();
+                        this.ctx.shadowBlur = 0;
+                    }
+                }
+                
+                // Pipes with neon effect
+                for (const pipe of this.pipes) {
+                    const pipeGradient = this.ctx.createLinearGradient(pipe.x, 0, pipe.x + pipe.width, 0);
+                    if (this.settings.neon) {
+                        pipeGradient.addColorStop(0, '#00f2fe');
+                        pipeGradient.addColorStop(0.5, '#4facfe');
+                        pipeGradient.addColorStop(1, '#00f2fe');
+                    } else {
+                        pipeGradient.addColorStop(0, '#2ECC71');
+                        pipeGradient.addColorStop(1, '#27AE60');
+                    }
+                    
+                    if (this.settings.neon) {
+                        this.ctx.shadowBlur = 20;
+                        this.ctx.shadowColor = '#00f2fe';
+                    }
+                    
+                    this.ctx.fillStyle = pipeGradient;
+                    this.ctx.fillRect(pipe.x, 0, pipe.width, pipe.top);
+                    this.ctx.fillRect(pipe.x, pipe.bottom, pipe.width, this.canvas.height - pipe.bottom);
+                    
+                    // Pipe caps
+                    this.ctx.fillRect(pipe.x - 8, pipe.top - 35, pipe.width + 16, 35);
+                    this.ctx.fillRect(pipe.x - 8, pipe.bottom, pipe.width + 16, 35);
+                    
+                    this.ctx.shadowBlur = 0;
+                }
+                
+                // Power-ups
+                for (const powerup of this.powerups) {
+                    this.ctx.save();
+                    this.ctx.font = '32px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.textBaseline = 'middle';
+                    
+                    if (this.settings.neon) {
+                        this.ctx.shadowBlur = 15;
+                        this.ctx.shadowColor = '#FFD700';
+                    }
+                    
+                    this.ctx.fillText(powerup.icon, powerup.x, powerup.y);
+                    this.ctx.restore();
+                }
+                
+                // Bird
+                this.ctx.save();
+                this.ctx.translate(this.bird.x, this.bird.y);
+                this.ctx.rotate((this.bird.rotation * Math.PI) / 180);
+                
+                // Shield effect
+                if (this.isShielded) {
+                    this.ctx.strokeStyle = '#3498DB';
+                    this.ctx.lineWidth = 4;
+                    this.ctx.shadowBlur = 15;
+                    this.ctx.shadowColor = '#3498DB';
+                    this.ctx.beginPath();
+                    this.ctx.arc(0, 0, this.bird.radius + 8, 0, Math.PI * 2);
+                    this.ctx.stroke();
+                }
+                
+                // Ghost/Invincible effect
+                if (this.isGhost || this.isInvincible) {
+                    this.ctx.globalAlpha = 0.5;
+                }
+                
+                // Bird glow
+                if (this.settings.neon) {
+                    this.ctx.shadowBlur = 20;
+                    this.ctx.shadowColor = '#00f2fe';
+                }
+                
+                const birdGradient = this.ctx.createRadialGradient(0, 0, 0, 0, 0, this.bird.radius);
+                birdGradient.addColorStop(0, '#00f2fe');
+                birdGradient.addColorStop(0.7, '#4facfe');
+                birdGradient.addColorStop(1, '#667eea');
+                
+                this.ctx.fillStyle = birdGradient;
+                this.ctx.beginPath();
+                this.ctx.arc(0, 0, this.bird.radius, 0, Math.PI * 2);
+                this.ctx.fill();
+                
+                // Bird eye
+                this.ctx.shadowBlur = 0;
+                this.ctx.fillStyle = 'white';
+                this.ctx.beginPath();
+                this.ctx.arc(6, -4, 5, 0, Math.PI * 2);
+                this.ctx.fill();
+                
+                this.ctx.fillStyle = 'black';
+                this.ctx.beginPath();
+                this.ctx.arc(8, -4, 3, 0, Math.PI * 2);
+                this.ctx.fill();
+                
+                this.ctx.restore();
+                
+                // Particles
+                this.particleCtx.clearRect(0, 0, this.particleCanvas.width, this.particleCanvas.height);
+                for (const p of this.particles) {
+                    this.particleCtx.fillStyle = p.color;
+                    this.particleCtx.globalAlpha = p.life;
+                    
+                    if (this.settings.neon) {
+                        this.particleCtx.shadowBlur = 10;
+                        this.particleCtx.shadowColor = p.color;
+                    }
+                    
+                    this.particleCtx.beginPath();
+                    this.particleCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    this.particleCtx.fill();
+                }
+                this.particleCtx.globalAlpha = 1;
+                this.particleCtx.shadowBlur = 0;
+                
+                // Start message
+                if (!this.gameStarted && this.gameRunning) {
+                    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+                    this.ctx.fillRect(0, this.canvas.height / 2 - 70, this.canvas.width, 140);
+                    
+                    this.ctx.fillStyle = '#00f2fe';
+                    this.ctx.font = `bold ${Math.min(this.canvas.width / 10, 40)}px Orbitron`;
+                    this.ctx.textAlign = 'center';
+                    this.ctx.textBaseline = 'middle';
+                    
+                    if (this.settings.neon) {
+                        this.ctx.shadowBlur = 20;
+                        this.ctx.shadowColor = '#00f2fe';
+                    }
+                    
+                    this.ctx.fillText('TAP TO START', this.canvas.width / 2, this.canvas.height / 2 - 15);
+                    
+                    this.ctx.font = `${Math.min(this.canvas.width / 20, 20)}px Rajdhani`;
+                    this.ctx.fillStyle = 'white';
+                    this.ctx.shadowBlur = 10;
+                    this.ctx.fillText('Space or Click to Flap', this.canvas.width / 2, this.canvas.height / 2 + 25);
+                    
+                    this.ctx.shadowBlur = 0;
+                }
+            }
+
+            animateBackground() {
+                if (!this.gameRunning) {
+                    this.draw();
+                }
+                requestAnimationFrame(() => this.animateBackground());
+            }
+
+            gameLoop() {
+               if (!this.gameRunning || this.isPaused) return; // Add isPaused check
+                
+                this.update();
+                this.draw();
+                
+                requestAnimationFrame(() => this.gameLoop());
+            }
+        }
+
+
+        const game = new FlappyBird2026();
+    </script>
+</body>
+</html>

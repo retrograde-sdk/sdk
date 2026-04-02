@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Nebula Bubble Pop - Pro Edition</title>
+    <style>
+        :root {
+            --primary: #bb86fc;
+            --secondary: #03dac6;
+            --bg: #0a0a12;
+            --danger: #ff3e3e;
+            --glass: rgba(255, 255, 255, 0.1);
+        }
+
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: var(--bg);
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            user-select: none;
+            touch-action: none;
+            color: white;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            /* background: radial-gradient(circle at center, #1b1b3a 0%, #050508 100%); */
+            background: url("nebula-bg.png") no-repeat center center;
+            background-size: cover;
+        }
+
+        #game-container::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 0;
+        }
+
+        canvas,
+        #hud,
+        .overlay {
+            position: relative;
+            z-index: 1;
+        }
+
+        canvas {
+            background: rgba(15, 52, 96, 0.2);
+            backdrop-filter: blur(8px);
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+            display: block;
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        #hud {
+            position: absolute;
+            top: 20px;
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+            pointer-events: none;
+            font-size: 20px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            z-index: 5;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            backdrop-filter: blur(10px);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        #level-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+            margin: 20px;
+            max-height: 50vh;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .level-node {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            background: var(--glass);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: 1px solid var(--primary);
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        .level-node:hover:not(.locked) {
+            background: var(--primary);
+            color: black;
+        }
+
+        .level-node.locked {
+            opacity: 0.3;
+            cursor: not-allowed;
+            border-color: #666;
+        }
+
+        .menu-btn {
+            padding: 15px 40px;
+            margin: 10px;
+            font-size: 18px;
+            cursor: pointer;
+            background: var(--primary);
+            border: none;
+            color: black;
+            border-radius: 30px;
+            font-weight: bold;
+            min-width: 220px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .menu-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px var(--primary);
+        }
+
+        .menu-btn:active {
+            transform: scale(0.95);
+        }
+
+        #controls-hint {
+            position: absolute;
+            bottom: 20px;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 12px;
+            pointer-events: none;
+        }
+
+        #mute-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: var(--glass);
+            border: 1px solid var(--primary);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            transition: all 0.2s;
+        }
+
+        #mute-btn:hover {
+            background: var(--primary);
+            color: black;
+        }
+    </style>
+    <!-- <script src="https://sdk.crazygames.com/crazygames-sdk-v3.js"></script> -->
+
+    <!-- <script type="text/javascript">
+        window.GD_OPTIONS = {
+            "gameId": "b0555d73970e481597ac2a84da137004",
+            "onEvent": function (event) {
+                switch (event.name) {
+                    case "SDK_GAME_START":
+                        if (window.game) window.game.isPaused = false;
+                        AudioEngine.sdkMuted = false;
+                        AudioEngine.updateButton();
+                        break;
+                    case "SDK_GAME_PAUSE":
+                        if (window.game) window.game.isPaused = true;
+                        AudioEngine.sdkMuted = true;
+                        AudioEngine.updateButton();
+                        break;
+                    case "SDK_REWARDED_WATCH_COMPLETE":
+                        if (window.game) window.game.rewardUser();
+                        break;
+                    case "SDK_READY":
+                        console.log("GD SDK Ready");
+                        break;
+                }
+            },
+        };
+        (function (d, s, id) {
+            var js, fjs = d.getElementsByTagName(s)[0];
+            if (d.getElementById(id)) return;
+            js = d.createElement(s); js.id = id;
+            js.src = 'https://html5.api.gamedistribution.com/main.min.js';
+            fjs.parentNode.insertBefore(js, fjs);
+        }(document, 'script', 'gamedistribution-jssdk'));
+    </script> -->
+    <script type="text/javascript">
+        window.SDK_OPTIONS = {
+            gameId: "0cwbvhootwnldgwi96abovqjr55su4nq",
+            onEvent: function (a) {
+                switch (a.name) {
+                    case "SDK_GAME_PAUSE":
+                        // pause game logic / mute audio
+                        break;
+                    case "SDK_GAME_START":
+                        // advertisement done, resume game logic and unmute audio
+                        break;
+                    case "SDK_READY":
+                        // when sdk is ready
+                        break;
+                }
+            }
+        };
+        (function (a, b, c) {
+            var d = a.getElementsByTagName(b)[0];
+            a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+        })(document, "script", "gamemonetize-sdk"); 
+    </script>
+</head>
+
+<body>
+    <div id="game-container">
+        <button id="mute-btn" onclick="AudioEngine.toggleMute()">🔊</button>
+        <canvas id="gameCanvas"></canvas>
+
+        <div id="hud">
+            <span>SCORE: <span id="scoreVal">0</span></span>
+            <span>LEVEL: <span id="levelVal">1</span></span>
+        </div>
+
+        <div id="controls-hint">TAP TO SHOOT • RIGHT CLICK / TWO-FINGER TAP TO SWAP</div>
+
+        <div id="main-menu" class="overlay">
+            <h1 style="font-size: 48px; letter-spacing: 10px; color: var(--primary);">NEBULA POP</h1>
+            <button class="menu-btn" onclick="window.game.playCurrentLevel()">CONTINUE MISSION</button>
+            <button class="menu-btn" onclick="window.game.showLevelSelect()">SECTOR MAP</button>
+        </div>
+
+        <div id="level-menu" class="overlay hidden">
+            <h1>SELECT SECTOR</h1>
+            <div id="level-grid"></div>
+            <button class="menu-btn" onclick="window.game.showMainMenu()">BACK</button>
+        </div>
+
+        <div id="status-overlay" class="overlay hidden">
+            <h1 id="status-title">CLEAR!</h1>
+            <p id="final-score" style="font-size: 24px;">Score: 0</p>
+            <button class="menu-btn" id="next-btn" onclick="window.game.nextLevel()">NEXT SECTOR</button>
+            <button class="menu-btn" id="revive-btn" onclick="window.game.watchRewardedAd()"
+                style="background: var(--secondary); color: #000;">📺 REVIVE (WATCH AD)</button>
+            <button class="menu-btn" id="restart-btn" onclick="window.game.restartLevel()">RETRY</button>
+            <button class="menu-btn" onclick="window.game.showMainMenu()">QUIT</button>
+        </div>
+    </div>
+
+    <script>
+        const AudioEngine = {
+            ctx: new (window.AudioContext || window.webkitAudioContext)(),
+            isMuted: localStorage.getItem('nebula_muted') === 'true',
+
+            toggleMute() {
+                this.isMuted = !this.isMuted;
+                localStorage.setItem('nebula_muted', this.isMuted);
+                this.updateButton();
+            },
+
+            updateButton() {
+                const btn = document.getElementById('mute-btn');
+                if (btn) btn.innerText = this.isMuted ? '🔇' : '🔊';
+            },
+
+            play(type) {
+                if (this.isMuted) return;
+                if (this.ctx.state === 'suspended') this.ctx.resume();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.connect(gain); gain.connect(this.ctx.destination);
+                const now = this.ctx.currentTime;
+
+                if (type === 'shoot') {
+                    osc.frequency.setValueAtTime(400, now);
+                    osc.frequency.exponentialRampToValueAtTime(100, now + 0.2);
+                    gain.gain.setValueAtTime(0.1, now);
+                } else if (type === 'pop') {
+                    osc.frequency.setValueAtTime(800, now);
+                    osc.frequency.exponentialRampToValueAtTime(200, now + 0.1);
+                    gain.gain.setValueAtTime(0.1, now);
+                } else if (type === 'swap') {
+                    osc.frequency.setValueAtTime(200, now);
+                    osc.frequency.linearRampToValueAtTime(300, now + 0.1);
+                    gain.gain.setValueAtTime(0.05, now);
+                }
+                osc.start(); osc.stop(now + 0.2);
+            }
+        };
+
+        // let sdkReady = false;
+
+        const CONFIG = {
+            COLS: 8,
+            ROWS: 14,
+            COLORS: ['#ff3e3e', '#00ffaa', '#3e8eff', '#ffff3e', '#ff3eff', '#ffa500'],
+            TOTAL_LEVELS: 50,
+            SHALLOW_ROWS: 10
+        };
+
+        class BubbleShooter {
+            constructor() {
+                this.canvas = document.getElementById('gameCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.grid = [];
+                this.particles = [];
+                this.floatingTexts = [];
+                this.floatingBubbles = [];
+                this.score = 0;
+                this.isPaused = false;
+                this.unlockedLevel = parseInt(localStorage.getItem('nebula_unlocked')) || 0;
+                this.currentLevel = this.unlockedLevel;
+
+                this.shooter = {
+                    x: 0, y: 0, angle: 0,
+                    activeBubble: null,
+                    nextBubble: null,
+                    isShooting: false
+                };
+
+                this.mouse = { x: 0, y: 0, down: false };
+                this.isGameOver = false;
+                this.shotsTaken = 0;
+                this.shotsToDescend = 6;
+
+                this.resize();
+                this.initListeners();
+                this.loop();
+            }
+            triggerInterstitial() {
+                // if (typeof gdid !== 'undefined') {
+                //     gdid.showBanner();
+                // }
+                if (typeof sdk !== 'undefined' && sdk.showBanner !== 'undefined') {
+                    sdk.showBanner();
+                }
+            }
+
+            watchRewardedAd() {
+                // if (typeof gdid !== 'undefined') {
+                //     gdid.displayRewardedVideo();
+                //     this.rewardUser()
+                // } else {
+                //     alert("Ads unavailable. Reviving anyway!");
+                //     this.rewardUser();
+                // }
+                if (typeof sdk !== 'undefined' && sdk.showBanner !== 'undefined') {
+                    sdk.showBanner();
+                    this.rewardUser();
+                } else {
+                    alert("Ads unavailable. Reviving anyway!");
+                    this.rewardUser();
+                }
+            }
+
+            rewardUser() {
+                for (let r = CONFIG.ROWS - 1; r > CONFIG.ROWS - 5; r--) {
+                    for (let c = 0; c < CONFIG.COLS; c++) {
+                        if (this.grid[r]) this.grid[r][c].active = false;
+                    }
+                }
+                this.isGameOver = false;
+                this.isPaused = false;
+                document.getElementById('status-overlay').classList.add('hidden');
+            }
+
+            resize() {
+                const h = window.innerHeight;
+                const w = Math.min(window.innerWidth, h * 0.7);
+                this.canvas.width = w;
+                this.canvas.height = h;
+                this.bubbleSize = w / (CONFIG.COLS + 0.5);
+                this.deadLineY = h - 160;
+                this.shooter.x = w / 2;
+                this.shooter.y = h - 70;
+            }
+
+            initListeners() {
+                const handleInput = (e) => {
+                    if (this.isGameOver || this.isPaused) return;
+                    const rect = this.canvas.getBoundingClientRect();
+                    const t = e.touches ? e.touches[0] : e;
+                    this.mouse.x = t.clientX - rect.left;
+                    this.mouse.y = t.clientY - rect.top;
+                    let angle = Math.atan2(this.mouse.y - this.shooter.y, this.mouse.x - this.shooter.x);
+                    this.shooter.angle = Math.max(Math.min(angle, -0.2), -Math.PI + 0.2);
+                };
+
+                window.addEventListener('mousemove', handleInput);
+                window.addEventListener('touchstart', (e) => {
+                    if (e.touches.length > 1) { this.swapBubbles(); e.preventDefault(); }
+                    handleInput(e);
+                    this.mouse.down = true;
+                });
+
+                window.addEventListener('mousedown', (e) => {
+                    if (e.button === 2) { this.swapBubbles(); e.preventDefault(); }
+                    else { this.mouse.down = true; }
+                });
+
+                window.addEventListener('contextmenu', e => e.preventDefault());
+
+                window.addEventListener('mouseup', () => { if (this.mouse.down) this.shoot(); this.mouse.down = false; });
+                window.addEventListener('touchend', () => { if (this.mouse.down) this.shoot(); this.mouse.down = false; });
+            }
+
+            swapBubbles() {
+                if (this.shooter.isShooting || this.isGameOver || this.isPaused) return;
+                const temp = this.shooter.activeBubble.color;
+                this.shooter.activeBubble.color = this.shooter.nextBubble.color;
+                this.shooter.nextBubble.color = temp;
+                AudioEngine.play('swap');
+            }
+
+            showMainMenu() {
+                this.isGameOver = true;
+                document.querySelectorAll('.overlay').forEach(el => el.classList.add('hidden'));
+                document.getElementById('main-menu').classList.remove('hidden');
+            }
+
+            showLevelSelect() {
+                document.querySelectorAll('.overlay').forEach(el => el.classList.add('hidden'));
+                const menu = document.getElementById('level-menu');
+                const grid = document.getElementById('level-grid');
+                grid.innerHTML = '';
+                menu.classList.remove('hidden');
+                for (let i = 0; i < CONFIG.TOTAL_LEVELS; i++) {
+                    const node = document.createElement('div');
+                    node.className = `level-node ${i > this.unlockedLevel ? 'locked' : ''}`;
+                    node.innerText = i + 1;
+                    if (i <= this.unlockedLevel) node.onclick = () => this.startLevel(i);
+                    grid.appendChild(node);
+                }
+            }
+
+            playCurrentLevel() { this.startLevel(this.unlockedLevel); }
+            restartLevel() { this.startLevel(this.currentLevel); }
+
+            startLevel(idx) {
+                // if (sdkReady) {
+                //     CrazyGames.SDK.game.gameplayStart();
+                // }
+                this.triggerInterstitial();
+                this.currentLevel = idx;
+                this.score = 0;
+                this.shotsTaken = 0;
+                this.isGameOver = false;
+                this.particles = [];
+                this.floatingTexts = [];
+                this.floatingBubbles = [];
+                this.shotsToDescend = Math.max(3, 7 - Math.floor(idx / 10));
+
+                document.querySelectorAll('.overlay').forEach(el => el.classList.add('hidden'));
+                this.initGrid(idx);
+                this.prepareShooter(true);
+                this.updateHUD();
+            }
+
+            initGrid(levelIdx) {
+                this.grid = [];
+                const startRows = 4 + Math.floor(levelIdx / 5);
+                const colorCount = Math.min(3 + Math.floor(levelIdx / 8), 6);
+                for (let r = 0; r < CONFIG.ROWS; r++) {
+                    this.grid[r] = [];
+                    for (let c = 0; c < CONFIG.COLS; c++) {
+                        const active = r < startRows && (Math.random() > 0.1 || r < 2);
+                        this.grid[r][c] = {
+                            color: active ? CONFIG.COLORS[Math.floor(Math.random() * colorCount)] : null,
+                            active: active,
+                            isSpecial: active && Math.random() > 0.97
+                        };
+                    }
+                }
+            }
+
+            prepareShooter(firstRun = false) {
+                const activeColors = [...new Set(this.grid.flat().filter(b => b.active).map(b => b.color))];
+                if (activeColors.length === 0 && !firstRun) return;
+
+                const getRandCol = () => activeColors.length > 0 ?
+                    activeColors[Math.floor(Math.random() * activeColors.length)] :
+                    CONFIG.COLORS[0];
+
+                if (firstRun) {
+                    this.shooter.activeBubble = { x: this.shooter.x, y: this.shooter.y, color: getRandCol(), vx: 0, vy: 0 };
+                    this.shooter.nextBubble = { color: getRandCol() };
+                } else {
+                    this.shooter.activeBubble = { x: this.shooter.x, y: this.shooter.y, color: this.shooter.nextBubble.color, vx: 0, vy: 0 };
+                    this.shooter.nextBubble = { color: getRandCol() };
+                }
+                this.shooter.isShooting = false;
+            }
+
+            shoot() {
+                if (this.shooter.isShooting || !this.shooter.activeBubble || this.isGameOver) return;
+                const speed = 28;
+                this.shooter.activeBubble.vx = Math.cos(this.shooter.angle) * speed;
+                this.shooter.activeBubble.vy = Math.sin(this.shooter.angle) * speed;
+                this.shooter.isShooting = true;
+                AudioEngine.play('shoot');
+            }
+
+            snap(b) {
+                let best = { r: 0, c: 0, d: 9999 };
+                for (let r = 0; r < CONFIG.ROWS; r++) {
+                    for (let c = 0; c < CONFIG.COLS; c++) {
+                        if (this.grid[r][c].active) continue;
+                        const p = this.getGridPos(r, c);
+                        const d = Math.hypot(b.x - p.x, b.y - p.y);
+                        if (d < best.d) best = { r, c, d };
+                    }
+                }
+
+                this.grid[best.r][best.c] = { color: b.color, active: true, isSpecial: false };
+                const matched = this.handleMatches(best.r, best.c);
+                this.dropOrphans();
+
+                if (!matched) {
+                    this.shotsTaken++;
+                    if (this.shotsTaken >= this.shotsToDescend) {
+                        this.descendGrid();
+                        this.shotsTaken = 0;
+                    }
+                }
+
+                this.updateHUD();
+                if (!this.grid.some(row => row.some(cell => cell.active))) {
+                    this.levelWin();
+                } else {
+                    this.prepareShooter();
+                    this.checkDeadLine();
+                }
+            }
+
+            handleMatches(r, c) {
+                const target = this.grid[r][c].color;
+                const matches = [];
+                const q = [{ r, c }];
+                const v = new Set();
+
+                while (q.length) {
+                    const curr = q.shift();
+                    const k = `${curr.r},${curr.c}`;
+                    if (v.has(k)) continue;
+                    v.add(k);
+                    if (this.grid[curr.r][curr.c].active && this.grid[curr.r][curr.c].color === target) {
+                        matches.push(curr);
+                        this.getNeighbors(curr.r, curr.c).forEach(n => q.push(n));
+                    }
+                }
+
+                if (matches.length >= 3) {
+                    matches.forEach(m => this.popBubble(m.r, m.c));
+                    AudioEngine.play('pop');
+                    return true;
+                }
+                return false;
+            }
+
+            popBubble(r, c) {
+                const b = this.grid[r][c];
+                if (!b.active) return;
+                const p = this.getGridPos(r, c);
+                this.createExplosion(p.x, p.y, b.color);
+                this.score += 10;
+                b.active = false;
+            }
+
+            dropOrphans() {
+                const attached = new Set();
+                const q = [];
+                for (let c = 0; c < CONFIG.COLS; c++) if (this.grid[0][c].active) q.push({ r: 0, c });
+
+                while (q.length) {
+                    const curr = q.shift();
+                    const k = `${curr.r},${curr.c}`;
+                    if (attached.has(k)) continue;
+                    attached.add(k);
+                    this.getNeighbors(curr.r, curr.c).forEach(n => {
+                        if (this.grid[n.r][n.c].active) q.push(n);
+                    });
+                }
+
+                for (let r = 1; r < CONFIG.ROWS; r++) {
+                    for (let c = 0; c < CONFIG.COLS; c++) {
+                        if (this.grid[r][c].active && !attached.has(`${r},${c}`)) {
+                            const p = this.getGridPos(r, c);
+                            this.floatingBubbles.push({ ...p, color: this.grid[r][c].color, vy: 2, ay: 0.5 });
+                            this.grid[r][c].active = false;
+                            this.score += 20;
+                            this.floatingTexts.push({ x: p.x, y: p.y, txt: "+20", life: 1 });
+                        }
+                    }
+                }
+            }
+
+            getNeighbors(r, c) {
+                const res = [];
+                const offset = r % 2 === 0 ? 0 : 1;
+                [[0, -1], [0, 1], [-1, offset - 1], [-1, offset], [1, offset - 1], [1, offset]].forEach(([dr, dc]) => {
+                    const nr = r + dr, nc = c + dc;
+                    if (nr >= 0 && nr < CONFIG.ROWS && nc >= 0 && nc < CONFIG.COLS) res.push({ r: nr, c: nc });
+                });
+                return res;
+            }
+
+            descendGrid() {
+                for (let r = CONFIG.ROWS - 1; r > 0; r--) {
+                    this.grid[r] = [...this.grid[r - 1]];
+                }
+                const colorCount = Math.min(3 + Math.floor(this.currentLevel / 8), 6);
+                this.grid[0] = Array.from({ length: CONFIG.COLS }, () => ({
+                    color: CONFIG.COLORS[Math.floor(Math.random() * colorCount)],
+                    active: true,
+                    isSpecial: Math.random() > 0.95
+                }));
+            }
+
+            checkDeadLine() {
+                for (let r = 0; r < CONFIG.ROWS; r++) {
+                    for (let c = 0; c < CONFIG.COLS; c++) {
+                        if (this.grid[r][c].active) {
+                            const p = this.getGridPos(r, c);
+                            if (p.y + this.bubbleSize / 2 >= this.deadLineY) this.gameOver();
+                        }
+                    }
+                }
+            }
+
+            createExplosion(x, y, col) {
+                for (let i = 0; i < 8; i++) {
+                    this.particles.push({
+                        x, y,
+                        vx: (Math.random() - 0.5) * 10,
+                        vy: (Math.random() - 0.5) * 10,
+                        life: 1,
+                        col
+                    });
+                }
+            }
+
+            update() {
+                if (this.shooter.isShooting) {
+                    let b = this.shooter.activeBubble;
+                    b.x += b.vx; b.y += b.vy;
+                    if (b.x < this.bubbleSize / 2 || b.x > this.canvas.width - this.bubbleSize / 2) b.vx *= -1;
+                    if (this.checkCollision(b) || b.y < this.bubbleSize / 2) this.snap(b);
+                }
+
+                this.particles.forEach((p, i) => {
+                    p.x += p.vx; p.y += p.vy; p.life -= 0.04;
+                    if (p.life <= 0) this.particles.splice(i, 1);
+                });
+
+                this.floatingBubbles.forEach((fb, i) => {
+                    fb.y += fb.vy; fb.vy += fb.ay;
+                    if (fb.y > this.canvas.height) this.floatingBubbles.splice(i, 1);
+                });
+
+                this.floatingTexts.forEach((t, i) => {
+                    t.y -= 1; t.life -= 0.02;
+                    if (t.life <= 0) this.floatingTexts.splice(i, 1);
+                });
+            }
+
+            checkCollision(b) {
+                for (let r = 0; r < CONFIG.ROWS; r++) {
+                    for (let c = 0; c < CONFIG.COLS; c++) {
+                        if (this.grid[r][c].active) {
+                            const p = this.getGridPos(r, c);
+                            if (Math.hypot(b.x - p.x, b.y - p.y) < this.bubbleSize * 0.8) return true;
+                        }
+                    }
+                }
+                return false;
+            }
+
+            getGridPos(r, c) {
+                const xOff = (r % 2 === 0) ? 0 : this.bubbleSize / 2;
+                return { x: c * this.bubbleSize + xOff + this.bubbleSize / 2, y: r * (this.bubbleSize * 0.88) + this.bubbleSize / 2 };
+            }
+
+            draw() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+                // Draw Danger Line
+                this.ctx.beginPath();
+                this.ctx.strokeStyle = `rgba(255, 62, 62, ${0.3 + Math.sin(Date.now() / 200) * 0.2})`;
+                this.ctx.lineWidth = 4;
+                this.ctx.setLineDash([15, 10]);
+                this.ctx.moveTo(0, this.deadLineY);
+                this.ctx.lineTo(this.canvas.width, this.deadLineY);
+                this.ctx.stroke();
+                this.ctx.setLineDash([]);
+
+                // Draw Aim
+                if (!this.shooter.isShooting && this.mouse.down && this.shooter.activeBubble) this.drawAimLine();
+
+                // Draw Grid
+                this.grid.forEach((row, r) => row.forEach((b, c) => {
+                    if (b.active) this.drawBubble(this.getGridPos(r, c), b.color, b.isSpecial);
+                }));
+
+                // Draw Active and Next
+                if (this.shooter.activeBubble) this.drawBubble(this.shooter.activeBubble, this.shooter.activeBubble.color);
+                if (this.shooter.nextBubble) {
+                    const nextPos = { x: this.shooter.x - 60, y: this.shooter.y + 20 };
+                    this.drawBubble(nextPos, this.shooter.nextBubble.color, false, 0.6);
+                }
+
+                this.floatingBubbles.forEach(fb => this.drawBubble(fb, fb.color));
+
+                this.particles.forEach(p => {
+                    this.ctx.globalAlpha = p.life;
+                    this.ctx.fillStyle = p.col;
+                    this.ctx.fillRect(p.x, p.y, 4, 4);
+                });
+                this.ctx.globalAlpha = 1;
+
+                this.floatingTexts.forEach(t => {
+                    this.ctx.fillStyle = `rgba(255,255,255,${t.life})`;
+                    this.ctx.font = "bold 16px Arial";
+                    this.ctx.fillText(t.txt, t.x, t.y);
+                });
+            }
+
+            drawBubble(p, col, special = false, scale = 1) {
+                const r = (this.bubbleSize / 2 - 2) * scale;
+                this.ctx.save();
+                this.ctx.translate(p.x, p.y);
+
+                // Glow
+                const shadow = this.ctx.createRadialGradient(0, 0, 0, 0, 0, r * 1.5);
+                shadow.addColorStop(0, col); shadow.addColorStop(1, 'transparent');
+                this.ctx.globalAlpha = 0.2;
+                this.ctx.fillStyle = shadow;
+                this.ctx.fillRect(-r * 2, -r * 2, r * 4, r * 4);
+                this.ctx.globalAlpha = 1;
+
+                this.ctx.beginPath();
+                this.ctx.arc(0, 0, r, 0, Math.PI * 2);
+                const grad = this.ctx.createRadialGradient(-r / 3, -r / 3, r / 5, 0, 0, r);
+                grad.addColorStop(0, '#fff'); grad.addColorStop(0.2, col); grad.addColorStop(1, '#000');
+                this.ctx.fillStyle = grad; this.ctx.fill();
+
+                if (special) {
+                    this.ctx.fillStyle = "white";
+                    this.ctx.font = "bold 20px Arial";
+                    this.ctx.textAlign = "center";
+                    this.ctx.fillText("★", 0, 7);
+                }
+                this.ctx.restore();
+            }
+
+            drawAimLine() {
+                let x = this.shooter.x, y = this.shooter.y;
+                let vx = Math.cos(this.shooter.angle), vy = Math.sin(this.shooter.angle);
+                this.ctx.beginPath();
+                this.ctx.strokeStyle = "rgba(255,255,255,0.2)";
+                this.ctx.setLineDash([5, 10]);
+                this.ctx.moveTo(x, y);
+                for (let i = 0; i < 1000; i += 10) {
+                    x += vx * 10; y += vy * 10;
+                    if (x < this.bubbleSize / 2 || x > this.canvas.width - this.bubbleSize / 2) vx *= -1;
+                    this.ctx.lineTo(x, y);
+                    if (this.checkPointCollision(x, y) || y < 0) break;
+                }
+                this.ctx.stroke();
+                this.ctx.setLineDash([]);
+            }
+
+            checkPointCollision(x, y) {
+                for (let r = 0; r < CONFIG.ROWS; r++) {
+                    for (let c = 0; c < CONFIG.COLS; c++) {
+                        if (this.grid[r][c].active) {
+                            const p = this.getGridPos(r, c);
+                            if (Math.hypot(x - p.x, y - p.y) < this.bubbleSize * 0.7) return true;
+                        }
+                    }
+                }
+                return false;
+            }
+
+            updateHUD() {
+                document.getElementById('scoreVal').innerText = this.score;
+                document.getElementById('levelVal').innerText = this.currentLevel + 1;
+            }
+
+            levelWin() {
+                if (this.currentLevel === this.unlockedLevel) {
+                    this.unlockedLevel = Math.min(this.unlockedLevel + 1, CONFIG.TOTAL_LEVELS - 1);
+                    localStorage.setItem('nebula_unlocked', this.unlockedLevel);
+                }
+                this.isGameOver = true;
+                this.triggerInterstitial();
+                const overlay = document.getElementById('status-overlay');
+                overlay.classList.remove('hidden');
+                document.getElementById('status-title').innerText = "SECTOR CLEAR";
+                document.getElementById('status-title').style.color = "var(--secondary)";
+                document.getElementById('final-score').innerText = "Final Score: " + this.score;
+            }
+
+            gameOver() {
+                // if (sdkReady) {
+                //     CrazyGames.SDK.game.gameplayStop();
+                // }
+                this.isGameOver = true;
+                this.triggerInterstitial();
+                const overlay = document.getElementById('status-overlay');
+                overlay.classList.remove('hidden');
+                document.getElementById('status-title').innerText = "MISSION FAILED";
+                document.getElementById('status-title').style.color = "var(--danger)";
+                document.getElementById('next-btn').classList.add('hidden');
+            }
+
+            nextLevel() { this.startLevel(this.currentLevel + 1); }
+
+            loop() {
+                if (!this.isPaused) {
+                    this.update();
+                    this.draw();
+                }
+                requestAnimationFrame(() => this.loop());
+            }
+        }
+
+        // if (window.CrazyGames && window.CrazyGames.SDK) {
+
+        //     CrazyGames.SDK.init().then(() => {
+        //         sdkReady = true;
+        //         console.log("CrazyGames SDK Ready ✅");
+        //     }).catch(e => {
+        //         console.error("SDK Init Error:", e);
+
+        //     });
+        // }
+
+        window.onload = () => { window.game = new BubbleShooter(); };
+        window.onload = () => {
+            AudioEngine.updateButton();
+            window.game = new BubbleShooter();
+        };
+    </script>
+</body>
+
+</html>

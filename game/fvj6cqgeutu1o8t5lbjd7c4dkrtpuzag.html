@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>President 2048 - USA Edition</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<script type="text/javascript">
+   window.SDK_OPTIONS = {
+      gameId: "fvj6cqgeutu1o8t5lbjd7c4dkrtpuzag",
+      onEvent: function (a) {
+         switch (a.name) {
+            case "SDK_GAME_PAUSE":
+               // pause game logic / mute audio
+               break;
+            case "SDK_GAME_START":
+               // advertisement done, resume game logic and unmute audio
+               break;
+            case "SDK_READY":
+               // when sdk is ready
+               break;
+         }
+      }
+   };
+(function (a, b, c) {
+   var d = a.getElementsByTagName(b)[0];
+   a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+})(document, "script", "gamemonetize-sdk"); 
+</script>
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-content">
+            <div class="loading-logo">🇺🇸</div>
+            <h1 class="loading-title">President 2048</h1>
+            <p class="loading-subtitle">USA Edition</p>
+            
+            <div class="loading-presidents" id="loadingPresidents"></div>
+            
+            <div class="loading-bar-container">
+                <div class="loading-bar" id="loadingBar"></div>
+            </div>
+            
+            <p class="loading-text" id="loadingText">Loading presidential data...</p>
+            
+            <button class="start-btn" id="startBtn" onclick="startGame(); window.sdk.showBanner();">
+                🎮 START GAME
+            </button>
+            
+            <p class="loading-tips">💡 Tip: Merge same presidents from Biden to Washington!</p>
+        </div>
+    </div>
+
+    <!-- Game Container -->
+    <div class="game-wrapper">
+        <div class="game-container" id="gameContainer">
+            <!-- Header -->
+            <div class="game-header">
+                <h1>🇺🇸 President 2048 🇺🇸</h1>
+                <p class="subtitle">Merge presidents from Biden to Washington!</p>
+            </div>
+            
+            <!-- Main Game Area -->
+            <div class="game-main">
+                <!-- Left Panel - Current Progress -->
+                <div class="side-panel left-panel">
+                    <div class="current-president" id="currentProgress">
+                        <img id="currentImg" src="" alt="">
+                        <div class="current-president-info">
+                            <div class="current-label">Current Highest</div>
+                            <div class="current-president-name" id="currentName">Biden</div>
+                            <div class="goal-text">🎯 Goal: Washington</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Center - Game Board -->
+                <div class="game-center">
+                    <div class="game-board" id="gameBoard"></div>
+                </div>
+                
+                <!-- Right Panel - Score -->
+                <div class="side-panel right-panel">
+                    <div class="score-box">
+                        <div class="score-label">Score</div>
+                        <div class="score-value" id="score">0</div>
+                    </div>
+                    <div class="score-box">
+                        <div class="score-label">Best</div>
+                        <div class="score-value" id="bestScore">0</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Controls -->
+            <div class="controls" id="controlsArea">
+                <button class="btn" onclick="initGame(); window.sdk.showBanner();">🔄 New Game</button>
+                <button class="btn secondary" onclick="showMenu()">🏠 Menu</button>
+            </div>
+            
+            <!-- Footer Instructions -->
+            <div class="game-footer">
+                <p>⬆️⬇️⬅️➡️ Arrow Keys | 📱 Swipe to Move</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Game Over Modal -->
+    <div class="game-over" id="gameOver">
+        <div class="game-over-content">
+            <h2 id="gameOverTitle">Game Over!</h2>
+            <img class="winner-img" id="winnerImg" src="" alt="">
+            <p class="final-score">Final Score: <span id="finalScore">0</span></p>
+            <p id="highestReached">Highest Reached: Biden</p>
+            <div class="game-over-buttons">
+                <button class="btn" onclick="initGame()">🔄 Play Again</button>
+                <button class="btn secondary" onclick="showMenu()">🏠 Menu</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

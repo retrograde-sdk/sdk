@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Play Dots and Boxes 2.0 - A classic strategy game with AI opponents (Normal, Hard, Expert), multiplayer mode, customizable board size (up to 20x20), and Quick Game mode. Support Ukraine while enjoying this timeless puzzle game.">
+    <meta name="keywords" content="dots and boxes, strategy game, puzzle game, AI game, two player game, board game, support ukraine">
+    <title>Dots & Boxes 2 - Classic Strategy Game</title>
+    
+
+<style type="text/css">@font-face {font-family:Poppins;font-style:normal;font-weight:400;src:url(/cf-fonts/s/poppins/5.0.11/devanagari/400/normal.woff2);unicode-range:U+0900-097F,U+1CD0-1CF9,U+200C-200D,U+20A8,U+20B9,U+25CC,U+A830-A839,U+A8E0-A8FF;font-display:swap;}@font-face {font-family:Poppins;font-style:normal;font-weight:400;src:url(/cf-fonts/s/poppins/5.0.11/latin/400/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Poppins;font-style:normal;font-weight:400;src:url(/cf-fonts/s/poppins/5.0.11/latin-ext/400/normal.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:Poppins;font-style:normal;font-weight:700;src:url(/cf-fonts/s/poppins/5.0.11/devanagari/700/normal.woff2);unicode-range:U+0900-097F,U+1CD0-1CF9,U+200C-200D,U+20A8,U+20B9,U+25CC,U+A830-A839,U+A8E0-A8FF;font-display:swap;}@font-face {font-family:Poppins;font-style:normal;font-weight:700;src:url(/cf-fonts/s/poppins/5.0.11/latin-ext/700/normal.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:Poppins;font-style:normal;font-weight:700;src:url(/cf-fonts/s/poppins/5.0.11/latin/700/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}</style>
+    <!-- GameMonetize SDK Integration -->
+    <script type="text/javascript">
+        window.SDK_OPTIONS = {
+            gameId: "njg32276zi9zg95bn3uc185d107hraix", // Replace with your actual GameMonetize game ID
+            onEvent: function (a) {
+                switch (a.name) {
+                    case "SDK_GAME_PAUSE":
+                        // Pause game logic and mute audio
+                        if (window.gameAudioContext) {
+                            window.gameAudioContext.suspend();
+                        }
+                        if (window.gameState) {
+                            window.gameState.pausedForAd = true;
+                        }
+                        console.log("Game paused for ad");
+                        break;
+                    case "SDK_GAME_START":
+                        // Resume game logic and unmute audio
+                        if (window.gameAudioContext) {
+                            window.gameAudioContext.resume();
+                        }
+                        if (window.gameState) {
+                            window.gameState.pausedForAd = false;
+                        }
+                        console.log("Game resumed after ad");
+                        break;
+                    case "SDK_READY":
+                        console.log("GameMonetize SDK is ready");
+                        break;
+                }
+            }
+        };
+        (function (a, b, c) {
+            var d = a.getElementsByTagName(b)[0];
+            a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+        })(document, "script", "gamemonetize-sdk");
+    </script>
+    
+    <style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--player1-color:#667eea;--player2-color:#E91E63}
+html,body{height:100%;min-height:100vh}
+body{font-family:'Poppins',sans-serif;background:linear-gradient(135deg,#667eea 0%,#E91E63 100%);min-height:100vh;display:flex;justify-content:center;align-items:center;padding:2px}
+.container{background:#fff;border-radius:10px;box-shadow:0 10px 30px #0003;max-width:800px;width:100%;overflow:hidden}
+.header{background:linear-gradient(135deg,var(--player1-color) 0%,var(--player2-color) 100%);color:#fff;padding:10px;text-align:center}
+h1{font-size:1.5em;margin-bottom:2px}
+.version-badge{display:inline-block;background:#fff3;border-radius:15px;padding:2px 8px;font-size:.7em;margin-top:2px}
+.container.game-active .header{display:none}
+.container.game-active{max-width:100%;border-radius:0;box-shadow:none}
+.container.game-active .screen.active{padding-top:5px;min-height:100vh}
+.screen{display:none;padding:5px;min-height:300px}
+.screen.active{display:block}
+.menu-btn{background:linear-gradient(135deg,var(--player1-color) 0%,var(--player2-color) 100%);color:#fff;border:none;padding:15px 30px;margin:10px;border-radius:10px;font-size:1.1em;cursor:pointer;transition:transform 0.2s,box-shadow .2s;width:calc(100% - 20px);max-width:300px}
+.menu-btn:hover{transform:translateY(-2px);box-shadow:0 5px 15px #0000004d}
+.menu-btn:active{transform:translateY(0)}
+.back-btn{background:#6c757d;padding:8px 15px;font-size:.8em;margin-bottom:10px;background:#6c757d;color:#fff;border:none}
+.option-group{margin:10px auto;padding:5px;background:#f8f9fa;border-radius:8px;max-width:450px;text-align:center}
+.option-group h3{margin-bottom:10px;font-size:1.1em;color:var(--player1-color)}
+.option-btn{background:#fff;border:2px solid var(--player1-color);color:var(--player1-color);padding:8px 15px;margin:3px;border-radius:6px;font-size:.9em;cursor:pointer;transition:all .2s}
+.option-btn.selected{background:var(--player1-color);color:#fff}
+.option-btn:hover{transform:scale(1.05)}
+.game-info{display:flex;justify-content:space-around;margin:1px 0;flex-wrap:nowrap;gap:15px;max-height:30px}
+.player-info{flex-grow:1;text-align:center;display:flex;justify-content:center;align-items:center;gap:5px;padding:3px 5px;background:#f0f0f0;border-radius:6px;transition:all .3s ease;color:#333;min-width:100px}
+.score-separator{font-size:1.4em;font-weight:700;line-height:1;color:#666;margin:0 -2px}
+.player-info > div:first-child{font-size:.8em;font-weight:500;line-height:1}
+.player-info.active{background:#fff;box-shadow:0 0 0 2px var(--active-player-color);transform:none;color:var(--active-player-color)}
+#player1Info.active{--active-player-color:var(--player1-color)}
+#player2Info.active{--active-player-color:var(--player2-color)}
+.score{font-size:1.4em;font-weight:700;margin:0;line-height:1}
+.board-container{display:flex;justify-content:center;align-items:center;margin:2px 0}
+#gameCanvas{max-width:100%;max-height:100%;border:2px solid #e0e0e0;border-radius:10px;cursor:pointer}
+.donate-btn{display:inline-block;padding:10px 15px;margin:5px;border-radius:8px;text-decoration:none;color:#fff;font-weight:700;transition:transform .2s;width:calc(100% - 10px);max-width:250px;text-align:center}
+.save-life{background:#0057B7}
+.sternenko{background:#FFD700;color:#333}
+.donate-btn:hover{transform:translateY(-2px);box-shadow:0 5px 15px #0000004d}
+.slider-container,.input-group{margin:10px 0}
+input[type="range"]{width:100%;margin:5px 0}
+.input-group label{display:block;margin-bottom:3px;color:var(--player1-color);font-weight:700;font-size:.95em}
+.color-input-wrapper{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.color-input-wrapper input[type="color"]{width:50px;height:30px;padding:0;border:2px solid #ccc;border-radius:5px;cursor:pointer}
+.stats-table{width:100%;border-collapse:collapse;margin:10px 0}
+.stats-table th,.stats-table td{padding:8px;text-align:left;border-bottom:1px solid #e0e0e0}
+.stats-table th{background:var(--player1-color);color:#fff;font-weight:700}
+.stats-table tr:hover{background:#f8f9fa}
+.game-over{position:fixed;top:0;left:0;width:100%;height:100%;background:#000c;display:none;justify-content:center;align-items:center;z-index:1000}
+.game-over.show{display:flex}
+.game-over-content{background:#fff;padding:20px;border-radius:10px;text-align:center;max-width:90%}
+.game-over-content h2{color:var(--player1-color);margin-bottom:10px}
+#about p,#about ul{margin:10px 0;line-height:1.4;font-size:.9em}
+#about h3{margin:10px 0 5px;font-size:1.1em}
+#about ul{margin-left:15px}
+@media (max-width: 768px) {
+body{padding:5px}
+.container{border-radius:5px}
+.screen{min-height:auto}
+h1{font-size:1.2em}
+.menu-btn{max-width:100%;width:95%}
+.donate-btn{max-width:95%;width:95%}
+}
+#quickFillCheckbox{vertical-align:middle}
+.input-group p{margin-top:5px!important;font-size:.8em!important}
+#customSizeSection .input-group{display:flex;justify-content:space-between;align-items:center;margin:8px 0}
+#customSizeSection .input-group label{flex-grow:1;margin-right:10px}
+#customSizeSection .input-group input[type="number"]{width:70px;padding:5px;border:1px solid #ccc;border-radius:4px;text-align:center}
+@media (max-width: 450px) {
+.game-info{gap:5px}
+.player-info{padding:2px 3px;gap:3px;min-width:unset}
+.player-info > div:first-child{font-size:.7em}
+.score-separator,.score{font-size:1.2em}
+}
+@media (min-width: 769px) {
+#gameScreen.active{flex-grow:1;padding:5px;display:flex;flex-direction:column;justify-content:flex-start;min-height:auto;padding-bottom:50px;position:relative}
+.board-container{flex-grow:1;display:flex;justify-content:center;align-items:center;margin:5px 0}
+#gameScreen.active::after{content:"";display:block;position:absolute;bottom:0;left:0;right:0;height:45px;background:#f8f9fa;box-shadow:0 -2px 10px #0000001a;padding:5px 0;text-align:center;z-index:10}
+#gameScreen .back-btn,#gameScreen .menu-btn:not(#mainMenuBtn){position:fixed;bottom:5px;z-index:20;max-width:150px;width:auto;margin:0 5px}
+#gameScreen .back-btn{left:10px;background:#6c757d;color:#fff}
+#gameScreen .menu-btn:not(#mainMenuBtn){right:10px;background:linear-gradient(135deg,var(--player1-color) 0%,var(--player2-color) 100%)}
+}
+</style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Dots and Boxes</h1>
+            <div class="version-badge">v2.0 - New Edition</div>
+        </div>
+
+        <div id="mainMenu" class="screen active">
+            <div style="text-align: center;">
+                <button class="menu-btn" onclick="showScreen('gameMode')">▶ Play Game</button>
+                <button class="menu-btn" onclick="showScreen('settings')">⚙ Settings</button>
+                <button class="menu-btn" onclick="showScreen('stats')">📊 Statistics</button>
+                <button class="menu-btn" onclick="showScreen('support')">🇺🇦 Support Ukraine</button>
+                <button class="menu-btn" onclick="showScreen('about')">ℹ About</button>
+            </div>
+        </div>
+
+        <div id="gameMode" class="screen">
+            <button class="menu-btn back-btn" onclick="showScreen('mainMenu')">← Back</button>
+            <div class="option-group">
+                <h3>Select Game Mode</h3>
+                <button class="option-btn selected" onclick="selectGameMode('ai', this)">🤖 vs AI Bot</button>
+                <button class="option-btn" onclick="selectGameMode('two', this)">👥 Two Players</button>
+            </div>
+            <div id="difficultySection" class="option-group">
+                <h3>AI Difficulty</h3>
+                <button class="option-btn selected" onclick="selectDifficulty('normal', this)">😊 Normal</button>
+                <button class="option-btn" onclick="selectDifficulty('hard', this)">😈 Hard</button>
+                <button class="option-btn" onclick="selectDifficulty('expert', this)">🧠 Expert</button>
+            </div>
+            <div class="option-group" data-type="board">
+                <h3>Board Size</h3>
+                <button class="option-btn selected" onclick="selectBoardSize(4, this)">Small (4×4)</button>
+                <button class="option-btn" onclick="selectBoardSize(6, this)">Medium (6×6)</button>
+                <button class="option-btn" onclick="selectBoardSize(8, this)">Large (8×8)</button>
+                <button class="option-btn" onclick="selectBoardSize('custom', this)">Custom (Max 20x20)</button>
+            </div>
+            <div id="customSizeSection" class="option-group" style="display: none;">
+                <div class="input-group">
+                    <label for="customRows">Rows (2-20):</label>
+                    <input type="number" id="customRows" min="2" max="20" value="5" onchange="updateCustomSize()">
+                </div>
+                <div class="input-group">
+                    <label for="customCols">Columns (2-20):</label>
+                    <input type="number" id="customCols" min="2" max="20" value="5" onchange="updateCustomSize()">
+                </div>
+            </div>
+            <div style="text-align: center; margin-top: 15px;">
+                <button class="menu-btn" onclick="startGame()">🎮 Start Game</button>
+            </div>
+        </div>
+
+        <div id="gameScreen" class="screen">
+            <button class="menu-btn back-btn" onclick="endGame()">← End Game</button>
+     <div class="game-info">
+    <div class="player-info active" id="player1Info">
+        <div>Player 1</div>
+        <span class="score-separator">=</span>
+        <div class="score" id="score1">0</div>
+    </div>
+    <div class="player-info" id="player2Info">
+        <div id="player2Name">Player 2</div>
+        <span class="score-separator">=</span>
+        <div class="score" id="score2">0</div>
+    </div>
+</div>
+            <div class="board-container">
+                <canvas id="gameCanvas"></canvas>
+            </div>
+        </div>
+
+        <div id="settings" class="screen">
+            <button class="menu-btn back-btn" onclick="showScreen('mainMenu')">← Back</button>
+            <div class="option-group">
+                <h3>Sound Settings</h3>
+                <div class="slider-container">
+                    <label>Volume: <span id="volumeValue">50</span>%</label>
+                    <input type="range" id="volumeSlider" min="0" max="100" value="50" oninput="updateVolume(this.value)">
+                </div>
+            </div>
+
+            <div class="option-group">
+                <h3>Player Colors</h3>
+                <div class="color-input-wrapper">
+                    <label for="player1Color">Player 1 Color:</label>
+                    <input type="color" id="player1Color" value="#667eea" onchange="updatePlayerColor(1, this.value)">
+                </div>
+                <div class="color-input-wrapper">
+                    <label for="player2Color">Player 2 Color:</label>
+                    <input type="color" id="player2Color" value="#E91E63" onchange="updatePlayerColor(2, this.value)">
+                </div>
+            </div>
+
+            <div class="option-group">
+                <h3>Game Mode Settings</h3>
+                <button class="option-btn" id="quickGameBtn" onclick="toggleQuickGameSpeed(this)">⚡ Quick Game (Animation): OFF</button>
+                <div class="input-group" style="margin-top: 20px;">
+                    <label for="quickFillCheckbox" style="display: inline-block;">🎲 Auto 40% Random Start:</label>
+                    <input type="checkbox" id="quickFillCheckbox" style="width: auto; margin-left: 10px;">
+                    <p style="margin-top: 10px; color: #666; font-size: 0.9em;">If checked, 40% of the board lines will be filled randomly at the start of the game.</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="stats" class="screen">
+            <button class="menu-btn back-btn" onclick="showScreen('mainMenu')">← Back</button>
+            <h2 style="color: #667eea; margin-bottom: 20px;">Game Statistics</h2>
+            <table class="stats-table">
+                <tr><th>Stat</th><th>Value</th></tr>
+                <tr><td>Games Played</td><td id="gamesPlayed">0</td></tr>
+                <tr><td>Games Won (P1)</td><td id="gamesWon">0</td></tr>
+                <tr><td>Win Rate (P1)</td><td id="winRate">0%</td></tr>
+                <tr><td>vs AI Wins (P1)</td><td id="aiWins">0</td></tr>
+                <tr><td>Two Player Wins (P1)</td><td id="twoPlayerWins">0</td></tr>
+            </table>
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="menu-btn" onclick="resetStats()">🔄 Reset Statistics</button>
+            </div>
+        </div>
+
+        <div id="support" class="screen">
+            <button class="menu-btn back-btn" onclick="showScreen('mainMenu')">← Back</button>
+            <div style="text-align: center;">
+                <div style="font-size: 4em; margin: 20px 0;">🇺🇦</div>
+                <h2 style="color: #0057B7; margin-bottom: 10px;">Stand with Ukraine</h2>
+                <p style="margin: 20px 0; color: #666;">Support Ukraine by donating to verified humanitarian organizations:</p>
+                <a href="https://savelife.in.ua/en/donate-en/" target="_blank" rel="noopener noreferrer" class="donate-btn save-life">Donate via Save Life in UA</a>
+                <a href="https://www.sternenkofund.org/en/donate" target="_blank" rel="noopener noreferrer" class="donate-btn sternenko">Donate via Sternenko Fund</a>
+                <p style="margin: 30px 0; color: #666; font-size: 0.9em;">Every contribution helps provide critical support to those affected by the conflict.</p>
+            </div>
+        </div>
+
+        <div id="about" class="screen">
+            <button class="menu-btn back-btn" onclick="showScreen('mainMenu')">← Back</button>
+            <h2 style="color: var(--player1-color); margin-bottom: 20px;">About Dots and Boxes 3.0</h2>
+            <p style="margin: 15px 0; line-height: 1.6;">Dots and Boxes is a classic strategy game where players take turns connecting dots to form boxes. The player who completes the most boxes wins!</p>
+            <h3 style="color: var(--player1-color); margin: 20px 0 10px 0;">How to Play:</h3>
+            <ul style="margin-left: 20px; line-height: 1.8;">
+                <li>Click on a line between two dots to claim it</li>
+                <li>Complete a box by drawing its fourth side</li>
+                <li>When you complete a box, you get another turn</li>
+                <li>The game ends when all boxes are completed</li>
+                <li>The player with the most boxes wins!</li>
+            </ul>
+            <h3 style="color: var(--player1-color); margin: 20px 0 10px 0;">Features:</h3>
+            <ul style="margin-left: 20px; line-height: 1.8;">
+                <li>Play against AI (Normal, Hard, or Expert difficulty)</li>
+                <li>Two-player local multiplayer</li>
+                <li>Customizable board sizes (up to 20x20)</li>
+                <li>Quick Game 40% board fill option</li>
+                <li>Game statistics tracking</li>
+                <li>Responsive design for all devices</li>
+                <li>GameMonetize SDK integration</li>
+            </ul>
+            <h3 style="color: var(--player1-color); margin: 20px 0 10px 0;">What's New in v3.0:</h3>
+            <ul style="margin-left: 20px; line-height: 1.8;">
+                <li>✨ Integrated GameMonetize SDK for ad support</li>
+                <li>🎵 Improved audio management during ads</li>
+                <li>🎯 Better game pause/resume functionality</li>
+                <li>🐛 Bug fixes and performance improvements</li>
+            </ul>
+            <p style="margin: 20px 0; color: #666; font-size: 0.9em;">Version 3.0 - Made with ❤️</p>
+        </div>
+    </div>
+
+    <div class="game-over" id="gameOver">
+        <div class="game-over-content">
+            <h2 id="gameOverTitle">Game Over!</h2>
+            <p id="gameOverMessage" style="font-size: 1.2em; margin: 20px 0;"></p>
+            <div style="font-size: 2em; margin: 20px 0;" id="gameOverEmoji">🎉</div>
+            <button class="menu-btn" onclick="closeGameOver()">Continue</button>
+        </div>
+    </div>
+
+    <script>
+        // --- Core Configuration and Sound (Web Audio API) ---
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+        let volume = 0.5;
+        let quickGameSpeed = false;
+        let playerColors = { 1: '#667eea', 2: '#E91E63' };
+        
+        // Make audio context globally accessible for SDK
+        window.gameAudioContext = null;
+        
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new AudioContext();
+                window.gameAudioContext = audioCtx;
+            }
+        }
+
+        function playSound(frequency, duration, type = 'sine', decay = 0.01) {
+            if (!audioCtx || volume === 0) return;
+            if (window.gameState && window.gameState.pausedForAd) return;
+            
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            oscillator.frequency.value = frequency;
+            oscillator.type = type;
+            
+            gainNode.gain.setValueAtTime(volume, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(decay, audioCtx.currentTime + duration);
+            
+            oscillator.start(audioCtx.currentTime);
+            oscillator.stop(audioCtx.currentTime + duration);
+        }
+
+        function playLineSound() {
+            playSound(440, 0.1, 'square');
+        }
+
+        function playBoxSound() {
+            playSound(660, 0.2, 'triangle');
+            setTimeout(() => playSound(880, 0.15, 'triangle'), 100);
+        }
+
+        function playWinSound() {
+            playSound(523, 0.2);
+            setTimeout(() => playSound(659, 0.2), 150);
+            setTimeout(() => playSound(784, 0.3), 300);
+        }
+
+        function updateVolume(val) {
+            volume = val / 100;
+            document.getElementById('volumeValue').textContent = val;
+            localStorage.setItem('volume', val);
+        }
+
+        function toggleQuickGameSpeed(btn) {
+            quickGameSpeed = !quickGameSpeed;
+            btn.textContent = quickGameSpeed ? '⚡ Quick Game (Animation): ON' : '⚡ Quick Game (Animation): OFF';
+            btn.classList.toggle('selected', quickGameSpeed);
+            localStorage.setItem('quickGameSpeed', quickGameSpeed);
+        }
+        
+        function updatePlayerColor(player, color) {
+            playerColors[player] = color;
+            localStorage.setItem(`player${player}Color`, color);
+            document.documentElement.style.setProperty(`--player${player}-color`, color);
+        }
+
+        // --- Game Variables ---
+        let canvas, ctx;
+        let gameState = {
+            mode: 'ai',
+            difficulty: 'normal',
+            rows: 4,
+            cols: 4,
+            currentPlayer: 1,
+            scores: [0, 0],
+            lines: [],
+            boxes: [],
+            gameActive: false,
+            pausedForAd: false,
+            lastLine: null
+        };
+
+        // Make gameState globally accessible
+        window.gameState = gameState;
+
+        let dotSize = 4;
+        let spacing = 60;
+        let lineWidth = 4;
+        let hoveredLine = null;
+
+       // --- Screen Management ---
+function showScreen(screenId) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(screenId).classList.add('active');
+    
+    const container = document.querySelector('.container');
+    
+    // Перевіряємо, чи активний екран гри, щоб керувати класом контейнера
+    if (screenId === 'gameScreen') {
+        container.classList.add('game-active');
+    } else {
+        container.classList.remove('game-active');
+    }
+    
+    if (screenId === 'stats') {
+        updateStatsDisplay();
+    }
+}
+
+        // --- Game Mode Selection ---
+        function selectGameMode(mode, btn) {
+            gameState.mode = mode;
+            document.querySelectorAll('#gameMode .option-group:first-child .option-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            
+            document.getElementById('difficultySection').style.display = mode === 'ai' ? 'block' : 'none';
+        }
+
+        function selectDifficulty(difficulty, btn) {
+            gameState.difficulty = difficulty;
+            document.querySelectorAll('#difficultySection .option-btn')
+    .forEach(b => b.classList.remove('selected'));
+btn.classList.add('selected');
+            btn.classList.add('selected');
+        }
+
+        function selectBoardSize(size, btn) {
+            document.querySelectorAll('#gameMode .option-group[data-type="board"] .option-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            
+            const customSection = document.getElementById('customSizeSection');
+            if (size === 'custom') {
+                customSection.style.display = 'block';
+                updateCustomSize();
+            } else {
+                customSection.style.display = 'none';
+                gameState.rows = size;
+                gameState.cols = size;
+            }
+        }
+        
+        function updateCustomSize() {
+            const rowsInput = document.getElementById('customRows');
+            const colsInput = document.getElementById('customCols');
+            
+            gameState.rows = Math.max(2, Math.min(20, parseInt(rowsInput.value) || 5));
+            gameState.cols = Math.max(2, Math.min(20, parseInt(colsInput.value) || 5));
+            
+            rowsInput.value = gameState.rows;
+            colsInput.value = gameState.cols;
+        }
+        
+        // --- Initialization and Drawing ---
+  function startGame() {
+    initAudio();
+    showGameMonetizeAd()
+    document.getElementById('player2Name').textContent = gameState.mode === 'ai' ? 'AI Bot' : 'Player 2';
+    
+    canvas = document.getElementById('gameCanvas');
+    ctx = canvas.getContext('2d');
+    
+    // --- ADAPTATION FOR MOBILE RESPONSIVENESS (MODIFIED CODE) ---
+    
+    // 1. Determine the maximum available width for the canvas.
+    // Use the container width but constrain the maximum to 520px (or the screen size if smaller).
+    const container = document.querySelector('.container');
+    // Account for container padding (approximate, based on CSS)
+    const containerPadding = 40; 
+    
+    let maxAvailableWidth = container ? container.clientWidth - containerPadding : window.innerWidth - 40;
+    
+    // **NEW CONSTRAINT:** Limit the drawing space to a maximum of 520 pixels.
+    const MAX_DRAWING_WIDTH = 520;
+    maxAvailableWidth = Math.min(maxAvailableWidth, MAX_DRAWING_WIDTH);
+    
+    // 2. Calculate the optimal spacing based on the grid size and available width.
+    // We use Math.max(gameState.rows, gameState.cols) to ensure the spacing fits the larger dimension.
+    const numLines = Math.max(gameState.rows, gameState.cols);
+    
+    // The canvas width will be (numCols + 1) * spacing.
+    // The canvas height will be (numRows + 1) * spacing.
+    // To fit the larger dimension (numLines + 1) within maxAvailableWidth:
+    // spacing = maxAvailableWidth / (numLines + 1)
+    
+    // Use Math.floor to ensure spacing is an integer for clean rendering
+    spacing = Math.floor(maxAvailableWidth / (numLines + 1));
+    
+    // 3. Constrain spacing to a playable range for touch
+    spacing = Math.max(30, Math.min(80, spacing)); // Enforce a minimum of 30 for touch targets and max 80
+
+    // **IMPORTANT:** After all calculations, if the spacing became very small 
+    // due to a large board (e.g., 20x20), and we try to draw an 800px board 
+    // on a small screen, the existing CSS `max-width: 100%` on `#gameCanvas` 
+    // will ensure the board scales down and fits. The logic here primarily 
+    // prevents the **internal dot-to-dot spacing** from becoming too large 
+    // on large monitors and caps the *desired* maximum size around 520px.
+    
+    // 4. Set canvas dimensions based on the new spacing
+    canvas.width = (gameState.cols + 1) * spacing;
+    canvas.height = (gameState.rows + 1) * spacing;
+    
+    // 5. Ensure the canvas fits within its parent container (already in CSS, but good for context)
+    canvas.style.maxWidth = '100%';
+    canvas.style.height = 'auto'; // Maintain aspect ratio
+
+    // --- END ADAPTATION ---
+    
+    initializeGame();
+    showScreen('gameScreen');
+    setupCanvasEvents();
+    
+    if (gameState.mode === 'ai' && gameState.currentPlayer === 2) {
+        setTimeout(aiMove, quickGameSpeed ? 300 : 800);
+    }
+}
+
+        function initializeGame() {
+            gameState.currentPlayer = 1;
+            gameState.scores = [0, 0];
+            gameState.gameActive = true;
+            gameState.pausedForAd = false;
+            gameState.lines = [];
+            gameState.boxes = [];
+            gameState.lastLine = null;
+            
+            for (let row = 0; row <= gameState.rows; row++) {
+                for (let col = 0; col < gameState.cols; col++) {
+                    gameState.lines.push({ type: 'h', row: row, col: col, claimed: false, player: 0 });
+                }
+            }
+            for (let row = 0; row < gameState.rows; row++) {
+                for (let col = 0; col <= gameState.cols; col++) {
+                    gameState.lines.push({ type: 'v', row: row, col: col, claimed: false, player: 0 });
+                }
+            }
+            
+            for (let row = 0; row < gameState.rows; row++) {
+                for (let col = 0; col < gameState.cols; col++) {
+                    gameState.boxes.push({ row: row, col: col, owner: 0 });
+                }
+            }
+            
+            if (document.getElementById('quickFillCheckbox').checked) {
+                quickFillRandomLines();
+            }
+
+            updateScoreDisplay();
+            updatePlayerTurn();
+            drawBoard();
+        }
+        
+        function quickFillRandomLines() {
+            const allLines = gameState.lines.filter(l => !l.claimed);
+            const totalLines = allLines.length;
+            const linesToClaim = Math.floor(totalLines * 0.4);
+            
+            allLines.sort(() => 0.5 - Math.random());
+            const linesForQuickGame = allLines.slice(0, linesToClaim);
+            
+            linesForQuickGame.forEach(line => {
+                const claimingPlayer = Math.random() < 0.5 ? 1 : 2;
+                line.claimed = true;
+                line.player = claimingPlayer;
+                updateBoxes(line);
+            });
+            
+            gameState.scores = [0, 0];
+            gameState.boxes.forEach(box => {
+                if (box.owner > 0) {
+                    gameState.scores[box.owner - 1]++;
+                }
+            });
+
+            if (gameState.currentPlayer === 2) {
+                gameState.currentPlayer = 1;
+            }
+        }
+
+  function drawBoard() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    gameState.boxes.forEach(box => {
+        if (box.owner > 0) {
+            // Calculate the center coordinates for the box.
+            const x = (box.col + 1) * spacing;
+            const y = (box.row + 1) * spacing;
+            // Use a slightly smaller size for the colored square inside the box
+            const size = spacing - 8; 
+            
+            // 1. Draw the background filled square
+            ctx.fillStyle = box.owner === 1 ? hexToRgba(playerColors[1], 0.3) : hexToRgba(playerColors[2], 0.3);
+            // x and y are the center, so we draw from (center - size/2)
+            ctx.fillRect(x - size / 2, y - size / 2, size, size);
+            
+            // 2. Draw the player text ("P1" or "P2")
+            ctx.fillStyle = box.owner === 1 ? hexToRgba(playerColors[1], 1.0) : hexToRgba(playerColors[2], 1.0);
+            
+            // Ensure font size scales with spacing for visibility
+            ctx.font = `${Math.floor(spacing * 0.4)}px 'Segoe UI', Tahoma, sans-serif`; 
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle'; // Crucial for vertical centering
+            
+            // Draw text at the center (x, y)
+            ctx.fillText(`P${box.owner}`, x, y);
+        }
+    });
+
+    gameState.lines.forEach(line => {
+        // Пропускаємо останню лінію тут, щоб намалювати її пізніше
+        if (line.claimed && line !== gameState.lastLine) {
+            drawLine(line, playerColors[line.player], lineWidth);
+        }
+    });
+
+    if (gameState.lastLine && gameState.lastLine.claimed) {
+        // Виділення: товстий, яскравий колір (наприклад, жовтий або білий)
+        const highlightColor = '#ffff00'; // Яскраво-жовтий
+        const highlightWidth = lineWidth + 4; 
+        
+        // 1. Малюємо обведення
+        drawLine(gameState.lastLine, highlightColor, highlightWidth);
+        // 2. Малюємо саму лінію поверх обведення
+        drawLine(gameState.lastLine, playerColors[gameState.lastLine.player], lineWidth);
+    }
+
+    if (hoveredLine && !hoveredLine.claimed && gameState.gameActive) {
+        drawLine(hoveredLine, hexToRgba(playerColors[gameState.currentPlayer], 0.35), lineWidth + 1);
+    }
+
+    for (let row = 0; row <= gameState.rows; row++) {
+        for (let col = 0; col <= gameState.cols; col++) {
+            const x = (col + 0.5) * spacing;
+            const y = (row + 0.5) * spacing;
+
+            ctx.fillStyle = '#333';
+            ctx.beginPath();
+            ctx.arc(x, y, dotSize, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+}
+        
+        function drawLine(line, color, width) {
+            ctx.strokeStyle = color;
+            ctx.lineWidth = width;
+            ctx.lineCap = 'round';
+            
+            const x1 = (line.col + 0.5) * spacing;
+            const y1 = (line.row + 0.5) * spacing;
+            
+            let x2, y2;
+            if (line.type === 'h') {
+                x2 = x1 + spacing;
+                y2 = y1;
+            } else {
+                x2 = x1;
+                y2 = y1 + spacing;
+            }
+            
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+        }
+
+        function hexToRgba(hex, alpha) {
+            const r = parseInt(hex.slice(1, 3), 16);
+            const g = parseInt(hex.slice(3, 5), 16);
+            const b = parseInt(hex.slice(5, 7), 16);
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        }
+
+        // --- Game Logic ---
+        function makeMove(line) {
+            if (gameState.pausedForAd) return;
+            
+            line.claimed = true;
+            line.player = gameState.currentPlayer;
+            playLineSound();
+            
+            const completedBoxes = updateBoxes(line);
+            
+            if (completedBoxes > 0) {
+                gameState.scores[gameState.currentPlayer - 1] += completedBoxes;
+                playBoxSound();
+                updateScoreDisplay();
+            } else {
+                gameState.currentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
+
+                updatePlayerTurn();
+            }
+            
+            hoveredLine = null;
+            gameState.lastLine = line;
+drawBoard();
+
+            
+            if (checkGameOver()) {
+                setTimeout(() => endGameWithResults(), quickGameSpeed ? 500 : 1000);
+            } else if (gameState.mode === 'ai' && gameState.currentPlayer === 2) {
+                setTimeout(aiMove, quickGameSpeed ? 300 : 800);
+            }
+        }
+
+        function updateBoxes(line) {
+            let completed = 0;
+            
+            const adjacentBoxes = gameState.boxes.filter(box => {
+                if (box.owner > 0) return false;
+                
+                const boxSides = getBoxSides(box);
+                return boxSides.some(side => 
+                    side.type === line.type && side.row === line.row && side.col === line.col
+                );
+            });
+
+            adjacentBoxes.forEach(box => {
+                const sides = getBoxSides(box);
+                if (sides.every(side => side.claimed)) {
+                    box.owner = gameState.currentPlayer;
+                    completed++;
+                }
+            });
+            
+            return completed;
+        }
+
+        function checkGameOver() {
+            return gameState.boxes.every(box => box.owner > 0);
+        }
+
+        function endGameWithResults() {
+            gameState.gameActive = false;
+            
+            const winner = gameState.scores[0] > gameState.scores[1] ? 1 : 
+                          gameState.scores[0] < gameState.scores[1] ? 2 : 0;
+            
+            playWinSound();
+            
+            let message, emoji;
+            const player2Name = gameState.mode === 'ai' ? 'AI Bot' : 'Player 2';
+            
+            if (winner === 0) {
+                message = `It's a tie! P1: ${gameState.scores[0]} | ${player2Name}: ${gameState.scores[1]}`;
+                emoji = '🤝';
+            } else if (winner === 1) {
+                message = `Player 1 wins! P1: ${gameState.scores[0]} | ${player2Name}: ${gameState.scores[1]}`;
+                emoji = '🏆';
+            } else {
+                message = `${player2Name} wins! P1: ${gameState.scores[0]} | ${player2Name}: ${gameState.scores[1]}`;
+                emoji = '🏆';
+            }
+            
+            document.getElementById('gameOverTitle').textContent = winner === 0 ? "It's a Draw!" : 'Game Over!';
+            document.getElementById('gameOverMessage').textContent = message;
+            document.getElementById('gameOverEmoji').textContent = emoji;
+            document.getElementById('gameOver').classList.add('show');
+            
+            updateStats(winner);
+            showGameMonetizeAd();
+        }
+
+        function endGame() {
+            if (confirm('Are you sure you want to end the current game?')) {
+                gameState.gameActive = false;
+                showGameMonetizeAd();
+                showScreen('mainMenu');
+            }
+        }
+
+        // --- GameMonetize Ad Function ---
+        function showGameMonetizeAd() {
+            if (typeof sdk !== 'undefined' && typeof sdk.showBanner !== 'undefined') {
+                try {
+                    sdk.showBanner();
+                    console.log('GameMonetize ad requested');
+                } catch (error) {
+                    console.error('Error showing GameMonetize ad:', error);
+                }
+            } else {
+                console.log('GameMonetize SDK not ready yet');
+            }
+        }
+
+        // --- AI Logic ---
+        function aiMove() {
+            if (!gameState.gameActive || gameState.pausedForAd) return;
+            
+            let move;
+            if (gameState.difficulty === 'expert') {
+                move = getExpertAIMove();
+            } else if (gameState.difficulty === 'hard') {
+                move = getHardAIMove();
+            } else {
+                move = getNormalAIMove();
+            }
+            
+            if (move) {
+                makeMove(move);
+            }
+        }
+        
+        function getBoxSides(box) {
+            return [
+                gameState.lines.find(l => l.type === 'h' && l.row === box.row && l.col === box.col),
+                gameState.lines.find(l => l.type === 'h' && l.row === box.row + 1 && l.col === box.col),
+                gameState.lines.find(l => l.type === 'v' && l.row === box.row && l.col === box.col),
+                gameState.lines.find(l => l.type === 'v' && l.row === box.row && l.col === box.col + 1)
+            ];
+        }
+
+        function wouldCompleteBox(line) {
+            const adjacentBoxes = gameState.boxes.filter(box => {
+                if (box.owner > 0) return false;
+                const boxSides = getBoxSides(box);
+                return boxSides.some(side => 
+                    side.type === line.type && side.row === line.row && side.col === line.col
+                );
+            });
+            
+            for (let box of adjacentBoxes) {
+                const sides = getBoxSides(box);
+                const claimedSides = sides.filter(s => s.claimed).length;
+                if (claimedSides === 3) return true;
+            }
+            return false;
+        }
+
+        function wouldSetOpponentUp(line) {
+            const adjacentBoxes = gameState.boxes.filter(box => {
+                if (box.owner > 0) return false;
+                const boxSides = getBoxSides(box);
+                return boxSides.some(side => 
+                    side.type === line.type && side.row === line.row && side.col === line.col
+                );
+            });
+            
+            for (let box of adjacentBoxes) {
+                const sides = getBoxSides(box);
+                const claimedSides = sides.filter(s => s.claimed).length;
+                
+                if (claimedSides + 1 === 3) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        
+        function getNormalAIMove() {
+            const availableLines = gameState.lines.filter(l => !l.claimed);
+            const completingMoves = availableLines.filter(wouldCompleteBox);
+            if (completingMoves.length > 0) return completingMoves[0];
+            
+            const safeMoves = availableLines.filter(l => !wouldSetOpponentUp(l));
+            if (safeMoves.length > 0) return safeMoves[Math.floor(Math.random() * safeMoves.length)];
+            
+            return availableLines[Math.floor(Math.random() * availableLines.length)];
+        }
+
+        function getHardAIMove() {
+            const availableLines = gameState.lines.filter(l => !l.claimed);
+            const completingMoves = availableLines.filter(wouldCompleteBox);
+            if (completingMoves.length > 0) return completingMoves[0];
+            
+            const safeMoves = availableLines.filter(l => !wouldSetOpponentUp(l));
+            if (safeMoves.length > 0) {
+                return safeMoves.reduce((bestMove, currentMove) => {
+                    const bestBoxSideCount = getMoveMinBoxSideCount(bestMove);
+                    const currentBoxSideCount = getMoveMinBoxSideCount(currentMove);
+                    if (currentBoxSideCount < bestBoxSideCount) return currentMove;
+                    return bestMove;
+                }, safeMoves[0]);
+            }
+            return availableLines[0];
+        }
+        
+        function getExpertAIMove() {
+            const availableLines = gameState.lines.filter(l => !l.claimed);
+            
+            const completingMoves = availableLines.filter(wouldCompleteBox);
+            if (completingMoves.length > 0) {
+                return completingMoves.reduce((best, current) => {
+                    const bestCount = countCompletedBoxes(best);
+                    const currentCount = countCompletedBoxes(current);
+                    return currentCount > bestCount ? current : best;
+                });
+            }
+            
+            const nonSacrificialMoves = availableLines.filter(l => !wouldSetOpponentUp(l));
+            if (nonSacrificialMoves.length > 0) {
+                return nonSacrificialMoves.reduce((bestMove, currentMove) => {
+                    const bestSideCount = getMoveMinBoxSideCount(bestMove);
+                    const currentSideCount = getMoveMinBoxSideCount(currentMove);
+                    if (currentSideCount < bestSideCount) return currentMove;
+                    return bestMove;
+                }, nonSacrificialMoves[0]);
+            }
+            
+            const sacrificialMoves = availableLines.filter(wouldSetOpponentUp);
+            return sacrificialMoves.reduce((best, current) => {
+                const bestSetupCount = countSetupBoxes(best);
+                const currentSetupCount = countSetupBoxes(current);
+                return currentSetupCount < bestSetupCount ? current : best;
+            }, sacrificialMoves[0] || availableLines[0]);
+        }
+        
+        function countCompletedBoxes(line) {
+            let count = 0;
+            const adjacentBoxes = gameState.boxes.filter(box => {
+                if (box.owner > 0) return false;
+                const boxSides = getBoxSides(box);
+                return boxSides.some(side => 
+                    side.type === line.type && side.row === line.row && side.col === line.col
+                );
+            });
+            for (let box of adjacentBoxes) {
+                const sides = getBoxSides(box);
+                const claimedSides = sides.filter(s => s.claimed).length;
+                if (claimedSides === 3) count++;
+            }
+            return count;
+        }
+
+        function countSetupBoxes(line) {
+            let count = 0;
+            const adjacentBoxes = gameState.boxes.filter(box => {
+                if (box.owner > 0) return false;
+                const boxSides = getBoxSides(box);
+                return boxSides.some(side => 
+                    side.type === line.type && side.row === line.row && side.col === line.col
+                );
+            });
+            for (let box of adjacentBoxes) {
+                const sides = getBoxSides(box);
+                const claimedSides = sides.filter(s => s.claimed).length;
+                if (claimedSides + 1 === 3) count++;
+            }
+            return count;
+        }
+
+        function getMoveMinBoxSideCount(line) {
+            let minSides = 5;
+            const adjacentBoxes = gameState.boxes.filter(box => {
+                if (box.owner > 0) return false;
+                const boxSides = getBoxSides(box);
+                return boxSides.some(side => 
+                    side.type === line.type && side.row === line.row && side.col === line.col
+                );
+            });
+            
+            for (let box of adjacentBoxes) {
+                const sides = getBoxSides(box);
+                const claimedSides = sides.filter(s => s.claimed).length;
+                minSides = Math.min(minSides, claimedSides);
+            }
+            return minSides;
+        }
+        
+        // --- UI Updates and Stats ---
+        function updateScoreDisplay() {
+            document.getElementById('score1').textContent = gameState.scores[0];
+            document.getElementById('score2').textContent = gameState.scores[1];
+        }
+
+        function updatePlayerTurn() {
+            document.getElementById('player1Info').classList.toggle('active', gameState.currentPlayer === 1);
+            document.getElementById('player2Info').classList.toggle('active', gameState.currentPlayer === 2);
+        }
+
+        function closeGameOver() {
+            document.getElementById('gameOver').classList.remove('show');
+            showScreen('mainMenu');
+        }
+        
+        function setupCanvasEvents() {
+            if (!canvas) return;
+            
+            canvas.addEventListener('mousemove', (e) => {
+                if (!gameState.gameActive || gameState.pausedForAd) return;
+                
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                hoveredLine = getLineAtPosition(x, y);
+                drawBoard();
+            });
+
+            canvas.addEventListener('click', (e) => {
+                if (!gameState.gameActive || gameState.pausedForAd) return;
+                if (gameState.mode === 'ai' && gameState.currentPlayer === 2) return;
+                
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                const line = getLineAtPosition(x, y);
+                if (line && !line.claimed) {
+                    makeMove(line);
+                }
+            });
+
+            canvas.addEventListener('mouseleave', () => {
+                hoveredLine = null;
+                drawBoard();
+            });
+            
+            canvas.addEventListener('touchstart', (e) => {
+                if (!gameState.gameActive || gameState.pausedForAd) return;
+                if (gameState.mode === 'ai' && gameState.currentPlayer === 2) return;
+                
+                e.preventDefault();
+                const rect = canvas.getBoundingClientRect();
+                const touch = e.touches[0];
+                const x = touch.clientX - rect.left;
+                const y = touch.clientY - rect.top;
+                
+                const line = getLineAtPosition(x, y);
+                if (line && !line.claimed) {
+                    makeMove(line);
+                }
+            });
+        }
+        
+        function getLineAtPosition(x, y) {
+            const threshold = 15;
+            
+            for (let line of gameState.lines) {
+                if (line.claimed) continue;
+                
+                const x1 = (line.col + 0.5) * spacing;
+                const y1 = (line.row + 0.5) * spacing;
+                
+                if (line.type === 'h') {
+                    const x2 = x1 + spacing;
+                    if (Math.abs(y - y1) < threshold && x >= x1 - threshold && x <= x2 + threshold) {
+                        return line;
+                    }
+                } else {
+                    const y2 = y1 + spacing;
+                    if (Math.abs(x - x1) < threshold && y >= y1 - threshold && y <= y2 + threshold) {
+                        return line;
+                    }
+                }
+            }
+            
+            return null;
+        }
+
+        function updateStats(winner) {
+            const stats = JSON.parse(localStorage.getItem('dotsBoxesStats') || '{}');
+            
+            stats.gamesPlayed = (stats.gamesPlayed || 0) + 1;
+            if (winner === 1) {
+                stats.gamesWon = (stats.gamesWon || 0) + 1;
+                if (gameState.mode === 'ai') {
+                    stats.aiWins = (stats.aiWins || 0) + 1;
+                } else {
+                    stats.twoPlayerWins = (stats.twoPlayerWins || 0) + 1;
+                }
+            }
+            
+            localStorage.setItem('dotsBoxesStats', JSON.stringify(stats));
+        }
+
+        function updateStatsDisplay() {
+            const stats = JSON.parse(localStorage.getItem('dotsBoxesStats') || '{}');
+            
+            document.getElementById('gamesPlayed').textContent = stats.gamesPlayed || 0;
+            document.getElementById('gamesWon').textContent = stats.gamesWon || 0;
+            document.getElementById('aiWins').textContent = stats.aiWins || 0;
+            document.getElementById('twoPlayerWins').textContent = stats.twoPlayerWins || 0;
+            
+            const winRate = stats.gamesPlayed > 0 ? 
+                Math.round((stats.gamesWon / stats.gamesPlayed) * 100) : 0;
+            document.getElementById('winRate').textContent = winRate + '%';
+        }
+
+        function resetStats() {
+            if (confirm('Are you sure you want to reset all statistics?')) {
+                localStorage.removeItem('dotsBoxesStats');
+                updateStatsDisplay();
+            }
+        }
+        
+        // --- Load settings on startup ---
+        window.addEventListener('load', () => {
+            const savedVolume = localStorage.getItem('volume');
+            if (savedVolume) {
+                document.getElementById('volumeSlider').value = savedVolume;
+                updateVolume(savedVolume);
+            }
+            
+            const savedQuickGameSpeed = localStorage.getItem('quickGameSpeed');
+            const quickGameBtn = document.getElementById('quickGameBtn');
+            if (savedQuickGameSpeed !== null) {
+                quickGameSpeed = savedQuickGameSpeed === 'true';
+                quickGameBtn.textContent = quickGameSpeed ? '⚡ Quick Game (Animation): ON' : '⚡ Quick Game (Animation): OFF';
+                quickGameBtn.classList.toggle('selected', quickGameSpeed);
+            } else {
+                quickGameBtn.textContent = quickGameSpeed ? '⚡ Quick Game (Animation): ON' : '⚡ Quick Game (Animation): OFF';
+                quickGameBtn.classList.toggle('selected', quickGameSpeed);
+            }
+            
+            const p1Color = localStorage.getItem('player1Color');
+            const p2Color = localStorage.getItem('player2Color');
+            
+            if (p1Color) {
+                playerColors[1] = p1Color;
+                document.getElementById('player1Color').value = p1Color;
+                document.documentElement.style.setProperty('--player1-color', p1Color);
+            }
+            if (p2Color) {
+                playerColors[2] = p2Color;
+                document.getElementById('player2Color').value = p2Color;
+                document.documentElement.style.setProperty('--player2-color', p2Color);
+            }
+        });
+    </script>
+</body>
+</html>

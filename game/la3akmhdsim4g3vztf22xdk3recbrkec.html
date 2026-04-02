@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+	<meta charset='utf-8' />
+	<meta name='renderer' content='webkit' />
+	<meta name='viewport'
+		content='width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no' />
+	<link href="icon" href="favicon.ico">
+	<meta name='apple-mobile-web-app-capable' content='yes' />
+	<meta name='full-screen' content='true' />
+	<meta name='x5-fullscreen' content='true' />
+	<meta name='360-fullscreen' content='true' />
+	<meta name='laya' screenorientation='landscape' />
+	<meta http-equiv='expires' content='0' />
+	<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1' />
+	<meta http-equiv='expires' content='0' />
+	<meta http-equiv='Cache-Control' content='no-siteapp' />
+	<title>Cozy Pizzeria</title>
+	<style>
+		@font-face {
+			font-family: "Arial";
+			src: url("rrzzhh.ttf");
+		}
+
+		@font-face {
+			font-family: "SimSun";
+			src: url("rrzzhh.ttf");
+		}
+
+		* {
+			margin: 0;
+			padding: 0;
+			overflow: hidden;
+		}
+
+		body {
+			overflow: 'hidden';
+			/* 页面背景颜色 */
+			background: #a5e6ff
+		}
+
+		#unity-container {
+			z-index: 1000;
+			background: #a5e6ff;
+			position: absolute;
+			overflow: hidden;
+		}
+
+		#LoadingView {
+			position: absolute;
+			left: 50%;
+			top: 50%;
+			height: 100%;
+			width: 100%;
+			overflow: hidden;
+			transform: translate(-50%, -50%);
+
+			text-align: center;
+		}
+
+		#top-container {
+			flex: 0;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			/* 距离顶部位置 */
+			margin-top: 10%;
+		}
+
+		#progress {
+			flex: 0;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			position: absolute;
+			bottom: 10%;
+		}
+
+		div {
+			text-align: center;
+		}
+	</style>
+
+</head>
+
+<body>
+
+	<script>
+		// —— 焦点工具：把键盘焦点抢回到 Laya 的 canvas ——
+		function __focusCanvas() {
+			try {
+				var canvas = document.querySelector('#layaCanvas') || document.querySelector('canvas');
+				if (canvas) {
+					if (!canvas.hasAttribute('tabindex')) canvas.setAttribute('tabindex', '0');
+					canvas.focus({ preventScroll: true });
+				}
+			} catch (e) { }
+			try { window.focus(); } catch (e) { }
+		}
+
+		// 连续几帧尝试，规避广告遮罩尚未移除的瞬间
+		function __restoreAfterAd() {
+			let i = 0, N = 8;
+			(function tick() { __focusCanvas(); if (++i < N) requestAnimationFrame(tick); })();
+		}
+
+		// 只装一次：防止方向键/空格滚动页面 + 任意点击时自动抢焦点
+		if (!window.__adFocusFixInstalled) {
+			window.addEventListener('keydown', function (e) {
+				if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) e.preventDefault();
+			}, { passive: false });
+			document.addEventListener('pointerdown', __focusCanvas, true);
+			document.addEventListener('visibilitychange', function () {
+				if (!document.hidden) __restoreAfterAd(); // 回到标签页时也拉回焦点
+			});
+			window.__adFocusFixInstalled = true;
+		}
+	</script>
+	<script type="text/javascript">
+		window.SDK_OPTIONS = {
+			gameId: "la3akmhdsim4g3vztf22xdk3recbrkec",
+			onEvent: function (a) {
+				switch (a.name) {
+					case "SDK_GAME_PAUSE":
+						// pause game logic / mute audio
+						Laya.timer.scale = 0;     // 暂停所有定时器
+						Laya.SoundManager.stopAll();
+						break;
+					case "SDK_GAME_START":
+						Laya.timer.scale = 1;
+						Laya.SoundManager.playMusic("new/bgm.mp3")
+						// 恢复定时器
+						__restoreAfterAd();
+						// advertisement done, resume game logic and unmute audio
+						break;
+					case "SDK_READY":
+						// when sdk is ready
+						StartGame();
+
+						console.error("SDK_READY");
+						break;
+				}
+			}
+		};
+		(function (a, b, c) {
+			var d = a.getElementsByTagName(b)[0];
+			a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+		})(document, "script", "gamemonetize-sdk"); 
+	</script>
+	<script>
+
+		const keysToBlockWhenFramed = [32, 33, 34, 35, 36, 37, 38, 39, 40, 44];
+		document.addEventListener('keydown', function (info) {
+			if (window != window.top && keysToBlockWhenFramed.indexOf(info.which) > -1) {
+				info.preventDefault();
+				info.stopPropagation();
+			}
+		}, true)
+		document.addEventListener("mousedown", function () {
+			window.focus();
+		}, true);
+		document.addEventListener("touchstart", function () {
+			window.focus();
+		}, true);
+
+		//游戏加载时关闭触控
+		document.addEventListener('gesturestart', function (event) {
+			event.preventDefault()
+		})
+
+		function StartGame(url) {
+			var s = document.createElement('script');
+			s.src = 'index.js';  // ← 如果你的入口不是 index.js，这里改掉
+			s.async = false;
+			document.body.appendChild(s);
+		}
+		function loadLib(url) {
+			var script = document.createElement("script");
+			script.async = false;
+			script.src = url;
+			document.body.appendChild(script);
+		}
+	</script>
+
+
+	<!-- 引类库 -->
+	<script type="text/javascript" src="https://h5gamessdk.yyggames.com/sdk/laya/2.12.0/laya.core.js"></script>
+
+	<script type="text/javascript" src="https://h5gamessdk.yyggames.com/sdk/laya/2.12.0/laya.ui.js"></script>
+
+	<script type="text/javascript" src="https://h5gamessdk.yyggames.com/sdk/laya/2.12.0/laya.d3.js"></script>
+
+	<script type="text/javascript" src="https://h5gamessdk.yyggames.com/sdk/laya/2.12.0/laya.html.js"></script>
+
+	<script type="text/javascript" src="https://h5gamessdk.yyggames.com/sdk/laya/2.12.0/laya.physics3D.js"></script>
+
+
+
+
+
+	<!-- <script type="text/javascript" src="index.js"></script> -->
+
+</body>
+
+</html>

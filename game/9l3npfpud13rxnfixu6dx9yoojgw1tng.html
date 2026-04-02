@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Santa Gift Catch — Robust</title>
+<style>
+  :root{--bg1:#021026;--bg2:#041a2a}
+  html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg1),var(--bg2));font-family:Arial,sans-serif;color:#fff;overflow:hidden}
+  canvas{display:block;margin:18px auto;border-radius:8px;background:linear-gradient(180deg,#021026,#041a2a)}
+  #hud{position:fixed;left:12px;top:12px;z-index:30}
+  /* Loading UI */
+  #loadingScreen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(circle at top,#013,#000);z-index:50}
+  #loadingBarContainer{width:60%;height:26px;border-radius:16px;border:2px solid rgba(255,255,255,0.08);overflow:hidden;margin-top:16px}
+  #loadingBar{height:100%;width:0;background:linear-gradient(90deg,#ff4d4d,#ffd24d)}
+  /* Game Over Screen */
+  #gameOverScreen{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,0.85);z-index:60}
+  #gameOverScreen h1{font-size:48px;color:#ff4d4d;margin-bottom:10px;text-shadow:0 0 20px #ff4d4d}
+  #gameOverScreen h2{font-size:32px;color:#fff;margin-top:0;margin-bottom:30px}
+  #finalScore{font-size:28px;color:#ffd24d;margin-bottom:30px}
+  /* Buttons */
+  .btn{position:fixed;left:50%;transform:translateX(-50%);padding:10px 18px;border-radius:10px;border:none;font-size:18px;cursor:pointer;z-index:60}
+  #playBtn{top:54%;background:#e53935;color:#fff;display:none}
+  #restartBtn{top:62%;background:#2e7d32;color:#fff;display:none}
+  #levelUp{position:fixed;left:50%;top:36%;transform:translate(-50%,-50%);font-size:56px;color:gold;font-weight:700;display:none;text-shadow:0 0 20px #ff0;z-index:60}
+  /* small helper text — moved to bottom-right */
+  #hint{
+    position:fixed;
+    right:15px;
+    bottom:15px;
+    color:#dfe;
+    z-index:60;
+    background: rgba(0,0,0,0.35);
+    padding:6px 10px;
+    border-radius:8px;
+    font-size:14px;
+    font-family: Arial, sans-serif;
+  }
+</style>
+</head>
+<body>
+
+<div id="loadingScreen">
+  <h1>🎅 Loading Santa Claus starts collecting gifts...</h1>
+  <div id="loadingBarContainer"><div id="loadingBar"></div></div>
+  <div style="margin-top:10px;color:#cfe">Preparing assets — this takes ~4 seconds</div>
+</div>
+
+<div id="gameOverScreen">
+  <h1>GAME OVER</h1>
+  <h2>Santa's gift collection has stopped!</h2>
+  <div id="finalScore">Final Score: 0</div>
+  <button id="restartBtnGameOver" class="btn" style="position:relative;left:0;transform:none;background:#2e7d32">↻ Play Again</button>
+</div>
+
+<button id="playBtn" class="btn">🎄 Play Game 🎅</button>
+<button id="restartBtn" class="btn">↻ Restart</button>
+<div id="levelUp">LEVEL UP!</div>
+<div id="hint">Use Arrow keys or WASD to move Santa</div>
+
+<div id="hud">Score: <span id="score">0</span> • Lives: <span id="lives">3</span> • Level: <span id="level">1</span> • Speed: <span id="speed">2.0</span></div>
+
+<canvas id="game" width="800" height="600" aria-label="Santa Gift Catch"></canvas>
+<audio id="bgm" src="Jingle-Bells.mp3" loop></audio>
+
+<!-- GameMonetize SDK -->
+<script type="text/javascript">
+  window.SDK_OPTIONS = {
+    gameId: "9l3npfpud13rxnfixu6dx9yoojgw1tng",
+    onEvent: function (a) {
+      switch (a.name) {
+        case "SDK_GAME_PAUSE":
+          // Pause game logic and mute audio
+          if (window.gamePause) window.gamePause();
+          break;
+        case "SDK_GAME_START":
+          // Advertisement done, resume game logic and unmute audio
+          if (window.gameResume) window.gameResume();
+          break;
+        case "SDK_READY":
+          // SDK is ready
+          console.log("GameMonetize SDK is ready");
+          if (window.sdkReady) window.sdkReady();
+          break;
+      }
+    }
+  };
+  
+  (function (a, b, c) {
+    var d = a.getElementsByTagName(b)[0];
+    a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+  })(document, "script", "gamemonetize-sdk");
+</script>
+
+<script>
+/* Robust Santa Gift Catch with GameMonetize Ads
+   - Requires: santa.png, gift.gif, bomb.png, Jingle-Bells.mp3 in same folder
+   - Loading bar runs ~4s; then Play button appears
+   - Press Play to start (audio play allowed)
+   - Automatic ads on game over
+*/
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const loadingScreen = document.getElementById('loadingScreen');
+const loadingBar = document.getElementById('loadingBar');
+const playBtn = document.getElementById('playBtn');
+const restartBtn = document.getElementById('restartBtn');
+const restartBtnGameOver = document.getElementById('restartBtnGameOver');
+const levelUpDiv = document.getElementById('levelUp');
+const gameOverScreen = document.getElementById('gameOverScreen');
+const finalScoreEl = document.getElementById('finalScore');
+const scoreEl = document.getElementById('score');
+const livesEl = document.getElementById('lives');
+const levelEl = document.getElementById('level');
+const speedEl = document.getElementById('speed');
+const bgm = document.getElementById('bgm');
+
+// Game state variables for ads
+let gamePaused = false;
+let gameMuted = false;
+let sdkInitialized = false;
+
+let ASSETS = {
+  santa: { src: 'santa.png', img: new Image(), ok:false },
+  gift:  { src: 'gift.gif', img: new Image(), ok:false },
+  bomb:  { src: 'bomb.png', img: new Image(), ok:false },
+  audioReady: false
+};
+
+let assetsToLoad = 3; // images only (audio handled separately)
+function tryAssetLoad(){
+  // load images
+  ASSETS.santa.img.onload = ()=>{ ASSETS.santa.ok=true; onAssetLoaded(); };
+  ASSETS.santa.img.onerror = ()=>{ console.warn('santa.png missing or failed'); onAssetLoaded(); };
+  ASSETS.santa.img.src = ASSETS.santa.src;
+
+  ASSETS.gift.img.onload = ()=>{ ASSETS.gift.ok=true; onAssetLoaded(); };
+  ASSETS.gift.img.onerror = ()=>{ console.warn('gift.gif missing or failed'); onAssetLoaded(); };
+  ASSETS.gift.img.src = ASSETS.gift.src;
+
+  ASSETS.bomb.img.onload = ()=>{ ASSETS.bomb.ok=true; onAssetLoaded(); };
+  ASSETS.bomb.img.onerror = ()=>{ console.warn('bomb.png missing or failed'); onAssetLoaded(); };
+  ASSETS.bomb.img.src = ASSETS.bomb.src;
+
+  // audio: mark ready when canplaythrough
+  bgm.oncanplaythrough = ()=>{ ASSETS.audioReady=true; console.log('audio ready'); };
+  bgm.onerror = ()=>{ console.warn('audio failed to load'); };
+  // don't call play here (must be user gesture)
+}
+
+let loadedCount = 0;
+function onAssetLoaded(){
+  loadedCount++;
+  // we'll still run a visible 4s loading bar regardless (UX)
+}
+
+// run the visual loading bar for ~4s, but ensure assets attempted to load earlier
+(function runLoader(){
+  tryAssetLoad();
+  const steps = 40; // 40*100ms = 4s
+  let step = 0;
+  const iv = setInterval(()=>{
+    step++;
+    loadingBar.style.width = Math.min(100, (step/steps)*100) + '%';
+    if(step >= steps){
+      clearInterval(iv);
+      // small delay to allow network finishes
+      setTimeout(() => {
+        loadingScreen.style.display = 'none';
+        playBtn.style.display = 'block';
+        console.log('loading complete — play button shown. asset statuses:', {
+          santa: ASSETS.santa.ok, gift: ASSETS.gift.ok, bomb: ASSETS.bomb.ok, audioReady: ASSETS.audioReady
+        });
+      }, 250);
+    }
+  }, 100);
+})();
+
+/* ---------------- Game state ---------------- */
+const state = {
+  santa: { x: 360, y: 460, w: 80, h: 80, speed: 6 },
+  gifts: [], bombs: [], snow: [], explosions: [],
+  score: 0, lives: 3, playing: false,
+  fallSpeed: 2, difficultyTick: 0, level: 1
+};
+
+/* Input */
+const keys = {};
+window.addEventListener('keydown', e => keys[e.key]=true);
+window.addEventListener('keyup', e => keys[e.key]=false);
+
+/* Spawn functions */
+function spawnGift(){
+  state.gifts.push({ x: Math.random()*(canvas.width-48)+8, y:-48, w:48, h:48, speed: state.fallSpeed });
+}
+function spawnBomb(){
+  state.bombs.push({ x: Math.random()*(canvas.width-40)+8, y:-40, w:40, h:40, speed: state.fallSpeed+0.8 });
+}
+function spawnSnow(){
+  state.snow.push({ x: Math.random()*canvas.width, y:-6, r: Math.random()*2+0.6, vy: Math.random()*1.2+0.4 });
+}
+
+/* Update functions */
+function updatePlayer(dt){
+  const s = state.santa;
+  if(keys['ArrowLeft']||keys['a']) s.x -= s.speed * dt * 60;
+  if(keys['ArrowRight']||keys['d']) s.x += s.speed * dt * 60;
+  if(keys['ArrowUp']||keys['w']) s.y -= s.speed * dt * 60;
+  if(keys['ArrowDown']||keys['s']) s.y += s.speed * dt * 60;
+  s.x = Math.max(6, Math.min(canvas.width - s.w - 6, s.x));
+  s.y = Math.max(6, Math.min(canvas.height - s.h - 6, s.y));
+}
+function updateObjects(dt){
+  state.gifts.forEach(g => g.y += g.speed * dt * 60);
+  state.bombs.forEach(b => b.y += b.speed * dt * 60);
+  state.snow.forEach(s => s.y += s.vy * dt * 60);
+  state.explosions.forEach(ex => ex.life -= dt*60);
+
+  // remove off-screen
+  state.gifts = state.gifts.filter(g => g.y < canvas.height + 80);
+  state.bombs = state.bombs.filter(b => b.y < canvas.height + 80);
+  state.snow = state.snow.filter(s => s.y < canvas.height + 20);
+  state.explosions = state.explosions.filter(ex => ex.life > 0);
+}
+
+/* Collision helpers */
+function rectOverlap(ax,ay,aw,ah,bx,by,bw,bh){
+  return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
+}
+function checkCollisions(){
+  // gifts
+  for(let i = state.gifts.length-1; i >= 0; i--){
+    const g = state.gifts[i];
+    if(rectOverlap(state.santa.x, state.santa.y, state.santa.w, state.santa.h, g.x,g.y,g.w,g.h)){
+      state.gifts.splice(i,1);
+      state.score += 10;
+      scoreEl.textContent = state.score;
+      checkLevelUp();
+    }
+  }
+  // bombs
+  for(let i = state.bombs.length-1; i >= 0; i--){
+    const b = state.bombs[i];
+    // approximate circle collision by center
+    const bx = b.x + b.w/2, by = b.y + b.h/2, br = Math.max(b.w,b.h)/2;
+    const nx = Math.max(state.santa.x, Math.min(bx, state.santa.x + state.santa.w));
+    const ny = Math.max(state.santa.y, Math.min(by, state.santa.y + state.santa.h));
+    const dx = nx - bx, dy = ny - by;
+    if(dx*dx + dy*dy <= br*br){
+      state.bombs.splice(i,1);
+      state.lives -= 1;
+      livesEl.textContent = state.lives;
+      state.explosions.push({ x: b.x + b.w/2, y: b.y + b.h/2, life: 30 });
+      if(state.lives <= 0) triggerGameOver();
+    }
+  }
+}
+
+/* Draw */
+function draw(){
+  // background
+  const g = ctx.createLinearGradient(0,0,0,canvas.height);
+  g.addColorStop(0,'#021026'); g.addColorStop(1,'#041a2a');
+  ctx.fillStyle = g; ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  // stars
+  ctx.fillStyle = 'rgba(255,255,255,0.03)';
+  for(let i=0;i<70;i++) ctx.fillRect((i*97)%canvas.width, 20 + (i%10)*45, 1.2, 1.2);
+
+  // snow
+  ctx.fillStyle = '#fff';
+  state.snow.forEach(s => ctx.fillRect(s.x, s.y, s.r, s.r));
+
+  // gifts
+  state.gifts.forEach(g => {
+    if(ASSETS.gift.ok) ctx.drawImage(ASSETS.gift.img, g.x, g.y, g.w, g.h);
+    else { ctx.fillStyle = '#ffcc4d'; ctx.fillRect(g.x,g.y,g.w,g.h); }
+  });
+
+  // bombs
+  state.bombs.forEach(b => {
+    if(ASSETS.bomb.ok) ctx.drawImage(ASSETS.bomb.img, b.x, b.y, b.w, b.h);
+    else { ctx.fillStyle='red'; ctx.beginPath(); ctx.arc(b.x+b.w/2, b.y+b.h/2, b.w/2,0,Math.PI*2); ctx.fill(); }
+  });
+
+  // explosions
+  state.explosions.forEach(ex => {
+    const r = (30 - ex.life) * 1.6;
+    ctx.beginPath(); ctx.arc(ex.x, ex.y, r, 0, Math.PI*2);
+    ctx.fillStyle = `rgba(255,120,0, ${ex.life/30})`; ctx.fill();
+  });
+
+  // santa
+  if(ASSETS.santa.ok) ctx.drawImage(ASSETS.santa.img, state.santa.x, state.santa.y, state.santa.w, state.santa.h);
+  else { ctx.fillStyle='#d33'; ctx.fillRect(state.santa.x,state.santa.y,state.santa.w,state.santa.h); }
+}
+
+/* Level-up system */
+function checkLevelUp(){
+  const newLevel = Math.floor(state.score/100) + 1;
+  if(newLevel > state.level){
+    state.level = newLevel;
+    levelEl.textContent = state.level;
+    state.fallSpeed += 0.5;
+    speedEl.textContent = state.fallSpeed.toFixed(2);
+    showLevelUp();
+  }
+}
+function showLevelUp(){
+  levelUpDiv.style.display = 'block';
+  setTimeout(()=> levelUpDiv.style.display = 'none', 1800);
+}
+
+/* Difficulty tick */
+function difficultyTick(){
+  state.difficultyTick++;
+  if(state.difficultyTick % 400 === 0){
+    state.fallSpeed += 0.2;
+    speedEl.textContent = state.fallSpeed.toFixed(2);
+  }
+}
+
+/* Game over logic with Game Over screen */
+function triggerGameOver(){
+  state.playing = false;
+  bgm.pause();
+  
+  // Show game over screen with final score
+  finalScoreEl.textContent = `Final Score: ${state.score}`;
+  gameOverScreen.style.display = 'flex';
+  
+  // Show ad after game over
+  showAd();
+  
+  console.log('Game Over. Game Over screen shown.');
+}
+
+/* Reset */
+function resetAll(){
+  state.gifts = []; state.bombs = []; state.snow = []; state.explosions = [];
+  state.score = 0; state.lives = 3; state.fallSpeed = 2; state.difficultyTick = 0; state.level = 1;
+  scoreEl.textContent = state.score; livesEl.textContent = state.lives; levelEl.textContent = state.level; speedEl.textContent = state.fallSpeed.toFixed(2);
+}
+
+/* Main loop */
+let last = performance.now();
+function loop(ts){
+  const dt = Math.min(0.033, (ts - last)/1000);
+  last = ts;
+  if(state.playing && !gamePaused){
+    // spawn logic with sensible caps
+    if(Math.random() < 0.03) spawnGift();
+    if(Math.random() < 0.015) spawnBomb();
+    if(Math.random() < 0.4) spawnSnow();
+
+    updatePlayer(dt);
+    updateObjects(dt);
+    checkCollisions();
+    difficultyTick();
+    draw();
+  }
+  requestAnimationFrame(loop);
+}
+
+/* Play / Restart handlers */
+// Play visible after loader; clicking Play starts game and audio
+playBtn.addEventListener('click', ()=>{
+  playBtn.style.display = 'none';
+  resetAll();
+  state.playing = true;
+  last = performance.now();
+  // try to play audio; browsers require user gesture, Play button suffices
+  bgm.currentTime = 0;
+  bgm.play().catch(err => console.warn('Audio play blocked', err));
+  requestAnimationFrame(loop);
+});
+
+// Restart from game over screen
+restartBtnGameOver.addEventListener('click', ()=>{
+  gameOverScreen.style.display = 'none';
+  resetAll();
+  state.playing = true;
+  bgm.currentTime = 0;
+  bgm.play().catch(()=>{});
+  last = performance.now();
+  requestAnimationFrame(loop);
+});
+
+// Restart from in-game button
+restartBtn.addEventListener('click', ()=>{
+  restartBtn.style.display = 'none';
+  resetAll();
+  state.playing = true;
+  bgm.currentTime = 0;
+  bgm.play().catch(()=>{});
+  last = performance.now();
+  requestAnimationFrame(loop);
+});
+
+/* Safety: log missing assets */
+setTimeout(()=> {
+  console.log('Asset status:', {santa:ASSETS.santa.ok, gift:ASSETS.gift.ok, bomb:ASSETS.bomb.ok, audioReady:ASSETS.audioReady});
+  if(!ASSETS.santa.ok) console.warn('santa.png failed to load — using fallback rectangle.');
+  if(!ASSETS.gift.ok) console.warn('gift.gif failed to load — using colored boxes.');
+  if(!ASSETS.bomb.ok) console.warn('bomb.png failed to load — using red circles.');
+}, 4500);
+
+/* GameMonetize SDK Integration - Exactly like Gem Runner */
+
+// Game pause/resume functions for SDK
+window.gamePause = function() {
+  gamePaused = true;
+  gameMuted = true;
+  bgm.pause();
+  console.log("Game paused for ad");
+};
+
+window.gameResume = function() {
+  gamePaused = false;
+  gameMuted = false;
+  if (state.playing) {
+    bgm.play().catch(() => {});
+  }
+  console.log("Game resumed after ad");
+};
+
+// SDK ready callback
+window.sdkReady = function() {
+  sdkInitialized = true;
+  console.log("SDK is ready");
+};
+
+// Show ad with callback - exactly like Gem Runner
+function showAd() {
+  if (sdkInitialized && typeof sdk !== 'undefined' && sdk.showBanner !== 'undefined') {
+    console.log("Showing ad");
+    sdk.showBanner();
+  } else {
+    console.log("SDK not available, skipping ad");
+  }
+}
+
+</script>
+</body>
+</html>

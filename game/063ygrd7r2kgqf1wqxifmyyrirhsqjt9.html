@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="A premium, modern Sliding Puzzle game featuring progressive levels, AI auto-solve, custom themes, and satisfying sound effects. Play now on desktop or mobile.">
+    <meta name="theme-color" content="#1e1e2e">
+    <title>Sliding Puzzle | Premium Brain Game</title>
+    <!-- Premium Google Font: Outfit -->
+    
+    
+    <style type="text/css">@font-face {font-family:Outfit;font-style:normal;font-weight:400;src:url(/cf-fonts/v/outfit/5.0.11/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Outfit;font-style:normal;font-weight:400;src:url(/cf-fonts/v/outfit/5.0.11/latin-ext/wght/normal.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:Outfit;font-style:normal;font-weight:600;src:url(/cf-fonts/v/outfit/5.0.11/latin-ext/wght/normal.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:Outfit;font-style:normal;font-weight:600;src:url(/cf-fonts/v/outfit/5.0.11/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Outfit;font-style:normal;font-weight:800;src:url(/cf-fonts/v/outfit/5.0.11/latin-ext/wght/normal.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:Outfit;font-style:normal;font-weight:800;src:url(/cf-fonts/v/outfit/5.0.11/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}</style>
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- GameMonetize SDK Implementation -->
+    <script type="text/javascript">
+      window.gmSdkReady = false;
+      window.watchingRewardedAd = false;
+
+      window.SDK_OPTIONS = {
+        gameId: "063ygrd7r2kgqf1wqxifmyyrirhsqjt9",
+        onEvent: function (a) {
+          switch (a.name) {
+            case "SDK_GAME_PAUSE":
+              // pause game logic / mute audio
+              if (window.game && typeof window.game.togglePause === 'function' && window.game.isPlaying) {
+                  window.game.togglePause(); // Use toggle without args to pause
+              }
+              break;
+            case "SDK_GAME_START":
+              // advertisement done, resume game logic and unmute audio
+              if (window.game && typeof window.game.togglePause === 'function' && !window.game.isPlaying) {
+                  window.game.togglePause(); // Use toggle without args to resume
+              }
+              
+              // ✅ Give reward if this was a reward ad
+              if (window.watchingRewardedAd) {
+                giveReward();
+                window.watchingRewardedAd = false;
+              }
+              break;
+            case "SDK_READY":
+              // when sdk is ready
+              window.gmSdkReady = true;
+              break;
+            case "SDK_ERROR":
+              // when sdk get error
+              window.gmSdkReady = false;
+              if (window.watchingRewardedAd) {
+                window.watchingRewardedAd = false;
+              }
+              break;
+          }
+        }
+      };
+      
+      (function (a, b, c) {
+        var d = a.getElementsByTagName(b)[0];
+        a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+      })(document, "script", "gamemonetize-sdk");
+      
+      window.gmAdsEnabled = false; // Flag to prevent ads before game start
+      
+      // Helper functions for app.js to call
+      function showAd() {
+        if (!window.gmAdsEnabled) {
+             console.log("Sliding Puzzle: Ads blocked - Logic not met (Not Allowed)");
+             return;
+        }
+        if (typeof sdk !== 'undefined' && sdk.showBanner) {
+          sdk.showBanner();
+        } else {
+            console.log("Sliding Puzzle: SDK not ready or undefined");
+        }
+      }
+
+      function showAdRewarded() {
+        if (typeof sdk !== 'undefined' && sdk.showBanner) {
+          window.watchingRewardedAd = true;
+          sdk.showBanner();
+        } else {
+            // Fallback for testing or if SDK fails
+             console.log("SDK not ready, simulating reward for testing");
+             window.watchingRewardedAd = true;
+             // Simulate event
+             setTimeout(function() {
+                 giveReward();
+                 window.watchingRewardedAd = false;
+             }, 1000);
+        }
+      }
+
+      function giveReward() {
+         console.log("Giving reward...");
+         if (window.game && typeof window.game.solveGame === 'function') {
+            window.game.solveGame();
+         }
+      }
+    </script>
+</head>
+<body>
+
+    <div class="app-container">
+
+        <!-- SCREEN: LOADING -->
+        <div id="screen-loading" class="screen">
+            <h1 class="logo-text">SLIDING<br><span class="highlight">PUZZLE</span></h1>
+            <div class="loading-bar-container">
+                <div class="loading-bar" id="loading-progress"></div>
+            </div>
+            <p class="loading-text">LOADING...</p>
+        </div>
+
+        <!-- SCREEN: HOME -->
+        <div id="screen-home" class="screen hidden">
+            <h1 class="logo-text large">SLIDING<br><span class="highlight">PUZZLE</span></h1>
+            <div class="home-menu">
+                <button id="btn-home-play" class="btn primary large pulse">PLAY GAME</button>
+                <div class="home-buttons-row">
+                    <button id="btn-home-sound" class="btn secondary">SOUND SETTINGS</button>
+                    <button id="btn-home-help" class="btn secondary">HOW TO PLAY</button>
+                </div>
+            </div>
+            <div class="version-text">MASTERMIND EDITION</div>
+        </div>
+        
+        <!-- SCREEN: GAME -->
+        <div id="screen-game" class="screen hidden">
+            <!-- Header -->
+            <header class="game-header">
+                <button id="btn-menu" class="icon-btn" aria-label="Menu">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
+                
+                <h1 class="game-title">SLIDING<br><span class="highlight">PUZZLE</span></h1>
+                
+                <div style="display: flex; gap: 8px;">
+                <div style="display: flex; gap: 8px;">
+                    <button id="btn-reset-icon" class="icon-btn" aria-label="Reset Game">
+                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M2.5 2v6h6M21.5 22v-6h-6"></path>
+                            <path d="M22 11.5A10 10 0 0 0 3.2 7.2M2 12.5a10 10 0 0 0 18.8 4.2"></path>
+                        </svg>
+                    </button>
+                    
+                    <button id="btn-volume" class="icon-btn" aria-label="Toggle Sound">
+                        <svg id="icon-vol-on" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                        </svg>
+                        <svg id="icon-vol-off" class="hidden" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                            <line x1="23" y1="9" x2="17" y2="15"></line>
+                            <line x1="17" y1="9" x2="23" y2="15"></line>
+                        </svg>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Stats Dashboard -->
+            <div class="stats-dashboard">
+                <div class="stat-card">
+                    <span class="stat-label">LEVEL</span>
+                    <span class="stat-value" id="level-display">1</span>
+                </div>
+                <div class="stat-divider"></div>
+
+                <div class="stat-card">
+                    <span class="stat-label">TIME</span>
+                    <span class="stat-value" id="time-display">0s</span>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat-card">
+                    <span class="stat-label">MOVES</span>
+                    <span class="stat-value" id="moves-display">0</span>
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="controls-area">
+                <button id="btn-pause-text" class="btn primary">PAUSE</button>
+                <button id="btn-solve" class="btn secondary">SOLVE</button>
+            </div>
+
+            <!-- Puzzle Grid -->
+            <div class="game-board-container">
+                <div class="game-board" id="game-board">
+                    <!-- Tiles generated by JS -->
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+
+    <!-- Side Menu (Overlay) -->
+    <div id="side-menu" class="side-menu hidden">
+        <div class="menu-content">
+            <button id="btn-close-menu" class="close-btn">&times;</button>
+            <h2>MENU</h2>
+            <nav>
+                <button id="menu-resume" class="btn primary">RESUME</button>
+                <button id="menu-sound-settings" class="btn secondary">SOUND SETTINGS</button>
+                <button id="menu-how-to-play" class="btn secondary">HOW TO PLAY</button>
+                <button id="menu-home" class="btn secondary">HOME</button>
+            </nav>
+        </div>
+        <div id="menu-backdrop" class="menu-backdrop"></div>
+    </div>
+
+        <!-- SCREEN: SOUND SETTINGS (Popup) -->
+        <div id="screen-sound-settings" class="overlay hidden">
+            <div class="overlay-content settings-modal">
+                <h2>AUDIO FX</h2>
+                
+                <div class="setting-row">
+                    <span>MASTER SOUND</span>
+                    <label class="switch">
+                        <input type="checkbox" id="setting-master-mute">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+
+                <div id="sound-controls-container">
+                    <!-- Custom Sound Toggle Removed -->
+                    
+                    <div class="divider"></div>
+                    <h3>SOUND PROFILES</h3>
+                    <div class="profiles-grid" id="profiles-list">
+                        <!-- JS will inject buttons here -->
+                    </div>
+                </div>
+
+                <button id="btn-close-settings" class="btn primary large">CLOSE</button>
+            </div>
+        </div>
+
+    <!-- Game Over Screen (Overlay/Screen) -->
+    <div id="screen-gameover" class="screen hidden overlay-like">
+        <div class="overlay-content">
+            <h2>LEVEL COMPLETE</h2>
+            <p>Time: <span id="final-time">0s</span></p>
+            <p>Moves: <span id="final-moves">0</span></p>
+            <div class="gameover-controls">
+                <button id="btn-play-again" class="btn primary large">PLAY AGAIN</button>
+                <button id="btn-gameover-home" class="btn secondary large">HOME</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCREEN: WATCH & SOLVE (Popup) -->
+    <div id="screen-watch-solve" class="screen overlay hidden">
+        <div class="overlay-content settings-modal small-modal">
+            <h2>Watch & Solve</h2>
+            <p class="modal-text">Watch a video to solve the puzzle instantly.</p>
+            
+            <div class="modal-buttons-row">
+                <button id="btn-watch-confirm" class="btn primary-green">Yes, Play</button>
+                <button id="btn-watch-cancel" class="btn secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCREEN: HOW TO PLAY -->
+    <div id="screen-how-to-play" class="screen overlay hidden">
+        <div class="overlay-content settings-modal">
+            <h2>HOW TO PLAY</h2>
+            
+            <div class="rules-list">
+                <div class="rule-item">
+                    <span class="rule-step">01</span>
+                    <div class="rule-icon-bg">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.05 6A5 5 0 0 1 18 10l-2.29 4.32A5 5 0 0 1 11.23 17H6l-3.26-1.63a7 7 0 0 1 0-12.52l1.65-.83A7 7 0 0 1 11 4.25V6h3.05z"></path></svg>
+                    </div>
+                    <p>Tap a tile next to the **empty space** to slide it into position.</p>
+                </div>
+                <div class="rule-item">
+                    <span class="rule-step">02</span>
+                    <div class="rule-icon-bg">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><path d="M3 14h7v7H3z"></path></svg>
+                    </div>
+                    <p>Arrange numbers from **1 to 15** in numerical order (Top-Left to Bottom-Right).</p>
+                </div>
+                <div class="rule-item">
+                    <span class="rule-step">03</span>
+                    <div class="rule-icon-bg">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    </div>
+                    <p>Beat the clock! Fewer moves and faster time earn a **Mastermind Score**.</p>
+                </div>
+            </div>
+
+            <button id="btn-close-help" class="btn primary large">GOT IT!</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Space Defender - Enhanced</title>
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+        background: #000;
+        overflow: hidden;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    #gameCanvas {
+        display: block;
+        background: #000;
+    }
+
+    /* ===== HOME / MENUS ===== */
+    #homeScreen,
+    #gameOverScreen {
+        position: absolute;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: radial-gradient(circle at center, #020612 0, #000000 100%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start; /* Changed to flex-start to move text higher */
+        color: #00ffea;
+        text-align: center;
+        z-index: 20;
+        padding-top: 50px; /* Padding for the title */
+    }
+
+    #homeScreen h1 {
+        font-size: 80px;
+        margin: 0;
+        text-shadow: 0 0 30px #00ffea;
+        letter-spacing: 5px;
+    }
+
+    #titleCreditDisplay {
+        font-size: 24px;
+        color: #ffff00;
+        margin-top: 5px;
+        font-weight: bold;
+        text-shadow: 0 0 10px rgba(255, 255, 0, 0.5);
+    }
+
+    /* Ship Preview Canvas */
+    #shipPreviewContainer {
+        margin: 20px 0;
+        width: 150px;
+        height: 150px;
+        position: relative;
+    }
+
+    /* ===== SHIP SELECTION ===== */
+    #shipSelection {
+        display: flex;
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+
+    .ship-card {
+        border: 2px solid #00ffea;
+        padding: 15px;
+        width: 180px;
+        cursor: pointer;
+        border-radius: 12px;
+        transition: 0.3s;
+        background: rgba(0, 255, 234, 0.05);
+    }
+
+    .ship-card.selected {
+        background: rgba(0, 255, 234, 0.2);
+        box-shadow: 0 0 25px #00ffea;
+        transform: translateY(-5px);
+        border-color: #fff;
+    }
+
+    .ship-card h4 { margin: 0 0 5px 0; font-size: 16px; color: #fff; }
+    .ship-card p { font-size: 12px; color: #88efeb; margin: 0; }
+
+    .menu-button {
+        padding: 15px 50px;
+        background: transparent;
+        border: 3px solid #00ffea;
+        color: #00ffea;
+        font-size: 24px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s;
+        border-radius: 8px;
+        text-transform: uppercase;
+        margin-top: 10px;
+    }
+
+    .menu-button:hover {
+        background: #00ffea;
+        color: #000;
+        box-shadow: 0 0 30px #00ffea;
+    }
+
+    /* ===== UPGRADE STORE ===== */
+    #upgradeStore {
+        margin-top: 20px;
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        background: rgba(0,0,0,0.5);
+        padding: 15px;
+        border-radius: 15px;
+        border: 1px solid rgba(0, 255, 234, 0.2);
+    }
+
+    .store-item {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid #00ffea;
+        padding: 12px;
+        width: 160px;
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .store-item h3 { font-size: 14px; margin: 0 0 5px 0; color: #fff; }
+    .store-item .cost { font-size: 16px; color: #ffff00; margin-bottom: 8px; font-weight: bold; }
+
+    .buy-btn {
+        width: 100%;
+        padding: 8px;
+        background: #00ffea;
+        border: none;
+        color: #000;
+        font-weight: bold;
+        cursor: pointer;
+        border-radius: 4px;
+        transition: 0.2s;
+    }
+    .buy-btn:hover { background: #fff; }
+    .buy-btn:disabled { background: #444; color: #888; cursor: not-allowed; }
+
+    /* ===== HUD ===== */
+    #ui {
+        position: absolute;
+        top: 20px; left: 20px;
+        color: #fff;
+        z-index: 10;
+        pointer-events: none;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .stat-row {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        font-size: 18px;
+        background: rgba(0,0,0,0.4);
+        padding: 5px 15px;
+        border-radius: 5px;
+        border-left: 3px solid #00ffea;
+    }
+
+    #healthBarContainer {
+        width: 300px; height: 18px;
+        background: rgba(255,255,255,0.1);
+        border: 2px solid #fff;
+        border-radius: 9px;
+        overflow: hidden;
+    }
+
+    #healthBar {
+        width: 100%; height: 100%;
+        background: linear-gradient(to right, #ff0000, #ff8800);
+        transition: width 0.3s;
+    }
+
+    #xpContainer {
+        position: absolute;
+        top: 0; left: 0;
+        width: 100%; height: 6px;
+        background: rgba(255,255,255,0.1);
+        z-index: 100;
+    }
+    #xpBar {
+        width: 0%; height: 100%;
+        background: #00f2ff;
+        box-shadow: 0 0 10px #00f2ff;
+    }
+
+    #radarContainer {
+        position: absolute;
+        bottom: 20px; right: 20px;
+        width: 150px; height: 150px;
+        background: rgba(0, 15, 25, 0.85);
+        border: 2px solid #00f2ff;
+        border-radius: 50%;
+        overflow: hidden;
+        box-shadow: 0 0 15px rgba(0, 242, 255, 0.3);
+    }
+</style>
+<style>
+    /* Mobile controls styles */
+    #touchControls { z-index: 50; }
+    #joystickBase { box-sizing: border-box; }
+    #joystickKnob { box-sizing: border-box; position: absolute; left:0; top:0; }
+    @media (max-width: 900px) {
+        .menu-button { padding: 14px 22px; font-size: 20px; }
+        #homeScreen h1 { font-size: 48px; }
+        #shipSelection { gap: 12px; }
+        #touchControls { display: block; }
+    }
+</style>
+<script type="text/javascript">
+    window.SDK_OPTIONS = {
+        gameId: "owu4ajfvxrnt4ottx1jygnsd3n04mou9", // Filled with provided game_id
+        onEvent: function (a) {
+            switch (a.name) {
+                case "SDK_GAME_PAUSE":
+                    // pause game logic / mute audio
+                    if (window.pauseGameForSDK) window.pauseGameForSDK();
+                    break;
+                case "SDK_GAME_START":
+                    // advertisement done, resume game logic and unmute audio
+                    if (window.resumeGameFromSDK) window.resumeGameFromSDK();
+                    break;
+                case "SDK_READY":
+                    // when sdk is ready
+                    break;
+                case "SDK_ERROR":
+                    // when sdk get error
+                    break;
+            }
+        }
+    };
+(function (a, b, c) {
+    var d = a.getElementsByTagName(b)[0];
+    a.getElementById(c) || (a = a.createElement(b), a.id = c,
+    a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+})(document, "script", "gamemonetize-sdk"); 
+</script>
+</head>
+<body>
+
+<canvas id="gameCanvas"></canvas>
+
+<div id="xpContainer"><div id="xpBar"></div></div>
+
+<div id="ui" style="display:none;">
+    <div id="healthBarContainer"><div id="healthBar"></div></div>
+    <div class="stat-row">Credits: <span id="creditsValue" style="color:#ffff00; font-weight:bold;">0</span></div>
+    <div class="stat-row">Wave: <span id="waveNumber">1</span></div>
+    <div class="stat-row">Bombs: <span id="wipeoutCount" style="color:#00ffea;">0</span> <small style="font-size:10px; margin-left:10px;">[SPACE]</small></div>
+    <div style="font-size: 14px; margin-top: 10px; color: #00ffea; font-weight: bold; text-shadow: 0 0 5px #000;">
+        [WASD] MOVE | [CLICK] SHOOT | [SPACE] BOMB
+    </div>
+</div>
+
+<div id="radarContainer" style="display:none;">
+    <canvas id="radarCanvas" width="150" height="150"></canvas>
+</div>
+
+<!-- Mobile / Touch Controls -->
+<div id="touchControls" style="display:none;">
+    <div id="joystickBase"><div id="joystickKnob"></div></div>
+    <button id="fireBtn" class="menu-button" style="position:fixed; right:18px; bottom:90px; padding:18px 22px; font-size:20px;">FIRE</button>
+    <button id="muteBtn" class="menu-button" style="position:fixed; right:18px; bottom:18px; padding:10px 14px; font-size:16px;">Mute</button>
+</div>
+
+<!-- HOME SCREEN -->
+<div id="homeScreen">
+    <h1>SPACE GAME</h1>
+    <div id="titleCreditDisplay">Score: 0</div>
+    
+    <div id="shipPreviewContainer">
+        <canvas id="previewCanvas" width="150" height="150"></canvas>
+    </div>
+
+    <div id="shipSelection">
+        <div class="ship-card selected" onclick="selectShip('interceptor', this)">
+            <h4>INTERCEPTOR</h4>
+            <p>Balanced speed & fire rate.</p>
+        </div>
+        <div class="ship-card" onclick="selectShip('tank', this)">
+            <h4>DREADNOUGHT</h4>
+            <p>High HP, slower fire rate.</p>
+        </div>
+        <div class="ship-card" onclick="selectShip('scout', this)">
+            <h4>STINGRAY</h4>
+            <p>Glass cannon. High speed.</p>
+        </div>
+    </div>
+
+    <button class="menu-button" id="startBtn">Play Game</button>
+
+    <div id="upgradeStore">
+        <div class="store-item">
+            <h3>Armor Plating</h3>
+            <div class="cost" id="armorCost">50 Credits</div>
+            <button class="buy-btn" id="buyArmor" onclick="buyUpgrade('armor')">Buy Upgrade</button>
+        </div>
+        <div class="store-item">
+            <h3>Weapon Speed</h3>
+            <div class="cost" id="speedCost">75 Credits</div>
+            <button class="buy-btn" id="buyWeapon" onclick="buyUpgrade('fireSpeed')">Buy Upgrade</button>
+        </div>
+    </div>
+</div>
+
+<div id="gameOverScreen" style="display:none;">
+    <h1 style="color: #ff0000; font-size: 72px; margin: 0;">GAME OVER</h1>
+    <p id="finalScore" style="font-size: 32px; color: #fff; margin: 20px 0;">Level Reached: 0</p>
+    <div style="display:flex; gap:12px;">
+        <button class="menu-button" id="continueBtn">Continue (Free)</button>
+        <button class="menu-button" onclick="location.reload()">Play Again</button>
+    </div>
+</div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const rCanvas = document.getElementById('radarCanvas');
+const rctx = rCanvas.getContext('2d');
+const pCanvas = document.getElementById('previewCanvas');
+const pctx = pCanvas.getContext('2d');
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let gameActive = false;
+let credits = 0;
+let waveNumber = 1;
+let asteroids = [];
+let bullets = [];
+let particles = [];
+let stars = [];
+let wipeoutCount = 0;
+let playerXP = 0;
+let nextLevelXP = 100;
+let previewAngle = 0;
+
+// GameMonetize helper functions
+window.showAd = function() {
+    try {
+        if (window.sdk && typeof window.sdk.showBanner === 'function') {
+            window.sdk.showBanner();
+        } else {
+            console.warn('GameMonetize SDK not available');
+        }
+    } catch (e) { console.error('showAd error', e); }
+};
+
+window.pauseGameForSDK = function() {
+    gameActive = false; // stop game loop progression where respected
+    // If you have audio elements, mute them here, e.g. document.querySelectorAll('audio').forEach(a=>a.muted=true);
+};
+
+window.resumeGameFromSDK = function() {
+    if (!gameActive) {
+        gameActive = true;
+        // If you have audio elements, unmute here, e.g. document.querySelectorAll('audio').forEach(a=>a.muted=false);
+        if (window.audioMuted === false && window.ensureAudioStarted) try { window.ensureAudioStarted(); } catch(e){}
+        // If the SDK resume was for a rewarded continue, grant a partial revive
+        if (window.pendingReward === 'continueLife') {
+            document.getElementById('gameOverScreen').style.display = 'none';
+            player.health = Math.min(player.maxHealth, Math.ceil(player.maxHealth * 0.5));
+            window.pendingReward = null;
+            updateUI();
+            spawnWave();
+        }
+        try { requestAnimationFrame(gameLoop); } catch(e){}
+    }
+};
+
+// --- Mobile controls, audio, and rewarded-continue wiring ---
+// Virtual joystick state
+window.vJoy = { x: 0, y: 0, active: false };
+
+// Audio (small synth SFX + ambient tone)
+window.audioCtx = null;
+window.bgGain = null;
+window.audioMuted = false;
+window.ensureAudioStarted = function() {
+    if (!window.audioCtx) {
+        window.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        window.bgGain = window.audioCtx.createGain();
+        window.bgGain.gain.value = 0.02;
+        window.bgGain.connect(window.audioCtx.destination);
+        // simple ambient oscillator
+        const osc = window.audioCtx.createOscillator();
+        osc.type = 'sine'; osc.frequency.value = 110;
+        osc.connect(window.bgGain); osc.start();
+        window._bgOsc = osc;
+    } else if (window.audioCtx.state === 'suspended') {
+        window.audioCtx.resume();
+    }
+};
+
+window.toggleMute = function() {
+    window.audioMuted = !window.audioMuted;
+    if (!window.bgGain) return;
+    window.bgGain.gain.value = window.audioMuted ? 0 : 0.02;
+    document.getElementById('muteBtn').innerText = window.audioMuted ? 'Unmute' : 'Mute';
+};
+
+function playShootSound() {
+    try {
+        window.ensureAudioStarted();
+        const o = window.audioCtx.createOscillator();
+        const g = window.audioCtx.createGain();
+        o.type = 'square'; o.frequency.value = 800;
+        g.gain.value = 0.08;
+        o.connect(g); g.connect(window.audioCtx.destination);
+        o.start(); g.gain.exponentialRampToValueAtTime(0.0001, window.audioCtx.currentTime + 0.12);
+        setTimeout(()=>{ o.stop(); }, 150);
+    } catch(e){ }
+}
+
+function playExplosionSound() {
+    try {
+        window.ensureAudioStarted();
+        const o = window.audioCtx.createOscillator();
+        const g = window.audioCtx.createGain();
+        o.type = 'sawtooth'; o.frequency.value = 120;
+        g.gain.value = 0.18;
+        o.connect(g); g.connect(window.audioCtx.destination);
+        o.start(); g.gain.exponentialRampToValueAtTime(0.0001, window.audioCtx.currentTime + 0.3);
+        setTimeout(()=>{ o.stop(); }, 350);
+    } catch(e){}
+}
+
+// Hook into firing and explosion to play SFX
+// (removed early reference to `Bullet` to avoid TDZ error; bullets are instrumented where created)
+
+// Touch UI behavior
+function showTouchControlsIfNeeded(){
+    if (window.innerWidth <= 900 || 'ontouchstart' in window) {
+        document.getElementById('touchControls').style.display = 'block';
+        // make HUD interactive for touch
+        document.getElementById('ui').style.pointerEvents = 'auto';
+    }
+}
+
+// Joystick implementation
+(() => {
+    const base = null;
+    let baseEl, knobEl, baseRect, startX, startY, maxR=60;
+    function init() {
+        baseEl = document.getElementById('joystickBase');
+        knobEl = document.getElementById('joystickKnob');
+        if(!baseEl) return;
+        baseEl.style.position = 'fixed'; baseEl.style.left = '18px'; baseEl.style.bottom = '18px';
+        baseEl.style.width = (maxR*2)+'px'; baseEl.style.height = (maxR*2)+'px';
+        baseEl.style.borderRadius = '50%'; baseEl.style.background = 'rgba(255,255,255,0.03)'; baseEl.style.border = '2px solid rgba(0,255,234,0.12)';
+        baseEl.style.touchAction = 'none';
+        knobEl.style.width = '46px'; knobEl.style.height = '46px'; knobEl.style.borderRadius = '50%'; knobEl.style.background = '#00ffea'; knobEl.style.opacity = '0.9';
+        knobEl.style.transform = 'translate('+ (maxR-23) +'px, '+ (maxR-23) +'px)';
+
+        baseEl.addEventListener('pointerdown', onDown);
+        window.addEventListener('pointermove', onMove);
+        window.addEventListener('pointerup', onUp);
+    }
+    function onDown(e){
+        baseRect = baseEl.getBoundingClientRect();
+        window.vJoy.active = true;
+        const cx = baseRect.left + maxR, cy = baseRect.top + maxR;
+        updateJoystick(e.clientX, e.clientY, cx, cy);
+    }
+    function onMove(e){
+        if(!window.vJoy.active) return;
+        const cx = baseRect.left + maxR, cy = baseRect.top + maxR;
+        updateJoystick(e.clientX, e.clientY, cx, cy);
+    }
+    function onUp(){
+        window.vJoy.active = false; window.vJoy.x = 0; window.vJoy.y = 0;
+        if(knobEl) knobEl.style.transform = 'translate('+ (maxR-23) +'px, '+ (maxR-23) +'px)';
+    }
+    function updateJoystick(px, py, cx, cy){
+        const dx = px - cx, dy = py - cy; const dist = Math.sqrt(dx*dx + dy*dy);
+        let nx = dx / Math.max(dist,1), ny = dy / Math.max(dist,1);
+        const r = Math.min(dist, maxR);
+        const kx = cx - baseRect.left - 23 + (nx * r);
+        const ky = cy - baseRect.top - 23 + (ny * r);
+        if(knobEl) knobEl.style.transform = 'translate('+ kx +'px, '+ ky +'px)';
+        window.vJoy.x = (r/maxR) * nx; window.vJoy.y = (r/maxR) * ny;
+    }
+    setTimeout(init, 400);
+})();
+
+// Fire / mute button wiring
+document.addEventListener('DOMContentLoaded', () => {
+    const fire = document.getElementById('fireBtn');
+    const mute = document.getElementById('muteBtn');
+    const cont = document.getElementById('continueBtn');
+    if(fire){
+        fire.addEventListener('pointerdown', () => { mouse.down = true; });
+        fire.addEventListener('pointerup', () => { mouse.down = false; });
+        fire.addEventListener('pointercancel', () => { mouse.down = false; });
+    }
+    if(mute){ mute.addEventListener('click', toggleMute); }
+    if(cont){ cont.addEventListener('click', () => { window.pendingReward = 'continueLife'; if (window.showAd) window.showAd(); }); }
+    showTouchControlsIfNeeded();
+});
+
+// Hook into bullet creation to play SFX
+const origSpawnBullet = function(x,y,angle){ bullets.push(new Bullet(x,y,angle)); playShootSound(); };
+// Replace direct pushes in code: find where bullets are created and add playShootSound() there (we add below as well)
+
+
+// Controls State
+const keys = { w: false, a: false, s: false, d: false, space: false };
+const mouse = { x: 0, y: 0, down: false };
+
+// Star Initialization
+for(let i=0; i<150; i++) {
+    stars.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        size: Math.random() * 2,
+        speed: Math.random() * 0.8 + 0.2
+    });
+}
+
+const player = {
+    x: canvas.width / 2,
+    y: canvas.height / 2,
+    size: 22,
+    speed: 5,
+    angle: 0,
+    health: 100,
+    maxHealth: 100,
+    fireCooldown: 0,
+    fireRate: 18,
+    type: 'interceptor'
+};
+
+function selectShip(type, el) {
+    document.querySelectorAll('.ship-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    player.type = type;
+    if(type === 'tank') {
+        player.maxHealth = 200; player.health = 200; player.fireRate = 32; player.speed = 3.5;
+    } else if(type === 'scout') {
+        player.maxHealth = 70; player.health = 70; player.fireRate = 10; player.speed = 7.5;
+    } else {
+        player.maxHealth = 100; player.health = 100; player.fireRate = 18; player.speed = 5;
+    }
+}
+
+function drawShip(targetCtx, x, y, angle, color) {
+    targetCtx.save();
+    targetCtx.translate(x, y);
+    targetCtx.rotate(angle);
+    targetCtx.strokeStyle = color;
+    targetCtx.lineWidth = 3;
+    targetCtx.beginPath();
+    
+    // Vary shape slightly based on type
+    if (player.type === 'tank') {
+        targetCtx.moveTo(25, 0);
+        targetCtx.lineTo(-15, -22);
+        targetCtx.lineTo(-8, 0);
+        targetCtx.lineTo(-15, 22);
+    } else if (player.type === 'scout') {
+        targetCtx.moveTo(30, 0);
+        targetCtx.lineTo(-18, -12);
+        targetCtx.lineTo(-10, 0);
+        targetCtx.lineTo(-18, 12);
+    } else {
+        targetCtx.moveTo(25, 0); 
+        targetCtx.lineTo(-18, -18);
+        targetCtx.lineTo(-10, 0);
+        targetCtx.lineTo(-18, 18);
+    }
+    
+    targetCtx.closePath(); 
+    targetCtx.stroke();
+    targetCtx.restore();
+}
+
+function updatePreview() {
+    if(gameActive) return;
+    pctx.clearRect(0, 0, pCanvas.width, pCanvas.height);
+    previewAngle += 0.02;
+    
+    // Draw glow
+    pctx.shadowBlur = 20;
+    pctx.shadowColor = '#00ffea';
+    drawShip(pctx, 75, 75, previewAngle, '#00ffea');
+    pctx.shadowBlur = 0;
+    
+    requestAnimationFrame(updatePreview);
+}
+
+class Bullet {
+    constructor(x, y, angle, color = '#00ffea') {
+        this.x = x; this.y = y; this.angle = angle;
+        this.speed = 14; this.life = 100; this.color = color;
+    }
+    update() {
+        this.x += Math.cos(this.angle) * this.speed;
+        this.y += Math.sin(this.angle) * this.speed;
+        this.life--;
+    }
+    draw() {
+        ctx.fillStyle = this.color;
+        ctx.beginPath(); ctx.arc(this.x, this.y, 4, 0, Math.PI*2); ctx.fill();
+        ctx.shadowBlur = 10; ctx.shadowColor = this.color;
+    }
+}
+
+class Asteroid {
+    constructor(x, y, elite = false) {
+        this.x = x; this.y = y;
+        this.size = elite ? 45 : 24;
+        this.elite = elite;
+        this.health = elite ? 10 : 2;
+        this.speed = Math.random() * 1.5 + (0.5 * (1 + waveNumber * 0.1));
+    }
+    update() {
+        let ang = Math.atan2(player.y - this.y, player.x - this.x);
+        this.x += Math.cos(ang) * this.speed;
+        this.y += Math.sin(ang) * this.speed;
+        let dist = Math.sqrt((this.x-player.x)**2 + (this.y-player.y)**2);
+        if(dist < this.size + player.size) {
+            player.health -= this.elite ? 20 : 8;
+            this.health = 0;
+        }
+    }
+    draw() {
+        ctx.strokeStyle = this.elite ? '#ff4444' : '#00f2ff';
+        ctx.lineWidth = 3;
+        ctx.shadowBlur = 5; ctx.shadowColor = ctx.strokeStyle;
+        ctx.strokeRect(this.x - this.size/2, this.y - this.size/2, this.size, this.size);
+        ctx.shadowBlur = 0;
+    }
+}
+
+function spawnExplosion(x, y, color) {
+    for(let i=0; i<12; i++) {
+        particles.push({
+            x, y, vx: (Math.random()-0.5)*12, vy: (Math.random()-0.5)*12,
+            life: 1.0, color, size: Math.random()*3 + 1
+        });
+    }
+}
+
+function triggerWipeout() {
+    if(wipeoutCount <= 0 || !gameActive) return;
+    wipeoutCount--;
+    asteroids.forEach(a => {
+        spawnExplosion(a.x, a.y, a.elite ? '#f00' : '#0ff');
+        credits += a.elite ? 15 : 5;
+        playerXP += a.elite ? 30 : 10;
+    });
+    asteroids = [];
+    updateUI();
+}
+
+function updateUI() {
+    const credVal = Math.floor(credits);
+    document.getElementById('creditsValue').innerText = credVal;
+        document.getElementById('titleCreditDisplay').innerText = "Score: " + credVal;
+    document.getElementById('waveNumber').innerText = waveNumber;
+    document.getElementById('wipeoutCount').innerText = wipeoutCount;
+    document.getElementById('healthBar').style.width = Math.max(0, (player.health / player.maxHealth * 100)) + '%';
+    document.getElementById('xpBar').style.width = (playerXP / nextLevelXP * 100) + '%';
+    
+    document.getElementById('buyArmor').disabled = (credits < 50);
+    document.getElementById('buyWeapon').disabled = (credits < 75);
+}
+
+function buyUpgrade(type) {
+    if(type === 'armor' && credits >= 50) {
+        credits -= 50; 
+        player.maxHealth += 30; 
+        player.health = player.maxHealth;
+    } else if(type === 'fireSpeed' && credits >= 75) {
+        credits -= 75; 
+        player.fireRate = Math.max(4, player.fireRate - 2);
+    }
+    updateUI();
+}
+
+function gameLoop() {
+    if(!gameActive) return;
+    
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    if (keys.w) player.y -= player.speed;
+    if (keys.s) player.y += player.speed;
+    if (keys.a) player.x -= player.speed;
+    if (keys.d) player.x += player.speed;
+
+    player.x = Math.max(player.size, Math.min(canvas.width - player.size, player.x));
+    player.y = Math.max(player.size, Math.min(canvas.height - player.size, player.y));
+
+    ctx.fillStyle = '#fff';
+    stars.forEach(s => {
+        s.y += s.speed;
+        if(s.y > canvas.height) { s.y = 0; s.x = Math.random() * canvas.width; }
+        ctx.fillRect(s.x, s.y, s.size, s.size);
+    });
+
+    player.angle = Math.atan2(mouse.y - player.y, mouse.x - player.x);
+
+    ctx.shadowBlur = 15; ctx.shadowColor = '#00ffea';
+    drawShip(ctx, player.x, player.y, player.angle, '#00ffea');
+    ctx.shadowBlur = 0;
+
+    player.fireCooldown--;
+    if(mouse.down && player.fireCooldown <= 0) {
+        bullets.push(new Bullet(player.x, player.y, player.angle));
+        try { playShootSound(); } catch(e) {}
+        player.fireCooldown = player.fireRate;
+    }
+
+    for(let i = bullets.length - 1; i >= 0; i--) {
+        let b = bullets[i];
+        b.update();
+        b.draw();
+        if(b.life <= 0) bullets.splice(i, 1);
+    }
+
+    for(let i = asteroids.length - 1; i >= 0; i--) {
+        let a = asteroids[i];
+        a.update();
+        a.draw();
+
+        for(let j = bullets.length - 1; j >= 0; j--) {
+            let b = bullets[j];
+            let dist = Math.sqrt((a.x-b.x)**2 + (a.y-b.y)**2);
+            if(dist < a.size) {
+                a.health--;
+                bullets.splice(j, 1);
+                spawnExplosion(b.x, b.y, '#00ffea');
+            }
+        }
+
+        if(a.health <= 0) {
+            spawnExplosion(a.x, a.y, a.elite ? '#f00' : '#0ff');
+            credits += a.elite ? 12 : 3;
+            playerXP += a.elite ? 25 : 8;
+                try { playExplosionSound(); } catch(e) {}
+            asteroids.splice(i, 1);
+            updateUI();
+        }
+    }
+
+    for(let i = particles.length - 1; i >= 0; i--) {
+        let p = particles[i];
+        p.x += p.vx; p.y += p.vy; p.life -= 0.025;
+        ctx.globalAlpha = p.life; ctx.fillStyle = p.color;
+        ctx.fillRect(p.x, p.y, p.size, p.size);
+        if(p.life <= 0) particles.splice(i, 1);
+    }
+    ctx.globalAlpha = 1;
+
+    rctx.clearRect(0, 0, 150, 150);
+    rctx.strokeStyle = 'rgba(0, 255, 234, 0.2)';
+    rctx.beginPath(); rctx.arc(75, 75, 70, 0, Math.PI*2); rctx.stroke();
+    rctx.fillStyle = '#fff'; rctx.fillRect(74, 74, 3, 3);
+    
+    asteroids.forEach(a => {
+        let dx = (a.x - player.x) * 0.08;
+        let dy = (a.y - player.y) * 0.08;
+        let dist = Math.sqrt(dx*dx + dy*dy);
+        if(dist < 70) {
+            rctx.fillStyle = a.elite ? '#f00' : '#0ff';
+            rctx.fillRect(75 + dx, 75 + dy, 3, 3);
+        }
+    });
+
+    if(asteroids.length === 0) {
+        waveNumber++;
+        wipeoutCount++;
+        // invoke ad on new level (per GameMonetize guidance)
+        if (window.showAd) window.showAd();
+        spawnWave();
+        updateUI();
+    }
+
+    if(player.health <= 0) {
+        gameActive = false;
+        document.getElementById('finalScore').innerText = "Level Reached: " + (waveNumber - 1);
+        document.getElementById('gameOverScreen').style.display='flex';
+    }
+
+    requestAnimationFrame(gameLoop);
+}
+
+function spawnWave() {
+    let count = 4 + waveNumber;
+    for(let i=0; i<count; i++) {
+        let side = Math.floor(Math.random() * 4);
+        let x, y;
+        if(side === 0) { x = Math.random()*canvas.width; y = -50; }
+        else if(side === 1) { x = canvas.width+50; y = Math.random()*canvas.height; }
+        else if(side === 2) { x = Math.random()*canvas.width; y = canvas.height+50; }
+        else { x = -50; y = Math.random()*canvas.height; }
+        
+        asteroids.push(new Asteroid(x, y, Math.random() < 0.15 + (waveNumber*0.02)));
+    }
+}
+
+window.addEventListener('keydown', e => {
+    const k = e.key.toLowerCase();
+    if (k === 'w') keys.w = true;
+    if (k === 'a') keys.a = true;
+    if (k === 's') keys.s = true;
+    if (k === 'd') keys.d = true;
+    if (k === ' ') triggerWipeout();
+});
+window.addEventListener('keyup', e => {
+    const k = e.key.toLowerCase();
+    if (k === 'w') keys.w = false;
+    if (k === 'a') keys.a = false;
+    if (k === 's') keys.s = false;
+    if (k === 'd') keys.d = false;
+});
+window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+window.addEventListener('mousedown', () => mouse.down = true);
+window.addEventListener('mouseup', () => mouse.down = false);
+
+document.getElementById('startBtn').addEventListener('click', () => {
+    document.getElementById('homeScreen').style.display = 'none';
+    document.getElementById('ui').style.display = 'flex';
+    document.getElementById('radarContainer').style.display = 'block';
+    // show an ad when user presses Play (SDK will emit pause/start events)
+    if (window.showAd) window.showAd();
+    gameActive = true;
+    updateUI();
+    spawnWave();
+    gameLoop();
+});
+
+window.addEventListener('resize', () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+});
+
+// Initialize title screen logic
+updateUI();
+updatePreview();
+</script>
+</body>
+</html>

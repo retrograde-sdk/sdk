@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Funny Sounds – Soundboard</title>
+  
+  <!-- GameMonetize SDK -->
+  <script type="text/javascript">
+    window.SDK_OPTIONS = {
+      gameId: "tr8vmrucaanecpllp3ja0dl1omj1wjv6",
+      onEvent: function (a) {
+        switch (a.name) {
+          case "SDK_GAME_PAUSE":
+            pauseAllSounds();
+            break;
+          case "SDK_GAME_START":
+            resumeGame();
+            break;
+          case "SDK_READY":
+            console.log('SDK is ready');
+            break;
+        }
+      }
+    };
+    (function (a, b, c) {
+      var d = a.getElementsByTagName(b)[0];
+      a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+    })(document, "script", "gamemonetize-sdk");
+  </script>
+  
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{
+      font:14px Arial,sans-serif;
+      background:linear-gradient(135deg,#667eea,#764ba2);
+      display:flex;align-items:center;justify-content:center;
+      min-height:100vh;padding:10px;
+    }
+    
+    /* LOADING SCREEN */
+    #loading-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg,#667eea,#764ba2);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+    #loading-screen h1 {
+      color: #fff;
+      font-size: 48px;
+      margin-bottom: 30px;
+      text-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+    .loader {
+      border: 8px solid #f3f3f3;
+      border-top: 8px solid #e94560;
+      border-radius: 50%;
+      width: 80px;
+      height: 80px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    #loading-screen p {
+      color: #fff;
+      margin-top: 20px;
+      font-size: 18px;
+    }
+    
+    /* HOW TO PLAY SCREEN */
+    #howtoplay-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.95);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9998;
+      padding: 20px;
+    }
+    #howtoplay-screen h2 {
+      color: #fff;
+      font-size: 42px;
+      margin-bottom: 30px;
+      text-shadow: 0 4px 10px rgba(233,69,96,0.5);
+    }
+    #howtoplay-screen .instructions {
+      background: linear-gradient(135deg,#2d4059,#1a2332);
+      padding: 30px;
+      border-radius: 15px;
+      border: 3px solid #e94560;
+      max-width: 600px;
+      margin-bottom: 40px;
+    }
+    #howtoplay-screen .instructions p {
+      color: #fff;
+      font-size: 18px;
+      line-height: 1.8;
+      margin-bottom: 15px;
+    }
+    #play-button {
+      padding: 20px 60px;
+      font-size: 28px;
+      font-weight: bold;
+      background: linear-gradient(135deg,#e94560,#d63447);
+      color: #fff;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(233,69,96,0.4);
+      transition: all 0.3s;
+      animation: pulse 2s infinite;
+    }
+    #play-button:hover {
+      transform: scale(1.1);
+      box-shadow: 0 12px 30px rgba(233,69,96,0.6);
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    
+    /* GAME CONTAINER */
+    #game-container{
+      width:100%;
+      max-width:800px;
+      height:600px;
+      background:#1a1a2e;
+      border-radius:15px;
+      box-shadow:0 10px 50px rgba(0,0,0,.5);
+      display:none;
+      position:relative;
+      overflow:hidden;
+    }
+    #game-container.active {
+      display: flex;
+    }
+    
+    #sidebar{
+      width:200px;
+      background:linear-gradient(180deg,#16213e,#0f3460);
+      padding:20px 10px;
+      display:flex;
+      flex-direction:column;
+      border-right:3px solid #e94560;
+      overflow-y:auto;
+    }
+    #logo{
+      text-align:center;
+      margin-bottom:25px;
+      padding-bottom:15px;
+      border-bottom:2px solid #e94560;
+    }
+    #logo h1{color:#fff;font-size:22px;}
+    #logo p{color:#aaa;font-size:11px;}
+    .menu-btn{
+      width:100%;margin-bottom:8px;
+      padding:12px 8px;
+      background:linear-gradient(135deg,#e94560,#d63447);
+      color:#fff;border:none;border-radius:8px;
+      font-weight:bold;cursor:pointer;
+      box-shadow:0 4px 10px rgba(233,69,96,.3);
+      transition:all .3s;
+    }
+    .menu-btn:hover{
+      transform:translateY(-2px);
+      box-shadow:0 6px 15px rgba(233,69,96,.5);
+    }
+    .menu-btn.active{
+      background:linear-gradient(135deg,#00d4ff,#0099cc);
+      box-shadow:0 4px 15px rgba(0,212,255,.5);
+    }
+    #content{
+      flex:1;
+      padding:20px;
+      overflow-y:auto;
+      overflow-x:hidden;
+    }
+    .panel{display:none;}
+    .panel.active{display:block;}
+    .sound-grid{
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:15px;
+    }
+    .sound-button{
+      display:flex;align-items:center;justify-content:center;
+      min-height:100px;
+      background:linear-gradient(135deg,#2d4059,#1a2332);
+      border:2px solid #e94560;
+      border-radius:10px;
+      cursor:pointer;
+      transition:all .3s;
+    }
+    .sound-button:hover{
+      transform:scale(1.05);
+      border-color:#00d4ff;
+      box-shadow:0 5px 20px rgba(0,212,255,.4);
+    }
+    .sound-button:active{transform:scale(0.95);}
+    .sound-button img{width:60px;height:60px;}
+    #content::-webkit-scrollbar{width:8px;}
+    #content::-webkit-scrollbar-track{background:#16213e;}
+    #content::-webkit-scrollbar-thumb{background:#e94560;border-radius:4px;}
+    #content::-webkit-scrollbar-thumb:hover{background:#00d4ff;}
+    .credits{display:flex;flex-direction:column;line-height:1.8;color:#fff;}
+    .credits p{font-weight:bold;margin-bottom:10px;font-size:16px;}
+    .credits a{
+      color:#00d4ff;
+      text-decoration:none;
+      font-size:13px;
+      transition:color .3s;
+      display:block;
+      margin:2px 0;
+    }
+    .credits a:hover{color:#e94560;}
+    .site-link{
+      color:#888;
+      text-decoration:none;
+      font-size:13px;
+      margin-top:10px;
+      display:block;
+      text-align:center;
+      transition:color .3s;
+    }
+    .site-link:hover{color:#fff;}
+    
+    /* RESPONSIVE */
+    @media (max-width:768px){
+      body{padding:5px;}
+      #game-container{
+        flex-direction:column;
+        height:auto;
+        max-height:none;
+      }
+      #sidebar{
+        width:100%;
+        border-right:none;
+        border-bottom:3px solid #e94560;
+        padding:10px;
+        max-height:none;
+        overflow-y:visible;
+        flex-shrink:0;
+      }
+      #logo{margin-bottom:15px;padding-bottom:10px;}
+      #logo h1{font-size:18px;}
+      #logo p{font-size:10px;}
+      .menu-btn{padding:8px 6px;font-size:12px;margin-bottom:5px;}
+      #content{padding:10px;flex:1;overflow-y:auto;}
+      .sound-grid{
+        grid-template-columns:repeat(3,1fr);
+        gap:10px;
+      }
+      .sound-button{min-height:80px;}
+      .sound-button img{width:50px;height:50px;}
+      #howtoplay-screen h2{font-size:28px;}
+      #howtoplay-screen .instructions{padding:20px;}
+      #howtoplay-screen .instructions p{font-size:16px;}
+      #play-button{padding:15px 40px;font-size:22px;}
+    }
+    @media (max-width:480px){
+      .sound-grid{
+        grid-template-columns:repeat(2,1fr);
+        gap:8px;
+      }
+      .sound-button{min-height:70px;}
+      .sound-button img{width:45px;height:45px;}
+      .menu-btn{font-size:11px;padding:6px 4px;}
+    }
+  </style>
+</head>
+<body>
+  
+  <!-- LOADING SCREEN -->
+  <div id="loading-screen">
+    <h1>🎵 FUNNY SOUNDS</h1>
+    <div class="loader"></div>
+    <p>Loading game...</p>
+  </div>
+  
+  <!-- HOW TO PLAY SCREEN -->
+  <div id="howtoplay-screen">
+    <h2>🎮 How to Play</h2>
+    <div class="instructions">
+      <p>🔊 Click on any sound button to play funny sounds!</p>
+      <p>🎵 Explore 5 categories: Human Sounds, Household, Street Sounds, Animal Sounds, and more!</p>
+      <p>😄 Mix multiple sounds together for extra fun!</p>
+      <p>📱 Works on desktop and mobile devices.</p>
+    </div>
+    <button id="play-button" onclick="startGame()">▶ PLAY NOW!</button>
+  </div>
+  
+  <!-- GAME CONTAINER -->
+  <div id="game-container">
+    <div id="sidebar">
+      <div id="logo">
+        <h1>🎵 FUNNY SOUNDS</h1>
+        <p>Soundboard Game</p>
+      </div>
+      <button class="menu-btn active" onclick="showPanel('human')">Human Sounds</button>
+      <button class="menu-btn" onclick="showPanel('home')">Household</button>
+      <button class="menu-btn" onclick="showPanel('other')">Other</button>
+      <button class="menu-btn" onclick="showPanel('street')">Street Sounds</button>
+      <button class="menu-btn" onclick="showPanel('animals')">Animal Sounds</button>
+      <button class="menu-btn" onclick="showPanel('authors')">Sound Authors</button>
+      <a href="https://www.zahrajhru.cz" class="site-link" target="_blank" rel="noopener">Play online games</a>
+      <div id="toplistcz1795420" style="margin-top:15px;text-align:center;">
+        <noscript>
+          <img src="https://toplist.cz/count.asp?id=1795420&logo=mc&njs=1" alt="TOPlist" width="88" height="60"/>
+        </noscript>
+      </div>
+      <script language="JavaScript">
+        (function(d,e,s){
+          var el=d.getElementById('toplistcz1795420');
+          if(el){
+            el.innerHTML='<img src="https://toplist.cz/count.asp?id=1795420&logo=mc&http='+
+              e(d.referrer)+'&t='+e(d.title)+'&l='+e(d.URL)+'&wi='+e(s.width)+'&he='+
+              e(s.height)+'&cd='+e(s.colorDepth)+'" width="88" height="60" border="0" alt="TOPlist"/>';
+          }
+        }(document,encodeURIComponent,window.screen));
+      </script>
+    </div>
+    <div id="content">
+      <!-- LIDSKÉ ZVUKY -->
+      <div class="panel active" id="human">
+        <div class="sound-grid">
+          <div class="sound-button" onclick="playSound('smich')"><img src="obr/21.png"/></div>
+          <div class="sound-button" onclick="playSound('smich2')"><img src="obr/22.png"/></div>
+          <div class="sound-button" onclick="playSound('smich3')"><img src="obr/24.png"/></div>
+          <div class="sound-button" onclick="playSound('krknuti')"><img src="obr/25.png"/></div>
+          <div class="sound-button" onclick="playSound('kychnuti')"><img src="obr/38.png"/></div>
+          <div class="sound-button" onclick="playSound('prdeni')"><img src="obr/26.png"/></div>
+          <div class="sound-button" onclick="playSound('chrapani')"><img src="obr/30.png"/></div>
+          <div class="sound-button" onclick="playSound('odplivnuti')"><img src="obr/39.png"/></div>
+          <div class="sound-button" onclick="playSound('kaslani')"><img src="obr/36.png"/></div>
+          <div class="sound-button" onclick="playSound('kroupani')"><img src="obr/40.png"/></div>
+          <div class="sound-button" onclick="playSound('pokrik')"><img src="obr/32.png"/></div>
+          <div class="sound-button" onclick="playSound('piskani')"><img src="obr/41.png"/></div>
+          <div class="sound-button" onclick="playSound('potlesk')"><img src="obr/23.png"/></div>
+          <div class="sound-button" onclick="playSound('facka')"><img src="obr/35.png"/></div>
+          <div class="sound-button" onclick="playSound('pad')"><img src="obr/27.png"/></div>
+          <div class="sound-button" onclick="playSound('gol')"><img src="obr/31.png"/></div>
+          <div class="sound-button" onclick="playSound('krik')"><img src="obr/34.png"/></div>
+          <div class="sound-button" onclick="playSound('jodlovani')"><img src="obr/33.png"/></div>
+          <div class="sound-button" onclick="playSound('zuby')"><img src="obr/29.png"/></div>
+          <div class="sound-button" onclick="playSound('happy')"><img src="obr/28.png"/></div>
+        </div>
+      </div>
+      <!-- DOMÁCNOST -->
+      <div class="panel" id="home">
+        <div class="sound-grid">
+          <div class="sound-button" onclick="playSound('hodiny')"><img src="obr/42.png"/></div>
+          <div class="sound-button" onclick="playSound('budik')"><img src="obr/44.png"/></div>
+          <div class="sound-button" onclick="playSound('budik2')"><img src="obr/43.png"/></div>
+          <div class="sound-button" onclick="playSound('strojek')"><img src="obr/45.png"/></div>
+          <div class="sound-button" onclick="playSound('nalevani')"><img src="obr/46.png"/></div>
+          <div class="sound-button" onclick="playSound('lahve')"><img src="obr/53.png"/></div>
+          <div class="sound-button" onclick="playSound('vysavac')"><img src="obr/47.png"/></div>
+          <div class="sound-button" onclick="playSound('cirkularka')"><img src="obr/48.png"/></div>
+          <div class="sound-button" onclick="playSound('klepani')"><img src="obr/55.png"/></div>
+          <div class="sound-button" onclick="playSound('dvere')"><img src="obr/54.png"/></div>
+          <div class="sound-button" onclick="playSound('chuze')"><img src="obr/50.png"/></div>
+          <div class="sound-button" onclick="playSound('moceni')"><img src="obr/49.png"/></div>
+          <div class="sound-button" onclick="playSound('wc')"><img src="obr/37.png"/></div>
+          <div class="sound-button" onclick="playSound('ostreni')"><img src="obr/52.png"/></div>
+          <div class="sound-button" onclick="playSound('rezani')"><img src="obr/51.png"/></div>
+          <div class="sound-button" onclick="playSound('zvonek')"><img src="obr/75.png"/></div>
+          <div class="sound-button" onclick="playSound('vrtacka')"><img src="obr/76.png"/></div>
+          <div class="sound-button" onclick="playSound('mikrovlnka')"><img src="obr/78.png"/></div>
+          <div class="sound-button" onclick="playSound('psacistroj')"><img src="obr/79.png"/></div>
+          <div class="sound-button" onclick="playSound('sklo')"><img src="obr/83.png"/></div>
+        </div>
+      </div>
+      <!-- OSTATNÍ -->
+      <div class="panel" id="other">
+        <div class="sound-grid">
+          <div class="sound-button" onclick="playSound('bic')"><img src="obr/56.png"/></div>
+          <div class="sound-button" onclick="playSound('rolnicky')"><img src="obr/57.png"/></div>
+          <div class="sound-button" onclick="playSound('pokladna')"><img src="obr/58.png"/></div>
+          <div class="sound-button" onclick="playSound('cert')"><img src="obr/68.png"/></div>
+          <div class="sound-button" onclick="playSound('mince')"><img src="obr/69.png"/></div>
+          <div class="sound-button" onclick="playSound('fotak')"><img src="obr/70.png"/></div>
+          <div class="sound-button" onclick="playSound('taser')"><img src="obr/71.png"/></div>
+          <div class="sound-button" onclick="playSound('zapalovac')"><img src="obr/77.png"/></div>
+          <div class="sound-button" onclick="playSound('pusa')"><img src="obr/84.png"/></div>
+          <div class="sound-button" onclick="playSound('bubliny')"><img src="obr/85.png"/></div>
+          <div class="sound-button" onclick="playSound('dj')"><img src="obr/86.png"/></div>
+          <div class="sound-button" onclick="playSound('smula')"><img src="obr/92.png"/></div>
+          <div class="sound-button" onclick="playSound('ruseni')"><img src="obr/93.png"/></div>
+          <div class="sound-button" onclick="playSound('vyzvaneni')"><img src="obr/94.png"/></div>
+          <div class="sound-button" onclick="playSound('zip')"><img src="obr/95.png"/></div>
+          <div class="sound-button" onclick="playSound('zam')"><img src="obr/96.png"/></div>
+          <div class="sound-button" onclick="playSound('karty')"><img src="obr/97.png"/></div>
+          <div class="sound-button" onclick="playSound('zpev')"><img src="obr/98.png"/></div>
+          <div class="sound-button" onclick="playSound('srdce')"><img src="obr/99.png"/></div>
+          <div class="sound-button" onclick="playSound('robot')"><img src="obr/100.png"/></div>
+        </div>
+      </div>
+      <!-- ZVUKY Z ULICE -->
+      <div class="panel" id="street">
+        <div class="sound-grid">
+          <div class="sound-button" onclick="playSound('pistala')"><img src="obr/67.png"/></div>
+          <div class="sound-button" onclick="playSound('kulomet')"><img src="obr/65.png"/></div>
+          <div class="sound-button" onclick="playSound('samopal')"><img src="obr/66.png"/></div>
+          <div class="sound-button" onclick="playSound('pistol')"><img src="obr/64.png"/></div>
+          <div class="sound-button" onclick="playSound('brokovnice')"><img src="obr/63.png"/></div>
+          <div class="sound-button" onclick="playSound('sirena')"><img src="obr/62.png"/></div>
+          <div class="sound-button" onclick="playSound('kostel')"><img src="obr/61.png"/></div>
+          <div class="sound-button" onclick="playSound('ohnostroj')"><img src="obr/60.png"/></div>
+          <div class="sound-button" onclick="playSound('letadlo')"><img src="obr/59.png"/></div>
+          <div class="sound-button" onclick="playSound('bouracka')"><img src="obr/89.png"/></div>
+          <div class="sound-button" onclick="playSound('startovani')"><img src="obr/72.png"/></div>
+          <div class="sound-button" onclick="playSound('jizda')"><img src="obr/73.png"/></div>
+          <div class="sound-button" onclick="playSound('policie')"><img src="obr/74.png"/></div>
+          <div class="sound-button" onclick="playSound('prejezd')"><img src="obr/87.png"/></div>
+          <div class="sound-button" onclick="playSound('vlak')"><img src="obr/88.png"/></div>
+          <div class="sound-button" onclick="playSound('sip')"><img src="obr/82.png"/></div>
+          <div class="sound-button" onclick="playSound('zvonekkolo')"><img src="obr/80.png"/></div>
+          <div class="sound-button" onclick="playSound('sbijecka')"><img src="obr/81.png"/></div>
+          <div class="sound-button" onclick="playSound('pila')"><img src="obr/90.png"/></div>
+          <div class="sound-button" onclick="playSound('voda')"><img src="obr/91.png"/></div>
+        </div>
+      </div>
+      <!-- ZVUKY ZVÍŘAT -->
+      <div class="panel" id="animals">
+        <div class="sound-grid">
+          <div class="sound-button" onclick="playSound('zaba')"><img src="obr/1.png"/></div>
+          <div class="sound-button" onclick="playSound('krava')"><img src="obr/2.png"/></div>
+          <div class="sound-button" onclick="playSound('kohout')"><img src="obr/3.png"/></div>
+          <div class="sound-button" onclick="playSound('slepice')"><img src="obr/4.png"/></div>
+          <div class="sound-button" onclick="playSound('lev')"><img src="obr/5.png"/></div>
+          <div class="sound-button" onclick="playSound('tygr')"><img src="obr/6.png"/></div>
+          <div class="sound-button" onclick="playSound('pes')"><img src="obr/7.png"/></div>
+          <div class="sound-button" onclick="playSound('kocka')"><img src="obr/8.png"/></div>
+          <div class="sound-button" onclick="playSound('prase')"><img src="obr/9.png"/></div>
+          <div class="sound-button" onclick="playSound('kun')"><img src="obr/10.png"/></div>
+          <div class="sound-button" onclick="playSound('slon')"><img src="obr/11.png"/></div>
+          <div class="sound-button" onclick="playSound('koza')"><img src="obr/12.png"/></div>
+          <div class="sound-button" onclick="playSound('moucha')"><img src="obr/13.png"/></div>
+          <div class="sound-button" onclick="playSound('medved')"><img src="obr/14.png"/></div>
+          <div class="sound-button" onclick="playSound('vlk')"><img src="obr/15.png"/></div>
+          <div class="sound-button" onclick="playSound('opice')"><img src="obr/16.png"/></div>
+          <div class="sound-button" onclick="playSound('pav')"><img src="obr/17.png"/></div>
+          <div class="sound-button" onclick="playSound('kachna')"><img src="obr/18.png"/></div>
+          <div class="sound-button" onclick="playSound('delfin')"><img src="obr/19.png"/></div>
+          <div class="sound-button" onclick="playSound('chrestys')"><img src="obr/20.png"/></div>
+        </div>
+      </div>
+      <!-- AUTOŘI -->
+      <div class="panel" id="authors">
+        <div class="credits">
+          <p>🎵 Sound Authors</p>
+          <a href="https://freesound.org/people/IFartInUrGeneralDirection/" target="_blank">IFartInUrGeneralDirection</a>
+          <a href="https://freesound.org/people/Benboncan/" target="_blank">Benboncan</a>
+          <a href="https://freesound.org/people/Setuniman/" target="_blank">Setuniman</a>
+          <a href="https://freesound.org/people/katzlbt/" target="_blank">katzlbt</a>
+          <a href="https://freesound.org/people/qubodup/" target="_blank">qubodup</a>
+          <a href="https://freesound.org/people/videog/" target="_blank">videog</a>
+          <a href="https://freesound.org/people/y89312/" target="_blank">y89312</a>
+          <a href="https://freesound.org/people/Halleck/" target="_blank">Halleck</a>
+          <a href="https://freesound.org/people/ccaaajf/" target="_blank">ccaaajf</a>
+          <a href="https://freesound.org/people/VlatkoBlazek/" target="_blank">VlatkoBlazek</a>
+          <a href="https://freesound.org/people/DjDust/" target="_blank">DjDust</a>
+          <a href="https://freesound.org/people/Manakias/" target="_blank">Manakias</a>
+          <a href="https://freesound.org/people/sandyrb/" target="_blank">sandyrb</a>
+          <a href="https://freesound.org/people/dobroide/" target="_blank">dobroide</a>
+          <a href="https://freesound.org/people/polmdx/" target="_blank">polmdx</a>
+          <a href="https://freesound.org/people/Hoerspielwerkstatt_HEF/" target="_blank">Hoerspielwerkstatt_HEF</a>
+          <a href="https://freesound.org/people/TwistedLemon/" target="_blank">TwistedLemon</a>
+          <a href="https://freesound.org/people/FunWithSound/" target="_blank">FunWithSound</a>
+          <a href="http://freesound.org/people/Ayliffe/sounds/94165/" target="_blank">Ayliffe</a>
+          <a href="http://freesound.org/people/smmassuda/sounds/136629/" target="_blank">smmassuda</a>
+          <a href="http://freesound.org/people/ngruber/sounds/204777/" target="_blank">ngruber</a>
+          <a href="http://freesound.org/people/CastIronCarousel/sounds/216748/" target="_blank">CastIronCarousel</a>
+          <a href="http://freesound.org/people/pauliep83/sounds/33675/" target="_blank">pauliep83</a>
+          <a href="http://freesound.org/people/TheSoundcatcher/sounds/315647/" target="_blank">TheSoundcatcher</a>
+          <a href="https://freesound.org/people/redafs/" target="_blank">redafs</a>
+          <a href="https://freesound.org/people/YleArkisto/" target="_blank">YleArkisto</a>
+          <a href="https://freesound.org/people/GregsMedia/" target="_blank">GregsMedia</a>
+          <a href="https://freesound.org/people/juskiddink/" target="_blank">juskiddink</a>
+          <a href="https://freesound.org/people/InspectorJ/" target="_blank">InspectorJ</a>
+          <a href="https://freesound.org/people/kiddpark/" target="_blank">kiddpark</a>
+          <a href="https://freesound.org/people/3bagbrew/" target="_blank">3bagbrew</a>
+          <a href="https://freesound.org/people/andre.nascimento/" target="_blank">andre.nascimento</a>
+          <a href="https://freesound.org/people/KuoShu/" target="_blank">KuoShu</a>
+          <a href="https://freesound.org/people/xtrgamr/" target="_blank">xtrgamr</a>
+          <a href="https://freesound.org/people/tim.kahn/" target="_blank">tim.kahn</a>
+          <a href="https://freesound.org/people/granizo/" target="_blank">granizo</a>
+          <a href="https://freesound.org/people/CGEffex/" target="_blank">CGEffex</a>
+          <a href="https://freesound.org/people/kwahmah_02/" target="_blank">kwahmah_02</a>
+          <a href="https://freesound.org/people/fastson/" target="_blank">fastson</a>
+          <a href="https://freesound.org/people/ondrosik/" target="_blank">ondrosik</a>
+          <a href="https://freesound.org/people/outdoor_recordings/" target="_blank">outdoor_recordings</a>
+          <a href="https://freesound.org/people/TaranP/" target="_blank">TaranP</a>
+          <a href="https://freesound.org/people/J.Zazvurek/" target="_blank">J.Zazvurek</a>
+          <a href="https://freesound.org/people/RICHERlandTV/" target="_blank">RICHERlandTV</a>
+          <a href="https://freesound.org/people/santooj/" target="_blank">santooj</a>
+          <a href="https://freesound.org/people/waveplay_old/" target="_blank">waveplay_old</a>
+          <a href="https://freesound.org/people/Goup_1/" target="_blank">Goup_1</a>
+          <a href="https://freesound.org/people/jordanielmills/" target="_blank">jordanielmills</a>
+          <a href="https://freesound.org/people/knarmahfox/" target="_blank">knarmahfox</a>
+          <a href="https://freesound.org/people/-zin-/" target="_blank">-zin-</a>
+          <a href="https://freesound.org/people/frankum/" target="_blank">frankum</a>
+          <a href="https://freesound.org/people/Kyle_Healey/" target="_blank">Kyle_Healey</a>
+          <a href="https://freesound.org/people/levelclearer/" target="_blank">levelclearer</a>
+          <a href="https://freesound.org/people/SSS_Samples/" target="_blank">SSS_Samples</a>
+          <a href="https://freesound.org/people/Flick3r/" target="_blank">Flick3r</a>
+          <a href="https://freesound.org/people/scottyheist/" target="_blank">scottyheist</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+<script>
+// Definice všech zvuků
+const sounds={smich:new Audio('zvuky/12.mp3'),smich2:new Audio('zvuky/13.mp3'),smich3:new Audio('zvuky/14.mp3'),potlesk:new Audio('zvuky/15.mp3'),krknuti:new Audio('zvuky/16.mp3'),prdeni:new Audio('zvuky/17.mp3'),chrapani:new Audio('zvuky/18.mp3'),odplivnuti:new Audio('zvuky/19.mp3'),kaslani:new Audio('zvuky/20.mp3'),kroupani:new Audio('zvuky/21.mp3'),pokrik:new Audio('zvuky/22.mp3'),piskani:new Audio('zvuky/23.mp3'),kychnuti:new Audio('zvuky/33.mp3'),facka:new Audio('zvuky/34.mp3'),pad:new Audio('zvuky/35.mp3'),gol:new Audio('zvuky/36.mp3'),krik:new Audio('zvuky/37.mp3'),jodlovani:new Audio('zvuky/38.mp3'),zuby:new Audio('zvuky/39.mp3'),happy:new Audio('zvuky/40.mp3'),hodiny:new Audio('zvuky/41.mp3'),budik:new Audio('zvuky/43.mp3'),budik2:new Audio('zvuky/48.mp3'),strojek:new Audio('zvuky/44.mp3'),nalevani:new Audio('zvuky/45.mp3'),klepani:new Audio('zvuky/46.mp3'),vysavac:new Audio('zvuky/54.mp3'),cirkularka:new Audio('zvuky/56.mp3'),lahve:new Audio('zvuky/60.mp3'),dvere:new Audio('zvuky/61.mp3'),chuze:new Audio('zvuky/62.mp3'),moceni:new Audio('zvuky/63.mp3'),wc:new Audio('zvuky/64.mp3'),ostreni:new Audio('zvuky/65.mp3'),rezani:new Audio('zvuky/66.mp3'),zvonek:new Audio('zvuky/75.mp3'),vrtacka:new Audio('zvuky/76.mp3'),mikrovlnka:new Audio('zvuky/78.mp3'),psacistroj:new Audio('zvuky/79.mp3'),sklo:new Audio('zvuky/83.mp3'),bic:new Audio('zvuky/42.mp3'),rolnicky:new Audio('zvuky/53.mp3'),pokladna:new Audio('zvuky/55.mp3'),cert:new Audio('zvuky/68.mp3'),mince:new Audio('zvuky/69.mp3'),fotak:new Audio('zvuky/70.mp3'),taser:new Audio('zvuky/71.mp3'),zapalovac:new Audio('zvuky/77.mp3'),pusa:new Audio('zvuky/84.mp3'),bubliny:new Audio('zvuky/85.mp3'),dj:new Audio('zvuky/86.mp3'),smula:new Audio('zvuky/92.mp3'),ruseni:new Audio('zvuky/93.mp3'),vyzvaneni:new Audio('zvuky/94.mp3'),zip:new Audio('zvuky/95.mp3'),zam:new Audio('zvuky/96.mp3'),karty:new Audio('zvuky/97.mp3'),zpev:new Audio('zvuky/98.mp3'),srdce:new Audio('zvuky/99.mp3'),robot:new Audio('zvuky/100.mp3'),pistala:new Audio('zvuky/47.mp3'),kulomet:new Audio('zvuky/49.mp3'),samopal:new Audio('zvuky/50.mp3'),pistol:new Audio('zvuky/51.mp3'),brokovnice:new Audio('zvuky/52.mp3'),sirena:new Audio('zvuky/57.mp3'),kostel:new Audio('zvuky/58.mp3'),ohnostroj:new Audio('zvuky/59.mp3'),letadlo:new Audio('zvuky/67.mp3'),startovani:new Audio('zvuky/72.mp3'),jizda:new Audio('zvuky/73.mp3'),policie:new Audio('zvuky/74.mp3'),zvonekkolo:new Audio('zvuky/80.mp3'),sbijecka:new Audio('zvuky/81.mp3'),sip:new Audio('zvuky/82.mp3'),prejezd:new Audio('zvuky/87.mp3'),vlak:new Audio('zvuky/88.mp3'),bouracka:new Audio('zvuky/89.mp3'),pila:new Audio('zvuky/90.mp3'),voda:new Audio('zvuky/91.mp3'),zaba:new Audio('zvuky/0.mp3'),krava:new Audio('zvuky/1.mp3'),kohout:new Audio('zvuky/2.mp3'),slepice:new Audio('zvuky/3.mp3'),lev:new Audio('zvuky/4.mp3'),tygr:new Audio('zvuky/5.mp3'),pes:new Audio('zvuky/6.mp3'),kocka:new Audio('zvuky/7.mp3'),prase:new Audio('zvuky/8.mp3'),kun:new Audio('zvuky/9.mp3'),slon:new Audio('zvuky/10.mp3'),koza:new Audio('zvuky/11.mp3'),moucha:new Audio('zvuky/24.mp3'),medved:new Audio('zvuky/25.mp3'),vlk:new Audio('zvuky/26.mp3'),opice:new Audio('zvuky/27.mp3'),pav:new Audio('zvuky/30.mp3'),kachna:new Audio('zvuky/29.mp3'),delfin:new Audio('zvuky/31.mp3'),chrestys:new Audio('zvuky/32.mp3')};
+
+// Přehrání zvuku (více zvuků najednou)
+function playSound(name){
+  let a = sounds[name];
+  if(!a) return;
+  a.currentTime = 0;
+  a.play();
+}
+
+// Pauza všech zvuků (pro reklamu)
+function pauseAllSounds() {
+  Object.values(sounds).forEach(sound => {
+    sound.pause();
+  });
+}
+
+// Pokračování po reklamě
+function resumeGame() {
+  console.log('Hra pokračuje po reklamě');
+}
+
+// Přepínání panelů
+function showPanel(id){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.menu-btn').forEach(b=>b.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+// START GAME - zobrazí reklamu a spustí hru
+function startGame() {
+  // Skrýt How to Play obrazovku
+  document.getElementById('howtoplay-screen').style.display = 'none';
+  
+  // Zobrazit hru
+  document.getElementById('game-container').classList.add('active');
+  
+  // ZOBRAZIT REKLAMU (pouze jednou při startu!)
+  if (typeof sdk !== 'undefined' && typeof sdk.showBanner !== 'undefined') {
+    sdk.showBanner();
+  }
+}
+
+// LOADING SCREEN - čeká 4 sekundy na inicializaci SDK
+window.addEventListener('load', function() {
+  setTimeout(function() {
+    // Skrýt loading screen
+    document.getElementById('loading-screen').style.display = 'none';
+    // Zobrazit How to Play obrazovku
+    document.getElementById('howtoplay-screen').style.display = 'flex';
+  }, 4000); // 4 sekundy na inicializaci SDK
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Curve Master Football</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap');
+
+        :root {
+            --green-dark: #1b5e20;
+            --green-light: #2e7d32;
+            --white: #ffffff;
+            --gold: #fbc02d;
+            --glass: rgba(255, 255, 255, 0.15);
+            --glass-border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #111;
+            font-family: 'Montserrat', sans-serif;
+            touch-action: none;
+            user-select: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 720px;
+            height: 1280px;
+            background: var(--green-light);
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+            overflow: hidden;
+            transform-origin: center;
+        }
+
+        canvas { display: block; width: 100%; height: 100%; }
+
+        /* UI LAYERS */
+        .ui-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            display: flex; flex-direction: column; justify-content: space-between;
+        }
+
+        .hud {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            padding: 20px; pointer-events: none; z-index: 5;
+        }
+        
+        .stat-column { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+
+        .stat-box, .hud-btn {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 10px 20px; border-radius: 20px;
+            color: white; font-weight: 700; font-size: 24px;
+            display: flex; align-items: center; gap: 10px;
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+        
+        /* LIVES DISPLAY */
+        .lives-box {
+            background: rgba(0,0,0,0.4); 
+            padding: 8px 15px; 
+            border-radius: 20px;
+            color: white; 
+            font-size: 24px; 
+            font-weight: bold; 
+            border: 1px solid rgba(255,255,255,0.2);
+            letter-spacing: 5px;
+        }
+        
+        .combo-box {
+            background: linear-gradient(45deg, #ff6f00, #ffca28);
+            border: 2px solid #fff;
+            color: #fff; text-shadow: 0 2px 0 #d32f2f;
+            transform: scale(1);
+            transition: transform 0.2s;
+            display: none; 
+        }
+        .combo-box.active { display: flex; animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+
+        .hud-btn { pointer-events: auto; cursor: pointer; padding: 12px 18px; }
+        .hud-btn:active { transform: scale(0.95); }
+
+        /* SCREENS */
+        .screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(8px);
+            display: flex; flex-direction: column; align-items: center;
+            pointer-events: auto; transition: opacity 0.3s ease; z-index: 10;
+        }
+        .hidden { opacity: 0; pointer-events: none; display: none; }
+
+        /* HOME SCREEN */
+        #startScreen { justify-content: flex-start; padding-top: 50px; box-sizing: border-box; }
+
+        .top-header { width: 90%; display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+        .profile-card { width: 55%; background: var(--glass); border: var(--glass-border); border-radius: 20px; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
+        .profile-row { display: flex; align-items: center; justify-content: space-between; }
+        .player-name { color: white; font-size: 22px; font-weight: 800; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 120px; }
+        .edit-btn { background: var(--gold); width: 28px; height: 28px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 14px; color: #000; cursor: pointer; }
+        .progress-container { width: 100%; display: flex; align-items: center; gap: 8px; font-size: 12px; color: #ddd; font-weight: 700; }
+        .bar-bg { flex-grow: 1; height: 6px; background: rgba(0,0,0,0.4); border-radius: 3px; overflow: hidden; }
+        .bar-fill { height: 100%; width: 0%; background: var(--gold); border-radius: 3px; }
+        .coin-badge { background: rgba(0,0,0,0.6); padding: 10px 20px; border-radius: 50px; border: var(--glass-border); color: white; font-weight: 700; font-size: 20px; display: flex; align-items: center; gap: 8px; }
+
+        .game-title { font-size: 50px; color: white; font-weight: 900; text-align: center; text-transform: uppercase; margin: 20px 0 40px 0; text-shadow: 0 5px 0 var(--green-dark); }
+
+        .menu-stack { width: 80%; display: flex; flex-direction: column; gap: 18px; }
+        .main-menu-btn { width: 100%; padding: 20px; border: none; border-radius: 18px; font-family: 'Montserrat'; font-size: 22px; font-weight: 900; text-transform: uppercase; cursor: pointer; box-shadow: 0 6px 0 rgba(0,0,0,0.2); transition: transform 0.1s; display: flex; justify-content: center; align-items: center; gap: 15px; }
+        .main-menu-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 rgba(0,0,0,0.2); }
+        .btn-play { background: linear-gradient(135deg, #4CAF50, #2E7D32); color: white; box-shadow: 0 8px 0 #1b5e20; font-size: 28px; padding: 25px; }
+        .btn-store { background: #fff; color: var(--green-dark); box-shadow: 0 6px 0 #bbb; }
+        .btn-levels { background: #fff; color: var(--green-dark); box-shadow: 0 6px 0 #bbb; }
+        .btn-leaderboard { background: #FF9800; color: white; box-shadow: 0 6px 0 #E65100; }
+
+        .daily-reward-grid { display: flex; gap: 10px; justify-content: center; margin: 20px 0; }
+        .day-box { background: rgba(255,255,255,0.1); padding: 10px; border-radius: 10px; width: 60px; height: 80px; display: flex; flex-direction: column; justify-content: center; align-items: center; border: 1px solid rgba(255,255,255,0.2); opacity: 0.5; }
+        .day-box.active { background: var(--gold); color: black; opacity: 1; transform: scale(1.1); box-shadow: 0 0 20px var(--gold); border: none; font-weight: bold; }
+        .claim-btn { background: var(--gold); color: black; padding: 15px 40px; border: none; border-radius: 50px; font-weight: 900; font-size: 20px; cursor: pointer; box-shadow: 0 5px 0 #c79100; margin-top: 20px; text-transform: uppercase; }
+
+        .screen-content { width: 80%; background: rgba(255,255,255,0.1); border-radius: 30px; padding: 40px; box-shadow: 0 10px 40px 0 rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2); text-align: center; margin: auto 0; }
+        button.action-btn { background: var(--white); color: var(--green-light); border: none; padding: 20px 0; width: 100%; font-size: 24px; font-weight: 800; border-radius: 60px; cursor: pointer; box-shadow: 0 8px 0 #9e9e9e; margin-bottom: 15px; font-family: 'Montserrat'; text-transform: uppercase; }
+        button.action-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #9e9e9e; }
+        button.retry-btn { background: var(--gold); color: #1b5e20; }
+        
+        input[type="text"] { width: 80%; padding: 15px; font-size: 24px; border-radius: 10px; border: none; margin-bottom: 20px; text-align: center; font-weight: bold; font-family: 'Montserrat'; }
+        
+        .grid-container { height: 600px; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 15px; padding: 15px; background: rgba(0,0,0,0.3); border-radius: 20px; margin-bottom: 30px; }
+        .ball-item { aspect-ratio: 1/1; border-radius: 50%; border: 4px solid transparent; position: relative; }
+        .ball-item.selected { border-color: var(--gold); box-shadow: 0 0 20px var(--gold); }
+        .ball-item.locked { background: #333 !important; }
+        .ball-item .price { position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%); background: var(--green-dark); color: var(--gold); font-size: 14px; padding: 4px 10px; border-radius: 10px; font-weight: bold; }
+        
+        .level-item { aspect-ratio: 1/1; background: white; color: var(--green-dark); border-radius: 15px; display: flex; flex-direction: column; justify-content: center; align-items: center; font-weight: 900; font-size: 24px; cursor: pointer; position: relative; }
+        .level-item.locked { background: #555; color: #888; pointer-events: none; }
+        .level-stars { font-size: 12px; margin-top: 2px; color: #FFD700; text-shadow: 0 1px 1px black; letter-spacing: -2px; }
+
+        .leaderboard-list { height: 600px; overflow-y: auto; background: rgba(0,0,0,0.3); border-radius: 15px; padding: 10px; margin-bottom: 20px; }
+        .lb-row { display: flex; justify-content: space-between; padding: 12px; color: white; font-weight: 600; font-size: 18px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .lb-row.me { background: rgba(251, 192, 45, 0.2); border: 1px solid var(--gold); border-radius: 8px; }
+
+        .tutorial { position: absolute; bottom: 25%; width: 100%; text-align: center; color: rgba(255,255,255,0.9); font-size: 32px; font-weight: 800; pointer-events: none; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 0.6; transform: scale(1); } 50% { opacity: 1; transform: scale(1.05); } 100% { opacity: 0.6; transform: scale(1); } }
+        @keyframes pop { 0% { transform: scale(0); } 80% { transform: scale(1.2); } 100% { transform: scale(1); } }
+        
+        .perfect-text {
+            position: absolute; top: 40%; width: 100%; text-align: center;
+            color: var(--gold); font-size: 60px; font-weight: 900;
+            text-shadow: 0 5px 0 #000; transform: scale(0);
+            pointer-events: none; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 20;
+        }
+        .perfect-text.show { transform: scale(1); }
+        
+        /* RESULT STARS */
+        .star-result { font-size: 50px; color: #333; margin: 10px; }
+        .star-result.active { color: #FFD700; text-shadow: 0 0 20px #FFD700; }
+        .star-container { display: flex; justify-content: center; margin-bottom: 20px; }
+
+    </style>
+
+    <!-- GameMonetize SDK -->
+    <script type="text/javascript">
+        window.SDK_OPTIONS = {
+            gameId: "8zw1gm6pbpq0n4ubhgqjs9hyr6ii54z9",
+            onEvent: function (a) {
+                switch (a.name) {
+                    case "SDK_GAME_PAUSE": if(typeof pauseForAd === 'function') pauseForAd(); break;
+                    case "SDK_GAME_START": if(typeof resumeFromAd === 'function') resumeFromAd(); break;
+                }
+            }
+        };
+        (function (a, b, c) {
+            var d = a.getElementsByTagName(b)[0];
+            a.getElementById(c) || (a = a.createElement(b), a.id = c, 
+            a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+        })(document, "script", "gamemonetize-sdk"); 
+    </script>
+</head>
+<body>
+
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="720" height="1280"></canvas>
+        <div id="perfectEffect" class="perfect-text">PERFECT!</div>
+
+        <div class="ui-layer">
+            <div class="hud">
+                <div class="stat-column">
+                    <div id="levelDisplay" class="stat-box">⭐ 1</div>
+                    <div id="coinDisplay" class="stat-box">💰 0</div>
+                    <div id="livesDisplay" class="lives-box">⚽ ⚽ ⚽</div>
+                </div>
+                <div id="comboDisplay" class="stat-box combo-box">🔥 x2</div>
+                <div class="hud-btn" onclick="togglePause()">⏸️</div>
+            </div>
+            <div id="tutorialText" class="tutorial">DRAW A CURVE 👆</div>
+        </div>
+
+        <!-- HOME -->
+        <div id="startScreen" class="screen">
+            <div class="top-header">
+                <div class="profile-card">
+                    <div class="profile-row">
+                        <span id="playerNameDisplay" class="player-name">Guest</span>
+                        <div class="edit-btn" onclick="requestNameChange()">✎</div>
+                    </div>
+                    <div class="progress-container">
+                        <span id="prevLevelNum">1</span>
+                        <div class="bar-bg"><div id="levelProgressBar" class="bar-fill"></div></div>
+                        <span id="nextLevelNum">2</span>
+                    </div>
+                </div>
+                <div class="coin-badge">💰 <span id="homeCoinDisplay">0</span></div>
+            </div>
+            <div class="game-title">Curve<br>Master</div>
+            <div class="menu-stack">
+                <button class="main-menu-btn btn-play" onclick="continueGame()">▶ Play Now</button>
+                <button class="main-menu-btn btn-store" onclick="openStore()">🛍️ Store</button>
+                <button class="main-menu-btn btn-levels" onclick="openLevelSelect()">🏆 Levels</button>
+                <button class="main-menu-btn btn-leaderboard" onclick="openLeaderboard()">🌍 Leaderboard</button>
+            </div>
+        </div>
+
+        <!-- DAILY REWARD -->
+        <div id="dailyRewardScreen" class="screen hidden">
+            <div class="screen-content">
+                <h1>Daily Reward</h1>
+                <p>Come back every day for free coins!</p>
+                <div class="daily-reward-grid">
+                    <div class="day-box active"><div class="day-num">Today</div><div class="reward">💰50</div></div>
+                </div>
+                <button class="claim-btn" onclick="claimDailyReward()">CLAIM</button>
+            </div>
+        </div>
+
+        <!-- MODALS -->
+        <div id="inputModal" class="screen hidden" style="background: rgba(0,0,0,0.9); z-index: 100;">
+            <div class="screen-content">
+                <h1>New Name</h1>
+                <input type="text" id="nameInput" placeholder="Enter Name" maxlength="10">
+                <button class="action-btn" style="background: var(--gold); color: white;" onclick="confirmNameChange()">Save</button>
+                <button class="action-btn" onclick="closeNameModal()">Cancel</button>
+            </div>
+        </div>
+        <div id="pauseScreen" class="screen hidden">
+            <div class="screen-content"><h1>PAUSED</h1><button class="action-btn" style="background: var(--green-light); color: white;" onclick="togglePause()">Resume</button><button class="action-btn" onclick="goHome()">Menu</button></div>
+        </div>
+        
+        <!-- WIN SCREEN (UPDATED) -->
+        <div id="winScreen" class="screen hidden">
+            <div class="screen-content">
+                <h1 id="winTitle">GOAL! ⚽</h1>
+                <div class="star-container">
+                    <span id="star1" class="star-result">★</span>
+                    <span id="star2" class="star-result">★</span>
+                    <span id="star3" class="star-result">★</span>
+                </div>
+                <p id="winSub">Nice Shot!</p>
+                
+                <!-- NEW BUTTON LOGIC: RETRY IF < 3 STARS -->
+                <button id="winRetryBtn" class="action-btn retry-btn" onclick="retryLevel()">↻ Try Again (Get 3★)</button>
+                
+                <button class="action-btn" style="background: var(--green-light); color: white;" onclick="nextLevel()">Next Level ▶</button>
+                <button class="action-btn" onclick="goHome()">Menu</button>
+            </div>
+        </div>
+        
+        <!-- LOSE SCREEN -->
+        <div id="loseScreen" class="screen hidden">
+            <div class="screen-content">
+                <h1>GAME OVER ❌</h1>
+                <p>No Balls Left!</p>
+                <button class="action-btn retry-btn" onclick="retryLevel()">↻ Try Again</button>
+                <button class="action-btn" onclick="goHome()">Menu</button>
+            </div>
+        </div>
+        
+        <div id="storeScreen" class="screen hidden"><div class="screen-content"><h1>Store</h1><div id="storeGrid" class="grid-container"></div><button class="action-btn" onclick="goHome()">Back</button></div></div>
+        <div id="levelSelectScreen" class="screen hidden"><div class="screen-content"><h1>Levels</h1><div id="levelGrid" class="grid-container"></div><button class="action-btn" onclick="goHome()">Back</button></div></div>
+        <div id="leaderboardScreen" class="screen hidden"><div class="screen-content"><h1>World Ranking</h1><div id="leaderboardList" class="leaderboard-list"></div><button class="action-btn" onclick="goHome()">Back</button></div></div>
+    </div>
+
+<script>
+// --- CANVAS ---
+const container = document.getElementById('gameContainer');
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d', { alpha: false }); 
+const GAME_W = 720;
+const GAME_H = 1280;
+
+function resizeGame() {
+    const scale = Math.min(window.innerWidth / GAME_W, window.innerHeight / GAME_H);
+    container.style.transform = `scale(${scale})`;
+}
+window.addEventListener('resize', resizeGame);
+resizeGame();
+
+// --- STATE ---
+let gameState = 'MENU';
+let previousState = 'MENU';
+let currentLevel = 1;
+let levelSnapshot = null;
+let pendingNameChange = false; 
+let isPerfectShot = false;
+let hitTarget = false;
+let lastTime = 0;
+let streak = 0; 
+let shotsLeft = 3; // LIVES
+let netImpact = 0; 
+
+let playerData = {
+    name: "Guest",
+    freeNameChange: true,
+    coins: 0,
+    highestLevel: 1,
+    unlockedBalls: [0],
+    selectedBall: 0,
+    lastLogin: null,
+    levelStars: {} 
+};
+
+const ball = { x: GAME_W/2, y: GAME_H*0.85, radius: 25, path: [], pathIndex: 0, speed: 40 };
+const goal = { x: 0, y: 0, width: 300, height: 100 };
+let defenders = [];
+let particles = [];
+let target = null;
+let cameraShake = 0;
+let isDragging = false;
+let inputPath = [];
+
+// --- STORAGE ---
+const STORAGE_KEY = 'CurveMaster_V14_Lives';
+function loadProgress() {
+    try {
+        const data = localStorage.getItem(STORAGE_KEY);
+        if (data) playerData = JSON.parse(data);
+        if(!playerData.levelStars) playerData.levelStars = {}; 
+    } catch(e) {}
+    updateHUD();
+    updateProfileUI();
+    checkDailyLogin();
+}
+function saveProgress() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(playerData)); } catch(e){}
+    updateHUD();
+    updateProfileUI();
+}
+
+// --- LOGIC ---
+function checkDailyLogin() {
+    const today = new Date().toDateString();
+    if (playerData.lastLogin !== today) setTimeout(() => showScreen('dailyRewardScreen'), 500);
+}
+function claimDailyReward() {
+    playerData.lastLogin = new Date().toDateString();
+    playerData.coins += 50; 
+    saveProgress();
+    goHome();
+}
+
+function updateProfileUI() {
+    document.getElementById('playerNameDisplay').innerText = playerData.name;
+    document.getElementById('homeCoinDisplay').innerText = playerData.coins;
+    document.getElementById('prevLevelNum').innerText = playerData.highestLevel;
+    document.getElementById('nextLevelNum').innerText = playerData.highestLevel + 1;
+    let progress = (playerData.coins % 100); 
+    if(progress > 100) progress = 100;
+    document.getElementById('levelProgressBar').style.width = `${progress}%`;
+}
+
+function requestNameChange() {
+    if (playerData.freeNameChange) showScreen('inputModal');
+    else { pendingNameChange = true; showAd(); }
+}
+
+function confirmNameChange() {
+    const newName = document.getElementById('nameInput').value.trim();
+    if (newName.length > 0) {
+        playerData.name = newName;
+        if (playerData.freeNameChange) playerData.freeNameChange = false;
+        saveProgress();
+    }
+    closeNameModal();
+}
+function closeNameModal() { document.getElementById('inputModal').classList.add('hidden'); }
+
+// --- LEADERBOARD ---
+const botNames = ["Striker", "Leo10", "CR7", "ProGamer", "Kicker", "CurveGod", "NetBreaker", "Speedy", "Wall", "Lucky"];
+function openLeaderboard() {
+    const list = document.getElementById('leaderboardList');
+    list.innerHTML = '';
+    let scores = [];
+    scores.push({ name: playerData.name, score: playerData.coins, isMe: true });
+    botNames.forEach(name => {
+        let variance = Math.floor(Math.random() * 500) - 250;
+        let s = Math.max(0, playerData.coins + variance);
+        scores.push({ name: name, score: s, isMe: false });
+    });
+    scores.sort((a, b) => b.score - a.score);
+    scores.slice(0, 10).forEach((entry, index) => {
+        const row = document.createElement('div');
+        row.className = `lb-row ${entry.isMe ? 'me' : ''}`;
+        row.innerHTML = `<span style="width:30px">#${index+1}</span> <span style="flex:1;text-align:left;padding-left:15px">${entry.name}</span> <span>${entry.score}</span>`;
+        list.appendChild(row);
+    });
+    showScreen('leaderboardScreen');
+}
+
+// --- GAMEPLAY ---
+const balls = [{ type: 'classic', color1: '#fff', price: 0 }];
+const colors = ['#f44336', '#9c27b0', '#3f51b5', '#03a9f4', '#009688', '#8bc34a', '#ffeb3b', '#ff9800', '#795548', '#607d8b'];
+for (let i = 1; i < 30; i++) balls.push({ type: Math.random()>0.4?'gradient':'solid', color1: colors[i%colors.length], color2: colors[(i+3)%colors.length], price: 100+i*50 });
+
+function goHome() { 
+    gameState = 'MENU'; 
+    particles = []; 
+    showScreen('startScreen'); 
+}
+function continueGame() { startLevel(playerData.highestLevel, false); }
+
+function startLevel(lvl, isRetry) {
+    if(!isRetry) {
+        try { if(typeof sdk !== 'undefined') sdk.showBanner(); } catch(e){}
+    }
+    
+    // Reset Everything
+    particles = [];
+    defenders = [];
+    inputPath = [];
+    netImpact = 0;
+    
+    // Reset Shots ONLY on new level or full retry
+    if(!isRetry || shotsLeft <= 0) shotsLeft = 3; 
+    
+    currentLevel = lvl;
+    gameState = 'PLAYING';
+    showScreen(null);
+    updateHUD();
+    document.getElementById('tutorialText').style.display = 'block';
+    
+    resetBall();
+
+    if (isRetry && levelSnapshot) {
+        try {
+            defenders = JSON.parse(JSON.stringify(levelSnapshot.defenders));
+            target = levelSnapshot.target ? JSON.parse(JSON.stringify(levelSnapshot.target)) : null;
+        } catch(e) { generateLevel(lvl); }
+    } else {
+        generateLevel(lvl);
+        levelSnapshot = {
+            defenders: JSON.parse(JSON.stringify(defenders)),
+            target: target ? JSON.parse(JSON.stringify(target)) : null
+        };
+    }
+}
+
+function nextLevel() {
+    if (currentLevel === playerData.highestLevel) playerData.highestLevel++;
+    saveProgress();
+    startLevel(currentLevel + 1, false);
+}
+function retryLevel() { 
+    streak = 0; 
+    shotsLeft = 3; // Refill balls
+    startLevel(currentLevel, true); 
+}
+
+function updateHUD() {
+    document.getElementById('coinDisplay').innerHTML = `💰 ${playerData.coins}`;
+    document.getElementById('levelDisplay').innerHTML = `⭐ ${currentLevel}`;
+    
+    // Visual Balls (Emoji)
+    let livesStr = "";
+    for(let i=0; i<shotsLeft; i++) livesStr += "⚽ ";
+    document.getElementById('livesDisplay').innerText = livesStr;
+    
+    const comboEl = document.getElementById('comboDisplay');
+    if(streak >= 2) {
+        comboEl.style.display = 'flex';
+        comboEl.innerText = `🔥 x${streak}`;
+        comboEl.classList.add('active');
+    } else {
+        comboEl.style.display = 'none';
+        comboEl.classList.remove('active');
+    }
+}
+
+function generateLevel(lvl) {
+    defenders = [];
+    goal.width = Math.max(200, 300 - lvl * 2);
+    goal.x = (GAME_W - goal.width) / 2;
+    goal.y = 150;
+    
+    target = null;
+    if (lvl % 2 === 0 || Math.random() > 0.5) {
+        target = {
+            x: goal.x + 20 + Math.random() * (goal.width - 40),
+            y: goal.y + 20 + Math.random() * (goal.height - 40),
+            r: 20, active: true
+        };
+    }
+
+    let numDefenders = Math.floor(lvl / 1.5); 
+    if (lvl === 1) numDefenders = 0; if (lvl === 2) numDefenders = 1;
+    
+    if (lvl >= 3) {
+        defenders.push({ x: GAME_W/2, y: goal.y + 60, r: 35, type: 'moving', speed: 3+(lvl*0.4), minX: goal.x-20, maxX: goal.x+goal.width+20, dir: 1, color: '#fbc02d', label: 'GK' });
+        numDefenders--;
+    }
+
+    let attempts = 0;
+    while(defenders.length < numDefenders + (lvl>=3?1:0) && attempts < 100) {
+        attempts++;
+        let isMoving = lvl > 5 && Math.random() > 0.5;
+        let d = { 
+            x: 100+Math.random()*(GAME_W-200), 
+            y: 400+Math.random()*500, 
+            r: 35, 
+            type: isMoving?'moving':'static', 
+            speed: 2+Math.random()*3, 
+            minX: 50, maxX: GAME_W-50, 
+            dir: Math.random()>0.5?1:-1, 
+            color: '#d32f2f', 
+            label: '' 
+        };
+        defenders.push(d);
+    }
+}
+
+function resetBall() {
+    ball.x = GAME_W / 2; ball.y = GAME_H * 0.85;
+    ball.path = []; ball.pathIndex = 0; inputPath = []; isDragging = false;
+    isPerfectShot = false; hitTarget = false;
+    document.getElementById('perfectEffect').classList.remove('show');
+}
+
+// Input Handlers
+function getCanvasPos(evt) {
+    let clientX = evt.clientX || evt.touches[0].clientX;
+    let clientY = evt.clientY || evt.touches[0].clientY;
+    let rect = canvas.getBoundingClientRect();
+    return { x: (clientX - rect.left) * (GAME_W / rect.width), y: (clientY - rect.top) * (GAME_H / rect.height) };
+}
+canvas.addEventListener('mousedown', e => inputStart(getCanvasPos(e)));
+canvas.addEventListener('mousemove', e => inputMove(getCanvasPos(e)));
+canvas.addEventListener('mouseup', inputEnd);
+canvas.addEventListener('touchstart', e => inputStart(getCanvasPos(e)));
+canvas.addEventListener('touchmove', e => { e.preventDefault(); inputMove(getCanvasPos(e)); });
+canvas.addEventListener('touchend', inputEnd);
+
+function inputStart(pos) {
+    if (gameState !== 'PLAYING') return;
+    if (Math.hypot(pos.x - ball.x, pos.y - ball.y) < 150) {
+        isDragging = true; inputPath = [{x: ball.x, y: ball.y}];
+        document.getElementById('tutorialText').style.display = 'none';
+    }
+}
+function inputMove(pos) {
+    if (!isDragging) return;
+    if (Math.hypot(pos.x - inputPath[inputPath.length-1].x, pos.y - inputPath[inputPath.length-1].y) > 20) inputPath.push(pos);
+}
+function inputEnd() {
+    if (!isDragging) return;
+    isDragging = false;
+    if (inputPath.length > 3) {
+        ball.path = smoothPath(inputPath); ball.pathIndex = 0; gameState = 'SHOOTING';
+    } else inputPath = [];
+}
+function smoothPath(points) {
+    if (points.length < 2) return points;
+    let smoothed = [points[0]];
+    let step = Math.max(1, Math.floor(points.length / 50)); 
+    for (let i = 0; i < points.length - 1; i++) {
+        let p0 = points[i], p1 = points[i+1];
+        let segments = Math.floor(Math.hypot(p1.x - p0.x, p1.y - p0.y) / 15);
+        for(let j=1; j<=segments; j++) {
+            let t = j/segments;
+            smoothed.push({ x: p0.x + (p1.x - p0.x) * t, y: p0.y + (p1.y - p0.y) * t });
+        }
+    }
+    let last = points[points.length-1], prev = points[points.length-2] || points[0];
+    let dx = last.x - prev.x, dy = last.y - prev.y;
+    let len = Math.hypot(dx, dy); 
+    if(len > 0) { dx /= len; dy /= len; }
+    for(let k=0; k<50; k++) smoothed.push({ x: last.x + dx * k * 20, y: last.y + dy * k * 20 });
+    return smoothed;
+}
+
+// --- MAIN LOOP ---
+function loop(timestamp) {
+    requestAnimationFrame(loop);
+    if (timestamp - lastTime < 16) return;
+    lastTime = timestamp;
+
+    if (gameState === 'PAUSED' || gameState === 'PAUSED_AD') return;
+
+    if (gameState === 'PLAYING' || gameState === 'SHOOTING') {
+         defenders.forEach(def => {
+            if (def.type === 'moving') {
+                def.x += def.speed * def.dir;
+                if (def.x > def.maxX || def.x < def.minX) def.dir *= -1;
+            }
+        });
+    }
+
+    if (gameState === 'SHOOTING') {
+        let steps = 2; 
+        for(let s=0; s<steps; s++) {
+            if (ball.pathIndex < ball.path.length - 1) {
+                ball.pathIndex++; ball.x = ball.path[ball.pathIndex].x; ball.y = ball.path[ball.pathIndex].y;
+                if (ball.pathIndex % 5 === 0) {
+                    let c = streak >= 2 ? '#ff5722' : 'rgba(255,255,255,0.5)';
+                    particles.push({x: ball.x, y: ball.y, vx:0, vy:0, life:1, color: c});
+                }
+                checkCollisions(); if (gameState !== 'SHOOTING') break;
+            } else { handleMiss(); break; }
+        }
+    }
+
+    if(netImpact > 0) netImpact *= 0.9;
+
+    for(let i=particles.length-1; i>=0; i--) {
+        let p = particles[i]; p.x += p.vx; p.y += p.vy; p.life -= 0.05; 
+        if (p.life <= 0) particles.splice(i,1);
+    }
+    if (cameraShake > 0) cameraShake *= 0.9;
+    render();
+}
+
+function checkCollisions() {
+    if (ball.x < 0 || ball.x > GAME_W || ball.y < 0) { handleMiss(); return; }
+    for (let def of defenders) {
+        if (Math.hypot(ball.x - def.x, ball.y - def.y) < ball.radius + def.r) {
+            cameraShake = 15; spawnExplosion(ball.x, ball.y, '#fff'); handleMiss(); return;
+        }
+    }
+    if (target && target.active && Math.hypot(ball.x - target.x, ball.y - target.y) < ball.radius + target.r) {
+        target.active = false; hitTarget = true; spawnExplosion(target.x, target.y, '#FFD700');
+    }
+    if (ball.y < goal.y + goal.height && ball.y > goal.y && ball.x > goal.x && ball.x < goal.x + goal.width) {
+        if (ball.y < goal.y + 45) isPerfectShot = true;
+        handleGoal();
+    }
+}
+
+function handleGoal() {
+    gameState = 'ENDED'; spawnConfetti();
+    streak++; 
+    netImpact = 30; 
+
+    let reward = 20 + (streak * 5); 
+    let msg = streak > 1 ? `COMBO x${streak}!` : "Nice Shot!";
+    
+    // STAR LOGIC
+    let earnedStars = 1; 
+    if (streak >= 2) earnedStars = 2; 
+    if (hitTarget || isPerfectShot) earnedStars = 3; 
+    
+    if(hitTarget) { reward += 50; msg = "BULLSEYE!"; }
+    if(isPerfectShot) { reward += 30; document.getElementById('perfectEffect').classList.add('show'); msg = "PERFECT!"; }
+    
+    // Save Stars
+    let oldStars = playerData.levelStars[currentLevel] || 0;
+    if(earnedStars > oldStars) playerData.levelStars[currentLevel] = earnedStars;
+
+    document.getElementById('winTitle').innerText = isPerfectShot ? "PERFECT!" : "GOAL! ⚽";
+    document.getElementById('winSub').innerText = msg;
+    
+    for(let i=1; i<=3; i++) {
+        let el = document.getElementById('star'+i);
+        if(i <= earnedStars) el.classList.add('active');
+        else el.classList.remove('active');
+    }
+    
+    // LOGIC: Show Retry Button if less than 3 stars
+    if (earnedStars < 3) {
+        document.getElementById('winRetryBtn').style.display = 'block';
+    } else {
+        document.getElementById('winRetryBtn').style.display = 'none';
+    }
+
+    setTimeout(() => { playerData.coins += reward; saveProgress(); showScreen('winScreen'); }, 1000);
+}
+
+function handleMiss() { 
+    streak = 0; 
+    shotsLeft--; // Reduce Life
+    updateHUD();
+    
+    if (shotsLeft <= 0) {
+        gameState = 'ENDED'; 
+        setTimeout(() => showScreen('loseScreen'), 600); 
+    } else {
+        // Just reset ball, not level
+        gameState = 'PLAYING';
+        resetBall();
+    }
+}
+
+function render() {
+    ctx.setTransform(1, 0, 0, 1, 0, 0); 
+    ctx.clearRect(0,0, GAME_W, GAME_H);
+    
+    let sx = (Math.random()-0.5)*cameraShake, sy = (Math.random()-0.5)*cameraShake; ctx.translate(sx, sy);
+
+    let grad = ctx.createLinearGradient(0,0,0,GAME_H); grad.addColorStop(0, '#1b5e20'); grad.addColorStop(1, '#2e7d32'); ctx.fillStyle = grad; ctx.fillRect(0,0, GAME_W, GAME_H);
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)'; ctx.lineWidth = 4;
+    ctx.strokeRect((GAME_W - 500)/2, goal.y, 500, 250); ctx.beginPath(); ctx.arc(GAME_W/2, goal.y + 250, 80, 0, Math.PI); ctx.stroke();
+
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    let netD = netImpact; 
+    ctx.beginPath(); ctx.moveTo(goal.x, goal.y); ctx.lineTo(goal.x + goal.width, goal.y);
+    ctx.lineTo(goal.x + goal.width - 20, goal.y - 40 - netD); ctx.lineTo(goal.x + 20, goal.y - 40 - netD);
+    ctx.fill();
+
+    ctx.strokeStyle = '#ddd'; ctx.lineWidth = 8; ctx.strokeRect(goal.x, goal.y, goal.width, goal.height);
+    ctx.lineWidth = 1; ctx.beginPath();
+    for(let i=0; i<=goal.width; i+=20) { 
+        ctx.moveTo(goal.x+i, goal.y); 
+        let topX = goal.x + i + (i > goal.width/2 ? -10 : 10);
+        ctx.lineTo(topX, goal.y - 40 - netD); 
+    }
+    ctx.stroke();
+
+    if (target && target.active) {
+        ctx.fillStyle = '#FF0000'; ctx.beginPath(); ctx.arc(target.x, target.y, target.r, 0, 6.28); ctx.fill();
+        ctx.fillStyle = '#FFFFFF'; ctx.beginPath(); ctx.arc(target.x, target.y, target.r*0.6, 0, 6.28); ctx.fill();
+        ctx.fillStyle = '#FF0000'; ctx.beginPath(); ctx.arc(target.x, target.y, target.r*0.3, 0, 6.28); ctx.fill();
+    }
+
+    defenders.forEach(d => {
+        ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.ellipse(d.x, d.y+d.r, d.r, d.r*0.4, 0,0,6.28); ctx.fill();
+        ctx.fillStyle = d.color; ctx.beginPath(); ctx.arc(d.x, d.y, d.r, 0, 6.28); ctx.fill();
+        if (d.label) { ctx.fillStyle = 'white'; ctx.font = 'bold 20px Arial'; ctx.textAlign = 'center'; ctx.fillText(d.label, d.x, d.y+7); }
+    });
+
+    if (isDragging && inputPath.length > 0) {
+        ctx.beginPath(); ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 6; ctx.setLineDash([15, 15]);
+        ctx.moveTo(inputPath[0].x, inputPath[0].y); for (let p of inputPath) ctx.lineTo(p.x, p.y); ctx.stroke(); ctx.setLineDash([]);
+    }
+
+    particles.forEach(p => { ctx.globalAlpha = p.life; ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x, p.y, 5, 0, 6.28); ctx.fill(); }); ctx.globalAlpha = 1;
+
+    let scale = 0.6 + (0.4 * (ball.y / GAME_H)), r = ball.radius * scale;
+    ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.ellipse(ball.x, ball.y+r, r, r*0.4, 0,0,6.28); ctx.fill();
+    let bData = balls[playerData.selectedBall];
+    if (bData.type === 'gradient') {
+        let g = ctx.createRadialGradient(ball.x-r/3, ball.y-r/3, 0, ball.x, ball.y, r); g.addColorStop(0, bData.color1); g.addColorStop(1, bData.color2); ctx.fillStyle = g;
+    } else ctx.fillStyle = bData.color1;
+    ctx.beginPath(); ctx.arc(ball.x, ball.y, r, 0, 6.28); ctx.fill();
+}
+
+function spawnExplosion(x, y, color) { for(let i=0; i<20; i++) particles.push({x:x, y:y, vx:(Math.random()-0.5)*15, vy:(Math.random()-0.5)*15, life:1, color:color}); }
+function spawnConfetti() { let cols = ['#f00','#0f0','#00f','#ff0']; for(let i=0; i<60; i++) particles.push({x:goal.x+goal.width/2, y:goal.y+goal.height/2, vx:(Math.random()-0.5)*20, vy:(Math.random()-1)*20, life:2, color:cols[Math.floor(Math.random()*4)]}); }
+
+function togglePause() {
+    if (gameState === 'PLAYING') { previousState = gameState; gameState = 'PAUSED'; showScreen('pauseScreen'); }
+    else if (gameState === 'PAUSED') { gameState = previousState; showScreen(null); }
+}
+function showScreen(id) { document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden')); if (id) document.getElementById(id).classList.remove('hidden'); }
+function showAd() { if (typeof sdk !== 'undefined' && typeof sdk.showBanner !== 'undefined') sdk.showBanner(); }
+function pauseForAd() { if(gameState === 'PLAYING' || gameState === 'SHOOTING') { previousState = gameState; gameState = 'PAUSED_AD'; } }
+function resumeFromAd() { 
+    if(gameState === 'PAUSED_AD') gameState = previousState; 
+    if (pendingNameChange) { pendingNameChange = false; showScreen('inputModal'); }
+}
+function openStore() {
+    let grid = document.getElementById('storeGrid'); grid.innerHTML = '';
+    balls.forEach((b, i) => {
+        let d = document.createElement('div');
+        d.className = 'ball-item' + (playerData.selectedBall === i ? ' selected' : '') + (playerData.unlockedBalls.includes(i) ? '' : ' locked');
+        d.style.background = b.type==='gradient'?`radial-gradient(${b.color1},${b.color2})`:b.color1;
+        if(!playerData.unlockedBalls.includes(i)) d.innerHTML = `<div class="price">💰${b.price}</div>`;
+        d.onclick = () => {
+            if(playerData.unlockedBalls.includes(i)) { playerData.selectedBall = i; saveProgress(); openStore(); }
+            else if(playerData.coins >= b.price) { playerData.coins-=b.price; playerData.unlockedBalls.push(i); playerData.selectedBall=i; saveProgress(); openStore(); }
+        };
+        grid.appendChild(d);
+    });
+    showScreen('storeScreen');
+}
+function openLevelSelect() {
+    let grid = document.getElementById('levelGrid'); grid.innerHTML = '';
+    for(let i=1; i<=300; i++) {
+        let stars = playerData.levelStars[i] || 0;
+        let starStr = "★".repeat(stars) + "☆".repeat(3-stars);
+        
+        let d = document.createElement('div'); 
+        d.className = 'level-item' + (i > playerData.highestLevel ? ' locked' : ''); 
+        d.innerHTML = `<span>${i}</span><span class="level-stars">${starStr}</span>`;
+        
+        if(i <= playerData.highestLevel) d.onclick = () => startLevel(i, false); 
+        grid.appendChild(d);
+    }
+    showScreen('levelSelectScreen');
+}
+
+loadProgress();
+loop();
+</script>
+</body>
+</html>

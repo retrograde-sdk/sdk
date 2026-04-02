@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Short Ride</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: #231f20;
+    }
+    #gameContainer {
+      width: 100vw;
+      height: 100vh;
+    }
+    #playScreen {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: #231f20;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+    }
+    #playScreen h1 {
+      color: white;
+      font-size: 2.5em;
+      font-family: Arial, sans-serif;
+      text-shadow: 2px 2px 8px black;
+      margin-bottom: 30px;
+    }
+    #playBtn {
+      padding: 18px 60px;
+      font-size: 1.5em;
+      font-family: Arial, sans-serif;
+      background: #ff6600;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+      transition: background 0.2s, transform 0.1s;
+    }
+    #playBtn:hover { background: #e05500; transform: scale(1.05); }
+    #playBtn:active { transform: scale(0.98); }
+    #playBtn:disabled { background: #888; cursor: not-allowed; transform: none; }
+    #sdkStatus {
+      color: rgba(255,255,255,0.6);
+      font-family: Arial, sans-serif;
+      font-size: 0.85em;
+      margin-top: 15px;
+    }
+    #loadingScreen {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: #231f20;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+    #loadingScreen h2 {
+      color: white;
+      font-family: Arial, sans-serif;
+      font-size: 1.6em;
+      margin-bottom: 25px;
+    }
+    .loading-bar-wrap {
+      width: 320px;
+      height: 18px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 10px;
+      overflow: hidden;
+      border: 2px solid rgba(255,255,255,0.3);
+    }
+    .loading-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #ff6600, #ffaa00);
+      border-radius: 10px;
+      transition: width 0.3s ease;
+    }
+    #loadingPercent {
+      color: rgba(255,255,255,0.7);
+      font-family: Arial, sans-serif;
+      font-size: 1em;
+      margin-top: 12px;
+    }
+    #loadingTip {
+      color: rgba(255,255,255,0.4);
+      font-family: Arial, sans-serif;
+      font-size: 0.8em;
+      margin-top: 20px;
+    }
+  </style>
+
+  <!-- GameMonetize SDK -->
+  <script type="text/javascript">
+    window.SDK_OPTIONS = {
+      gameId: "2p9kpyev7iisztb9q8cwfyu9h4f9hlv1",
+      onEvent: function (a) {
+        switch (a.name) {
+          case "SDK_GAME_PAUSE":
+            break;
+          case "SDK_GAME_START":
+            onAdFinished();
+            break;
+          case "SDK_READY":
+            console.log("SDK Ready");
+            onSdkReady();
+            break;
+          case "SDK_ERROR":
+            console.log("SDK Error");
+            onAdFinished();
+            break;
+        }
+      }
+    };
+    (function (a, b, c) {
+      var d = a.getElementsByTagName(b)[0];
+      a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+    })(document, "script", "gamemonetize-sdk");
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/gh/mmtrucefacts/assets@2e98e41681bfdec312f76ac81acad34601b7bec2/short-ride/UnityLoader.js"></script>
+</head>
+<body>
+
+  <div id="playScreen">
+    <h1>Short Ride</h1>
+    <button id="playBtn" disabled onclick="onPlayClicked()">&#9654; PLAY</button>
+    <div id="sdkStatus">Loading...</div>
+  </div>
+
+  <div id="loadingScreen">
+    <h2>Short Ride</h2>
+    <div class="loading-bar-wrap">
+      <div class="loading-bar-fill" id="loadingBarFill"></div>
+    </div>
+    <div id="loadingPercent">0%</div>
+    <div id="loadingTip">Get ready to ride!</div>
+  </div>
+
+  <div id="gameContainer"></div>
+
+  <script>
+    var BASE = "https://cdn.jsdelivr.net/gh/mmtrucefacts/assets@2e98e41681bfdec312f76ac81acad34601b7bec2/short-ride/";
+
+    var gameStarted = false;
+    var adShownOnLoad = false;
+    var sdkIsReady = false;
+
+    var playScreen     = document.querySelector("#playScreen");
+    var playBtn        = document.querySelector("#playBtn");
+    var sdkStatus      = document.querySelector("#sdkStatus");
+    var loadingScreen  = document.querySelector("#loadingScreen");
+    var loadingBarFill = document.querySelector("#loadingBarFill");
+    var loadingPercent = document.querySelector("#loadingPercent");
+
+    // Enable the button regardless after 3 seconds in case SDK_READY never fires
+    setTimeout(function() {
+      if (playBtn.disabled) {
+        console.log("SDK timeout — enabling button anyway");
+        enablePlayButton();
+      }
+    }, 3000);
+
+    function enablePlayButton() {
+      playBtn.disabled = false;
+      sdkStatus.textContent = "";
+    }
+
+    function onSdkReady() {
+      sdkIsReady = true;
+      enablePlayButton();
+    }
+
+    function onPlayClicked() {
+      playBtn.disabled = true;
+      playBtn.textContent = "Loading...";
+      sdkStatus.textContent = "";
+      if (sdkIsReady && typeof sdk !== 'undefined' && sdk.showBanner !== 'undefined') {
+        sdk.showBanner();
+      } else {
+        onAdFinished();
+      }
+    }
+
+    function onAdFinished() {
+      playScreen.style.display = "none";
+      if (!gameStarted) {
+        gameStarted = true;
+        loadingScreen.style.display = "flex";
+
+        var config = {
+          companyName: "gametornado",
+          productName: "Short Ride",
+          dataUrl:         BASE + "short-ride.data.unityweb",
+          asmCodeUrl:      BASE + "short-ride.asm.code.unityweb",
+          asmMemoryUrl:    BASE + "short-ride.asm.memory.unityweb",
+          asmFrameworkUrl: BASE + "short-ride.asm.framework.unityweb",
+          TOTAL_MEMORY: 268435456,
+          graphicsAPI: ["WebGL 2.0", "WebGL 1.0"],
+          webglContextAttributes: { preserveDrawingBuffer: false },
+          splashScreenStyle: "Dark",
+          backgroundColor: "#231F20"
+        };
+
+        var blob = new Blob([JSON.stringify(config)], { type: "application/json" });
+        var blobUrl = URL.createObjectURL(blob);
+
+        UnityLoader.instantiate("gameContainer", blobUrl, {
+          onProgress: function(gameInstance, progress) {
+            var pct = Math.round(progress * 100);
+            loadingBarFill.style.width = pct + "%";
+            loadingPercent.textContent = pct + "%";
+            if (progress === 1) {
+              loadingScreen.style.display = "none";
+              if (!adShownOnLoad) {
+                adShownOnLoad = true;
+                if (typeof sdk !== 'undefined' && sdk.showBanner !== 'undefined') {
+                  sdk.showBanner();
+                }
+              }
+            }
+          }
+        });
+      }
+    }
+
+    function CallInterstitialAdsJs() {
+      if (typeof sdk !== 'undefined' && sdk.showBanner !== 'undefined') {
+        sdk.showBanner();
+      }
+    }
+    function CallRewardedAdsJs() {
+      if (typeof sdk !== 'undefined' && sdk.showBanner !== 'undefined') {
+        sdk.showBanner();
+      }
+    }
+    function InitSDKJs() {}
+    function LoadRewardedAdsJs() {}
+  </script>
+</body>
+</html>

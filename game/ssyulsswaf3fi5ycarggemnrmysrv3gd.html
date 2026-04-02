@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title></title>
+  <link rel="stylesheet" type="text/css" href="css/gse-style.css" />
+  <link rel="stylesheet" type="text/css" href="css/gse-style-loading.css" />
+  <style type="text/css">
+  body {
+      background-color: black;
+      margin: 0;
+      padding: 0;
+  }
+  </style>
+</head>
+<body>
+<div id="gse-player" class="gse-frame">
+    <!-- The engine will create and insert drawing elements here. -->
+    <div class="gse-overlay">
+        <div id="gse-text" class="gse-dialog">
+            <div>
+                <button id="gse-text-cancel">Cancel</button>
+                <button id="gse-text-done">Done</button>
+                <p id="gse-text-prompt"></p>
+            </div>
+            <div>
+                <textarea id="gse-text-input"></textarea>
+            </div>
+        </div>
+        <div id="gse-loading" style="visibility: visible;">
+            <img src="images/gse-loading.png" />
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+(function(global) {
+    global.onEngineLoad = function() {
+        gse.ready(function(engine) {
+            var loadingElement = document.getElementById('gse-loading');
+            var playerDelegate = {
+                onSceneAboutToChange: function(sceneKey, sceneName, adType) {
+                  if (adType > 0) {
+                    sdk.showBanner();
+                  }
+                },
+                onShowBannerShow: function(position) {
+                  if (typeof sdk !== 'undefined' && sdk.showBanner !== 'undefined') {
+                    sdk.showBanner();
+                  }
+                },
+                onLoadingBegin: function() {
+                    engine.showOverlay();
+                    loadingElement.style.visibility = 'visible';
+                },
+
+                onLoadingEnd: function() {
+                    loadingElement.style.visibility = 'hidden';
+                    engine.hideOverlay();
+                },
+
+                onWindowResize: function() {
+                    engine.relayout();
+                }
+            };
+            engine.appendDelegate(playerDelegate);
+            window.addEventListener('resize', playerDelegate.onWindowResize, false);
+
+            // Aggiunto il codice per il controllo del volume
+            document.addEventListener("visibilitychange", onVisibilityChanged, false);
+            document.addEventListener("mozvisibilitychange", onVisibilityChanged, false);
+            document.addEventListener("webkitvisibilitychange", onVisibilityChanged, false);
+            document.addEventListener("msvisibilitychange", onVisibilityChanged, false);
+
+            function onVisibilityChanged() {
+                if (document.hidden || document.mozHidden || document.webkitHidden || document.msHidden) {
+                    gse.setGameVolume(engine, 0);
+                } else {
+                    gse.setGameVolume(engine, 1);
+                }
+            }
+
+            engine.setRenderFrame('gse-player');
+            engine.setOptions({
+                'viewport-reference': 'window',
+                'viewport-fit': 'letterbox'
+            });
+            engine.loadOptionsFromURL();
+            engine.play();
+        });
+    };
+}(window));
+</script>
+
+<script type="text/javascript" src="js/gse/gse-export.js" async onload="onEngineLoad()"></script>
+<script type="text/javascript">
+  var GAMEMONETIZE_GAME_ID = "ssyulsswaf3fi5ycarggemnrmysrv3gd";
+  window.SDK_OPTIONS = {
+    gameId: GAMEMONETIZE_GAME_ID,
+    onEvent: function (a) {
+       switch (a.name) {
+          case "SDK_GAME_PAUSE":
+            console.log("GameMonetize Message: SDK_GAME_PAUSE");
+            if (gse) gse.pause();
+            break;
+          case "SDK_GAME_START":
+            console.log("GameMonetize Message: SDK_GAME_START");
+            if (gse) gse.unpause();
+            break;
+          case "SDK_SHOW_BANNER":
+            console.log("Show ad event.");
+          case "SDK_READY":
+            console.log("GameMonetize Message: SDK_READY");
+            break;
+       }
+    }
+ };
+(function (a, b, c) {
+   var d = a.getElementsByTagName(b)[0];
+   a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+})(document, "script", "gamemonetize-sdk");
+</script>
+  </body>
+</html>

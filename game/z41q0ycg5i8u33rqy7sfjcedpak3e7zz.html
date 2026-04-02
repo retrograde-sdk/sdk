@@ -1,0 +1,505 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>BlockScape - Free Browser Voxel MMO | Play Now</title>
+    <meta charset="utf-8" />
+    <meta
+      name="description"
+      content="Play BlockScape free in your browser. Mine ores, fight monsters, train 4 skills, craft weapons, collect rare gems, build plots, and trade with other players in a 3D voxel world."
+    />
+    <meta
+      name="keywords"
+      content="voxel game, browser MMO, free online game, mining game, combat RPG, multiplayer, building game, BlockScape"
+    />
+    <meta property="og:title" content="BlockScape - Free Browser Voxel MMO" />
+    <meta
+      property="og:description"
+      content="Mine, fight, craft, and build in a 3D voxel MMO. No download required."
+    />
+    <meta property="og:type" content="website" />
+    <link rel="canonical" href="https://blockscape.io/" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect fill='%231a1a2e' width='32' height='32' rx='4'/%3E%3Cg transform='translate(16,16) rotate(-45) translate(-16,-16)'%3E%3Crect x='14' y='3' width='4' height='14' fill='%23c0c0c0'/%3E%3Crect x='14' y='3' width='4' height='3' fill='%23e0e0e0'/%3E%3Crect x='14' y='17' width='4' height='3' fill='%23f0a830'/%3E%3Crect x='10' y='17' width='12' height='2' fill='%23f0a830'/%3E%3Crect x='14' y='20' width='4' height='8' fill='%238B5E3C'/%3E%3Crect x='13' y='27' width='6' height='2' rx='1' fill='%23f0a830'/%3E%3C/g%3E%3C/svg%3E"
+    />
+    <link rel="preload" href="./assets/launcherbg.cc3903f4.webp" as="image" />
+    
+    
+    
+    
+    
+    
+    
+    <style type="text/css">
+      body {
+        background-color: #0c0d14;
+        margin: 0px;
+        overflow: hidden;
+      }
+
+      /* Blocks all game UI interaction during ads */
+      #ad-blocker-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 200000;
+        pointer-events: all;
+      }
+
+      /* coords now displayed in minimap area (gamePanel.css) */
+
+      /* Launcher preparing placeholder */
+      #launcher-preparing {
+        color: rgba(255, 255, 255, 0.4);
+        font-size: 14px;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 16px 0;
+      }
+
+      /* Cinematic fade-out for launcher dismiss */
+      #launcher.fade-out {
+        animation: launcherFadeOut 1.5s ease-out forwards;
+      }
+      @keyframes launcherFadeOut {
+        to {
+          opacity: 0;
+          visibility: hidden;
+        }
+      }
+    </style>
+    <script type="module" crossorigin src="./assets/index.4b5454ce.js"></script>
+    <link rel="modulepreload" crossorigin href="./assets/babylon.3fd628e8.js">
+    <link rel="stylesheet" href="./assets/index.cb654279.css">
+  </head>
+
+  <body>
+    <!-- HUD wrapper: stacks HUD + weapon stats vertically, no overlap -->
+    <div id="hud-wrapper">
+      <!-- Account Panel - player name, click to expand -->
+      <div id="account-panel">
+        <div id="account-panel-header">
+          <span id="account-panel-name">...</span>
+          <span id="account-panel-caret">&#9660;</span>
+        </div>
+        <div id="account-panel-dropdown">
+          <div id="account-panel-auth-status">
+            <span class="account-auth-dot guest"></span>
+            <span id="account-panel-auth-label">Guest account</span>
+          </div>
+          <button class="account-panel-btn" id="account-btn-link-discord">
+            <svg
+              class="discord-icon"
+              viewBox="0 0 24 24"
+              width="14"
+              height="14"
+            >
+              <path
+                fill="currentColor"
+                d="M19.27 5.33C17.94 4.71 16.5 4.26 15 4a.09.09 0 0 0-.07.03c-.18.33-.39.76-.53 1.09a16.09 16.09 0 0 0-4.8 0c-.14-.34-.36-.76-.54-1.09c-.01-.02-.04-.03-.07-.03c-1.5.26-2.93.71-4.27 1.33c-.01 0-.02.01-.03.02c-2.72 4.07-3.47 8.03-3.1 11.95c0 .02.01.04.03.05c1.8 1.32 3.53 2.12 5.24 2.65c.03.01.06 0 .07-.02c.4-.55.76-1.13 1.07-1.74c.02-.04 0-.08-.04-.09c-.57-.22-1.11-.48-1.64-.78c-.04-.02-.04-.08-.01-.11c.11-.08.22-.17.33-.25c.02-.02.05-.02.07-.01c3.44 1.57 7.15 1.57 10.55 0c.02-.01.05-.01.07.01c.11.09.22.17.33.26c.04.03.04.09-.01.11c-.52.31-1.07.56-1.64.78c-.04.01-.05.06-.04.09c.32.61.68 1.19 1.07 1.74c.03.01.06.02.09.01c1.72-.53 3.45-1.33 5.25-2.65c.02-.01.03-.03.03-.05c.44-4.53-.73-8.46-3.1-11.95c-.01-.01-.02-.02-.04-.02zM8.52 14.91c-1.03 0-1.89-.95-1.89-2.12s.84-2.12 1.89-2.12c1.06 0 1.9.96 1.89 2.12c0 1.17-.84 2.12-1.89 2.12zm6.97 0c-1.03 0-1.89-.95-1.89-2.12s.84-2.12 1.89-2.12c1.06 0 1.9.96 1.89 2.12c0 1.17-.83 2.12-1.89 2.12z"
+              />
+            </svg>
+            Link Discord
+          </button>
+          <button class="account-panel-btn" id="account-btn-signout">
+            Sign Out
+          </button>
+        </div>
+      </div>
+
+      <!-- Compact HUD Panel - minimal MMO style -->
+      <div id="hud-panel">
+        <div id="hud-stats">
+          <div id="hud-health-row">
+            <span class="hud-label">HP</span>
+            <div id="hud-health-bar"><div id="hud-health-fill"></div></div>
+            <span id="hud-health-text">100</span>
+          </div>
+          <div id="hud-total-level-row">
+            <span class="hud-label">Lv <span id="hud-level">4</span></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hidden skill rows (still updated by levels.js for data tracking) -->
+      <div id="hud-skills-hidden" style="display: none">
+        <div class="hud-skill-row">
+          <span class="hud-skill-level" id="hud-mining-level">1</span>
+          <div class="hud-skill-bar">
+            <div class="hud-skill-fill" id="hud-mining-fill"></div>
+            <span class="hud-skill-xp-text" id="hud-mining-xp">0 / 35</span>
+          </div>
+          <span class="hud-skill-pct" id="hud-mining-pct">0%</span>
+        </div>
+        <div class="hud-skill-row">
+          <span class="hud-skill-level" id="hud-combat-level">1</span>
+          <div class="hud-skill-bar">
+            <div class="hud-skill-fill" id="hud-combat-fill"></div>
+            <span class="hud-skill-xp-text" id="hud-combat-xp">0 / 35</span>
+          </div>
+          <span class="hud-skill-pct" id="hud-combat-pct">0%</span>
+        </div>
+        <div class="hud-skill-row">
+          <span class="hud-skill-level" id="hud-woodcutting-level">1</span>
+          <div class="hud-skill-bar">
+            <div class="hud-skill-fill" id="hud-woodcutting-fill"></div>
+            <span class="hud-skill-xp-text" id="hud-woodcutting-xp"
+              >0 / 35</span
+            >
+          </div>
+          <span class="hud-skill-pct" id="hud-woodcutting-pct">0%</span>
+        </div>
+        <div class="hud-skill-row">
+          <span class="hud-skill-level" id="hud-smithing-level">1</span>
+          <div class="hud-skill-bar">
+            <div class="hud-skill-fill" id="hud-smithing-fill"></div>
+            <span class="hud-skill-xp-text" id="hud-smithing-xp">0 / 35</span>
+          </div>
+          <span class="hud-skill-pct" id="hud-smithing-pct">0%</span>
+        </div>
+      </div>
+
+      <!-- Weapon Stats Panel -->
+      <div id="weapon-stats-panel" class="hidden">
+        <div id="weapon-stats-header">
+          <span id="weapon-name">Bronze Sword</span>
+        </div>
+        <div id="weapon-stats-row">
+          <div class="weapon-stat">
+            <span class="weapon-stat-label">DMG</span>
+            <span id="weapon-damage" class="weapon-stat-value">8</span>
+          </div>
+          <div class="weapon-stat">
+            <span class="weapon-stat-label">SPD</span>
+            <span id="weapon-speed" class="weapon-stat-value">800</span>
+          </div>
+        </div>
+        <div id="weapon-cooldown-row">
+          <span class="weapon-stat-label">Cooldown</span>
+          <div id="weapon-cooldown-bar">
+            <div id="weapon-cooldown-fill"></div>
+          </div>
+        </div>
+      </div>
+      <!-- Toast notification container -->
+      <div id="toast-container"></div>
+    </div>
+    <!-- /hud-wrapper -->
+
+    <!-- Launcher: visible on first paint -->
+    <div id="launcher" class="login-overlay">
+      <!-- Topbar -->
+      <div class="launcher-topbar">
+        <div class="launcher-topbar-left">
+          <img
+            src="./assets/logo.07499779.webp"
+            alt="Blockscape"
+            class="launcher-logo"
+          />
+          <a
+            href="https://blockscape.io"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="login-game-title"
+            >BLOCKSCAPE.IO</a
+          >
+        </div>
+        <div class="launcher-topbar-right">
+          <div id="launcher-account"></div>
+          <a
+            href="https://dlink.blockscape.io/"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="launcher-topbar-discord"
+            title="Join our Discord"
+          >
+            <svg viewBox="0 0 24 24" width="24" height="24">
+              <path
+                fill="currentColor"
+                d="M19.27 5.33C17.94 4.71 16.5 4.26 15 4a.09.09 0 0 0-.07.03c-.18.33-.39.76-.53 1.09a16.09 16.09 0 0 0-4.8 0c-.14-.34-.36-.76-.54-1.09c-.01-.02-.04-.03-.07-.03c-1.5.26-2.93.71-4.27 1.33c-.01 0-.02.01-.03.02c-2.72 4.07-3.47 8.03-3.1 11.95c0 .02.01.04.03.05c1.8 1.32 3.53 2.12 5.24 2.65c.03.01.06 0 .07-.02c.4-.55.76-1.13 1.07-1.74c.02-.04 0-.08-.04-.09c-.57-.22-1.11-.48-1.64-.78c-.04-.02-.04-.08-.01-.11c.11-.08.22-.17.33-.25c.02-.02.05-.02.07-.01c3.44 1.57 7.15 1.57 10.55 0c.02-.01.05-.01.07.01c.11.09.22.17.33.26c.04.03.04.09-.01.11c-.52.31-1.07.56-1.64.78c-.04.01-.05.06-.04.09c.32.61.68 1.19 1.07 1.74c.03.01.06.02.09.01c1.72-.53 3.45-1.33 5.25-2.65c.02-.01.03-.03.03-.05c.44-4.53-.73-8.46-3.1-11.95c-.01-.01-.02-.02-.04-.02zM8.52 14.91c-1.03 0-1.89-.95-1.89-2.12s.84-2.12 1.89-2.12c1.06 0 1.9.96 1.89 2.12c0 1.17-.84 2.12-1.89 2.12zm6.97 0c-1.03 0-1.89-.95-1.89-2.12s.84-2.12 1.89-2.12c1.06 0 1.9.96 1.89 2.12c0 1.17-.83 2.12-1.89 2.12z"
+              />
+            </svg>
+          </a>
+        </div>
+      </div>
+
+      <!-- Scrollable hub -->
+      <div class="launcher-hub loading-state" id="launcher-hub">
+        <!-- Featured: Blockscape main game -->
+        <div id="launcher-featured" class="launcher-featured" data-mode="main">
+          <div class="launcher-featured-bg"></div>
+          <div class="launcher-featured-content">
+            <h2 class="launcher-featured-title">BLOCKSCAPE</h2>
+            <p class="launcher-featured-sub">
+              Mine, fight, craft, and build in a voxel MMO
+            </p>
+            <button
+              class="launcher-featured-btn login-button-primary"
+              id="btn-play-main"
+            >
+              <span id="launcher-preparing"
+                ><span class="login-spinner"></span
+                ><span>Preparing game...</span></span
+              >
+            </button>
+          </div>
+        </div>
+
+        <!-- Player stats (populated by JS for returning players) -->
+        <div
+          id="launcher-stats"
+          class="launcher-stats"
+          style="display: none"
+        ></div>
+
+        <!-- Dynamic teleport destination rows (populated by loginUI.js from server sign data) -->
+        <div id="launcher-teleport-rows"></div>
+
+        <!-- Arcade -->
+        <div class="launcher-row">
+          <h3 class="launcher-row-title">Arcade</h3>
+          <div class="launcher-row-scroll">
+            <div
+              class="launcher-card"
+              data-mode="arcade"
+              data-game="chardesigner"
+            >
+              <div
+                class="launcher-card-thumb launcher-thumb-chardesigner"
+              ></div>
+              <div class="launcher-card-label">Character Designer</div>
+            </div>
+            <div
+              class="launcher-card launcher-card-placeholder"
+              data-mode="placeholder"
+            >
+              <div class="launcher-card-thumb"></div>
+              <span class="launcher-card-soon">Soon</span>
+              <div class="launcher-card-label">???</div>
+            </div>
+            <div
+              class="launcher-card launcher-card-placeholder"
+              data-mode="placeholder"
+            >
+              <div class="launcher-card-thumb"></div>
+              <span class="launcher-card-soon">Soon</span>
+              <div class="launcher-card-label">???</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Obby -->
+        <div class="launcher-row">
+          <h3 class="launcher-row-title">Obby</h3>
+          <div class="launcher-row-scroll">
+            <div
+              class="launcher-card launcher-card-placeholder"
+              data-mode="placeholder"
+            >
+              <div class="launcher-card-thumb"></div>
+              <span class="launcher-card-soon">Soon</span>
+              <div class="launcher-card-label">???</div>
+            </div>
+            <div
+              class="launcher-card launcher-card-placeholder"
+              data-mode="placeholder"
+            >
+              <div class="launcher-card-thumb"></div>
+              <span class="launcher-card-soon">Soon</span>
+              <div class="launcher-card-label">???</div>
+            </div>
+            <div
+              class="launcher-card launcher-card-placeholder"
+              data-mode="placeholder"
+            >
+              <div class="launcher-card-thumb"></div>
+              <span class="launcher-card-soon">Soon</span>
+              <div class="launcher-card-label">???</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal overlay for name picker / errors -->
+      <div id="launcher-modal" class="launcher-modal" style="display: none">
+        <div id="launcher-modal-card" class="login-container"></div>
+      </div>
+
+      <!-- Bottom nav -->
+      <div class="launcher-nav">
+        <a href="/highscores">Highscores</a>
+        <span class="launcher-nav-dot">&middot;</span>
+        <a href="/news">News</a>
+        <span class="launcher-nav-dot">&middot;</span>
+        <a href="/about">About</a>
+        <span class="launcher-nav-dot">&middot;</span>
+        <a href="/privacy">Privacy</a>
+        <span class="launcher-nav-dot" id="install-dot" style="display: none"
+          >&middot;</span
+        >
+        <a href="#" id="install-btn" style="display: none">Install App</a>
+      </div>
+    </div>
+
+    <script>
+      // When embedded on external portals, rewrite nav links to absolute URLs that open in new tabs
+      (function () {
+        try {
+          var isEmbedded = window.self !== window.top;
+        } catch (e) {
+          var isEmbedded = true;
+        }
+        if (!isEmbedded) {
+          var host = location.hostname;
+          isEmbedded =
+            host !== "localhost" &&
+            host !== "blockscape.io" &&
+            host !== "www.blockscape.io";
+        }
+        if (isEmbedded) {
+          var nav = document.querySelector(".launcher-nav");
+          if (nav) {
+            var links = nav.querySelectorAll('a[href^="/"]');
+            for (var i = 0; i < links.length; i++) {
+              links[i].href =
+                "https://blockscape.io" + links[i].getAttribute("href");
+              links[i].target = "_blank";
+              links[i].rel = "noopener";
+            }
+          }
+        }
+      })();
+    </script>
+    <script>
+      // Mobile device detection - block game on phones/tablets
+      (function () {
+        var ua = navigator.userAgent;
+        var isMobile =
+          /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+            ua,
+          ) ||
+          (navigator.maxTouchPoints > 1 && /Macintosh/i.test(ua));
+        if (isMobile) {
+          var featured = document.getElementById("launcher-featured");
+          if (featured) {
+            featured.innerHTML =
+              '<div style="text-align:center;padding:40px 20px;">' +
+              '<div style="font-size:48px;margin-bottom:16px;">&#128187;</div>' +
+              '<h2 style="color:#fff;margin:0 0 12px;font-size:22px;">Mobile Not Supported</h2>' +
+              '<p style="color:rgba(255,255,255,0.6);margin:0;font-size:14px;line-height:1.5;">' +
+              "BlockScape requires a desktop browser with<br>keyboard and mouse to play." +
+              "</p>" +
+              "</div>";
+          }
+          window.__MOBILE_BLOCKED = true;
+        }
+      })();
+    </script>
+    
+    <script>
+      // Preserve query params (e.g. ?portal=y8) on nav links
+      (function () {
+        var qs = location.search;
+        if (!qs) return;
+        document.querySelectorAll(".launcher-nav a").forEach(function (a) {
+          a.href += qs;
+        });
+      })();
+    </script>
+    <script>
+      // Reset zoom to 100% on page load (fixes being stuck zoomed in)
+      (function () {
+        // CSS zoom reset for the page content
+        document.documentElement.style.zoom = 1;
+
+        // Detect if browser is zoomed and warn user to reset
+        var detectZoom = function () {
+          var ratio = window.outerWidth / window.innerWidth;
+          if (ratio > 1.1 || ratio < 0.9) {
+            console.warn(
+              "[Zoom] Browser appears zoomed. Press Ctrl+0 (Cmd+0 on Mac) to reset.",
+            );
+          }
+        };
+        window.addEventListener("load", detectZoom);
+      })();
+
+      // Prevent browser zoom (ctrl+scroll, ctrl+plus/minus, pinch)
+      // But ALLOW Ctrl+0 so users can reset if stuck
+      document.addEventListener(
+        "wheel",
+        function (e) {
+          if (e.ctrlKey) {
+            e.preventDefault();
+          }
+        },
+        { passive: false },
+      );
+
+      document.addEventListener("keydown", function (e) {
+        // Block zoom in/out but allow reset (0)
+        if (e.ctrlKey && (e.key === "+" || e.key === "-" || e.key === "=")) {
+          e.preventDefault();
+        }
+      });
+
+      // Prevent pinch zoom on touch devices
+      document.addEventListener(
+        "touchstart",
+        function (e) {
+          if (e.touches.length > 1) {
+            e.preventDefault();
+          }
+        },
+        { passive: false },
+      );
+
+      document.addEventListener("gesturestart", function (e) {
+        e.preventDefault();
+      });
+    </script>
+  
+    <script>
+      window.SDK_OPTIONS = {
+        gameId: "z41q0ycg5i8u33rqy7sfjcedpak3e7zz",
+        onEvent: function (a) {
+          switch (a.name) {
+            case "SDK_GAME_PAUSE":
+              if (window.__adPause) window.__adPause();
+              break;
+            case "SDK_GAME_START":
+              if (window.__adResume) window.__adResume();
+              break;
+            case "SDK_READY":
+              break;
+          }
+        },
+      };
+
+      var _lastAdTime = 0;
+      window.__showAd = function (adType) {
+        var now = Date.now();
+        if (now - _lastAdTime < 30000) return;
+        _lastAdTime = now;
+        if (typeof sdk !== "undefined" && typeof sdk.showBanner !== "undefined") {
+          sdk.showBanner();
+        }
+      };
+    </script>
+    <script src="https://api.gamemonetize.com/sdk.js"></script>
+  </body>
+</html>

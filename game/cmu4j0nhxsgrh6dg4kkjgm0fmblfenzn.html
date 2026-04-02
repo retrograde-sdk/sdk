@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ru" onselectstart="return false;">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+        <title id="page-title">Soccer Duel</title>
+
+        <link rel="shortcut icon" href="TemplateData/favicon.ico">
+        <link rel="stylesheet" href="TemplateData/style.css?v=1">
+
+        <script src="https://illusions-games.ru/SoccerDuel/Scripts/js/jquery.min.js"></script>
+        <script src="https://illusions-games.ru/SoccerDuel/Scripts/js/md5.min.js"></script>
+    </head>
+
+    <body onResize="ChangeCanvas()" class="unselectable" onselectstart="return false;">
+        <div id="unity-container">
+            <canvas id="unity-canvas"></canvas>
+
+            <div id="unity-loading-bar">
+                <div id="unity-logo">
+                    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#0EA5E9"/>
+                                <stop offset="100%" stop-color="#38BDF8"/>
+                            </linearGradient>
+
+                            <radialGradient id="ballGrad" cx="50%" cy="50%" r="50%">
+                                <stop offset="0%" stop-color="#ffffff"/>
+                                <stop offset="100%" stop-color="#e2e8f0"/>
+                            </radialGradient>
+                        </defs>
+
+                        <rect x="12" y="12" width="77" height="77" rx="16" fill="url(#logoGrad)" stroke="white" stroke-width="2"/>
+                        <g transform="translate(50 50) scale(0.55) translate(-50 -50)">
+                            <circle cx="50" cy="50" r="28" fill="url(#ballGrad)" stroke="#1e293b" stroke-width="2"/>
+                        </g>
+                    </svg>
+                </div>
+
+                <div class="game-title" id="game-title">Soccer Duel</div>
+
+                <div class="progress-wrap">
+                    <div class="progress-track">
+                        <div class="progress-fill" id="progress-bar"></div>
+                    </div>
+                    <div class="progress-text">
+                        <span id="progress-label">Загрузка</span>
+                        <span id="progress-percent">0%</span>
+                    </div>
+                </div>
+
+                <div class="status-wrap">
+                    <div class="status-text" id="status-text">🎮 Подготовка игры...</div>
+                </div>
+
+                <button id="retry-btn" onclick="retryLoad()">Попробовать снова</button>
+            </div>
+        </div>
+
+        <script>
+            var container = document.getElementById("unity-container");
+            var canvas = document.getElementById("unity-canvas");
+
+            var BUILD_URL = "Build";
+            var BUILD_NAME = "SoccerDuel";
+
+            var loadingBar = document.getElementById("unity-loading-bar");
+            var progressBar = document.getElementById("progress-bar");
+            var progressPercent = document.getElementById("progress-percent");
+            var statusText = document.getElementById("status-text");
+            var retryBtn = document.getElementById("retry-btn");
+            var gameTitleEl = document.getElementById("game-title");
+            var pageTitleEl = document.getElementById("page-title");
+
+            window.gameLanguage = window.gameLanguage || "EN";
+
+            var translations = {
+                RU:{
+                title:"Soccer Duel",
+                loading:"Загрузка",
+                retry:"Попробовать снова",
+                stages:["🎮 Подготовка игры...","📦 Загрузка ресурсов...","✨ Почти готово..."]
+                },
+
+                EN:{
+                title:"Soccer Duel",
+                loading:"Loading",
+                retry:"Try again",
+                stages:["🎮 Preparing game...","📦 Loading assets...","✨ Almost ready..."]
+                },
+
+                ES:{
+                title:"Soccer Duel",
+                loading:"Cargando",
+                retry:"Intentar de nuevo",
+                stages:["🎮 Preparando juego...","📦 Cargando recursos...","✨ Casi listo..."]
+                },
+
+                PT:{
+                title:"Soccer Duel",
+                loading:"Carregando",
+                retry:"Tentar novamente",
+                stages:["🎮 Preparando jogo...","📦 Carregando recursos...","✨ Quase pronto..."]
+                },
+
+                TR:{
+                title:"Soccer Duel",
+                loading:"Yükleniyor",
+                retry:"Tekrar dene",
+                stages:["🎮 Oyun hazırlanıyor...","📦 Kaynaklar yükleniyor...","✨ Neredeyse hazır..."]
+                },
+
+                FR:{
+                title:"Soccer Duel",
+                loading:"Chargement",
+                retry:"Réessayer",
+                stages:["🎮 Préparation...","📦 Chargement...","✨ Presque prêt..."]
+                },
+
+                DE:{
+                title:"Soccer Duel",
+                loading:"Laden",
+                retry:"Erneut versuchen",
+                stages:["🎮 Spiel wird vorbereitet...","📦 Laden...","✨ Fast fertig..."]
+                },
+
+                IT:{
+                title:"Soccer Duel",
+                loading:"Caricamento",
+                retry:"Riprova",
+                stages:["🎮 Preparazione...","📦 Caricamento...","✨ Quasi pronto..."]
+                }
+            };
+
+            var currentLang = translations["EN"];
+
+            function applyLanguage(){
+                var lang = window.gameLanguage || "EN";
+                currentLang = translations[lang] || translations["EN"];
+
+                gameTitleEl.innerText = currentLang.title;
+                pageTitleEl.innerText = currentLang.title;
+                document.getElementById("progress-label").innerText = currentLang.loading;
+                retryBtn.innerText = currentLang.retry;
+            }
+
+            applyLanguage();
+
+            function ChangeCanvas() {
+                if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+                    var meta = document.createElement('meta');
+                    meta.name = 'viewport';
+                    meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no';
+                    document.getElementsByTagName('head')[0].appendChild(meta);
+                }
+                canvas.style.width = document.documentElement.clientWidth + 'px';
+                canvas.style.height = document.documentElement.clientHeight + 'px';
+            }
+            window.ChangeCanvas = ChangeCanvas;
+            ChangeCanvas();
+
+            function updateProgress(progress){
+                var percent = Math.round(progress * 100);
+                progressBar.style.width = percent + "%";
+                progressPercent.innerText = percent + "%";
+
+                if(progress < 0.3) statusText.innerText = currentLang.stages[0];
+                else if(progress < 0.8) statusText.innerText = currentLang.stages[1];
+                else statusText.innerText = currentLang.stages[2];
+            }
+
+            function retryLoad(){ location.reload(); }
+
+            function showUnityError(message) {
+                if (!message) message = "Unknown error";
+                console.warn("Unity Error:", message);
+                if (!statusText.dataset.hasError) {
+                    statusText.innerText = "";
+                    statusText.dataset.hasError = "1";
+                }
+                if (statusText.innerText.length > 0) statusText.innerText += "\n\n";
+                statusText.innerText += message;
+
+                var wrap = document.querySelector(".status-wrap");
+                if (wrap) wrap.classList.add("status-error");
+                retryBtn.style.display = "inline-block";
+            }
+
+            var config = {
+                dataUrl: BUILD_URL + "/" + BUILD_NAME + ".data.unityweb",
+                frameworkUrl: BUILD_URL + "/" + BUILD_NAME + ".framework.js.unityweb",
+                codeUrl: BUILD_URL + "/" + BUILD_NAME + ".wasm.unityweb",
+                streamingAssetsUrl: "StreamingAssets",
+                companyName: "Illusions Games",
+                productName: "Soccer Duel",
+                productVersion: "1.0",
+                showBanner: function(msg, type){
+                    if (type === "error") showUnityError(msg);
+                    else console.warn(msg);
+                },
+                errorHandler: function(err, url, line) { return true; }
+            };
+
+            var script = document.createElement("script");
+            script.src = BUILD_URL + "/" + BUILD_NAME + ".loader.js";
+
+            script.onload = function(){
+                createUnityInstance(canvas, config, updateProgress)
+                .then(function(instance){
+                    window.gameInstance = instance;
+                    loadingBar.style.display = "none";
+                    canvas.classList.add("ready");
+                })
+            .catch(function(msg){
+                    showUnityError(msg);
+                });
+            };
+
+            document.body.appendChild(script);
+        </script>
+        <script src="Unity.js?v=4"></script>
+    </body>
+</html>

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0f172a">
+    <link rel="manifest" href="/assets/manifest-CbqTM5Gk.json" />
+    <title>Trishift</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      :root {
+        --safe-top: env(safe-area-inset-top, 0px);
+        --safe-bottom: env(safe-area-inset-bottom, 0px);
+        --safe-left: env(safe-area-inset-left, 0px);
+        --safe-right: env(safe-area-inset-right, 0px);
+      }
+      
+      html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #020617;
+        font-family: system-ui, -apple-system, sans-serif;
+        touch-action: none;
+        -webkit-user-select: none;
+        user-select: none;
+        overscroll-behavior: none;
+        position: fixed; /* Prevents pull-to-refresh and bounce on mobile */
+      }
+      
+      #root {
+        width: 100%;
+        height: 100%;
+        background-color: #020617;
+        position: relative;
+        overflow: hidden;
+      }
+
+      /* Robust Forced Landscape for Mobile Portrait Devices */
+      @media (orientation: portrait) and (max-width: 1024px) {
+        #root {
+          width: 100vh;
+          height: 100vw;
+          transform: rotate(90deg);
+          transform-origin: top left;
+          position: fixed;
+          top: 0;
+          left: 100%;
+        }
+      }
+
+      canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+
+      @keyframes shimmer {
+        0% { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+      }
+      .animate-shimmer {
+        animation: shimmer 3s infinite linear;
+      }
+
+      @keyframes laser-scan {
+        0% { transform: translateY(-100%); opacity: 0; }
+        50% { opacity: 0.5; }
+        100% { transform: translateY(100%); opacity: 0; }
+      }
+      .animate-laser {
+        animation: laser-scan 3s infinite ease-in-out;
+      }
+
+      @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        20%, 60% { transform: translateX(-4px); }
+        40%, 80% { transform: translateX(4px); }
+      }
+      .animate-shake {
+        animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+      }
+
+      @keyframes glitch {
+        0% { transform: translate(0); text-shadow: none; }
+        20% { transform: translate(-2px, 1px); text-shadow: 2px 0 #ff00c1, -2px 0 #00fff9; }
+        40% { transform: translate(-2px, -1px); text-shadow: -2px 0 #ff00c1, 2px 0 #00fff9; }
+        60% { transform: translate(2px, 1px); text-shadow: 2px 0 #ff00c1, -2px 0 #00fff9; }
+        80% { transform: translate(2px, -1px); text-shadow: -2px 0 #ff00c1, 2px 0 #00fff9; }
+        100% { transform: translate(0); text-shadow: none; }
+      }
+      .group:hover .animate-glitch {
+        animation: glitch 0.3s infinite;
+      }
+
+      @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+      }
+      .animate-float {
+        animation: float 2.5s ease-in-out infinite;
+      }
+
+      @keyframes data-rise {
+        0% { transform: translateY(100%) scale(0); opacity: 0; }
+        50% { opacity: 0.8; }
+        100% { transform: translateY(-200%) scale(1.5); opacity: 0; }
+      }
+      .data-bit {
+        position: absolute;
+        width: 4px;
+        height: 4px;
+        background: #06b6d4;
+        pointer-events: none;
+        opacity: 0;
+      }
+      .group:hover .data-bit {
+        animation: data-rise 1.5s infinite linear;
+      }
+    </style>
+    <script type="text/javascript">
+       window.SDK_OPTIONS = {
+          gameId: "your_game_id_here",
+          onEvent: function (a) {
+             switch (a.name) {
+                case "SDK_GAME_PAUSE":
+                   window.dispatchEvent(new CustomEvent('SDK_GAME_PAUSE'));
+                   break;
+                case "SDK_GAME_START":
+                   window.dispatchEvent(new CustomEvent('SDK_GAME_START'));
+                   break;
+                case "SDK_READY":
+                   window.dispatchEvent(new CustomEvent('SDK_READY'));
+                   break;
+             }
+          }
+       };
+       (function (a, b, c) {
+          var d = a.getElementsByTagName(b)[0];
+          a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+       })(document, "script", "gamemonetize-sdk");
+    </script>
+
+<link rel="stylesheet" href="/index.css">
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.555.0"
+  }
+}
+</script>
+  <script type="module" crossorigin src="./assets/index-D4zfpXcL.js"></script>
+</head>
+  <body class="no-scrollbar">
+    <div id="root"></div>
+</body>
+</html>

@@ -1,0 +1,2580 @@
+<!doctype html>
+<html lang="en" translate="no">
+<head>
+<meta charset="utf-8"/>
+<meta name="google" content="notranslate"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<title>African Animals: Jigsaw Puzzles</title>
+
+
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@700;800&display=swap" rel="stylesheet">
+
+<style>
+  :root{ --green:#0a6a3a; --green2:#0b7a41; --orange:#f3a63a; --shadow:rgba(0,0,0,.35); --w:100vw; --h:100vh; }
+  html,body{height:100%; margin:0; overflow:hidden; font-family: "Trebuchet MS", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none;}
+  body{ background: transparent; color:#fff; }
+  *{ -webkit-tap-highlight-color: transparent; }
+  /* jigsaw-pattern background via inline SVG */
+  .screen{ position:fixed; inset:0; display:none; overflow:hidden; }
+  .screen.active{ display:block; }
+  .screenInner{ height:calc(var(--vh, 1vh) * 100); width:100%; box-sizing:border-box; display:flex; flex-direction:column; align-items:center; justify-content:center; padding: calc(72px + env(safe-area-inset-top, 0px)) 14px calc(36px + env(safe-area-inset-bottom, 0px)); }
+  .screenContent{ width:100%; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; max-width:1100px; padding: 6px 10px; box-sizing:border-box; }
+
+  .panel{
+    width:min(980px, calc(100vw - 40px));
+    display:grid;
+    grid-template-columns: 1.15fr .85fr;
+    gap:24px;
+    align-items:center;
+  }
+  .card{
+    background: rgba(0,0,0,.20);
+    border: 3px solid rgba(255,255,255,.20);
+    box-shadow: 0 14px 40px rgba(0,0,0,.35);
+    border-radius: 18px;
+    padding: 22px;
+    backdrop-filter: blur(2px);
+  }
+  .title{ font-size:52px; letter-spacing:1px; margin:0 0 10px; text-transform:uppercase; }
+  .sub{ margin:0 0 18px; opacity:.9; font-size:18px; line-height:1.4; }
+  .gameName{ font-size: clamp(24px, 3.2vw, 44px); font-weight:1000; letter-spacing:2px; color:#e8fff3; text-shadow: 0 4px 0 rgba(0,0,0,.25); }
+  .bigTitle{
+  display:inline-block;
+  padding: 12px 26px;
+  border-radius: 999px;
+  background: linear-gradient(#f6e3bc, #d7ab68);
+  border: 2px solid rgba(75,43,13,.28);
+  box-shadow: 0 10px 22px rgba(0,0,0,.22), inset 0 2px 0 rgba(255,255,255,.35);
+  color:#4b2b0d;
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  text-shadow: 0 2px 0 rgba(0,0,0,.18);
+}
+  .footerBrand{ margin-top:18px; opacity:.9; font-weight:900; letter-spacing:.6px; pointer-events:auto; position:relative; z-index:5; }
+  .footerBrand a{ color:#fff; text-decoration:none; text-shadow: 0 2px 10px rgba(0,0,0,.55); }
+  /* make brand more noticeable on the main screen */
+  #screenChooseImage .footerBrand a{ font-size: clamp(24px, 3.0vw, 34px); }
+  /* keep it readable on the pieces screen */
+  #screenChoosePieces .footerBrand a{ font-size: clamp(22px, 2.6vw, 32px); }
+  /* bottom controls on pieces screen: readable on bright background */
+  #screenChoosePieces #backToImages{
+    background: rgba(0,0,0,.34);
+    border-color: rgba(255,255,255,.26);
+    color:#fff;
+    backdrop-filter: blur(2px);
+  }
+  #screenChoosePieces #autoStartNote{
+    display:inline-block;
+    padding: 8px 12px;
+    border-radius: 12px;
+    background: rgba(0,0,0,.34);
+    color:#fff;
+    text-shadow: 0 2px 10px rgba(0,0,0,.55);
+    backdrop-filter: blur(2px);
+  }
+
+
+  .btn{
+    display:inline-flex; gap:10px; align-items:center; justify-content:center;
+    border:none; cursor:pointer; user-select:none;
+    background: var(--orange);
+    color:#4b2200;
+    font-weight:900;
+    padding: 16px 22px;
+    border-radius: 14px;
+    box-shadow: 0 10px 0 rgba(0,0,0,.25);
+    transform: translateY(0);
+    font-size:20px;
+  }
+  .btn:active{ transform: translateY(2px); box-shadow: 0 8px 0 rgba(0,0,0,.25); }
+  .btn.secondary{
+    background: rgba(255,255,255,.14);
+    color:#fff;
+    box-shadow:none;
+    border:2px solid rgba(255,255,255,.22);
+  }
+
+  /* choose image */
+  .chooseWrap{ display:flex; align-items:center; justify-content:center; gap:18px; }
+  .arrow{
+    width:74px; height:74px; border-radius:16px;
+    background: rgba(255,255,255,.12);
+    border:2px solid rgba(255,255,255,.22);
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+  }
+  .arrow:active{ transform: translateY(1px); }
+  .arrow span{ font-size:38px; line-height:1; }
+  .thumb{
+    width:min(700px, calc(100vw - 220px));
+    max-width:720px;
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap:18px;
+    align-items:stretch;
+   margin:0 auto; }
+  .thumb .item{
+    background: rgba(255,255,255,.12);
+    border:4px solid rgba(255,255,255,.85);
+    border-radius:16px;
+    padding:10px;
+    cursor:pointer;
+    box-shadow: 0 12px 0 rgba(0,0,0,.20);
+  }
+  .thumb .item.selected{ outline: 5px solid rgba(243,166,58,.95); }
+  .thumb .item.locked{
+  /* keep the card visible; dim only the preview image */
+  opacity:1;
+  cursor:not-allowed;
+  position:relative;
+}
+.thumb .item.locked img{
+  opacity:.94;
+  filter: saturate(.92) contrast(1.02);
+}
+.thumb .item.locked::after{
+  content:"🔒";
+  position:absolute;
+  left:50%; top:50%;
+  transform:translate(-50%,-50%);
+  width:78px; height:78px;
+  border-radius:18px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:44px;
+  background:rgba(0,0,0,.26);
+  box-shadow:0 10px 0 rgba(0,0,0,.18);
+}
+.thumb img{ width:100%; height:210px; object-fit:cover; border-radius:10px; display:block; }
+  .topIcons{
+    position:fixed; top:calc(14px + env(safe-area-inset-top, 0px)); left:calc(14px + env(safe-area-inset-left, 0px)); display:flex; gap:10px; z-index:50;
+  }
+  .iconBtn{
+  width: 56px; height: 56px;
+  display:flex; align-items:center; justify-content:center;
+  border-radius: 18px;
+  background: linear-gradient(#f6e3bc, #d7ab68);
+  border: 2px solid rgba(75,43,13,.28);
+  color:#4b2b0d;
+  box-shadow: 0 10px 18px rgba(0,0,0,.20), inset 0 2px 0 rgba(255,255,255,.35);
+  cursor: pointer;
+  user-select:none;
+}
+  .iconBtn:active{ transform: translateY(2px); box-shadow: 0 8px 0 rgba(0,0,0,.25); }
+
+  .rightIcons{
+    position:fixed; top:14px; right:14px; display:flex; gap:10px; z-index:50;
+  }
+
+  /* pieces choose */
+  .grid4{ width:min(820px, calc(100vw - 48px)); margin: 0 auto; display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap: clamp(10px, 1.8vw, 18px); }
+  .pieceCard{ background: rgba(255,255,255,.10); border:4px solid rgba(255,255,255,.80); border-radius:18px; padding: clamp(10px, 1.6vw, 14px); cursor:pointer; box-shadow: 0 12px 0 rgba(0,0,0,.20); display:flex; flex-direction:column; gap:8px; align-items:center; }
+  .pieceCard .label{ font-size: clamp(16px, 2.2vw, 22px); font-weight:1000; letter-spacing:.5px; }
+  .miniGrid{ width: min(18.5vw, 18.5vh, 210px); height: min(18.5vw, 18.5vh, 210px); border-radius:10px; border:3px solid rgba(255,255,255,.55); background: rgba(0,0,0,.14); display:grid; place-items:center; }
+  .miniGrid svg{ width:86%; height:86%; opacity:.9; }
+
+  /* Game */
+  #game{ position:fixed; inset:0; display:none; }
+  #game.active{ display:block; }
+  #c{ position:absolute; inset:0; width:100%; height:100%; touch-action:none; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; z-index:1; }
+  #confetti{ position:absolute; inset:0; width:100%; height:100%; pointer-events:none; touch-action:none; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; z-index:55; }
+  .hudTop{
+    position:absolute; top:12px; left:110px; right:110px;
+    display:flex; align-items:center; justify-content:center; gap:30px;
+    pointer-events:none;
+    z-index:30;
+  }
+  .hudTop .stat{ font-weight:900; font-size:26px; letter-spacing:1px; text-shadow: 0 2px 0 rgba(0,0,0,.35); pointer-events:none;}
+  .hudBottom{
+    position:absolute; bottom:calc(16px + env(safe-area-inset-bottom, 0px)); right:14px; display:flex; gap:12px; z-index:40;
+  }
+  .hudBottom .iconBtn{
+  width: 56px; height: 56px;
+  display:flex; align-items:center; justify-content:center;
+  border-radius: 18px;
+  background: linear-gradient(#f6e3bc, #d7ab68);
+  border: 2px solid rgba(75,43,13,.28);
+  color:#4b2b0d;
+  box-shadow: 0 10px 18px rgba(0,0,0,.20), inset 0 2px 0 rgba(255,255,255,.35);
+  cursor: pointer;
+  user-select:none;
+}
+  .hintBadge{
+    position:absolute; bottom:18px; left:14px; z-index:40; 
+    background: rgba(0,0,0,.22); border:2px solid rgba(255,255,255,.18);
+    border-radius:14px; padding:10px 12px; font-weight:800;
+  }
+  .toast{
+    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    z-index:60;
+    background: rgba(0,0,0,.40);
+    border:3px solid rgba(255,255,255,.25);
+    border-radius:18px; padding:18px 18px 16px;
+    min-width:min(520px, calc(100vw - 60px));
+    box-shadow:0 20px 60px rgba(0,0,0,.45);
+    display:none;
+  }
+  .toast.show{ display:block; }
+  .toast h3{ margin:0 0 8px; font-size:34px; text-align:center; }
+  .toast p{ margin:0; text-align:center; opacity:.92; font-size:18px; }
+  .toast .row{ display:flex; justify-content:center; gap:12px; margin-top:14px; flex-wrap:wrap; }
+  .toast .closeX{
+    position:absolute; right:12px; top:12px;
+    width:44px; height:44px; border-radius:12px;
+    background: rgba(255,255,255,.12);
+    border:2px solid rgba(255,255,255,.20);
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+    font-size:22px; font-weight:900;
+  }
+
+  /* small screens */
+  @media (max-width:860px){
+    .panel{ grid-template-columns:1fr; }
+    .title{ font-size:38px; }
+    .bigTitle{ font-size: clamp(20px, 6vw, 34px); }
+    .gameName{ font-size: clamp(22px, 5vw, 34px); }
+    .thumb{ grid-template-columns:1fr; width:min(520px, calc(100vw - 120px)); }
+    .thumb img{ height:200px; }
+    .hudTop{ left:90px; right:90px; gap:16px; }
+    .hudTop .stat{ font-size:22px; }
+    /* on small screens trays move to bottom, so move extra buttons up */
+    .hudBottom{ top:132px; bottom:auto; right:14px; }
+    .hintBadge{ top:132px; bottom:auto; left:14px; }
+  }
+
+  .footerBrand a{ color:rgba(255,255,255,.92); text-decoration:none; pointer-events:auto; font-size: clamp(18px, 2.4vw, 26px); text-shadow: 0 2px 0 rgba(0,0,0,.25); }
+  .footerBrand a:hover{ text-decoration:underline; }
+
+  @media (max-height: 700px){
+  .bigTitle{ font-size: clamp(18px, 4.6vw, 30px); }
+  .gameName{ font-size: clamp(18px, 4.4vw, 30px); }
+  .grid4{ gap: 12px; }
+  .pieceCard{ padding: 12px; }
+  .miniGrid{ width: min(18vw, 18vh, 180px); height: min(18vw, 18vh, 180px); }
+}
+
+  /* Fit piece selection on short screens (no scroll) */
+  #screenChoosePieces .bigTitle{ font-size: clamp(22px, 3.6vw, 38px); }
+  #screenChoosePieces .gameName{ font-size: clamp(16px, 2.4vw, 22px); }
+  @media (max-height: 820px){
+    .screenInner{ padding-top: calc(64px + env(safe-area-inset-top, 0px)); padding-bottom: calc(26px + env(safe-area-inset-bottom, 0px)); }
+    #screenChoosePieces .bigTitle{ font-size: clamp(20px, 3.2vw, 34px); }
+  }
+  @media (max-height: 760px){
+    .grid4{ width:min(760px, calc(100vw - 40px)); gap: 10px; }
+    .pieceCard{ padding: 10px; }
+    .pieceCard .label{ font-size: clamp(14px, 2.0vw, 20px); }
+    .miniGrid{ width: min(16vw, 16vh, 180px); height: min(16vw, 16vh, 180px); }
+  }
+
+
+@media (max-width: 420px){
+  .iconBtn{ width:52px; height:52px; font-size:26px; border-radius:14px; }
+  .topIcons, .topRight{ gap:10px; }
+  .titleRow{ margin-top: 0; }
+}
+
+
+/* ===== Confetti (donor style) ===== */
+.confetti-root{ position:fixed; inset:0; pointer-events:none; overflow:hidden; z-index:9999; }
+.confetti{ position:absolute; top:-14px; width:10px; height:14px; border-radius:2px; will-change:transform; transform:translate3d(0,0,0);
+  animation-name: confettiFall; animation-timing-function: ease-in; animation-fill-mode: forwards; opacity:.98; }
+
+.fruit{ position:absolute; top:-5vh; font-size: 30px; line-height:1; will-change:transform; transform:translate3d(0,0,0);
+  animation-name: confettiFall; animation-timing-function: ease-in; animation-fill-mode: forwards; opacity:.98;
+  filter: drop-shadow(0 2px 2px rgba(0,0,0,.28)); }
+@keyframes confettiFall{
+  to{ transform: translate3d(var(--dx), 110vh, 0) rotate(var(--rot)); opacity: 0.92; }
+}
+
+  /* ===== Background image (single, stable) ===== */
+  .bg{
+    position:fixed; inset:0;
+    background: url("assets/images/bg_game.webp") center / cover no-repeat;
+    pointer-events:none;
+  }
+
+  
+  /* Bigger brand on main (Choose Image) */
+  #screenChooseImage .footerBrand{ margin-top: 14px; opacity: 1; }
+  #screenChooseImage .footerBrand a{ font-size: clamp(24px, 3.0vw, 34px); }
+
+  /* ===== Footer (donor-like, but higher + readable on Choose Pieces) ===== */
+  #screenChoosePieces .footerBrand{ margin-top: 10px; }
+  #screenChoosePieces .footerBrand a{ font-size: clamp(22px, 2.6vw, 32px); text-decoration:none; }
+
+  /* On short screens (e.g. when DevTools is open) keep the footer visible */
+  @media (max-height: 820px){
+    #screenChoosePieces .screenInner{ padding-bottom: calc(54px + env(safe-area-inset-bottom, 0px)); }
+    #screenChoosePieces .screenContent{ gap: 10px; }
+    #screenChoosePieces .footerBrand{ margin-top: 6px; }
+    #screenChoosePieces .footerBrand a{ font-size: clamp(22px, 2.6vw, 32px); }
+  }
+
+</style>
+
+<!-- GameMonetize SDK -->
+<script>
+  window.GM_GAME_ID = "gri3zqusan79qkifwqhiftaqzbrwq9rn";
+  window.SDK_OPTIONS = {
+    gameId: window.GM_GAME_ID,
+    onEvent: function (event) {
+      // Handle pause/resume as early as possible (some SDK builds are inconsistent with event delivery).
+      try{
+        const name = String((event && event.name) || "");
+        if (name === "SDK_GAME_PAUSE") { try{ window.__gmPause && window.__gmPause(); }catch(e){} }
+        else if (name === "SDK_GAME_START") { try{ window.__gmResume && window.__gmResume(); }catch(e){} }
+      }catch(e){}
+      try {
+        window.dispatchEvent(new CustomEvent("GM_SDK_EVENT", { detail: event }));
+      } catch (e) {}
+    }
+  };
+</script>
+<script src="https://api.gamemonetize.com/sdk.js"></script>
+
+</head>
+<body>
+<div class="bg"></div>
+
+<!-- Global icons (fullscreen, sound, close) -->
+<div class="topIcons">
+  <div class="iconBtn" id="btnFs" title="Fullscreen">⛶</div>
+</div>
+<div class="rightIcons">
+  <div class="iconBtn" id="btnSound" title="Sound">🔊</div>
+  <div class="iconBtn" id="btnClose" title="Exit">✕</div>
+</div>
+
+<!-- MENU -->
+<section class="screen" id="screenMenu" style="display:none">
+  <div class="panel">
+    <div class="card">
+      <h1 class="title">African Animals: Jigsaw Puzzles</h1>
+      <p class="sub">Build the picture from pieces. First choose an image, then pick the number of pieces — and start playing.</p>
+      <button class="btn" id="goChooseImage">▶ Play</button>
+      <div style="margin-top:14px;opacity:.8">Website: <a href="https://igrolis.ru" target="_top" rel="noopener">igrolis.ru</a></div>
+    </div>
+    <div class="card" style="text-align:center">
+      <div style="font-weight:900; font-size:22px; margin-bottom:10px">Preview</div>
+      <img id="menuPreview" src="assets/images/img1.webp" alt="preview" style="width:100%; border-radius:14px; border:3px solid rgba(255,255,255,.25); max-height:420px; object-fit:cover"/>
+      <div style="margin-top:10px; opacity:.9">Pieces: <b id="menuPieces">64</b></div>
+    </div>
+  </div>
+</section>
+
+<!-- CHOOSE IMAGE -->
+<section class="screen" id="screenChooseImage">
+  <div class="screenInner"><div class="screenContent">
+    <div class="gameName">AFRICAN ANIMAL PUZZLES</div>
+    <div class="bigTitle">CHOOSE A PICTURE</div>
+    <div class="chooseWrap">
+      <div class="arrow" id="imgPrev" aria-label="Back"><span>◀</span></div>
+      <div class="thumb" id="thumbGrid"></div>
+      <div class="arrow" id="imgNext" aria-label="Next"><span>▶</span></div>
+    </div>
+    <div style="margin-top:18px;">
+      <button class="btn" id="goChoosePieces">Next ▶</button>
+    </div>
+    <div class="footerBrand"><a href="https://igrolis.ru" target="_top" rel="noopener">igrolis.ru</a></div>
+  </div>
+
+</div>
+</section>
+
+<!-- CHOOSE PIECES -->
+<section class="screen" id="screenChoosePieces">
+  <div class="screenInner"><div class="screenContent">
+    <div class="gameName">AFRICAN ANIMAL PUZZLES</div>
+    <div class="bigTitle">CHOOSE NUMBER OF PIECES</div>
+    <div class="grid4">
+      <div class="pieceCard" data-n="16">
+        <div class="miniGrid" aria-hidden="true">
+          <svg viewBox="0 0 100 100">
+            <path d="M10 10H90V90H10Z" fill="none" stroke="rgba(255,255,255,.9)" stroke-width="4"/>
+            <path d="M10 35H90M10 60H90M35 10V90M60 10V90" fill="none" stroke="rgba(255,255,255,.9)" stroke-width="3"/>
+          </svg>
+        </div>
+        <div class="label">16 PIECES</div>
+      </div>
+      <div class="pieceCard" data-n="36">
+        <div class="miniGrid" aria-hidden="true">
+          <svg viewBox="0 0 100 100">
+            <path d="M10 10H90V90H10Z" fill="none" stroke="rgba(255,255,255,.9)" stroke-width="4"/>
+            <g stroke="rgba(255,255,255,.9)" stroke-width="2" fill="none">
+              <path d="M10 23H90M10 36H90M10 49H90M10 62H90M10 75H90"/>
+              <path d="M23 10V90M36 10V90M49 10V90M62 10V90M75 10V90"/>
+            </g>
+          </svg>
+        </div>
+        <div class="label">36 PIECES</div>
+      </div>
+      <div class="pieceCard" data-n="64">
+        <div class="miniGrid" aria-hidden="true">
+          <svg viewBox="0 0 100 100">
+            <path d="M10 10H90V90H10Z" fill="none" stroke="rgba(255,255,255,.9)" stroke-width="4"/>
+            <g stroke="rgba(255,255,255,.9)" stroke-width="1.6" fill="none">
+              <path d='M10 20H90'/>
+<path d='M10 30H90'/>
+<path d='M10 40H90'/>
+<path d='M10 50H90'/>
+<path d='M10 60H90'/>
+<path d='M10 70H90'/>
+<path d='M10 80H90'/>
+              <path d='M20 10V90'/>
+<path d='M30 10V90'/>
+<path d='M40 10V90'/>
+<path d='M50 10V90'/>
+<path d='M60 10V90'/>
+<path d='M70 10V90'/>
+<path d='M80 10V90'/>
+            </g>
+          </svg>
+        </div>
+        <div class="label">64 PIECES</div>
+      </div>
+      <div class="pieceCard" data-n="100">
+        <div class="miniGrid" aria-hidden="true">
+          <svg viewBox="0 0 100 100">
+            <path d="M10 10H90V90H10Z" fill="none" stroke="rgba(255,255,255,.9)" stroke-width="4"/>
+            <g stroke="rgba(255,255,255,.9)" stroke-width="1.2" fill="none">
+              <path d='M10 18H90'/>
+<path d='M10 26H90'/>
+<path d='M10 34H90'/>
+<path d='M10 42H90'/>
+<path d='M10 50H90'/>
+<path d='M10 58H90'/>
+<path d='M10 66H90'/>
+<path d='M10 74H90'/>
+<path d='M10 82H90'/>
+              <path d='M18 10V90'/>
+<path d='M26 10V90'/>
+<path d='M34 10V90'/>
+<path d='M42 10V90'/>
+<path d='M50 10V90'/>
+<path d='M58 10V90'/>
+<path d='M66 10V90'/>
+<path d='M74 10V90'/>
+<path d='M82 10V90'/>
+            </g>
+          </svg>
+        </div>
+        <div class="label">100 PIECES</div>
+      </div>
+    </div>
+    <div style="margin-top:18px;">
+      <button class="btn secondary" id="backToImages">← Back</button>
+      <div style="margin-top:10px; opacity:.9;"><span id="autoStartNote">After you choose, the puzzle starts automatically.</span></div>
+    </div>
+    <div class="footerBrand"><a href="https://igrolis.ru" target="_top" rel="noopener">igrolis.ru</a></div>
+  </div>
+
+</div>
+</section>
+
+<!-- GAME -->
+<section id="game" class="screen">
+  <canvas id="c"></canvas>
+  <canvas id="confetti"></canvas>
+
+  <div class="hudTop">
+    <div class="stat"><span id="timeLabel">TIME</span> <span id="t">00:00</span></div>
+    <div class="stat"><span id="movesLabel">MOVES</span> <span id="m">0</span></div>
+  </div>
+
+  <div class="hudBottom">
+    <div class="iconBtn" id="btnHint" title="Hint">🧩</div>
+    <div class="iconBtn" id="btnShuffle" title="Shuffle">🔄</div>
+  </div>
+  <div class="hintBadge" id="hintState"><span id="hintLabel">Hint</span>: OFF</div>
+
+  <div class="toast" id="winToast" role="dialog" aria-modal="true">
+    <div class="closeX" id="winClose">✕</div>
+    <h3>DONE! 🎉</h3>
+    <p>Time: <b id="winTime">00:00</b> · Moves: <b id="winMoves">0</b></p>
+    <div class="row">
+      <button class="btn" id="winMore">More puzzles</button>
+      <button class="btn secondary" id="winReplay">Play again</button>
+    </div>
+  </div>
+</section>
+<audio id="bgm" src="assets/audio/bgm.mp3" preload="auto"></audio>
+<script>
+(() => {
+
+  // --- i18n (EN default, RU via ?lang=ru) ---
+  const _qp = new URLSearchParams(location.search);
+  const _langQP = ((_qp.get("lang") || _qp.get("locale") || _qp.get("language") || _qp.get("hl") || "") + "").toLowerCase();
+  // GM requirement: default language is EN. RU only when the platform explicitly passes lang/locale=ru.
+  const LANG = (_langQP && _langQP.startsWith("ru")) ? "ru" : "en";
+  try{ document.documentElement.setAttribute("lang", LANG); }catch(e){}
+  try{ document.title = (LANG === "ru") ? "Африканские животные: Пазлы" : "African Animals: Jigsaw Puzzles"; }catch(e){}
+  const I18N = {
+    en: {
+      gameTitleTop: "African Animals: Jigsaw Puzzles",
+      choosePicture: "CHOOSE A PICTURE",
+      next: "Next ▶",
+      back: "← Back",
+      choosePieces: "CHOOSE NUMBER OF PIECES",
+      autoStart: "After you choose, the puzzle starts automatically.",
+      time: "TIME",
+      moves: "MOVES",
+      hint: "Hint",
+      on: "ON",
+      off: "OFF"
+    },
+    ru: {
+      gameTitleTop: "Африканские животные: Пазлы",
+      choosePicture: "ВЫБЕРИТЕ КАРТИНКУ",
+      next: "Следующий шаг ▶",
+      back: "← Назад",
+      choosePieces: "ВЫБЕРИТЕ КОЛИЧЕСТВО ДЕТАЛЕЙ",
+      autoStart: "После выбора пазл запускается автоматически.",
+      time: "ВРЕМЯ",
+      moves: "ХОДЫ",
+      hint: "Подсказка",
+      on: "ВКЛ",
+      off: "ВЫКЛ"
+    }
+  };
+  const T = (k) => (I18N[LANG] && I18N[LANG][k]) || I18N.en[k] || k;
+
+  function applyI18n() {
+    // Menu screen
+    const menuTitle = document.querySelector("#screenMenu .title");
+    const menuSub   = document.querySelector("#screenMenu .sub");
+    if (menuTitle) menuTitle.textContent = T("gameTitleTop");
+    if (menuSub)   menuSub.textContent   = T("choosePicture");
+
+    // Choose image screen
+    const imgName  = document.querySelector("#screenChooseImage .gameName");
+    const imgTitle = document.querySelector("#screenChooseImage .bigTitle");
+    const imgNext  = document.getElementById("goChoosePieces");
+    if (imgName)  imgName.textContent  = T("gameTitleTop");
+    if (imgTitle) imgTitle.textContent = T("choosePicture");
+    if (imgNext)  imgNext.textContent  = T("next");
+
+    // Choose pieces screen
+    const pcsName  = document.querySelector("#screenChoosePieces .gameName");
+    const pcsTitle = document.querySelector("#screenChoosePieces .bigTitle");
+    const pcsBack  = document.getElementById("backToImages");
+    if (pcsName)  pcsName.textContent  = T("gameTitleTop");
+    if (pcsTitle) pcsTitle.textContent = T("choosePieces");
+    if (pcsBack)  pcsBack.textContent  = T("back");
+
+    // Pieces labels (16/36/64/100 ...)
+    const ruPlural = (n, one, few, many) => {
+      const mod10 = n % 10, mod100 = n % 100;
+      if (mod10 === 1 && mod100 !== 11) return one;
+      if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return few;
+      return many;
+    };
+    document.querySelectorAll("#screenChoosePieces .pieceCard").forEach(card => {
+      const n = parseInt(card.getAttribute("data-n") || "0", 10);
+      const label = card.querySelector(".label");
+      if (!label || !n) return;
+      if (LANG === "ru") {
+        label.textContent = `${n} ${ruPlural(n, "деталь", "детали", "деталей")}`;
+      } else {
+        label.textContent = `${n} PIECES`;
+      }
+    });
+
+
+    const note = document.getElementById("autoStartNote");
+    if (note) note.textContent = T("autoStart");
+
+    // HUD labels
+    const timeLabel  = document.getElementById("timeLabel");
+    const movesLabel = document.getElementById("movesLabel");
+    if (timeLabel)  timeLabel.textContent  = T("time");
+    if (movesLabel) movesLabel.textContent = T("moves");
+  };
+  document.addEventListener("DOMContentLoaded", applyI18n);
+
+  // --- GameMonetize SDK helpers (donor-style ads + robust pause/resume) ---
+  let adPaused = false;
+  let wasRunningBeforeAd = false;
+  let pendingAction = null;
+
+  // If SDK wasn't ready at the moment of selecting difficulty, retry showing one ad once SDK_READY arrives.
+  let pendingStartAdRetry = false;
+
+  let _bgmWasPlaying = false;
+
+  let adRequestInFlight = false;
+  let adStarted = false;
+  let adStartGuardTimer = null;
+  let adMaxTimer = null;
+
+  const AdsPlan = {
+    t0: Date.now(),
+    startupDelayMs: 0,     // donor build
+    minIntervalMs: 60000,  // donor build
+    lastAdTs: 0,
+    canShow(){
+      return !!(window.sdk && (
+        typeof window.sdk.showInterstitial === "function" ||
+        typeof window.sdk.showBanner === "function" ||
+        typeof window.sdk.showAd === "function"
+      ));
+    },
+    canShowNow(){
+      const now = Date.now();
+      if (now - this.t0 < this.startupDelayMs) return false;
+      if (this.lastAdTs && (now - this.lastAdTs) < this.minIntervalMs) return false;
+      return true;
+    },
+    markShown(){ this.lastAdTs = Date.now(); }
+  };
+
+  function gmPauseForAd(){
+    adPaused = true;
+
+    // If this pause is related to an ad request, mark it as started
+    if (adRequestInFlight){
+      try{ AdsPlan.markShown(); }catch(e){}
+      adStarted = true;
+      if (adStartGuardTimer){ clearTimeout(adStartGuardTimer); adStartGuardTimer = null; }
+      adRequestInFlight = false;
+    }
+
+    // Freeze gameplay loop / timer if present
+    try{
+      wasRunningBeforeAd = !!running;
+      if (wasRunningBeforeAd) stopTimer();
+      if (typeof running !== "undefined") running = false;
+    }catch(e){}
+
+    // Stop any active drag
+    try{ dragging = null; draggingGroup = null; dragLead = null; }catch(e){}
+
+    // Pause music (remember intent to resume after ad)
+    try{ pauseBgmHard("ad"); }catch(e){}
+// Block pointer events
+    try{
+      const cvs = document.getElementById("c");
+      if (cvs) cvs.style.pointerEvents = "none";
+    }catch(e){}
+  }
+
+  function gmResumeAfterAd(){
+    adPaused = false;
+
+    if (adStartGuardTimer){ clearTimeout(adStartGuardTimer); adStartGuardTimer = null; }
+
+    try{ if (adMaxTimer){ clearTimeout(adMaxTimer); adMaxTimer = null; } }catch(e){}
+    adRequestInFlight = false;
+    adStarted = false;
+
+    // Restore pointer events
+    try{
+      const cvs = document.getElementById("c");
+      if (cvs) cvs.style.pointerEvents = "";
+    }catch(e){}
+
+    // Resume gameplay if it was running
+    try{
+      if (wasRunningBeforeAd){
+        wasRunningBeforeAd = false;
+        if (typeof running !== "undefined") running = true;
+        startTimer();
+        redraw();
+      }
+    }catch(e){}
+
+    // Resume music
+    try{ _bgmNeedUserKick = true; }catch(e){}
+    try{ clearBgmPause("ad"); }catch(e){}
+    // A couple of retries in case visibility is restored slightly later
+    try{
+      setTimeout(()=>{ try{ clearBgmPause("ad"); }catch(e){} }, 180);
+      setTimeout(()=>{ try{ clearBgmPause("ad"); }catch(e){} }, 520);
+    }catch(e){}
+
+    // If we were waiting to run something after the ad — do it now
+    if (pendingAction){
+      const fn = pendingAction;
+      pendingAction = null;
+      try{ fn(); }catch(e){}
+    }
+  }
+
+  function gmShowAd(){
+    if (!AdsPlan.canShow() || !AdsPlan.canShowNow()) return false;
+    try{
+      adRequestInFlight = true;
+      adStarted = false;
+
+      // Call SDK (prefer interstitial if available)
+      if (window.sdk && typeof window.sdk.showInterstitial === "function") window.sdk.showInterstitial();
+      else if (window.sdk && typeof window.sdk.showBanner === "function") window.sdk.showBanner();
+      else if (window.sdk && typeof window.sdk.showAd === "function") window.sdk.showAd();
+
+      // Guard: if SDK does not pause the game shortly, assume ad did not start and continue.
+      if (adStartGuardTimer) clearTimeout(adStartGuardTimer);
+      adStartGuardTimer = setTimeout(() => {
+        try{
+          if (!adPaused && pendingAction){
+            const fn = pendingAction; pendingAction = null;
+            adRequestInFlight = false;
+            adStarted = false;
+            try{ fn(); }catch(e){}
+          }
+        }catch(e){}
+      }, 1400);
+
+      // Safety: if SDK never signals resume, auto-resume after a long timeout (avoid stuck state)
+      if (adMaxTimer) clearTimeout(adMaxTimer);
+      adMaxTimer = setTimeout(() => {
+        try{
+          if (adPaused){
+            // resume and continue
+            gmResumeAfterAd();
+          }
+        }catch(e){}
+      }, 70000);
+
+      return true;
+    }catch(e){
+      adRequestInFlight = false;
+      adStarted = false;
+      return false;
+    }
+  }
+
+  function runAfterAd(fn){
+    if (typeof fn !== "function") return;
+    // If ad can't be shown now — run action immediately
+    if (!gmShowAd()){
+      fn();
+      return;
+    }
+    // Otherwise run after SDK_GAME_START / resume
+    pendingAction = fn;
+  }
+
+  // Start-level ad: if an ad can't be shown right now (SDK not ready / no fill),
+  // start the level immediately, but retry showing ONE ad as soon as SDK_READY arrives.
+  function runAfterAdStart(fn){
+    if (typeof fn !== "function") return;
+
+    // If SDK is not available yet, start immediately and retry once when SDK becomes ready.
+    if (!AdsPlan.canShow()){
+      pendingStartAdRetry = true;
+      fn();
+      return;
+    }
+
+    // If SDK exists but we're in cooldown, start immediately (no retry).
+    if (!AdsPlan.canShowNow()){
+      fn();
+      return;
+    }
+
+    // Try to show an ad now; if it fails (no fill), start immediately and retry once on SDK_READY.
+    if (!gmShowAd()){
+      pendingStartAdRetry = true;
+      fn();
+      return;
+    }
+    pendingAction = fn;
+  }
+
+  function _gmHandleSdkEvent(ev){
+    const name = String((ev && ev.name) || "");
+    if (!name) return;
+    if (name === "SDK_READY") {
+      // If we failed to show an ad on difficulty selection (SDK wasn't ready),
+      // try once again after SDK is ready (while the game screen is active).
+      try{
+        const gameScreen = document.getElementById("game");
+        if (pendingStartAdRetry && gameScreen && gameScreen.classList.contains("active") && !adPaused){
+          pendingStartAdRetry = false;
+          gmShowAd();
+        }
+      }catch(e){}
+      return;
+    }
+    if (name === "SDK_GAME_PAUSE") { gmPauseForAd(); return; }
+    if (name === "SDK_GAME_START") { gmResumeAfterAd(); return; }
+
+    const U = name.toUpperCase();
+    // Be careful: strings like "AD_START" contain "START" — never resume on generic "START".
+    if (U.includes("AD_START") || U.includes("AD_BEGIN") || U.includes("AD_OPEN") || U.includes("REWARDED_START") || U.includes("INTERSTITIAL_START")) { gmPauseForAd(); return; }
+    if (U.includes("AD_END") || U.includes("AD_CLOSE") || U.includes("AD_COMPLETE") || U.includes("REWARDED_END") || U.includes("INTERSTITIAL_END") || U.includes("REWARDED_COMPLETE")) { gmResumeAfterAd(); return; }
+    if (U.includes("PAUSE")) { gmPauseForAd(); return; }
+    if (U.includes("RESUME")) { gmResumeAfterAd(); return; }
+  }
+
+  window.addEventListener("GM_SDK_EVENT", (e) => _gmHandleSdkEvent((e && e.detail) || {}));
+
+  // Some integrations call these directly:
+  window.__gmPause = gmPauseForAd;
+  window.__gmResume = gmResumeAfterAd;
+
+
+  // Correct "vh" for mobile browsers (address bar / safe areas)
+  function setVh(){
+    const vh = window.innerHeight * 0.01;
+    document.documentElement.style.setProperty('--vh', `${vh}px`);
+  }
+  setVh();
+  window.addEventListener('resize', setVh, {passive:true});
+  window.addEventListener('orientationchange', setVh, {passive:true});
+
+  // ====== helpers ======
+  const $ = (id) => document.getElementById(id);
+
+  // Prevent selection / context menu inside WebApp/game (canvas + UI)
+  document.addEventListener("contextmenu", (e) => { e.preventDefault(); }, {capture:true});
+  document.addEventListener("selectstart", (e) => { e.preventDefault(); }, {capture:true});
+  document.addEventListener("dragstart", (e) => { e.preventDefault(); }, {capture:true});
+
+  const screens = {
+    menu: $("screenMenu"),
+    img: $("screenChooseImage"),
+    pieces: $("screenChoosePieces"),
+    game: $("game"),
+  };
+  function showScreen(which){
+    Object.values(screens).forEach(s => s.classList?.remove("active"));
+    const isGame = (which === "game");
+if (isGame) screens.game.classList.add("active");
+    else screens[which].classList.add("active");
+  }
+  function pad2(n){ return String(n).padStart(2,"0"); }
+  function fmtTime(sec){
+    sec = Math.max(0, sec|0);
+    const m = (sec/60)|0, s = sec%60;
+    return pad2(m)+":"+pad2(s);
+  }
+
+  // ====== sound (autoplay-safe + pause on ads/hidden) ======
+  let soundOn = true;
+  const bgm = document.getElementById("bgm");
+  let bgmUnlocked = false;
+
+  // Track whether music was playing before an interruption (ad / tab hidden)
+  let _bgmShouldResume = false;
+  let _bgmPausedByAd = false;
+  let _bgmPausedByHidden = false;
+
+  // Some embeds block autoplay after an ad; retry on next user gesture.
+  let _bgmNeedUserKick = false;
+  let _bgmSavedVol = null;
+  let _bgmSavedMuted = null;
+  let _bgmForceMuted = false;
+  const BASE_BGM_VOL = 0.25;
+
+  // Playlist: current (bgm.mp3) + bgm10 + bgm8 (8 is last)
+  const BGM_PLAYLIST = [
+    "assets/audio/bgm.mp3",
+    "assets/audio/bgm10.mp3",
+    "assets/audio/bgm8.mp3",
+  ];
+  let bgmIndex = 0;
+
+  function bgmSetTrack(nextIndex, autoplay){
+    if(!bgm) return;
+    const n = BGM_PLAYLIST.length;
+    bgmIndex = ((nextIndex % n) + n) % n;
+
+    const wasMuted = bgm.muted;
+    const wasVol = bgm.volume;
+
+    try{
+      bgm.src = BGM_PLAYLIST[bgmIndex];
+      bgm.load();
+    }catch(e){}
+
+    try{
+      bgm.currentTime = 0;
+    }catch(e){}
+
+    // keep output state
+    try{ bgm.muted = wasMuted; }catch(e){}
+    try{ bgm.volume = wasVol; }catch(e){}
+
+    if (autoplay){
+      _bgmShouldResume = true;
+      _restoreBgmOutputIfAllowed();
+      const _p = bgm.play();
+    if (_p && typeof _p.then === "function"){
+      _p.then(()=>{ _bgmNeedUserKick = false; }).catch(()=>{ _bgmNeedUserKick = true; });
+    }
+    }
+  }
+
+  if (bgm){
+    bgm.volume = BASE_BGM_VOL;
+    bgm.preload = "auto";
+    // Disable native loop; we loop the playlist ourselves
+    bgm.loop = false;
+
+    // Ensure first track
+    try{
+      if (!bgm.src || !String(bgm.src).includes("assets/audio/bgm.mp3")){
+        bgm.src = BGM_PLAYLIST[0];
+      }
+    }catch(e){}
+
+    bgm.addEventListener("ended", () => {
+      if(!soundOn) return;
+      if(document.hidden) return;
+      if(adPaused || _bgmPausedByAd || _bgmPausedByHidden) return;
+      bgmSetTrack(bgmIndex + 1, true);
+    });
+  }
+
+  function _restoreBgmOutputIfAllowed(){
+    if(!bgm || !_bgmForceMuted) return;
+    // Restore only when allowed to actually play sound.
+    if(!soundOn) return;
+    if(document.hidden) return;
+    if(adPaused || _bgmPausedByAd || _bgmPausedByHidden) return;
+    try{
+      bgm.muted = (_bgmSavedMuted === null ? false : _bgmSavedMuted);
+      bgm.volume = (_bgmSavedVol === null ? BASE_BGM_VOL : _bgmSavedVol);
+    }catch(e){}
+    _bgmForceMuted = false;
+    _bgmSavedVol = null;
+    _bgmSavedMuted = null;
+  }
+
+  function pauseBgmHard(reason){
+    if(!bgm) return;
+    // Remember if it was actually playing
+    try{
+      if (bgmUnlocked && !bgm.paused && !bgm.ended){
+        _bgmShouldResume = true;
+      }
+    }catch(e){}
+
+    // Force-mute immediately (some browsers/embeds keep audio audible briefly)
+    try{
+      if (!_bgmForceMuted){
+        _bgmSavedVol = bgm.volume;
+        _bgmSavedMuted = bgm.muted;
+        _bgmForceMuted = true;
+      }
+      bgm.muted = true;
+      bgm.volume = 0;
+    }catch(e){}
+
+    try{ bgm.pause(); }catch(e){}
+
+    if (reason === "ad") _bgmPausedByAd = true;
+    if (reason === "hidden") _bgmPausedByHidden = true;
+  }
+
+  function tryResumeBgmHard(){
+    if(!bgm) return;
+    if(!bgmUnlocked) return;
+    if(!soundOn) return;
+    if(document.hidden) return;
+    if(adPaused || _bgmPausedByAd || _bgmPausedByHidden) return;
+    if(!_bgmShouldResume) return;
+    _restoreBgmOutputIfAllowed();
+    try{ if (bgm.ended) bgmSetTrack(bgmIndex + 1, false); }catch(e){}
+    const _p = bgm.play();
+    if (_p && typeof _p.then === "function"){
+      _p.then(()=>{ _bgmNeedUserKick = false; }).catch(()=>{ _bgmNeedUserKick = true; });
+    }
+  }
+
+  function clearBgmPause(reason){
+    if (reason === "ad") _bgmPausedByAd = false;
+    if (reason === "hidden") _bgmPausedByHidden = false;
+    tryResumeBgmHard();
+  }
+
+  function syncBgm(){
+    if(!bgm) return;
+    if(!bgmUnlocked) return;
+
+    if(!soundOn){
+      _bgmShouldResume = false;
+      try{ bgm.pause(); }catch(e){}
+      return;
+    }
+    // Do not auto-play while an ad is showing or tab is hidden
+    if (adPaused || document.hidden || _bgmPausedByAd || _bgmPausedByHidden) return;
+
+    _bgmShouldResume = true;
+    _restoreBgmOutputIfAllowed();
+    const _p = bgm.play();
+    if (_p && typeof _p.then === "function"){
+      _p.then(()=>{ _bgmNeedUserKick = false; }).catch(()=>{ _bgmNeedUserKick = true; });
+    }
+  }
+
+  function unlockBgmOnce(){
+    if(bgmUnlocked) return;
+    bgmUnlocked = true;
+    // Some environments (WebApp) require a play attempt on user gesture
+    syncBgm();
+  }
+
+  // Browsers block autoplay: start music after the first user interaction
+  window.addEventListener("pointerdown", unlockBgmOnce, {once:true, passive:true});
+  window.addEventListener("keydown", unlockBgmOnce, {once:true});
+
+
+  // If music was blocked from resuming after an ad, retry on next user gesture.
+  function kickBgmIfNeeded(){
+    if(!_bgmNeedUserKick) return;
+    if(!bgm || !bgmUnlocked) return;
+    if(!soundOn) { _bgmNeedUserKick = false; return; }
+    if(document.hidden || adPaused || _bgmPausedByAd || _bgmPausedByHidden) return;
+    _restoreBgmOutputIfAllowed();
+    try{
+      const p = bgm.play();
+      if (p && typeof p.then === "function"){
+        p.then(()=>{ _bgmNeedUserKick = false; }).catch(()=>{});
+      }
+    }catch(e){}
+  }
+  window.addEventListener("pointerdown", kickBgmIfNeeded, {passive:true});
+  window.addEventListener("keydown", kickBgmIfNeeded);
+
+  // Pause on tab/app hide, resume on return
+  function onHidden(){ pauseBgmHard("hidden"); }
+  function onShown(){ clearBgmPause("hidden"); }
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) onHidden();
+    else onShown();
+  });
+  window.addEventListener("pagehide", onHidden, {passive:true});
+  window.addEventListener("pageshow", onShown, {passive:true});
+  window.addEventListener("blur", onHidden, {passive:true});
+  window.addEventListener("focus", onShown, {passive:true});
+
+  function blip(){ if(!soundOn) return; /* silent by default */ }
+// ====== assets ======
+  const IMAGE_TITLES = {
+    en: ["Bunnies & Gifts", "Snow Maiden", "Holiday Dance", "Wolf’s Gift", "Santa Claus", "Snowman"],
+    ru: ["Зайчики и подарки", "Снегурочка", "Хоровод у ёлки", "Волк с подарком", "Дед Мороз", "Снеговик"]
+  };
+
+  const IMAGES = [
+    {src:"assets/images/img1.webp", title: IMAGE_TITLES[LANG][0]},
+    {src:"assets/images/img2.webp", title: IMAGE_TITLES[LANG][1]},
+    {src:"assets/images/img3.webp", title: IMAGE_TITLES[LANG][2]},
+    {src:"assets/images/img4.webp", title: IMAGE_TITLES[LANG][3]},
+    {src:"assets/images/img5.webp", title: IMAGE_TITLES[LANG][4]},
+    {src:"assets/images/img6.webp", title: IMAGE_TITLES[LANG][5]},
+  ];
+// ====== UI: thumbnails ======
+  let page = 0;
+  let selectedIndex = 0;
+  // ====== Sequential unlock (no stars) ======
+  const UNLOCK_KEY = "unlock_max_" + (window.GM_GAME_ID || "aa");
+  function getUnlockedMax(){
+    try{
+      const v = parseInt(localStorage.getItem(UNLOCK_KEY) || "0", 10);
+      if (Number.isFinite(v)) return Math.max(0, Math.min(v, IMAGES.length-1));
+    }catch(e){}
+    return 0;
+  }
+  function setUnlockedMax(v){
+    try{
+      const vv = Math.max(0, Math.min(v, IMAGES.length-1));
+      localStorage.setItem(UNLOCK_KEY, String(vv));
+    }catch(e){}
+  }
+  let unlockedMax = getUnlockedMax();
+  if (selectedIndex > unlockedMax) selectedIndex = unlockedMax;
+
+  const pageSize = 3;
+  const thumbGrid = $("thumbGrid");
+
+  
+  
+  function renderThumbs(){
+    thumbGrid.innerHTML = "";
+    const start = page*pageSize;
+    const slice = IMAGES.slice(start, start+pageSize);
+
+    slice.forEach((it, i) => {
+      const idx = start+i;
+      const locked = idx > unlockedMax;
+
+      const div = document.createElement("div");
+      div.className = "item" + (idx===selectedIndex ? " selected" : "") + (locked ? " locked" : "");
+      div.innerHTML = `<img src="${it.src}" alt="${it.title}">`;
+
+      div.addEventListener("click", () => {
+        if (locked){ try{ blip(); }catch(e){} return; }
+        selectedIndex = idx;
+        renderThumbs();
+        $("menuPreview").src = IMAGES[selectedIndex].src;
+      });
+
+      thumbGrid.appendChild(div);
+    });
+  }
+
+
+  $("imgPrev").addEventListener("click", () => { page = (page-1+Math.ceil(IMAGES.length/pageSize))%Math.ceil(IMAGES.length/pageSize); renderThumbs(); });
+  $("imgNext").addEventListener("click", () => { page = (page+1)%Math.ceil(IMAGES.length/pageSize); renderThumbs(); });
+
+  // ====== global buttons ======
+  $("btnClose").addEventListener("click", () => runAfterAd(() => { showScreen("img"); stopGame(); }));
+  $("goChooseImage").addEventListener("click", () => { showScreen("img"); renderThumbs(); });
+  const backToMenu1 = $("backToMenu1");
+  if (backToMenu1) backToMenu1.addEventListener("click", () => showScreen("img"));
+  $("goChoosePieces").addEventListener("click", () => showScreen("pieces"));
+$("backToImages").addEventListener("click", () => showScreen("img"));
+
+  $("btnSound").addEventListener("click", () => {
+    soundOn = !soundOn;
+    $("btnSound").textContent = soundOn ? "🔊" : "🔇";
+    syncBgm();
+  });
+
+  $("btnFs").addEventListener("click", async () => {
+    const el = document.documentElement;
+    try{
+      if (!document.fullscreenElement) await el.requestFullscreen();
+      else await document.exitFullscreen();
+    }catch(e){}
+  });
+
+  // ====== choose pieces -> start game ======
+  let chosenPieces = 64;
+  document.querySelectorAll(".pieceCard").forEach(card => {
+    card.addEventListener("click", () => {
+      chosenPieces = parseInt(card.dataset.n, 10);
+      $("menuPieces").textContent = String(chosenPieces);
+      runAfterAdStart(() => startGame());
+    });
+  });
+
+  // ====== Canvas game ======
+  const canvas = $("c");
+  const ctx = canvas.getContext("2d");
+  const confettiCanvas = $("confetti");
+  const confCtx = confettiCanvas ? confettiCanvas.getContext("2d") : null;
+  let dpr = 1;
+  function resize(){
+  dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+  const w = Math.floor(window.innerWidth);
+  const h = Math.floor(window.innerHeight);
+
+  // main puzzle canvas
+  canvas.width = Math.floor(w * dpr);
+  canvas.height = Math.floor(h * dpr);
+  canvas.style.width = w+"px";
+  canvas.style.height = h+"px";
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+
+  // confetti overlay canvas
+  if (confettiCanvas && confCtx){
+    confettiCanvas.width = Math.floor(w * dpr);
+    confettiCanvas.height = Math.floor(h * dpr);
+    confettiCanvas.style.width = w+"px";
+    confettiCanvas.style.height = h+"px";
+    confCtx.setTransform(dpr,0,0,dpr,0,0);
+  }
+}
+
+// --- IMPORTANT: keep layout centered on fullscreen/resize WITHOUT resetting progress ---
+let _relayoutRAF = 0;
+let _relayoutTO  = 0;
+
+function captureStateForRelayout(){
+  const state = new Map();
+  const W = window.innerWidth, H = window.innerHeight;
+  const cellW = board.w/cols, cellH = board.h/rows;
+
+  pieces.forEach(p => {
+    const key = p.r + "_" + p.c;
+    const cx = p.x + cellW/2;
+    const cy = p.y + cellH/2;
+
+    let zone = "G";
+    let rect = {x:0,y:0,w:W,h:H};
+
+    if (pointInRect(cx,cy,leftTray)) { zone = "L"; rect = leftTray; }
+    else if (pointInRect(cx,cy,rightTray)) { zone = "R"; rect = rightTray; }
+    else if (pointInRect(cx,cy,board)) { zone = "B"; rect = board; }
+
+    const ex = p.extra || 0;
+    const margin = 18;
+
+    let minX = rect.x + margin + ex;
+    let maxX = rect.x + rect.w - margin - ex - cellW;
+    let minY = rect.y + margin + ex;
+    let maxY = rect.y + rect.h - margin - ex - cellH;
+
+    if (maxX <= minX) { minX = rect.x + (rect.w - cellW)/2; maxX = minX; }
+    if (maxY <= minY) { minY = rect.y + (rect.h - cellH)/2; maxY = minY; }
+
+    let relX = 0.5, relY = 0.5;
+    if (!p.locked){
+      if (maxX > minX) relX = (p.x - minX) / (maxX - minX);
+      if (maxY > minY) relY = (p.y - minY) / (maxY - minY);
+    }
+    relX = Math.max(0, Math.min(1, relX));
+    relY = Math.max(0, Math.min(1, relY));
+
+    state.set(key, {
+      locked: !!p.locked,
+      zone,
+      relX,
+      relY,
+      gid: (typeof p.gid === 'number') ? p.gid : null,
+    });
+  });
+
+  return state;
+}
+
+function applyStateAfterRelayout(state){
+  const W = window.innerWidth, H = window.innerHeight;
+  const cellW = board.w/cols, cellH = board.h/rows;
+  let maxGid = 0;
+
+  pieces.forEach(p => {
+    const key = p.r + "_" + p.c;
+    const s = state.get(key);
+    if (!s) return;
+
+    p.locked = !!s.locked;
+
+    if (s.gid != null){
+      p.gid = s.gid;
+      if (s.gid > maxGid) maxGid = s.gid;
+    }
+
+    if (p.locked){
+      p.x = p.tx;
+      p.y = p.ty;
+      return;
+    }
+
+    let rect;
+    if (s.zone === "L") rect = leftTray;
+    else if (s.zone === "R") rect = rightTray;
+    else if (s.zone === "B") rect = board;
+    else rect = {x:0,y:0,w:W,h:H};
+
+    const ex = p.extra || 0;
+    const margin = 18;
+
+    const minX = rect.x + margin + ex;
+    const maxX = rect.x + rect.w - margin - ex - cellW;
+    const minY = rect.y + margin + ex;
+    const maxY = rect.y + rect.h - margin - ex - cellH;
+
+    if (maxX <= minX) p.x = rect.x + (rect.w - cellW)/2;
+    else p.x = minX + s.relX * (maxX - minX);
+
+    if (maxY <= minY) p.y = rect.y + (rect.h - cellH)/2;
+    else p.y = minY + s.relY * (maxY - minY);
+  });
+
+  if (maxGid) nextGid = Math.max(nextGid, maxGid + 1);
+
+  // cancel dragging safely
+  dragging = null;
+  draggingGroup = null;
+  dragLead = null;
+}
+
+function relayoutKeepProgress(){
+  // Robust relayout: fullscreen/resize must never leave a blank field.
+  const gameActive = screens.game.classList.contains("active");
+  const imgReady = !!(img && img.naturalWidth);
+  const hasPieces = !!(pieces && pieces.length);
+
+  // Capture state BEFORE we rebuild pieces (if there is an active puzzle).
+  let state = null;
+  if (gameActive && imgReady && hasPieces){
+    try{ state = captureStateForRelayout(); }catch(e){ state = null; }
+  }
+
+  // Always resize canvas first (this may clear it).
+  resize();
+
+  // If game screen is not visible, no need to rebuild now.
+  if (!gameActive) return;
+
+  // If image not ready yet, just redraw what we can (avoid NaNs).
+  if (!imgReady){
+    try{ redraw(); }catch(e){}
+    return;
+  }
+
+  // Recompute layout for new viewport.
+  layout();
+
+  // Rebuild pieces only when we can restore state (or when puzzle hasn't been built yet).
+  if (!hasPieces || state){
+    buildPieces();
+    if (state) applyStateAfterRelayout(state);
+    sanitizeAllGroupsUI();
+  }
+
+  redraw();
+}
+
+
+function scheduleRelayout(){
+  if (_relayoutRAF) cancelAnimationFrame(_relayoutRAF);
+  _relayoutRAF = requestAnimationFrame(() => {
+    _relayoutRAF = 0;
+    relayoutKeepProgress();
+  });
+
+  // some browsers update innerWidth/innerHeight a moment later on fullscreenchange
+  clearTimeout(_relayoutTO);
+  _relayoutTO = setTimeout(() => relayoutKeepProgress(), 120);
+}
+
+window.addEventListener("resize", scheduleRelayout);
+window.addEventListener("orientationchange", scheduleRelayout);
+document.addEventListener("fullscreenchange", scheduleRelayout);
+
+  // puzzle state
+  let img = new Image();
+  img.crossOrigin = "anonymous";
+  let cols=8, rows=8, total=64;
+  let board = {x:0,y:0,w:0,h:0};
+  let leftTray = {x:0,y:0,w:0,h:0};
+  let rightTray = {x:0,y:0,w:0,h:0};
+  let pieces = []; // {r,c,x,y,tx,ty,locked,path,maskCanvas,w,h,tab}
+  let tabsMap = null; // keep tab shapes so they don't change on resize/fullscreen
+  let finalReveal = false;
+  let finalStart = 0;
+  let finalAnim = 0;
+  let dragging = null;
+  let draggingGroup = null; // array of pieces being dragged together
+  let dragLead = null;       // piece that was initially grabbed
+  let dragOff = {x:0,y:0};
+  let hintOn = false;
+  let moves = 0;
+  let startedAt = 0;
+  let tickTimer = null;
+  let sec = 0;
+  let running = false;
+
+  function computeGrid(n){
+    // prefer near-square grids: 16=4x4,36=6x6,64=8x8,100=10x10
+    const s = Math.round(Math.sqrt(n));
+    return {rows:s, cols:s};
+  }
+
+  function layout(){
+    const W = window.innerWidth, H = window.innerHeight;
+    const pad = 18;
+    const topHud = (W < 860 ? 84 : 96);
+    const ar = img.naturalWidth / img.naturalHeight;
+
+    const narrow = W < 820;
+
+    if (narrow){
+      // Mobile/tablet: trays at the bottom (2 columns)
+      const trayH = Math.max(160, Math.floor(H * 0.28));
+      const trayY = H - trayH - pad;
+      const trayW = (W - pad*3) / 2;
+
+      leftTray  = { x: pad,          y: trayY, w: trayW, h: trayH };
+      rightTray = { x: pad*2+trayW,  y: trayY, w: trayW, h: trayH };
+
+      const boardMaxW = W - pad*2;
+      const boardMaxH = trayY - topHud - pad;
+
+      let bw = Math.min(boardMaxW, boardMaxH * ar);
+      let bh = bw / ar;
+      if (bh > boardMaxH){ bh = boardMaxH; bw = bh * ar; }
+
+      board = { x: (W - bw)/2, y: topHud + (boardMaxH - bh)/2, w:bw, h:bh };
+      return;
+    }
+
+    // Desktop: trays on the sides
+    const trayW = Math.max(190, Math.min(320, Math.floor(W * 0.18)));
+    leftTray  = { x: pad,              y: topHud, w: trayW, h: H - topHud - pad };
+    rightTray = { x: W - pad - trayW,  y: topHud, w: trayW, h: H - topHud - pad };
+
+    const boardMaxW = W - (trayW*2 + pad*4);
+    // Reserve a smaller bottom margin: Yandex UI already reduces viewport in many cases
+    // (keeping this modest prevents pieces from being hidden under overlays)
+    const boardMaxH = H - topHud - 60;
+
+    let bw = Math.min(boardMaxW, boardMaxH * ar);
+    let bh = bw / ar;
+    if (bh > boardMaxH){ bh = boardMaxH; bw = bh * ar; }
+    board = { x: (W - bw)/2, y: topHud + (boardMaxH - bh)/2, w:bw, h:bh };
+  }
+
+  function randIn(rect, margin=10){
+    return {
+      x: rect.x + margin + Math.random()*(rect.w - margin*2),
+      y: rect.y + margin + Math.random()*(rect.h - margin*2),
+    };
+  }
+
+  function pointInRect(x,y,r){ return x>=r.x && x<=r.x+r.w && y>=r.y && y<=r.y+r.h; }
+
+  function groupBox(group){
+    const b = groupBounds(group);
+    return { x: b.left, y: b.top, w: (b.right - b.left), h: (b.bottom - b.top) };
+  }
+
+  let _uiFullCache = null;
+    let _uiFullCacheAt = 0;
+    function getUiFullRects(padPx=0){
+      const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+      if (_uiFullCache && (now - _uiFullCacheAt) < 120) return _uiFullCache;
+      const canvasRect = canvas.getBoundingClientRect();
+      // Include fullscreen button too (GM): prevent pieces from being fully hidden under it.
+      const ids = ['btnFs','btnSound','btnClose','btnHint','btnShuffle','hintState'];
+      const rects = [];
+      for (const id of ids){
+        const el = document.getElementById(id);
+        if(!el) continue;
+        const st = getComputedStyle(el);
+        if (st.display === 'none' || st.visibility === 'hidden') continue;
+        const r = el.getBoundingClientRect();
+        if (r.width <= 0 || r.height <= 0) continue;
+        const obj = {
+          x: (r.left - canvasRect.left) - padPx,
+          y: (r.top  - canvasRect.top ) - padPx,
+          w: r.width  + padPx*2,
+          h: r.height + padPx*2,
+        };
+        // Fullscreen button: allow only a small overlap so tiny pieces cannot become ungrabbable.
+        if (id === 'btnFs') {
+          obj.maxOverlap = 0.22;
+          obj.centerOverlap = 0.18;
+        }
+        rects.push(obj);
+      }
+  
+      // Prevent pieces from getting trapped BETWEEN paired buttons.
+      // Even if a tiny piece can visually appear in the gap, pointer events are often captured
+      // by the buttons' boxes/shadows, making the piece impossible to grab.
+      function addSeamRect(idA, idB){
+        const aEl = document.getElementById(idA);
+        const bEl = document.getElementById(idB);
+        if (!aEl || !bEl) return;
+        const sa = getComputedStyle(aEl);
+        const sb = getComputedStyle(bEl);
+        if (sa.display === 'none' || sa.visibility === 'hidden') return;
+        if (sb.display === 'none' || sb.visibility === 'hidden') return;
+        const ra = aEl.getBoundingClientRect();
+        const rb = bEl.getBoundingClientRect();
+        if (ra.width <= 0 || ra.height <= 0 || rb.width <= 0 || rb.height <= 0) return;
+  
+        const a = {
+          x: (ra.left - canvasRect.left) - padPx,
+          y: (ra.top  - canvasRect.top ) - padPx,
+          w: ra.width  + padPx*2,
+          h: ra.height + padPx*2,
+        };
+        const b = {
+          x: (rb.left - canvasRect.left) - padPx,
+          y: (rb.top  - canvasRect.top ) - padPx,
+          w: rb.width  + padPx*2,
+          h: rb.height + padPx*2,
+        };
+  
+        const L = (a.x <= b.x) ? a : b;
+        const R = (a.x <= b.x) ? b : a;
+        const y = Math.min(L.y, R.y);
+        const h = Math.max(L.y + L.h, R.y + R.h) - y;
+        const gapL = L.x + L.w;
+        const gapR = R.x;
+  
+        // A "seam" barrier: either the real gap (expanded) or a small strip at the join.
+        const seamPad = 10;
+        let seamX, seamW;
+        const gapW = gapR - gapL;
+        if (gapW > 2){
+          seamX = gapL - seamPad;
+          seamW = gapW + seamPad*2;
+        } else {
+          const cx = (gapL + gapR) / 2;
+          seamW = seamPad * 2;
+          seamX = cx - seamW/2;
+        }
+        rects.push({
+          x: seamX,
+          y: y - seamPad,
+          w: seamW,
+          h: h + seamPad*2,
+          hard: true,
+        });
+      }
+  
+      // Pairs on the right side
+      addSeamRect('btnSound','btnClose');
+      addSeamRect('btnHint','btnShuffle');
+  
+      _uiFullCache = rects;
+      _uiFullCacheAt = now;
+      return rects;
+    }
+  
+    function boxInside(box, r){
+      return box.x >= r.x && box.y >= r.y && (box.x + box.w) <= (r.x + r.w) && (box.y + box.h) <= (r.y + r.h);
+    }
+  
+    function rectsOverlap(a,b){
+      return !(a.x + a.w <= b.x || b.x + b.w <= a.x || a.y + a.h <= b.y || b.y + b.h <= a.y);
+    }
+  
+    function randInSafe(rect, margin=10, w=0, h=0){
+      // random TOP-LEFT that keeps whole (w×h) inside rect, optionally avoiding UI
+      const avoid = getUiAvoidRects();
+      const W = window.innerWidth, H = window.innerHeight;
+      const ww = w || 0, hh = h || 0;
+      const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+
+      let minX = rect.x + margin;
+      let maxX = rect.x + rect.w - margin - ww;
+      let minY = rect.y + margin;
+      let maxY = rect.y + rect.h - margin - hh;
+
+      if (maxX <= minX || maxY <= minY){
+        const cx = rect.x + (rect.w - ww)/2;
+        const cy = rect.y + (rect.h - hh)/2;
+        return { x: clamp(cx, margin, W - margin - ww), y: clamp(cy, margin, H - margin - hh) };
+      }
+
+      const pick = () => ({
+        x: minX + Math.random() * (maxX - minX),
+        y: minY + Math.random() * (maxY - minY),
+      });
+
+      if(!avoid || !avoid.length){
+        const xy = pick();
+        return { x: clamp(xy.x, margin, W - margin - ww), y: clamp(xy.y, margin, H - margin - hh) };
+      }
+
+      for(let i=0;i<280;i++){
+        const xy = pick();
+        const box = {x: xy.x, y: xy.y, w: ww, h: hh};
+        let ok = true;
+        for(const ar of avoid){ if(rectsOverlap(box, ar)){ ok=false; break; } }
+        if(ok) return { x: clamp(xy.x, margin, W - margin - ww), y: clamp(xy.y, margin, H - margin - hh) };
+      }
+
+      const xy = pick();
+      return { x: clamp(xy.x, margin, W - margin - ww), y: clamp(xy.y, margin, H - margin - hh) };
+    }
+    // --- /Safe spawn ---
+  
+  
+    // Place TOP-LEFT of piece cell strictly inside tray (taking tabs/extra into account)
+    function randInTraySafe(tray, margin, cellW, cellH, extra){
+      const avoid = getUiAvoidRects();
+      const ex = extra || 0;
+      const Wc = canvas.width || window.innerWidth;
+      const Hc = canvas.height || window.innerHeight;
+      const clampVal = (v, a, b) => Math.max(a, Math.min(b, v));
+  
+      const minX = tray.x + margin + ex;
+      const maxX = tray.x + tray.w - margin - ex - cellW;
+      const minY = tray.y + margin + ex;
+      const maxY = tray.y + tray.h - margin - ex - cellH;
+  
+      // If tray is too small, center the piece in it
+      if (maxX <= minX || maxY <= minY){
+        const cx = tray.x + (tray.w - cellW)/2;
+        const cy = tray.y + (tray.h - cellH)/2;
+        return { x: clampVal(cx, margin + ex, Wc - margin - ex - cellW), y: clampVal(cy, margin + ex, Hc - margin - ex - cellH) };
+      }
+  
+      for (let i=0;i<260;i++){
+        const x = minX + Math.random()*(maxX - minX);
+        const y = minY + Math.random()*(maxY - minY);
+  
+        // piece draw box (including tabs)
+        const box = { x: x - ex, y: y - ex, w: cellW + ex*2, h: cellH + ex*2 };
+  
+        let ok = true;
+        for(const ar of avoid){
+          if(rectsOverlap(box, ar)) { ok = false; break; }
+        }
+        if(ok) return {x: clampVal(x, margin + ex, Wc - margin - ex - cellW), y: clampVal(y, margin + ex, Hc - margin - ex - cellH)};
+      }
+  
+      const rx = minX + Math.random()*(maxX - minX);
+      const ry = minY + Math.random()*(maxY - minY);
+      return { x: clampVal(rx, margin + ex, Wc - margin - ex - cellW), y: clampVal(ry, margin + ex, Hc - margin - ex - cellH) };
+    }
+  
+    function groupBox(group){
+      const b = groupBounds(group);
+      return { x: b.left, y: b.top, w: (b.right - b.left), h: (b.bottom - b.top) };
+    }
+  
+    function pushOutDelta(box, ar){
+      const dxL = ar.x - (box.x + box.w);
+      const dxR = (ar.x + ar.w) - box.x;
+      const dyU = ar.y - (box.y + box.h);
+      const dyD = (ar.y + ar.h) - box.y;
+      const cand = [
+        {dx: dxL, dy: 0,  abs: Math.abs(dxL)},
+        {dx: dxR, dy: 0,  abs: Math.abs(dxR)},
+        {dx: 0,  dy: dyU, abs: Math.abs(dyU)},
+        {dx: 0,  dy: dyD, abs: Math.abs(dyD)},
+      ].sort((a,b)=>a.abs-b.abs);
+      return cand;
+    }
+  
+    
+    function rectContainsPoint(r, x, y){
+      return x >= r.x && x <= (r.x + r.w) && y >= r.y && y <= (r.y + r.h);
+    }
+    function overlapArea(a,b){
+      const x1 = Math.max(a.x, b.x);
+      const y1 = Math.max(a.y, b.y);
+      const x2 = Math.min(a.x + a.w, b.x + b.w);
+      const y2 = Math.min(a.y + a.h, b.y + b.h);
+      const w = Math.max(0, x2 - x1);
+      const h = Math.max(0, y2 - y1);
+      return w * h;
+    }
+  
+    function keepGroupOutOfUI(group, isDragging=false){
+      // Soft protection: allow pieces to slide *partially* under UI,
+      // but never allow them to become hidden more than ~half (especially small pieces on 64/100).
+      // A small padding makes hit-safe zones closer to what the user actually can click/grab,
+      // especially with shadows / rounded corners.
+      const avoid = getUiFullRects(4);
+      if (!avoid || !avoid.length) return;
+  
+      // Allow partial overlap, but limit how deep the piece/group can go under UI.
+      // This is important because UI elements capture pointer events: the player must always
+      // have a visible area to grab the piece back.
+      //
+      // maxOverlap: max allowed UI-covered area relative to the group's bbox.
+      // While dragging we keep it slightly looser to avoid jitter.
+      // Allow up to ~half of the bbox under UI, but never more.
+      // (Needed because UI captures pointer events — the player must always have something to grab.)
+      const maxOverlap = isDragging ? 0.50 : 0.48;
+      const centerOverlap = isDragging ? 0.45 : 0.40;
+  
+      for (let it=0; it<3; it++){
+        let box = groupBox(group);
+        let moved = false;
+        const areaBox = Math.max(1, box.w * box.h);
+        const cx = box.x + box.w/2;
+        const cy = box.y + box.h/2;
+  
+        for (const ar of avoid){
+          const a = overlapArea(box, ar);
+          if (a <= 0) continue;
+  
+          const ratio = a / areaBox;
+          const fully = boxInside(box, ar);
+          const centerIn = rectContainsPoint(ar, cx, cy);
+  
+          // allow about half overlap, but not more than that (some controls can override thresholds)
+          const hard = !!ar.hard;
+          const maxO = (typeof ar.maxOverlap === 'number') ? ar.maxOverlap : maxOverlap;
+          const centO = (typeof ar.centerOverlap === 'number') ? ar.centerOverlap : centerOverlap;
+          // For "seam" barriers (between paired buttons) we push out as soon as the group's center
+          // gets inside the seam. This prevents tiny pieces from becoming ungrabbable between buttons.
+          const deep = hard ? centerIn : (fully || (ratio > maxO) || (centerIn && ratio > centO));
+          if (!deep) continue;
+  
+          const options = pushOutDelta(box, ar);
+          let applied = false;
+          for (const opt of options){
+            const res = applyGroupDeltaClamped(group, opt.dx, opt.dy);
+            if (res && (res.dx !== 0 || res.dy !== 0)) { applied = true; break; }
+          }
+          moved = moved || applied;
+          box = groupBox(group);
+        }
+        if (!moved) break;
+      }
+    }
+  
+    // If a piece/group ended up inside UI "seams" (between buttons) and became ungrabbable,
+    // this will nudge it back to a playable area without changing any layout metrics.
+    function sanitizeAllGroupsUI(){
+      if (!pieces || !pieces.length) return;
+      const groups = new Map();
+      for (const p of pieces){
+        if (!p || p.locked) continue;
+        if (typeof p.gid !== 'number') p.gid = nextGid++;
+        if (!groups.has(p.gid)) groups.set(p.gid, []);
+        groups.get(p.gid).push(p);
+      }
+      for (const grp of groups.values()){
+        keepGroupOutOfUI(grp, false);
+      }
+    }
+  
+    // --- Group (glued pieces) support ---
+    let nextGid = 1;
+  
+    function getGroup(p){
+      if (!p || p.locked) return [p];
+      if (typeof p.gid !== 'number') p.gid = nextGid++;
+      const gid = p.gid;
+      const arr = [];
+      for (const x of pieces){
+        if (!x.locked && x.gid === gid) arr.push(x);
+      }
+      return arr.length ? arr : [p];
+    }
+  
+    function bringGroupToFront(group){
+      // keep relative order but move all to the end
+      for (const gp of group){
+        const i = pieces.indexOf(gp);
+        if (i >= 0) pieces.splice(i, 1);
+      }
+      for (const gp of group) pieces.push(gp);
+    }
+  
+    function groupBounds(group){
+      let left = 1e9, top = 1e9, right = -1e9, bottom = -1e9;
+      for (const p of group){
+        const l = p.x - p.extra;
+        const t = p.y - p.extra;
+        const r = l + p.offW;
+        const b = t + p.offH;
+        if (l < left) left = l;
+        if (t < top) top = t;
+        if (r > right) right = r;
+        if (b > bottom) bottom = b;
+      }
+      return {left, top, right, bottom};
+    }
+  
+    function applyGroupDeltaClamped(group, dx, dy){
+      const W = window.innerWidth, H = window.innerHeight;
+      const b = groupBounds(group);
+      const minDx = -b.left;
+      const maxDx = W - b.right;
+      const minDy = -b.top;
+      const maxDy = H - b.bottom;
+      const cdx = Math.max(minDx, Math.min(maxDx, dx));
+      const cdy = Math.max(minDy, Math.min(maxDy, dy));
+      if (cdx === 0 && cdy === 0) return {dx:0, dy:0};
+      for (const p of group){ p.x += cdx; p.y += cdy; }
+      return {dx:cdx, dy:cdy};
+    }
+  
+    function tryGlueGroup(group, snapDist){
+      // Try to snap the dragged group to another group (or to a locked anchor piece).
+      const cellW = board.w/cols, cellH = board.h/rows;
+      const byKey = new Map();
+      for (const p of pieces) byKey.set(p.r + ',' + p.c, p);
+  
+      let best = null;
+      for (const p of group){
+        const nbs = [
+          {r:p.r-1, c:p.c, dx:0,      dy:-cellH},
+          {r:p.r+1, c:p.c, dx:0,      dy: cellH},
+          {r:p.r,   c:p.c-1, dx:-cellW, dy:0},
+          {r:p.r,   c:p.c+1, dx: cellW, dy:0},
+        ];
+        for (const nb of nbs){
+          const q = byKey.get(nb.r + ',' + nb.c);
+          if (!q) continue;
+          if (!q.locked){
+            if (typeof q.gid !== 'number') q.gid = nextGid++;
+            if (q.gid === p.gid) continue;
+          }
+          const alignX = q.x - nb.dx;
+          const alignY = q.y - nb.dy;
+          const dist = Math.hypot(alignX - p.x, alignY - p.y);
+          if (dist <= snapDist){
+            if (!best || dist < best.dist){
+              best = {dist, shiftX: alignX - p.x, shiftY: alignY - p.y, target: q, anchor: q.locked};
+            }
+          }
+        }
+      }
+  
+      if (!best) return false;
+  
+      applyGroupDeltaClamped(group, best.shiftX, best.shiftY);
+  
+      // Merge only with an unlocked target group
+      if (!best.anchor){
+        const targetGid = best.target.gid;
+        for (const p of group) p.gid = targetGid;
+      }
+      blip();
+      return true;
+    }
+  
+    function snapGroupToBoardAndLock(group, snapDist){
+      // If any piece in the group is close to its target slot, snap whole group into place
+      // and lock all pieces that end up exactly on their slots.
+      let best = null;
+      for (const p of group){
+        const dist = Math.hypot(p.x - p.tx, p.y - p.ty);
+        if (dist <= snapDist){
+          if (!best || dist < best.dist) best = {p, dist};
+        }
+      }
+      if (!best) return false;
+  
+      applyGroupDeltaClamped(group, best.p.tx - best.p.x, best.p.ty - best.p.y);
+  
+      const eps = 1.2;
+      for (const p of group){
+        const d = Math.hypot(p.x - p.tx, p.y - p.ty);
+        if (d <= eps){
+          p.x = p.tx;
+          p.y = p.ty;
+          p.locked = true;
+          p.gid = -1;
+        }
+      }
+      return true;
+    }
+    // --- /Group support ---
+
+
+
+  // --- Safe spawn: never place pieces under UI buttons ---
+  function getUiAvoidRects(padPx=12){
+    const canvasRect = c.getBoundingClientRect();
+    const ids = ['btnFs','btnSound','btnClose','btnHint','btnShuffle'];
+    const rects = [];
+    ids.forEach(id => {
+      const el = document.getElementById(id);
+      if(!el) return;
+      const r = el.getBoundingClientRect();
+      if(r.width <= 0 || r.height <= 0) return;
+      rects.push({
+        x: (r.left - canvasRect.left) - padPx,
+        y: (r.top  - canvasRect.top ) - padPx,
+        w: r.width  + padPx*2,
+        h: r.height + padPx*2
+      });
+    });
+    return rects;
+  }
+
+  function rectsOverlap(a,b){
+    return !(a.x + a.w <= b.x || b.x + b.w <= a.x || a.y + a.h <= b.y || b.y + b.h <= a.y);
+  }
+
+  function randInSafe(rect, margin=10, w=0, h=0){
+      // random TOP-LEFT that keeps whole (w×h) inside rect, optionally avoiding UI
+      const avoid = getUiAvoidRects();
+      const W = window.innerWidth, H = window.innerHeight;
+      const ww = w || 0, hh = h || 0;
+      const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+
+      let minX = rect.x + margin;
+      let maxX = rect.x + rect.w - margin - ww;
+      let minY = rect.y + margin;
+      let maxY = rect.y + rect.h - margin - hh;
+
+      if (maxX <= minX || maxY <= minY){
+        const cx = rect.x + (rect.w - ww)/2;
+        const cy = rect.y + (rect.h - hh)/2;
+        return { x: clamp(cx, margin, W - margin - ww), y: clamp(cy, margin, H - margin - hh) };
+      }
+
+      const pick = () => ({
+        x: minX + Math.random() * (maxX - minX),
+        y: minY + Math.random() * (maxY - minY),
+      });
+
+      if(!avoid || !avoid.length){
+        const xy = pick();
+        return { x: clamp(xy.x, margin, W - margin - ww), y: clamp(xy.y, margin, H - margin - hh) };
+      }
+
+      for(let i=0;i<280;i++){
+        const xy = pick();
+        const box = {x: xy.x, y: xy.y, w: ww, h: hh};
+        let ok = true;
+        for(const ar of avoid){ if(rectsOverlap(box, ar)){ ok=false; break; } }
+        if(ok) return { x: clamp(xy.x, margin, W - margin - ww), y: clamp(xy.y, margin, H - margin - hh) };
+      }
+
+      const xy = pick();
+      return { x: clamp(xy.x, margin, W - margin - ww), y: clamp(xy.y, margin, H - margin - hh) };
+    }
+  // --- /Safe spawn ---
+
+
+  function piecePath(px, py, pw, ph, tabs){
+    // tabs: {top,right,bottom,left} values -1/0/1 (in/out)
+    const size = Math.min(pw, ph);
+    const tab = size*0.22;
+    const neck = tab*0.55;
+    const midx = px + pw/2;
+    const midy = py + ph/2;
+    const p = new Path2D();
+    p.moveTo(px, py);
+
+    // TOP
+    if (tabs.top !== 0){
+      const dir = tabs.top;
+      p.lineTo(midx - neck, py);
+      p.bezierCurveTo(midx - neck, py - dir*tab, midx + neck, py - dir*tab, midx + neck, py);
+    }
+    p.lineTo(px + pw, py);
+
+    // RIGHT
+    if (tabs.right !== 0){
+      const dir = tabs.right;
+      p.lineTo(px + pw, midy - neck);
+      p.bezierCurveTo(px + pw + dir*tab, midy - neck, px + pw + dir*tab, midy + neck, px + pw, midy + neck);
+    }
+    p.lineTo(px + pw, py + ph);
+
+    // BOTTOM
+    if (tabs.bottom !== 0){
+      const dir = tabs.bottom;
+      p.lineTo(midx + neck, py + ph);
+      p.bezierCurveTo(midx + neck, py + ph + dir*tab, midx - neck, py + ph + dir*tab, midx - neck, py + ph);
+    }
+    p.lineTo(px, py + ph);
+
+    // LEFT
+    if (tabs.left !== 0){
+      const dir = tabs.left;
+      p.lineTo(px, midy + neck);
+      p.bezierCurveTo(px - dir*tab, midy + neck, px - dir*tab, midy - neck, px, midy - neck);
+    }
+    p.closePath();
+    return p;
+  }
+
+  function buildPieces(){
+    pieces = [];
+    const cellW = board.w / cols;
+    const cellH = board.h / rows;
+
+    // tabs map
+    let tabs;
+if (tabsMap && tabsMap.length === rows && tabsMap[0] && tabsMap[0].length === cols){
+  tabs = tabsMap; // reuse previous tabs (important on fullscreen/resize)
+} else {
+  tabs = Array.from({length: rows}, () => Array.from({length: cols}, () => ({top:0,right:0,bottom:0,left:0})));
+  for (let r=0; r<rows; r++){
+    for (let c=0; c<cols; c++){
+      // edges: 0, internal: random +/-1 with matching neighbors
+      tabs[r][c].top = (r===0) ? 0 : -tabs[r-1][c].bottom;
+      tabs[r][c].left = (c===0) ? 0 : -tabs[r][c-1].right;
+      tabs[r][c].right = (c===cols-1) ? 0 : (Math.random()<0.5 ? 1 : -1);
+      tabs[r][c].bottom = (r===rows-1) ? 0 : (Math.random()<0.5 ? 1 : -1);
+    }
+  }
+  tabsMap = tabs;
+}
+
+    // create per-piece mask canvas (for clipped draw)
+    const srcW = img.naturalWidth, srcH = img.naturalHeight;
+    for (let r=0; r<rows; r++){
+      for (let c=0; c<cols; c++){
+        const tx = board.x + c*cellW;
+        const ty = board.y + r*cellH;
+        const pw = cellW;
+        const ph = cellH;
+        // Offscreen size includes tab extra
+        const extra = Math.min(pw,ph)*0.26;
+        const offW = Math.ceil(pw + extra*2);
+        const offH = Math.ceil(ph + extra*2);
+        const off = document.createElement("canvas");
+        off.width = Math.ceil(offW*dpr);
+        off.height = Math.ceil(offH*dpr);
+        const octx = off.getContext("2d");
+        octx.setTransform(dpr,0,0,dpr,0,0);
+
+        const localX = extra, localY = extra;
+        const path = piecePath(localX, localY, pw, ph, tabs[r][c]);
+
+        // clip
+        octx.save();
+        octx.clip(path);
+
+        // draw image portion with matching scaling
+        // map board rect -> image rect
+        // draw the full image aligned to the board so tabs contain real pixels (no empty gaps)
+        const bleed = 1.5;
+        octx.drawImage(
+          img,
+          0, 0, srcW, srcH,
+          localX - c*pw - bleed,
+          localY - r*ph - bleed,
+          pw*cols + bleed*2,
+          ph*rows + bleed*2
+        );
+        octx.restore();
+
+        // border highlight
+        octx.strokeStyle = "rgba(0,0,0,.35)";
+        octx.lineWidth = 3;
+        octx.stroke(path);
+        octx.strokeStyle = "rgba(255,255,255,.25)";
+        octx.lineWidth = 2;
+        octx.stroke(path);
+
+        // place in trays (left/right alternating)
+        const tray = ((r*cols+c) % 2 === 0) ? leftTray : rightTray;
+        const pos = randInSafe(tray, 24, offW, offH);
+        pieces.push({
+          r,c, tx,ty, locked:false,
+          home: (((r*cols+c) % 2 === 0) ? "L" : "R"),
+          x: pos.x, y: pos.y,
+          off, offW, offH, extra,
+          pathLocal: path, // in offscreen coords
+          tabs: tabs[r][c],
+        });
+      }
+    }
+    shufflePieces(false);
+  }
+
+  function shufflePieces(countMove=true){
+    // Shuffle only free single pieces that are currently in the SIDE TRAYS.
+    // Glued groups (gid with >1 pieces) are NOT moved.
+    // Pieces already pulled onto the board stay in place.
+    const groups = new Map();
+
+    for (const p of pieces){
+      if (p.locked) continue;
+      if (typeof p.gid !== 'number') p.gid = nextGid++;
+      if (!groups.has(p.gid)) groups.set(p.gid, []);
+      groups.get(p.gid).push(p);
+    }
+
+    for (const [gid, grp] of groups){
+      if (grp.length !== 1) continue; // keep glued groups in place
+
+      const box = groupBox(grp);
+      const cx = box.x + box.w/2;
+      const cy = box.y + box.h/2;
+      let tray = null;
+      if (!countMove){
+        // initial distribution / hard shuffle: force into piece's home tray
+        const h = (grp[0] && grp[0].home) || "L";
+        tray = (h === "R") ? rightTray : leftTray;
+      } else {
+        if (pointInRect(cx,cy,leftTray)) tray = leftTray;
+        else if (pointInRect(cx,cy,rightTray)) tray = rightTray;
+        else continue; // not in trays -> don't shuffle
+      }
+
+      const margin = 34;
+      let minX = tray.x + margin;
+      let maxX = tray.x + tray.w - margin - box.w;
+      let minY = tray.y + margin;
+      let maxY = tray.y + tray.h - margin - box.h;
+
+      let nx, ny;
+      if (maxX <= minX) nx = tray.x + (tray.w - box.w)/2;
+      else nx = minX + Math.random()*(maxX - minX);
+      if (maxY <= minY) ny = tray.y + (tray.h - box.h)/2;
+      else ny = minY + Math.random()*(maxY - minY);
+
+      const dx = nx - box.x;
+      const dy = ny - box.y;
+      applyGroupDeltaClamped(grp, dx, dy);
+      // keep piece from becoming fully hidden under UI
+      keepGroupOutOfUI(grp, false);
+    }
+
+    // If something got stuck between UI buttons earlier, nudge it out (without moving groups).
+    sanitizeAllGroupsUI();
+
+    if (countMove) moves++;
+    updateHud();
+    redraw();
+  }
+
+  function updateHud(){
+    $("m").textContent = String(moves);
+    $("t").textContent = fmtTime(sec);
+    $("hintState").textContent = "Hint: " + (hintOn ? "ON" : "OFF");
+  }
+
+  function startTimer(){
+    stopTimer();
+    sec = 0;
+    startedAt = Date.now();
+    tickTimer = setInterval(() => {
+      if(!running) return;
+      sec = Math.floor((Date.now()-startedAt)/1000);
+      updateHud();
+    }, 250);
+  }
+  function stopTimer(){
+    if (tickTimer){ clearInterval(tickTimer); tickTimer=null; }
+  }
+
+
+  // ====== Confetti (canvas overlay) ======
+  let _confettiRunning = false;
+  let _confettiParticles = [];
+  let _confettiUntil = 0;
+
+  function confettiBurst(durationMs=1500){
+    if(!confettiCanvas || !confCtx) return;
+    _confettiParticles = [];
+
+    const W = window.innerWidth, H = window.innerHeight;
+    const count = Math.max(360, Math.min(900, Math.floor((W * H) / 3600)));
+    const palette = ["#ff4d6d","#ffd166","#06d6a0","#4dabf7","#b197fc","#f783ac","#ff922b"];
+
+    for (let i=0; i<count; i++){
+      const size = 6 + Math.random()*8;
+      _confettiParticles.push({
+        x: Math.random() * W,
+        y: -20 - Math.random() * (H * 0.25),
+        vx: (Math.random() - 0.5) * 3.4,
+        vy: 2.8 + Math.random() * 4.5,
+        r: Math.random() * Math.PI * 2,
+        vr: (Math.random() - 0.5) * 0.28,
+        w: size,
+        h: size * (0.55 + Math.random()*0.35),
+        a: 1,
+        color: palette[(Math.random() * palette.length) | 0],
+      });
+    }
+
+    _confettiUntil = (typeof performance !== "undefined" ? performance.now() : Date.now()) + durationMs;
+    if (!_confettiRunning){
+      _confettiRunning = true;
+      requestAnimationFrame(confettiTick);
+    }
+  }
+
+  function confettiTick(t){
+    if(!confettiCanvas || !confCtx){ _confettiRunning = false; return; }
+
+    const W = window.innerWidth, H = window.innerHeight;
+    confCtx.clearRect(0,0,W,H);
+
+    const now = (typeof t === "number") ? t : ((typeof performance !== "undefined") ? performance.now() : Date.now());
+    const nearEnd = Math.max(0, _confettiUntil - now);
+    const fade = Math.min(1, Math.max(0, nearEnd / 350));
+
+    const dt = 16/1000;
+    for (const p of _confettiParticles){
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 9.8 * dt * 0.55;  // gravity
+      p.r += p.vr;
+      p.a = fade;
+
+      confCtx.save();
+      confCtx.globalAlpha = p.a;
+      confCtx.translate(p.x, p.y);
+      confCtx.rotate(p.r);
+      confCtx.fillStyle = p.color;
+      confCtx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+      confCtx.restore();
+    }
+
+    _confettiParticles = _confettiParticles.filter(p => p.y < H + 120 && p.a > 0.02);
+
+    if (now < _confettiUntil && _confettiParticles.length){
+      requestAnimationFrame(confettiTick);
+    } else {
+      confCtx.clearRect(0,0,W,H);
+      _confettiParticles = [];
+      _confettiRunning = false;
+    }
+  }
+  function redraw(){
+    if (!screens.game.classList.contains("active")) return;
+    const W = window.innerWidth, H = window.innerHeight;
+    ctx.clearRect(0,0,W,H);
+
+    // Slight dim over CSS background for better contrast while assembling the puzzle
+    ctx.save();
+    ctx.fillStyle = "rgba(0,0,0,.12)";
+    ctx.fillRect(0,0,W,H);
+    ctx.restore();
+
+    // background pattern already in CSS; we just draw translucent frame
+    // trays + board frame (slightly brighter for the dark winter background)
+    ctx.save();
+    ctx.lineWidth = 2;
+
+    // trays
+    ctx.fillStyle = "rgba(0,0,0,.26)";
+    ctx.strokeStyle = "rgba(255,255,255,.28)";
+    roundRect(ctx, leftTray.x, leftTray.y, leftTray.w, leftTray.h, 18, true, true);
+    roundRect(ctx, rightTray.x, rightTray.y, rightTray.w, rightTray.h, 18, true, true);
+
+    // board frame
+    ctx.fillStyle = "rgba(0,0,0,.30)";
+    ctx.strokeStyle = "rgba(255,255,255,.28)";
+    roundRect(ctx, board.x-10, board.y-10, board.w+20, board.h+20, 16, true, true);
+    ctx.restore();
+
+    // board hint image
+    if (hintOn){
+      ctx.save();
+      ctx.globalAlpha = 0.22;
+      ctx.drawImage(img, board.x, board.y, board.w, board.h);
+      ctx.restore();
+    }
+
+    // draw locked pieces on the board (normal brightness)
+    pieces.forEach(p => {
+      if (!p.locked) return;
+      ctx.drawImage(p.off, p.tx - p.extra, p.ty - p.extra, p.offW, p.offH);
+    });
+    // If solved, fade in a clean full image on top (no seams)
+    if (finalReveal){
+      const t = Math.min(1, (performance.now() - finalStart) / 450);
+      ctx.save();
+      ctx.globalAlpha = t;
+      ctx.drawImage(img, board.x, board.y, board.w, board.h);
+      ctx.restore();
+      if (t < 1){
+        cancelAnimationFrame(finalAnim);
+        finalAnim = requestAnimationFrame(redraw);
+      }
+    }
+
+
+    // draw pieces (unlocked then dragged on top)
+    const list = pieces.slice().sort((a,b)=> (a===dragging?1:0) - (b===dragging?1:0));
+    list.forEach(p => {
+      if (p.locked) return;
+      drawPiece(p);
+    });
+    if (dragging && !dragging.locked) drawPiece(dragging, true);
+  }
+
+  function drawPiece(p, onTop=false){
+    ctx.save();
+    if (onTop){
+      ctx.shadowColor = "rgba(0,0,0,.45)";
+      ctx.shadowBlur = 22;
+      ctx.shadowOffsetY = 10;
+    } else {
+      ctx.shadowColor = "rgba(0,0,0,.28)";
+      ctx.shadowBlur = 14;
+      ctx.shadowOffsetY = 8;
+    }
+    ctx.drawImage(p.off, p.x - p.extra, p.y - p.extra, p.offW, p.offH);
+    ctx.restore();
+  }
+
+  function roundRect(ctx,x,y,w,h,r,fill,stroke){
+    const rr = Math.min(r, w/2, h/2);
+    ctx.beginPath();
+    ctx.moveTo(x+rr,y);
+    ctx.arcTo(x+w,y,x+w,y+h,rr);
+    ctx.arcTo(x+w,y+h,x,y+h,rr);
+    ctx.arcTo(x,y+h,x,y,rr);
+    ctx.arcTo(x,y,x+w,y,rr);
+    ctx.closePath();
+    if(fill) ctx.fill();
+    if(stroke) ctx.stroke();
+  }
+
+  // hit testing with offscreen path
+  function hitPiece(px, py){
+    // iterate from topmost to bottom
+    for (let i=pieces.length-1; i>=0; i--){
+      const p = pieces[i];
+      if (p.locked) continue;
+      // point in offscreen local coords
+      const lx = (px - (p.x - p.extra));
+      const ly = (py - (p.y - p.extra));
+      if (lx < 0 || ly < 0 || lx > p.offW || ly > p.offH) continue;
+      // use pathLocal (in offscreen CSS coords)
+      if (ctx.isPointInPath(p.pathLocal, lx, ly)){
+        return p;
+      }
+    }
+    return null;
+  }
+
+  function pointerPos(ev){
+    const rect = canvas.getBoundingClientRect();
+    const x = (ev.clientX - rect.left);
+    const y = (ev.clientY - rect.top);
+    return {x,y};
+  }
+
+  function onDown(ev){
+    if (adPaused) return;
+    // If we couldn't show an ad when selecting difficulty, try once on the first gameplay interaction.
+    if (pendingStartAdRetry){
+      pendingStartAdRetry = false;
+      try{ if (gmShowAd()) return; }catch(e){}
+    }
+    ev.preventDefault();
+    const pos = pointerPos(ev);
+    const p = hitPiece(pos.x, pos.y);
+    if (!p) return;
+
+    // drag whole glued group
+    dragging = p;
+    dragLead = p;
+    draggingGroup = getGroup(p);
+    bringGroupToFront(draggingGroup);
+
+    dragOff.x = pos.x - p.x;
+    dragOff.y = pos.y - p.y;
+    canvas.setPointerCapture(ev.pointerId);
+    redraw();
+  }
+  function onMove(ev){
+    if (adPaused) return;
+    if (!dragging || !draggingGroup || !dragLead) return;
+    ev.preventDefault();
+    const pos = pointerPos(ev);
+
+    const desiredX = pos.x - dragOff.x;
+    const desiredY = pos.y - dragOff.y;
+    const dx = desiredX - dragLead.x;
+    const dy = desiredY - dragLead.y;
+
+    applyGroupDeltaClamped(draggingGroup, dx, dy);
+    // Allow partial overlap, but prevent the group from becoming fully hidden under UI controls
+    keepGroupOutOfUI(draggingGroup, true);
+    redraw();
+  }
+  function onUp(ev){
+    if (adPaused) return;
+    if (!dragging || !draggingGroup || !dragLead) return;
+    ev.preventDefault();
+    try{ canvas.releasePointerCapture(ev.pointerId); }catch(e){}
+
+    // take a snapshot of the originally dragged pieces
+    const draggedSnapshot = draggingGroup.slice();
+
+    dragging = null;
+    draggingGroup = null;
+    dragLead = null;
+
+    const snap = Math.min(board.w/cols, board.h/rows) * 0.25;
+    moves++; updateHud();
+
+    // 1) Glue to nearby groups (repeat until no more snaps)
+    // We always move the group that the player dragged; after a merge we keep using the merged gid.
+    let anchorPiece = null;
+    for (const p of draggedSnapshot){
+      if (!p.locked){ anchorPiece = p; break; }
+    }
+    if (anchorPiece){
+      let safety = 0;
+      while (safety++ < 10){
+        const g = getGroup(anchorPiece);
+        if (!g.length) break;
+        const changed = tryGlueGroup(g, snap);
+        if (!changed) break;
+        // after merge, anchorPiece keeps its gid; getGroup() will return the merged group
+      }
+
+      // 2) Snap the glued group to the board and lock pieces
+      const g2 = getGroup(anchorPiece);
+      snapGroupToBoardAndLock(g2, snap);
+      // Safety: if UI shifted (Yandex panels), keep the moved group out from under buttons
+      keepGroupOutOfUI(g2, false);
+    } else {
+      // fallback for safety
+      const p = draggedSnapshot[0];
+      if (p && !p.locked){
+        const dist = Math.hypot(p.x - p.tx, p.y - p.ty);
+        if (dist < snap){
+          p.x = p.tx;
+          p.y = p.ty;
+          p.locked = true;
+          p.gid = -1;
+          blip();
+        }
+      }
+    }
+
+    // win?
+    if (pieces.every(pp => pp.locked)){
+      win();
+    }
+    redraw();
+  }
+
+  function startConfetti(durationMs=1300){
+    try{
+      const root = document.createElement('div');
+      root.className = 'confetti-root';
+      document.body.appendChild(root);
+
+      const colors = ['#ff3b30','#ffcc00','#34c759','#007aff','#af52de','#ff2d55'];
+      const end = performance.now() + durationMs;
+
+      function spawn(){
+        for (let i=0;i<12;i++){
+          const p = document.createElement('div');
+          p.className = 'confetti';
+          p.style.left = (Math.random()*100) + 'vw';
+          p.style.background = colors[(Math.random()*colors.length)|0];
+
+          const dx = ((Math.random()*2-1) * 40).toFixed(1) + 'vw';
+          const rot = ((Math.random()*2-1) * 540).toFixed(0) + 'deg';
+          p.style.setProperty('--dx', dx);
+          p.style.setProperty('--rot', rot);
+
+          const dur = 900 + Math.random()*600;
+          p.style.animationDuration = dur.toFixed(0) + 'ms';
+
+          root.appendChild(p);
+          setTimeout(() => p.remove(), dur + 220);
+        }
+        if (performance.now() < end) requestAnimationFrame(spawn);
+        else setTimeout(() => root.remove(), 1200);
+      }
+      spawn();
+    }catch(e){}
+  }
+
+
+function startFruitRain(durationMs=1400){
+    try{
+      const root = document.createElement('div');
+      root.className = 'confetti-root';
+      document.body.appendChild(root);
+
+      // African fruits 🍌 (can extend later)
+      const fruits = ['🍌','🍌','🍌','🍌','🍌'];
+      const end = performance.now() + durationMs;
+
+      function spawn(){
+        for (let i=0;i<10;i++){
+          const p = document.createElement('div');
+          p.className = 'fruit';
+          p.style.left = (Math.random()*100) + 'vw';
+          p.textContent = fruits[(Math.random()*fruits.length)|0];
+
+          const dx = ((Math.random()*2-1) * 32).toFixed(1) + 'vw';
+          const rot = ((Math.random()*2-1) * 520).toFixed(0) + 'deg';
+          p.style.setProperty('--dx', dx);
+          p.style.setProperty('--rot', rot);
+
+          const size = 22 + Math.random()*20;
+          p.style.fontSize = size.toFixed(0) + 'px';
+
+          const dur = 950 + Math.random()*650;
+          p.style.animationDuration = dur.toFixed(0) + 'ms';
+
+          root.appendChild(p);
+          setTimeout(() => p.remove(), dur + 260);
+        }
+        if (performance.now() < end) requestAnimationFrame(spawn);
+        else setTimeout(() => root.remove(), 1200);
+      }
+      spawn();
+    }catch(e){}
+  }
+
+
+
+function win(){
+         
+    // Reveal the final image first, then show the "Done" dialog
+    if (finalReveal) return;
+    finalReveal = true;
+    // Unlock next picture sequentially
+    try{
+      const next = Math.min(IMAGES.length-1, selectedIndex + 1);
+      if (next > unlockedMax){ unlockedMax = next; setUnlockedMax(unlockedMax); }
+    }catch(e){}
+    finalStart = performance.now();
+    hintOn = false;
+    updateHud();
+    redraw();
+
+    // Give the player a moment to enjoy the final picture
+    setTimeout(() => {
+      running = false;
+      stopTimer();
+      $("winTime").textContent = fmtTime(sec);
+      $("winMoves").textContent = String(moves);
+      startFruitRain(1500);
+      $("winToast").classList.add("show");}, 650);
+  }
+
+  function hideWin(){ $("winToast").classList.remove("show"); }
+
+  $("winClose").addEventListener("click", hideWin);
+  $("winMore").addEventListener("click", () => { runAfterAd(() => { hideWin(); showScreen("img"); renderThumbs(); }); });
+  $("winReplay").addEventListener("click", () => { runAfterAd(() => { hideWin(); startGame(true); }); });
+  // game buttons
+  $("btnHint").addEventListener("click", () => { hintOn = !hintOn; updateHud(); redraw(); });
+  $("btnShuffle").addEventListener("click", () => shufflePieces(true));
+
+  // keys (ESC exits)
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape"){
+      if ($("winToast").classList.contains("show")) hideWin();
+      else { showScreen("img"); stopGame(); }
+    }
+  });
+
+  function stopGame(){
+    running = false;
+    stopTimer();
+    canvas.removeEventListener("pointerdown", onDown);
+    canvas.removeEventListener("pointermove", onMove);
+    canvas.removeEventListener("pointerup", onUp);
+    canvas.removeEventListener("pointercancel", onUp);
+  }
+
+  function startGame(replay=false){ 
+    tabsMap = null; // new puzzle -> new tabs
+    finalReveal = false;
+    finalStart = 0;
+
+    showScreen("game");
+    resize();
+    hintOn = false;
+    moves = 0;
+    updateHud();
+    hideWin();
+
+    const grid = computeGrid(chosenPieces);
+    rows = grid.rows; cols = grid.cols; total = rows*cols;
+
+    // load image
+    const src = IMAGES[selectedIndex].src;
+    img = new Image();
+    img.onload = () => {
+      layout();
+      buildPieces();
+      running = true;
+      startTimer();
+      canvas.addEventListener("pointerdown", onDown, {passive:false});
+      canvas.addEventListener("pointermove", onMove, {passive:false});
+      canvas.addEventListener("pointerup", onUp, {passive:false});
+      canvas.addEventListener("pointercancel", onUp, {passive:false});
+      redraw();
+    };
+    img.onerror = () => {
+      // if image fails, just go back
+      alert("Could not load the image. Please check the assets/images folder.");
+      showScreen("img");
+    };
+    img.src = src + "?v=" + Date.now(); // bypass cache
+  }
+
+  // init
+  showScreen("img");
+  renderThumbs();
+  const mp = $("menuPreview");
+  if (mp) mp.src = IMAGES[selectedIndex].src;
+})();
+</script>
+</body>
+</html>

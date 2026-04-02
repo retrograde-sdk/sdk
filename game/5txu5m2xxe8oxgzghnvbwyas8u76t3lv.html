@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Zen Jigsaw Master</title>
+    <link rel="stylesheet" href="style.css">
+
+    <!-- GameMonetize SDK & AdManager -->
+    <script type="text/javascript">
+        // --- AD SETTINGS ---
+        const GAME_ID = "5txu5m2xxe8oxgzghnvbwyas8u76t3lv"; 
+        const AD_INTERVAL = 90000; // 90 seconds
+
+        window.AdManager = {
+            lastAdTime: 0,
+            adCallback: null,
+
+            // Linked in game.js to control game state
+            onPause: function() {}, 
+            onResume: function() {},
+
+            // Interstitial Ad with 90s cooldown
+            showInterstitial: function(callback) {
+                this.adCallback = callback;
+                const currentTime = Date.now();
+
+                if (currentTime - this.lastAdTime >= AD_INTERVAL) {
+                    console.log("AdManager: Showing Interstitial.");
+                    if (typeof sdk !== 'undefined' && sdk.showBanner !== 'undefined') {
+                        this.lastAdTime = currentTime;
+                        sdk.showBanner();
+                    } else {
+                        this.complete();
+                    }
+                } else {
+                    console.log("AdManager: On cooldown.");
+                    this.complete();
+                }
+            },
+
+            // Rewarded Ad (Immediate)
+            showRewarded: function(callback) {
+                this.adCallback = callback;
+                if (typeof sdk !== 'undefined' && sdk.showBanner !== 'undefined') {
+                    sdk.showBanner();
+                } else {
+                    this.complete();
+                }
+            },
+
+            // Callback completion logic
+            complete: function() {
+                if (this.adCallback) {
+                    this.adCallback();
+                    this.adCallback = null;
+                }
+            }
+        };
+
+        window.SDK_OPTIONS = {
+            gameId: GAME_ID,
+            onEvent: function (a) {
+                switch (a.name) {
+                    case "SDK_GAME_PAUSE":
+                        window.AdManager.onPause();
+                        break;
+                    case "SDK_GAME_START":
+                        window.AdManager.onResume();
+                        window.AdManager.complete();
+                        break;
+                    case "SDK_READY":
+                        console.log("GameMonetize SDK Ready");
+                        break;
+                }
+            }
+        };
+
+        (function (a, b, c) {
+            var d = a.getElementsByTagName(b)[0];
+            a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+        })(document, "script", "gamemonetize-sdk");
+    </script>
+
+    <script type="importmap">
+    {
+      "imports": {
+        "react/": "https://esm.sh/react@^19.2.3/",
+        "react": "https://esm.sh/react@^19.2.3"
+      }
+    }
+    </script>
+</head>
+<body>
+    <div id="app-root">
+        <!-- Loading Screen -->
+        <div id="loading-screen" class="view">
+            <div class="loader"></div>
+            <p>Loading...</p>
+        </div>
+
+        <!-- Main Menu -->
+        <div id="menu-view" class="view hidden">
+            <header class="menu-header">
+                <h1 id="t-choose-puzzle">Choose Puzzle</h1>
+            </header>
+            
+            <button id="prev-page" class="side-nav-btn prev">←</button>
+            <div id="levels-grid" class="levels-grid"></div>
+            <button id="next-page" class="side-nav-btn next">→</button>
+
+            <div class="pagination-footer">
+                <div id="page-dots" class="page-dots"></div>
+            </div>
+            <button id="toggle-mute-menu" class="mute-btn-fixed"></button>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game-view" class="view hidden">
+            <div id="top-bar" class="top-bar">
+                <div class="top-left">
+                    <button id="btn-back" class="icon-btn">← <span id="t-back">Back</span></button>
+                    <button id="btn-mute-game" class="icon-btn-mute"></button>
+                </div>
+                <div class="top-center">
+                    <button id="btn-hint" class="hint-btn">
+                        <span id="t-hint">Hint</span>
+                        <small id="hints-count">3 left</small>
+                    </button>
+                </div>
+                <div class="top-right">
+                    <button id="btn-clear" class="clear-btn">
+                        <span id="t-clear">Clear</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="main-layout">
+                <div id="board-container" class="board-container">
+                    <canvas id="game-canvas"></canvas>
+                    <div id="reference-thumb" class="reference-thumb">
+                        <img id="ref-img" src="" alt="Ref">
+                        <div id="t-ref-label">Sample</div>
+                    </div>
+                </div>
+                <div id="sidebar" class="sidebar">
+                    <div class="sidebar-header" id="t-storage">Storage</div>
+                    <div id="pieces-container" class="pieces-container"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pause Modal -->
+        <div id="pause-modal" class="modal hidden">
+            <div class="modal-content pause">
+                <div class="pause-icon">II</div>
+                <h2 id="t-pause">Pause</h2>
+                <div class="modal-buttons">
+                    <button id="btn-resume" class="primary-btn">Resume</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Victory Modal -->
+        <div id="win-modal" class="modal hidden">
+            <div class="modal-content victory">
+                <h2 id="t-victory">Victory!</h2>
+                <p id="t-win-text">Puzzle Completed!</p>
+                <button id="btn-win-close" class="primary-btn">Menu</button>
+            </div>
+        </div>
+
+        <!-- Rewarded Ad Modal -->
+        <div id="ad-modal" class="modal hidden">
+            <div class="modal-content ad">
+                <h3 id="t-no-hints">No hints left</h3>
+                <p id="t-no-hints-text">Watch an ad for 3 extra hints?</p>
+                <div class="modal-buttons">
+                    <button id="btn-ad-cancel" class="secondary-btn">Cancel</button>
+                    <button id="btn-ad-watch" class="primary-btn">Watch</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Orientation Warning -->
+        <div id="orientation-warning" class="orientation-warning hidden">
+            <div class="rotate-icon">🔄</div>
+            <p id="t-rotate">Please rotate your device</p>
+        </div>
+    </div>
+
+    <!-- Main Game Script -->
+    <script src="game.js"></script>
+</body>
+</html>

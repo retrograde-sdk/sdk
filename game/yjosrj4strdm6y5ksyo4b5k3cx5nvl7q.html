@@ -1,0 +1,2144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>Ball Stack Run</title>
+  <style>
+    :root{
+      --bg:#0f1220; --panel:#171a2b; --accent:#7cf6ff; --gold:#ffd75e; --danger:#ff5c7a;
+      --muted: rgba(255,255,255,.10);
+    }
+    html,body{ margin:0; height:100%; background:var(--bg); font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; color:#fff;  overflow:hidden;}
+    .wrap{ height:100%; display:flex; align-items:flex-start; justify-content:center; padding:16px; box-sizing:border-box; }
+    .card{width:min(560px, 100%);
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:18px;
+      box-shadow:0 16px 60px rgba(0,0,0,.45);
+      padding:14px;
+      position:relative;
+     max-height:calc(100vh - 32px); overflow:hidden; display:flex; flex-direction:column; }
+    .topbar{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:6px 4px 10px; }
+    .title{ font-weight:800; letter-spacing:.2px; }
+    .pill{ font-size:12px; padding:6px 10px; border-radius:999px; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.10); }
+    canvas{
+      display:block;
+      border-radius:14px;
+      background:#0b0e18;
+      border:1px solid rgba(255,255,255,.08);
+      touch-action:none; /* important for mobile drag */
+    }
+
+/* --- GameMonetize review fixes (800x600 safe) --- */
+    .gameArea{
+      /* JS will set an exact px width/height to preserve aspect without stretch */
+      margin: 0 auto;
+      flex: 1;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      overflow:hidden;
+    }
+    .gameArea canvas{
+      width:100%;
+      height:100%;
+      border-radius:14px;
+    }
+
+    .hud{
+      position:absolute; left:22px; top:64px;
+      display:flex; gap:8px; flex-wrap:wrap;
+      pointer-events:none;
+    }
+    .hud .chip{
+      pointer-events:none;
+      background:rgba(0,0,0,.35);
+      border:1px solid rgba(255,255,255,.12);
+      padding:6px 10px; border-radius:999px;
+      font-size:12px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 6px 18px rgba(0,0,0,.25);
+    }
+    /* ---- Premium overlay transitions ---- */
+    .overlay{
+      position:absolute; inset:0;
+      display:flex; /* keep layout stable; we animate visibility/opacity instead */
+      align-items:center; justify-content:center;
+      background:rgba(0,0,0,.55);
+      border-radius:18px;
+      opacity:0;
+      visibility:hidden;
+      pointer-events:none;
+      transition: opacity 180ms ease, visibility 180ms ease;
+      backdrop-filter: blur(8px);
+    }
+    .overlay.open{
+      opacity:1;
+      visibility:visible;
+      pointer-events:auto;
+    }
+    .modal{
+      width:min(440px, 92%);
+      background:rgba(20,24,44,.92);
+      border:1px solid rgba(255,255,255,.14);
+      border-radius:18px;
+      padding:18px;
+      text-align:center;
+      box-shadow:0 18px 60px rgba(0,0,0,.55);
+      transform: translateY(10px) scale(.98);
+      opacity:.98;
+      transition: transform 180ms ease;
+      position:relative;
+      overflow:hidden;
+    }
+    .overlay.open .modal{
+      transform: translateY(0) scale(1);
+    }
+    .modal::before{
+      content:"";
+      position:absolute;
+      inset:-1px;
+      background: radial-gradient(1000px 500px at 20% 0%, rgba(124,246,255,.16), transparent 60%),
+                  radial-gradient(900px 500px at 80% 10%, rgba(255,215,94,.10), transparent 55%);
+      pointer-events:none;
+      z-index:0;
+    }
+    .modal > *{ position:relative; z-index:1; }
+    .modal h1{ margin:0 0 6px; font-size:24px; }
+    .modal p{ margin:0 0 14px; color:rgba(255,255,255,.82); font-size:14px; line-height:1.45; }
+    .row{ display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+    button{
+      border:0; cursor:pointer;
+      padding:10px 14px; border-radius:12px;
+      font-weight:800;
+      background:linear-gradient(180deg, rgba(124,246,255,.95), rgba(124,246,255,.70));
+      color:#041015;
+      min-width:120px;
+      transition: transform 140ms ease, filter 140ms ease, box-shadow 140ms ease;
+      box-shadow: 0 10px 22px rgba(0,0,0,.25);
+    }
+    button:hover{ filter:brightness(1.04); box-shadow:0 12px 26px rgba(0,0,0,.30); }
+    button:focus-visible{ outline:none; box-shadow:0 0 0 3px rgba(124,246,255,.35), 0 12px 26px rgba(0,0,0,.32); }
+    button:active{ transform:scale(.98); }
+    .ghost{
+      background:rgba(255,255,255,.10);
+      color:#fff;
+      border:1px solid rgba(255,255,255,.14);
+    }
+    .ghost:hover{ filter:brightness(1.06); box-shadow:0 12px 26px rgba(0,0,0,.30); }
+
+    /* Reduced motion support */
+    @media (prefers-reduced-motion: reduce){
+      .overlay, .modal, button{ transition:none !important; animation:none !important; }
+    }
+    .tip{ font-size:12px; color:rgba(255,255,255,.75); margin-top:10px; }
+    .small{ font-size:12px; opacity:.85; }
+  
+    /* ---- Setup dialog controls ---- */
+    .field{ text-align:left; margin:10px 0; }
+    .field label{ display:block; font-size:12px; opacity:.85; margin:0 0 6px; }
+    .inp{
+      width:100%;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.06);
+      color:#fff;
+      outline:none;
+      font-weight:600;
+    }
+
+    /* Dropdown menu colors (fix white-on-white options) */
+    select.inp{ color:#fff; }
+    select.inp option, select.inp optgroup{
+      background:#111827; /* dark menu */
+      color:#eaf2ff;
+    }
+    select.inp option:checked{
+      background:#1f2937;
+      color:#ffffff;
+    }
+
+    /* Tiny ripple effect */
+    .ripple{
+      position:absolute;
+      border-radius:999px;
+      transform:scale(0);
+      opacity:.35;
+      pointer-events:none;
+      background:rgba(255,255,255,.85);
+      animation:ripple 520ms ease-out forwards;
+      mix-blend-mode: overlay;
+    }
+    @keyframes ripple{
+      to{ transform:scale(1); opacity:0; }
+    }
+
+    /* Modal spring animation */
+    .modal.spring{
+      animation: modalSpring 520ms cubic-bezier(.2, 1.35, .25, 1) both;
+    }
+    @keyframes modalSpring{
+      0%   { transform: translateY(18px) scale(.92); filter: blur(.2px); }
+      60%  { transform: translateY(-2px) scale(1.02); filter: blur(0px); }
+      100% { transform: translateY(0) scale(1); filter: blur(0px); }
+    }
+
+    /* Smooth overlay-to-overlay transitions */
+    .overlay.closing{ opacity:0; visibility:visible; pointer-events:none; }
+    .overlay.closing .modal{ transform: translateY(10px) scale(.98); }
+
+    .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .hint{ font-size:12px; color:rgba(255,255,255,.72); margin-top:8px; }
+
+  
+    .overlay .modal{ max-height: calc(100vh - 60px); overflow:auto; }
+</style>
+
+  <!-- GameMonetize SDK (required for monetization) -->
+  <script type="text/javascript">
+    window.SDK_OPTIONS = {
+      gameId: "yjosrj4strdm6y5ksyo4b5k3cx5nvl7q",
+      onEvent: function (a) {
+        // Forward SDK events to the game code (defined later)
+        if (window.gm_onSDKEvent) window.gm_onSDKEvent(a.name);
+      }
+    };
+    (function (a, b, c) {
+      var d = a.getElementsByTagName(b)[0];
+      if (!a.getElementById(c)) {
+        a = a.createElement(b);
+        a.id = c;
+        a.src = "https://api.gamemonetize.com/sdk.js";
+        d.parentNode.insertBefore(a, d);
+      }
+    })(document, "script", "gamemonetize-sdk");
+  </script>
+
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="topbar">
+      <div class="title">Ball Stack Run</div>
+      <div class="pill">Mouse / Touch / ← →</div>
+    </div>
+
+    <div class="hud">
+      <div class="chip" id="chipScore">Score: 0</div>
+      <div class="chip" id="chipStack">Stack: 1</div>
+      <div class="chip" id="chipSpeed">Speed: 1.0x</div>
+    </div>
+
+    <div class="gameArea"><canvas id="game" width="420" height="700"></canvas></div>
+
+
+    <!-- Player Setup (first launch + customize) -->
+    <div class="overlay" id="setupOverlay" aria-hidden="true">
+      <div class="modal">
+        <h1 style="margin-bottom:2px;">Welcome!</h1>
+        <p class="small" style="margin-top:0;">Choose your style. You can change it later from the Start screen.</p>
+
+        <div class="field">
+          <label for="playerNameInput">Your name</label>
+          <input id="playerNameInput" class="inp" maxlength="16" placeholder="e.g. Ahsan" />
+        </div>
+
+        <div class="grid2">
+          <div class="field">
+            <label for="ballShapeSelect">Ball shape</label>
+            <select id="ballShapeSelect" class="inp">
+              <option value="circle">Circle</option>
+              <option value="square">Square</option>
+              <option value="triangle">Triangle</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="ballColorSelect">Ball color</label>
+            <select id="ballColorSelect" class="inp">
+              <option value="#7cf6ff">Neon Cyan</option>
+              <option value="#ffd75e">Gold</option>
+              <option value="#ff5c7a">Pink</option>
+              <option value="#7cff4a">Neon Green</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid2">
+          <div class="field">
+            <label for="obShapeSelect">Obstacle shape</label>
+            <select id="obShapeSelect" class="inp">
+              <option value="rect">Rectangle</option>
+              <option value="pill">Pill</option>
+              <option value="diamond">Diamond</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="obColorSelect">Obstacle color</label>
+            <select id="obColorSelect" class="inp">
+              <option value="#ff5c7a">Danger Pink</option>
+              <option value="#ff9c5c">Orange</option>
+              <option value="#7b61ff">Purple</option>
+              <option value="#00d37a">Mint</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid2">
+          <div class="field">
+            <label for="bgSelect">Background</label>
+            <select id="bgSelect" class="inp">
+              <option value="neon">Neon Night</option>
+              <option value="sunset">Sunset</option>
+              <option value="forest">Forest</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="soundSelect">Sound</label>
+            <select id="soundSelect" class="inp">
+              <option value="on">On</option>
+              <option value="off">Off</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:6px;">
+          <button id="btnSetupSave">Save & Continue</button>
+        </div>
+        <div class="hint">Tip: Revive shows an ad on GameMonetize. Locally it revives for testing.</div>
+      </div>
+    </div>
+
+
+    
+    <!-- Loading -->
+    <div class="overlay open" id="loadingOverlay" aria-hidden="false">
+      <div class="modal">
+        <h1 style="margin-bottom:6px;">Loading…</h1>
+        <div style="height:10px; background:rgba(255,255,255,.08); border-radius:999px; overflow:hidden;">
+          <div id="loadingBar" style="height:10px; width:10%; background:linear-gradient(90deg,#4ad6ff,#ffd54a);"></div>
+        </div>
+        <div id="loadingText" class="small" style="margin-top:10px; opacity:.8;">Preparing your run…</div>
+      </div>
+    </div>
+
+<!-- Start -->
+    <div class="overlay" id="startOverlay" aria-hidden="true">
+      <div class="modal">
+        <h1>Ball Stack Run</h1>
+        <p>Drag left/right to collect coins and build your stack. Avoid obstacles — they reduce your stack. If stack reaches 0, game over.</p>
+        <div class="row">
+          <button id="btnPlay">Play</button>
+          <button class="ghost" id="btnCustomize">Customize</button>
+          <button class="ghost" id="btnHow">How to Play</button>
+        </div>
+        <div class="tip">Tip: Stay near the center and react fast as speed increases.</div>
+      </div>
+    </div>
+
+    <!-- Game Over -->
+    <div class="overlay" id="gameOverOverlay">
+      <div class="modal">
+        <h1>Game Over</h1>
+        <p id="finalText"></p>
+        <div class="row">
+          <button id="btnRestart">Restart</button>
+          <button class="ghost" id="btnRevive">Revive (Ad)</button>
+          <button class="ghost" id="btnBack">Back</button>
+        </div>
+        <div class="tip small" id="gameOverTip"></div>
+      </div>
+    </div>
+
+    <!-- How to play -->
+    <div class="overlay" id="howOverlay">
+      <div class="modal">
+        <h1>How to Play</h1>
+        <p>
+          ✅ Collect <b style="color:var(--gold)">gold coins</b> to increase stack.<br/>
+          ❌ Hit <b style="color:var(--danger)">red obstacles</b> and lose stack.<br/>
+          🎯 Survive longer as speed increases to get a higher score.
+        </p>
+        <div class="row">
+          <button id="btnCloseHow">Got it</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+(async () => {
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d', { alpha: false });
+
+  const chipScore = document.getElementById('chipScore');
+  const chipStack = document.getElementById('chipStack');
+  const chipSpeed = document.getElementById('chipSpeed');
+
+  const startOverlay = document.getElementById('startOverlay');
+  const gameOverOverlay = document.getElementById('gameOverOverlay');
+  const howOverlay = document.getElementById('howOverlay');
+
+  const btnPlay = document.getElementById('btnPlay');
+  const btnRestart = document.getElementById('btnRestart');
+  const btnRevive = document.getElementById('btnRevive');
+  const btnBack = document.getElementById('btnBack');
+  const btnHow = document.getElementById('btnHow');
+  const btnCloseHow = document.getElementById('btnCloseHow');
+  const finalText = document.getElementById('finalText');
+  const gameOverTip = document.getElementById('gameOverTip');
+
+
+  const setupOverlay = document.getElementById('setupOverlay');
+  const btnCustomize = document.getElementById('btnCustomize');
+  const playerNameInput = document.getElementById('playerNameInput');
+  const ballShapeSelect = document.getElementById('ballShapeSelect');
+  const ballColorSelect = document.getElementById('ballColorSelect');
+  const obShapeSelect = document.getElementById('obShapeSelect');
+  const obColorSelect = document.getElementById('obColorSelect');
+  const bgSelect = document.getElementById('bgSelect');
+  const soundSelect = document.getElementById('soundSelect');
+  const btnSetupSave = document.getElementById('btnSetupSave');
+
+  // --- Player settings (saved) ---
+  let playerName = "Player";
+  const playerStyle = {
+    ballShape: "circle",
+    ballColor: "#7cf6ff",
+    obstacleShape: "rect",
+    obstacleColor: "#ff5c7a",
+    background: "neon",
+    sound: "on",
+  };
+
+  function loadPlayerSettings() {
+    try {
+      const raw = localStorage.getItem("ballstack_settings");
+      if (!raw) return false;
+      const saved = JSON.parse(raw);
+      if (saved.playerName) playerName = String(saved.playerName).slice(0,16);
+      if (saved.playerStyle) Object.assign(playerStyle, saved.playerStyle);
+      return true;
+    } catch { return false; }
+  }
+
+  function savePlayerSettings() {
+    localStorage.setItem("ballstack_settings", JSON.stringify({ playerName, playerStyle }));
+  }
+
+  function openSetup() {
+    // prefill
+    playerNameInput.value = playerName;
+    ballShapeSelect.value = playerStyle.ballShape;
+    ballColorSelect.value = playerStyle.ballColor;
+    obShapeSelect.value = playerStyle.obstacleShape;
+    obColorSelect.value = playerStyle.obstacleColor;
+    bgSelect.value = playerStyle.background;
+    soundSelect.value = playerStyle.sound;
+
+    // show setup and pause game
+    // IMPORTANT: hide the Start menu first, otherwise (because it's later in the DOM)
+    // it remains visible on top of the setup dialog.
+    // Smooth transition Start -> Setup
+    hideOverlay(howOverlay);
+    hideOverlay(gameOverOverlay);
+    switchOverlay(startOverlay, setupOverlay);
+  }
+
+  function closeSetup() {
+    hideOverlay(setupOverlay);
+  }
+// --- Audio (simple) ---
+  const SFX = {
+    click: new Audio("sounds/click.wav"),
+    coin: new Audio("sounds/coin.wav"),
+    hit: new Audio("sounds/hit.wav"),
+    power: new Audio("sounds/power.wav"),
+    gameover: new Audio("sounds/gameover.wav"),
+    bgm: new Audio("sounds/bgm.wav"),
+  };
+  SFX.bgm.loop = true;
+  SFX.bgm.volume = 0.28;
+  SFX.click.volume = 0.55;
+  SFX.coin.volume = 0.55;
+  SFX.hit.volume = 0.65;
+  SFX.power.volume = 0.55;
+  SFX.gameover.volume = 0.65;
+
+  let audioUnlocked = false;
+  function unlockAudioOnce() {
+    if (audioUnlocked) return;
+    audioUnlocked = true;
+    // Prime audio on first user gesture
+    try { SFX.bgm.play().then(()=>{ SFX.bgm.pause(); SFX.bgm.currentTime = 0; }); } catch {}
+  }
+
+  function setSoundEnabled(on) {
+    const enabled = on && playerStyle.sound === "on";
+    for (const k of Object.keys(SFX)) SFX[k].muted = !enabled;
+    if (enabled) {
+      // start bgm softly when entering gameplay
+      try { if (running && !gameOver) SFX.bgm.play(); } catch {}
+    } else {
+      try { SFX.bgm.pause(); } catch {}
+    }
+  }
+
+  function playSfx(key){
+    if (playerStyle.sound !== "on") return;
+    const a = SFX[key];
+    if (!a) return;
+    try { a.currentTime = 0; a.play(); } catch {}
+  }
+
+  // ---------- GameMonetize SDK integration ----------
+
+  // GameMonetize SDK docs: https://gamemonetize.com/sdk
+  // The SDK will call SDK_GAME_PAUSE before showing an ad and SDK_GAME_START after it ends.
+
+  // show midgame ad only every 3rd game over (≈ every 2–3 deaths)
+  let gameOverCount = 0;
+
+  let adInProgress = false;
+  let adTimeoutId = null;
+
+  // Ad cooldown handling (GameMonetize rejects requests made too soon)
+  const AD_COOLDOWN_MS = 25000; // 25s safe gap
+  let lastAdFinishedAt = -1;
+
+  // If the user clicked "Revive (Ad)" we will revive only after the ad finishes.
+  let pendingRewardRevive = false;
+
+  
+  
+  // True only if the Reward/Revive ad actually started (SDK paused the game).
+  let rewardAdStarted = false;
+// Start-session ad flow: show ad on Play, then start game after ad finishes.
+  let pendingStartAfterAd = false;
+  let startAdShown = false;
+function pauseGameForAd() {
+    running = false;
+    pauseReason = "ad";
+    pausedAt = performance.now();
+    adInProgress = true;
+
+    // Mark that a rewarded revive ad really started only when the SDK pauses the game.
+    if (pendingRewardRevive) rewardAdStarted = true;
+
+    // mute audio while ad is playing (required)
+    setSoundEnabled(false);
+
+    // Failsafe: resume if ad callbacks/events never arrive (adblock/no-fill/etc.)
+    if (adTimeoutId) clearTimeout(adTimeoutId);
+    adTimeoutId = setTimeout(() => {
+      if (adInProgress) {
+        adInProgress = false;
+        pauseReason = "";
+        setSoundEnabled(true);
+        if (!gameOver) running = true;
+        // do NOT auto-grant revive on timeout
+        pendingRewardRevive = false;
+        rewardAdStarted = false;
+      }
+    }, 9000);
+  }
+
+  function resumeGameAfterAd() {
+    lastAdFinishedAt = performance.now();
+    adInProgress = false;
+    pauseReason = "";
+    if (adTimeoutId) { clearTimeout(adTimeoutId); adTimeoutId = null; }
+
+    // unmute / restore audio after ad
+    setSoundEnabled(true);
+
+    // If this ad was for revive, grant revive ONLY if the ad really started (SDK paused content).
+    if (pendingRewardRevive) {
+      const canRevive = rewardAdStarted;
+      pendingRewardRevive = false;
+      rewardAdStarted = false;
+      if (canRevive) {
+        reviveWithCountdown();
+      } else {
+        // Rewarded ad did not actually play (too soon / canceled / no fill) -> stay on Game Over.
+        showToast("Ad not available right now. Try again in a moment.");
+      }
+      return;
+    }
+
+    if (!gameOver) running = true;
+  }
+
+  // SDK event bridge (called from window.SDK_OPTIONS in <head>)
+  window.gm_onSDKEvent = function(eventName) {
+    switch (eventName) {
+      case "SDK_GAME_PAUSE":
+      case "CONTENT_PAUSE_REQUESTED":
+        pauseGameForAd();
+        break;
+      case "SDK_GAME_START":
+      case "CONTENT_RESUME_REQUESTED":
+        // If we are waiting to start the first run after the Play-click ad, start now.
+        if (pendingStartAfterAd) {
+          pendingStartAfterAd = false;
+          startGame();
+        } else {
+          resumeGameAfterAd();
+        }
+        break;
+      case "SDK_READY":
+        // sdk is ready
+        break;
+    }
+  };
+
+  function showGMAd() {
+    // GameMonetize docs call this "showBanner" (it's the video/interstitial trigger).
+    if (typeof sdk !== "undefined" && typeof sdk.showBanner === "function") {
+      sdk.showBanner();
+      return true;
+    }
+    return false;
+  }
+
+  function requestMidgameAd() {
+    // Only request if SDK exists; otherwise just continue (no blocking)
+    showGMAd();
+  }
+
+  function requestRewardedAdForRevive() {
+    // Respect cooldown to avoid "requested too soon" failures.
+    const now = performance.now();
+    if (adInProgress) return;
+    if (lastAdFinishedAt > 0 && (now - lastAdFinishedAt) < AD_COOLDOWN_MS) {
+      showToast("Ad not ready yet. Please wait a few seconds and try again.");
+      return;
+    }
+    // Request a rewarded revive ad. Only revive if the SDK actually pauses (ad started) and then resumes.
+    pendingRewardRevive = true;
+    rewardAdStarted = false;
+    const ok = showGMAd();
+    if (!ok) {
+      // If SDK is unavailable, do NOT grant revive automatically.
+      pendingRewardRevive = false;
+      rewardAdStarted = false;
+    }
+  }
+
+
+  
+  function showToast(msg) {
+    try {
+      const t = document.createElement('div');
+      t.textContent = msg;
+      t.style.position = 'fixed';
+      t.style.left = '50%';
+      t.style.bottom = '18px';
+      t.style.transform = 'translateX(-50%)';
+      t.style.padding = '10px 14px';
+      t.style.background = 'rgba(0,0,0,0.75)';
+      t.style.color = '#fff';
+      t.style.borderRadius = '10px';
+      t.style.fontSize = '14px';
+      t.style.fontFamily = 'system-ui,-apple-system,Segoe UI,Roboto,Arial';
+      t.style.zIndex = '99999';
+      t.style.maxWidth = '92vw';
+      t.style.textAlign = 'center';
+      document.body.appendChild(t);
+      setTimeout(() => t.remove(), 2200);
+    } catch(e) {}
+  }
+
+// --- Canvas scaling (crisp on mobile/retina) ---
+  const BASE_W = 420;
+  const BASE_H = 700;
+  function setupCanvas() {
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    canvas.width = Math.floor(BASE_W * dpr);
+    canvas.height = Math.floor(BASE_H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  function resizeGameArea(){
+    const card = document.querySelector('.card');
+    const topbar = document.querySelector('.topbar');
+    const hud = document.querySelector('.hud');
+    const gameArea = document.querySelector('.gameArea');
+    if (!card || !gameArea) return;
+
+    const cardW = card.clientWidth;
+    const cardH = card.clientHeight;
+
+    const topH = (topbar ? topbar.offsetHeight : 0);
+    const hudH = 0; // hud is absolute
+    const padding = 14*2 + 8; // card padding + breathing room
+
+    const availW = Math.max(240, cardW - padding);
+    const availH = Math.max(240, cardH - topH - hudH - padding);
+
+    const aspect = BASE_W / BASE_H;
+    let w = availW;
+    let h = w / aspect;
+    if (h > availH){
+      h = availH;
+      w = h * aspect;
+    }
+
+    gameArea.style.width = Math.floor(w) + 'px';
+    gameArea.style.height = Math.floor(h) + 'px';
+  }
+
+  setupCanvas();
+  resizeGameArea();
+
+  window.addEventListener('resize', () => {
+    setupCanvas();
+    resizeGameArea();
+  });
+
+  const W = BASE_W, H = BASE_H;
+  const roadLeft = 64, roadRight = W - 64;
+  const roadWidth = roadRight - roadLeft;
+
+  // --- Game state ---
+  let running = false;
+  let pauseReason = ""; 
+  // ---------- UI state (prevent game running behind popups) ----------
+  const loadingOverlay = document.getElementById('loadingOverlay');
+  const loadingBar = document.getElementById('loadingBar');
+  const loadingText = document.getElementById('loadingText');
+
+  let uiBlocking = true;      // true when any overlay/menu is open
+  let hasStarted = false;     // becomes true after player presses Play at least once
+
+  function recomputeUIBlocking() {
+    uiBlocking =
+      startOverlay.classList.contains('open') ||
+      setupOverlay.classList.contains('open') ||
+      howOverlay.classList.contains('open') ||
+      gameOverOverlay.classList.contains('open') ||
+      (loadingOverlay && loadingOverlay.classList.contains('open'));
+    return uiBlocking;
+  }
+
+  function pauseForUI() {
+    running = false;
+    pauseReason = 'ui';
+    pausedAt = performance.now();
+  }
+
+
+  // ---------- UI polish helpers (ripple + smooth transitions) ----------
+  const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Tiny ripple on button clicks
+  function attachRipple(btn){
+    if (!btn || btn.dataset.rippleAttached) return;
+    btn.dataset.rippleAttached = "1";
+    btn.addEventListener('click', (e) => {
+      if (prefersReducedMotion) return;
+      const rect = btn.getBoundingClientRect();
+      const size = Math.max(rect.width, rect.height) * 2;
+      const ripple = document.createElement('span');
+      ripple.className = 'ripple';
+      ripple.style.width = ripple.style.height = size + 'px';
+      ripple.style.left = (e.clientX - rect.left - size/2) + 'px';
+      ripple.style.top  = (e.clientY - rect.top  - size/2) + 'px';
+      btn.appendChild(ripple);
+      ripple.addEventListener('animationend', () => ripple.remove());
+    }, { passive: true });
+  }
+
+  // Attach ripple to all current buttons
+  document.querySelectorAll('button').forEach(attachRipple);
+
+  // Add a "spring" animation to the modal each time it opens
+  function springModal(overlayEl){
+    if (prefersReducedMotion) return;
+    const modal = overlayEl && overlayEl.querySelector('.modal');
+    if (!modal) return;
+    modal.classList.remove('spring');
+    // force reflow to restart animation
+    void modal.offsetWidth;
+    modal.classList.add('spring');
+    modal.addEventListener('animationend', () => modal.classList.remove('spring'), { once:true });
+  }
+
+  function hideOverlayAnimated(el){
+    return new Promise((resolve) => {
+      if (!el) return resolve();
+      if (!el.classList.contains('open')) return resolve();
+      el.classList.add('closing');
+      el.classList.remove('open');
+      el.setAttribute('aria-hidden', 'true');
+      recomputeUIBlocking();
+      // match CSS transition duration (180ms) + tiny buffer
+      setTimeout(() => {
+        el.classList.remove('closing');
+        resolve();
+      }, 220);
+    });
+  }
+
+  async function switchOverlay(fromEl, toEl){
+    if (fromEl === toEl) return;
+    await hideOverlayAnimated(fromEl);
+    // Ensure only one overlay is open
+    [startOverlay, setupOverlay, howOverlay, gameOverOverlay].forEach(o => {
+      if (o && o !== toEl) { o.classList.remove('open'); o.classList.remove('closing'); o.setAttribute('aria-hidden','true'); }
+    });
+    showOverlay(toEl);
+  }
+
+  function showOverlay(el) {
+    if (!el) return;
+    el.classList.remove('closing');
+    el.classList.add('open');
+    el.setAttribute('aria-hidden', 'false');
+    springModal(el);
+    pauseForUI();
+    recomputeUIBlocking();
+  }
+
+  function hideOverlay(el) {
+    if (!el) return;
+    el.classList.remove('open');
+    el.setAttribute('aria-hidden', 'true');
+    recomputeUIBlocking();
+  }
+
+  function setLoadingProgress(pct, msg) {
+    if (loadingBar) loadingBar.style.width = Math.max(0, Math.min(100, pct)) + '%';
+    if (loadingText && msg) loadingText.textContent = msg;
+  }
+
+// "ad" | "setup" | "" 
+  let pausedAt = performance.now();
+
+  let gameOver = false;
+
+  const player = {
+    x: W / 2,
+    y: H - 120,
+    radius: 12,
+    stack: 1,
+    targetX: W / 2,
+
+    // power-ups
+    shieldHits: 0,
+    magnetT: 0,
+    slowT: 0,
+    boostT: 0,
+
+    // juice
+    combo: 0,
+    comboT: 0,
+    trail: [],
+  };
+
+  // Visual spacing between stacked balls (increase for clearer stacking feedback).
+  const STACK_SPACING = 18;
+  const MAX_STACK = 6;          // gameplay cap (prevents huge stacks)
+  const MAX_RENDER_STACK = 6;   // how many balls we actually draw
+
+
+  let score = 0;
+  let timeAlive = 0;
+
+  const baseSpeed = 4;
+  let speedMul = 1.0;
+
+  const collectables = []; // coins
+  const powerups = [];     // power-ups
+  const obstacles = [];    // various obstacle types
+  const particles = [];
+
+  let lastDangerSafeLane = -1;
+
+  // spawn timers
+  let tCollect = 0;
+  let tObs = 0;
+  let tPower = 0;
+
+  // input
+  let dragging = false;
+  let dragOffsetX = 0;
+  let keyLeft = false, keyRight = false;
+
+  // visuals state
+  let roadScroll = 0;
+  let shakeT = 0;
+  let flashT = 0;
+
+  let namePulse = 0;
+
+  function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
+
+
+  function hexToRgba(hex, a){
+    if (!hex) return `rgba(255,255,255,${a})`;
+    const h = hex.replace('#','').trim();
+    const full = h.length===3 ? h.split('').map(ch=>ch+ch).join('') : h;
+    const n = parseInt(full,16);
+    const r = (n>>16)&255, g=(n>>8)&255, b=n&255;
+    return `rgba(${r},${g},${b},${a})`;
+  }
+
+
+  function resetGame() {
+    running = false;
+    gameOver = false;
+    score = 0;
+    timeAlive = 0;
+    speedMul = 1.0;
+
+    player.x = W/2;
+    player.targetX = W/2;
+    player.stack = 1;
+
+    player.shieldHits = 0;
+    player.magnetT = 0;
+    player.slowT = 0;
+    player.boostT = 0;
+    player.combo = 0;
+    player.comboT = 0;
+    player.trail.length = 0;
+
+    collectables.length = 0;
+    powerups.length = 0;
+    obstacles.length = 0;
+    particles.length = 0;
+
+    tCollect = 0;
+    tObs = 0;
+    tPower = 2.5;
+
+    roadScroll = 0;
+    shakeT = 0;
+    flashT = 0;
+
+    updateHUD();
+  }
+
+  function activePowerText(){
+    const parts = [];
+    if (player.shieldHits > 0) parts.push(`🛡 Shield`);
+    if (player.magnetT > 0) parts.push(`🧲 Magnet`);
+    if (player.slowT > 0) parts.push(`🐢 Slow`);
+    if (player.boostT > 0) parts.push(`🚀 Boost`);
+    return parts.length ? parts.join(" • ") : "—";
+  }
+
+  function updateHUD() {
+    chipScore.textContent = `Score: ${score}`;
+    chipStack.textContent = `Stack: ${player.stack}`;
+    chipSpeed.textContent = `Speed: ${speedMul.toFixed(1)}x • Power: ${activePowerText()}`;
+  }
+
+  function showStart() {
+    // Menu should block gameplay
+    showOverlay(startOverlay);
+    hideOverlay(gameOverOverlay);
+    hideOverlay(howOverlay);
+    recomputeUIBlocking();
+  }
+  function hideStart() { hideOverlay(startOverlay); }
+  function showGameOver() {
+    // Update score + a playful message
+    finalText.textContent = `Your score: ${score}`;
+
+    const tips = [
+      "One more run—beat that score! 🚀",
+      "Nice try! Your next run will be even better ✨",
+      "So close! Keep going and climb higher 🔥",
+      "Can you top that? Hit Restart and prove it 💪",
+      "Quick fingers win—try again! ⚡"
+    ];
+    const tip = tips[Math.floor(Math.random() * tips.length)];
+    if (gameOverTip) gameOverTip.textContent = tip;
+
+    // Show only one menu at a time
+    showOverlay(gameOverOverlay);
+    hideOverlay(startOverlay);
+    hideOverlay(howOverlay);
+    hideOverlay(setupOverlay);
+  }
+  function hideGameOver() { hideOverlay(gameOverOverlay); }
+// -------- Spawning --------
+  function spawnCollectable() {
+    const x = roadLeft + 22 + Math.random() * (roadWidth - 44);
+    const r = 9 + Math.random() * 4;
+    collectables.push({ x, y: -30, r });
+  }
+
+  function spawnPowerup() {
+    if (powerups.length > 1) return;
+    const kinds = ["shield","magnet","slow","boost"];
+    const type = kinds[Math.floor(Math.random()*kinds.length)];
+    const x = roadLeft + 26 + Math.random() * (roadWidth - 52);
+    const r = 12;
+    powerups.push({ x, y: -40, r, type });
+  }
+
+  function pickObstacleType() {
+    const t = timeAlive;
+    const r = Math.random();
+    if (t < 8) return r < 0.85 ? "static" : "moving";
+    if (t < 18) {
+      if (r < 0.45) return "static";
+      if (r < 0.70) return "moving";
+      if (r < 0.84) return "breakable";
+      if (r < 0.92) return "rotating";
+      return "fake";
+    }
+    if (r < 0.28) return "moving";
+    if (r < 0.52) return "rotating";
+    if (r < 0.70) return "breakable";
+    if (r < 0.83) return "fake";
+    return "danger";
+  }
+
+  function spawnObstacle() {
+    const type = pickObstacleType();
+
+    const laneCount = 3;
+    const lane = Math.floor(Math.random()*laneCount);
+    const laneW = roadWidth / laneCount;
+    const laneCenter = roadLeft + laneW*(lane+0.5);
+
+    if (type === "rotating") {
+      const cx = clamp(laneCenter + (Math.random()*2-1)*18, roadLeft + 60, roadRight - 60);
+      const len = 110 + Math.random()*70;
+      obstacles.push({
+        type,
+        cx,
+        cy: 0,
+        y: -80,
+        len,
+        angle: Math.random()*Math.PI,
+        angVel: (Math.random() < 0.5 ? -1 : 1) * (1.4 + Math.random()*1.2),
+        thick: 10 + Math.random()*6,
+        sway: (Math.random()*2-1) * 18,
+        swaySpd: 0.9 + Math.random()*0.7,
+        t0: Math.random()*10,
+      });
+      return;
+    }
+
+    const wBase = 46 + Math.random() * 54;
+    const hBase = 18 + Math.random() * 30;
+    const w = clamp(wBase, 42, roadWidth - 24);
+    const h = hBase;
+
+    const x = clamp(laneCenter - w/2 + (Math.random()*2-1)*16, roadLeft + 10, roadRight - w - 10);
+
+    if (type === "moving") {
+      const amp = 26 + Math.random()*36;
+      obstacles.push({
+        type,
+        x, y: -60, w, h,
+        x0: x,
+        amp,
+        phase: Math.random()*Math.PI*2,
+        vx: 1.4 + Math.random()*1.6
+      });
+      return;
+    }
+
+    if (type === "breakable") {
+      obstacles.push({ type, x, y: -60, w, h, hp: 1 });
+      return;
+    }
+
+    if (type === "fake") {
+      obstacles.push({ type, x, y: -60, w, h, reveal: 0, triggered: false });
+      return;
+    }
+
+    if (type === "danger") {
+      // "Danger zone" should ALWAYS leave exactly 1 safe lane (gap) and shuffle lanes
+      let safeLane = Math.floor(Math.random()*laneCount);
+      if (safeLane === lastDangerSafeLane) safeLane = (safeLane + 1 + Math.floor(Math.random()*2)) % laneCount;
+      lastDangerSafeLane = safeLane;
+
+      const dh = 26 + Math.random()*18;
+      const y0 = -70;
+
+      // lane segments (cover all lanes except safeLane)
+      const pad = 6;
+      const segments = [];
+      for (let li=0; li<laneCount; li++){
+        if (li === safeLane) continue;
+        const segX = roadLeft + laneW*li + pad;
+        const segW = laneW - pad*2;
+        segments.push({ x: segX, y: y0, w: segW, h: dh });
+      }
+
+      obstacles.push({
+        type,
+        y: y0,
+        h: dh,
+        segments,
+        safeLane,        // 0..2 (left, middle, right)
+        warn: 0.75,      // seconds warning glow
+        active: false,   // becomes lethal after warn reaches 0
+      });
+      return;
+    }
+
+    obstacles.push({ type: "static", x, y: -60, w, h });
+  }
+
+  // -------- Effects / Physics --------
+  function addParticles(x, y, color, count=10, sp=2.3) {
+    for (let i=0;i<count;i++){
+      particles.push({
+        x, y,
+        vx: (Math.random()*2-1) * sp,
+        vy: (Math.random()*2-1) * sp,
+        life: 22 + Math.random()*18,
+        color
+      });
+    }
+  }
+
+  function circleRectCollide(cx, cy, cr, rx, ry, rw, rh) {
+    const nx = clamp(cx, rx, rx + rw);
+    const ny = clamp(cy, ry, ry + rh);
+    const dx = cx - nx;
+    const dy = cy - ny;
+    return (dx*dx + dy*dy) <= cr*cr;
+  }
+
+  function circleCircle(cx, cy, cr, x, y, r){
+    const dx = cx-x, dy = cy-y;
+    return (dx*dx + dy*dy) <= (cr+r)*(cr+r);
+  }
+
+  function circleVsSegment(cx, cy, cr, x1, y1, x2, y2, thickness){
+    const vx = x2-x1, vy = y2-y1;
+    const wx = cx-x1, wy = cy-y1;
+    const c1 = wx*vx + wy*vy;
+    if (c1 <= 0) {
+      const dx = cx-x1, dy = cy-y1;
+      return (dx*dx + dy*dy) <= (cr+thickness)*(cr+thickness);
+    }
+    const c2 = vx*vx + vy*vy;
+    if (c2 <= c1) {
+      const dx = cx-x2, dy = cy-y2;
+      return (dx*dx + dy*dy) <= (cr+thickness)*(cr+thickness);
+    }
+    const b = c1 / c2;
+    const px = x1 + b*vx;
+    const py = y1 + b*vy;
+    const dx = cx-px, dy = cy-py;
+    return (dx*dx + dy*dy) <= (cr+thickness)*(cr+thickness);
+  }
+
+  function applyObstacleHit(loss, impactX, impactY){
+    if (player.shieldHits > 0) {
+      player.shieldHits -= 1;
+      playSfx('hit');
+      addParticles(impactX, impactY, 'rgba(124,246,255,.95)', 22, 2.8);
+      flashT = 10;
+      shakeT = 8;
+      player.combo = 0;
+      player.comboT = 0;
+      return;
+    }
+
+    player.stack -= loss;
+    playSfx('hit');
+    addParticles(impactX, impactY, 'rgba(255,92,122,.95)', 18, 2.7);
+    shakeT = 10;
+    player.combo = 0;
+    player.comboT = 0;
+
+    if (player.stack <= 0) {
+      player.stack = 0;
+      endGame();
+    }
+  }
+
+  // -------- Main step --------
+  function step(dt) {
+    player.magnetT = Math.max(0, player.magnetT - dt);
+    player.slowT = Math.max(0, player.slowT - dt);
+    player.boostT = Math.max(0, player.boostT - dt);
+
+    timeAlive += dt;
+    const baseMul = 1.0 + Math.min(2.0, timeAlive / 20);
+    const slowFactor = player.slowT > 0 ? 0.65 : 1.0;
+    const boostFactor = player.boostT > 0 ? 1.18 : 1.0;
+    speedMul = clamp(baseMul * slowFactor * boostFactor, 0.9, 3.2);
+    const curSpeed = baseSpeed * speedMul;
+
+    tCollect += dt;
+    tObs += dt;
+    tPower += dt;
+
+    const collectInterval = Math.max(0.52, 1.00 - timeAlive * 0.020);
+    const obsInterval = Math.max(0.55, 1.05 - timeAlive * 0.022);
+    const powerInterval = 10.5 + Math.random()*4.5;
+
+    if (tCollect >= collectInterval) { tCollect = 0; spawnCollectable(); }
+    if (tObs >= obsInterval) { tObs = 0; spawnObstacle(); }
+    if (tPower >= powerInterval) { tPower = 0; spawnPowerup(); }
+
+    // controls
+    const moveSpeed = 10;
+    if (keyLeft) player.targetX -= moveSpeed;
+    if (keyRight) player.targetX += moveSpeed;
+    player.targetX = clamp(player.targetX, roadLeft + 20, roadRight - 20);
+
+    const lerp = player.boostT > 0 ? 0.28 : 0.22;
+    player.x += (player.targetX - player.x) * lerp;
+
+    // trail for boost
+    if (player.boostT > 0) {
+      player.trail.push({x: player.x, y: player.y, t: 0.22});
+      if (player.trail.length > 14) player.trail.shift();
+    } else {
+      for (let i=player.trail.length-1;i>=0;i--){
+        player.trail[i].t -= dt*1.4;
+        if (player.trail[i].t <= 0) player.trail.splice(i,1);
+      }
+    }
+
+    // move objects
+    for (const c of collectables) c.y += curSpeed;
+    for (const p of powerups) p.y += curSpeed;
+
+    for (const o of obstacles) {
+      o.y += curSpeed;
+
+      if (o.type === "danger") {
+        // keep segments in sync and handle warning->active transition
+        if (o.warn > 0) {
+          o.warn -= dt;
+          if (o.warn <= 0) { o.warn = 0; o.active = true; }
+        }
+        if (o.segments) {
+          for (const seg of o.segments) seg.y = o.y;
+        }
+      }
+
+      if (o.type === "moving") {
+        o.x = o.x0 + Math.sin((timeAlive*o.vx) + o.phase) * o.amp;
+        o.x = clamp(o.x, roadLeft + 8, roadRight - o.w - 8);
+      } else if (o.type === "rotating") {
+        o.angle += o.angVel * dt;
+        const tt = (timeAlive + o.t0) * o.swaySpd;
+        o.cx = clamp(o.cx + Math.sin(tt) * (o.sway * dt), roadLeft + 60, roadRight - 60);
+      } else if (o.type === "fake") {
+        const dy = Math.abs((o.y + o.h/2) - player.y);
+        if (!o.triggered && dy < 220) o.triggered = true;
+        if (o.triggered) o.reveal = Math.min(1, o.reveal + dt*2.2);
+      }
+    }
+
+    // magnet pulls coins slightly
+    if (player.magnetT > 0) {
+      const rad = 92;
+      for (const c of collectables) {
+        const dx = player.x - c.x;
+        const dy = player.y - c.y;
+        const d = Math.hypot(dx, dy);
+        if (d < rad && d > 1) {
+          c.x += (dx / d) * (70 * dt);
+          c.y += (dy / d) * (55 * dt);
+        }
+      }
+    }
+
+    // collisions: coins
+    for (let i = collectables.length - 1; i >= 0; i--) {
+      const c = collectables[i];
+      if (circleCircle(player.x, player.y, player.radius+6, c.x, c.y, c.r)) {
+        collectables.splice(i, 1);
+        playSfx('coin');
+        if (player.stack < MAX_STACK) {
+          player.stack += 1;
+        } else {
+          // If already at max stack, convert extra coins into bonus points instead.
+          score += 1;
+        }
+
+        player.combo += 1;
+        player.comboT = 1.2;
+        const centerBonus = Math.abs(player.x - W/2) < 26 ? 1 : 0;
+        const comboBonus = Math.min(6, Math.floor(player.combo / 4));
+        const boostBonus = player.boostT > 0 ? 2 : 0;
+
+        score += 2 + centerBonus + comboBonus + boostBonus;
+
+        addParticles(c.x, c.y, 'rgba(255,215,94,.95)', 14, 2.6);
+      } else if (c.y > H + 60) {
+        collectables.splice(i, 1);
+      }
+    }
+
+    if (player.comboT > 0) {
+      player.comboT -= dt;
+      if (player.comboT <= 0) player.combo = 0;
+    }
+
+    // collisions: powerups
+    for (let i = powerups.length - 1; i >= 0; i--) {
+      const p = powerups[i];
+      if (circleCircle(player.x, player.y, player.radius+10, p.x, p.y, p.r)) {
+        powerups.splice(i, 1);
+        playSfx('power');
+        activatePowerup(p.type);
+      } else if (p.y > H + 60) {
+        powerups.splice(i, 1);
+      }
+    }
+
+    // collisions: obstacles
+    for (let i = obstacles.length - 1; i >= 0; i--) {
+      const o = obstacles[i];
+
+      const checkCount = Math.min(player.stack, 9);
+      let hit = false;
+      let hitX = player.x;
+      let hitY = player.y;
+
+      if (o.type === "rotating") {
+        const cx = o.cx;
+        const cy = o.y;
+
+        const x1 = cx - Math.cos(o.angle) * (o.len/2);
+        const y1 = cy + Math.sin(o.angle) * (o.len/2);
+        const x2 = cx + Math.cos(o.angle) * (o.len/2);
+        const y2 = cy - Math.sin(o.angle) * (o.len/2);
+
+        for (let s=0; s<checkCount; s++){
+          const bx = player.x;
+          const by = player.y - s*14;
+          if (circleVsSegment(bx, by, player.radius, x1, y1, x2, y2, o.thick)) { hit = true; hitY = by; break; }
+        }
+
+        if (hit) {
+          obstacles.splice(i, 1);
+          const loss = 1 + Math.floor(Math.random()*2);
+          applyObstacleHit(loss, hitX, hitY);
+        } else if (o.y > H + 120) {
+          obstacles.splice(i, 1);
+        }
+        continue;
+      }
+
+      const canCollide = (o.type !== "fake") || (o.reveal > 0.35);
+
+            if (canCollide) {
+        for (let s = 0; s < checkCount; s++) {
+          const bx = player.x;
+          const by = player.y - s * STACK_SPACING;
+
+          if (o.type === "danger") {
+            // only lethal after the warning period
+            if (!o.active) continue;
+            for (const seg of o.segments) {
+              if (circleRectCollide(bx, by, player.radius, seg.x, seg.y, seg.w, seg.h)) {
+                hit = true; hitY = by; break;
+              }
+            }
+            if (hit) break;
+          } else {
+            if (circleRectCollide(bx, by, player.radius, o.x, o.y, o.w, o.h)) {
+              hit = true; hitY = by; break;
+            }
+          }
+        }
+      }
+
+      if (hit) {
+        if (o.type === "danger") {
+          player.stack = 0;
+          addParticles(player.x, player.y - 10, 'rgba(255,92,122,.95)', 28, 3.1);
+          shakeT = 14;
+          endGame();
+          return;
+        }
+
+        if (o.type === "breakable") {
+          obstacles.splice(i, 1);
+          addParticles(o.x + o.w/2, o.y + o.h/2, 'rgba(255,156,92,.95)', 24, 3.0);
+          applyObstacleHit(1, hitX, hitY);
+          continue;
+        }
+
+        if (o.type === "fake") {
+          obstacles.splice(i, 1);
+          addParticles(o.x + o.w/2, o.y + o.h/2, 'rgba(210,210,255,.85)', 18, 2.5);
+          applyObstacleHit(2, hitX, hitY);
+          continue;
+        }
+
+        obstacles.splice(i, 1);
+        const loss = Math.max(1, Math.round(1 + Math.random()*2));
+        applyObstacleHit(loss, hitX, hitY);
+
+      } else if (o.y > H + 100) {
+        obstacles.splice(i, 1);
+      }
+    }
+
+    // particles
+    for (let i=particles.length-1;i>=0;i--){
+      const p = particles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vx *= 0.97;
+      p.vy *= 0.97;
+      p.life -= 1;
+      if (p.life <= 0) particles.splice(i,1);
+    }
+
+    // survival points
+    const survivalGain = player.boostT > 0 ? 10 : 8;
+    score += Math.floor(dt * survivalGain);
+
+    roadScroll += curSpeed * dt * 10;
+
+    if (shakeT > 0) shakeT -= 1;
+    if (flashT > 0) flashT -= 1;
+
+    updateHUD();
+  }
+
+  function activatePowerup(type){
+    addParticles(player.x, player.y, 'rgba(124,246,255,.95)', 18, 2.8);
+    flashT = 10;
+
+    if (type === "shield") { player.shieldHits = 1; return; }
+    if (type === "magnet") { player.magnetT = 6.5; return; }
+    if (type === "slow") { player.slowT = 4.5; return; }
+    if (type === "boost") { player.boostT = 3.2; return; }
+  }
+
+  function endGame() {
+    running = false;
+    gameOver = true;
+    playSfx('gameover');
+    try { SFX.bgm.pause(); SFX.bgm.currentTime = 0; } catch {}
+
+    gameOverCount++;
+    if (gameOverCount % 3 === 0) {
+      requestMidgameAd();
+    }
+
+    showGameOver();
+  }
+
+  // --- Drawing helpers ---
+  function roundRect(ctx, x, y, w, h, r){
+    const rr = Math.min(r, w/2, h/2);
+    ctx.beginPath();
+    ctx.moveTo(x+rr, y);
+    ctx.arcTo(x+w, y, x+w, y+h, rr);
+    ctx.arcTo(x+w, y+h, x, y+h, rr);
+    ctx.arcTo(x, y+h, x, y, rr);
+    ctx.arcTo(x, y, x+w, y, rr);
+    ctx.closePath();
+  }
+
+
+  function obstaclePath(ctx, x, y, w, h, shape, r){
+    const sh = shape || "rect";
+    if (sh === "diamond") {
+      ctx.beginPath();
+      ctx.moveTo(x + w/2, y);
+      ctx.lineTo(x + w, y + h/2);
+      ctx.lineTo(x + w/2, y + h);
+      ctx.lineTo(x, y + h/2);
+      ctx.closePath();
+      return;
+    }
+    if (sh === "pill") {
+      const rr = Math.min(h/2, w/2);
+      roundRect(ctx, x, y, w, h, rr);
+      return;
+    }
+    roundRect(ctx, x, y, w, h, r);
+  }
+
+
+  
+  function drawNeonBall(x, y, r, color, shape) {
+    const c = color || "#7cf6ff";
+    const s = shape || "circle";
+
+    // outer glow
+    ctx.save();
+    ctx.globalAlpha = 0.22;
+    ctx.fillStyle = c;
+    if (s === "circle") {
+      ctx.beginPath(); ctx.arc(x, y, r + 10, 0, Math.PI * 2); ctx.fill();
+    } else if (s === "square") {
+      ctx.fillRect(x - (r+9), y - (r+9), (r+9)*2, (r+9)*2);
+    } else {
+      // triangle
+      ctx.beginPath();
+      ctx.moveTo(x, y - (r+10));
+      ctx.lineTo(x - (r+10), y + (r+10));
+      ctx.lineTo(x + (r+10), y + (r+10));
+      ctx.closePath(); ctx.fill();
+    }
+    ctx.restore();
+
+    // core
+    ctx.save();
+    ctx.fillStyle = c;
+    if (s === "circle") {
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+    } else if (s === "square") {
+      ctx.fillRect(x - r, y - r, r*2, r*2);
+    } else {
+      ctx.beginPath();
+      ctx.moveTo(x, y - r);
+      ctx.lineTo(x - r, y + r);
+      ctx.lineTo(x + r, y + r);
+      ctx.closePath(); ctx.fill();
+    }
+
+    // highlight
+    ctx.globalAlpha = 0.25;
+    ctx.fillStyle = "#ffffff";
+    if (s === "circle") {
+      ctx.beginPath(); ctx.arc(x - r*0.35, y - r*0.35, r*0.32, 0, Math.PI*2); ctx.fill();
+    } else {
+      ctx.fillRect(x - r*0.35, y - r*0.55, r*0.55, r*0.35);
+    }
+    ctx.restore();
+  }
+
+
+  function drawCoin(x, y, r) {
+    ctx.beginPath();
+    ctx.arc(x, y, r + 10, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(255,215,94,.16)";
+    ctx.fill();
+
+    const g = ctx.createRadialGradient(x - r*0.3, y - r*0.3, r*0.2, x, y, r);
+    g.addColorStop(0, "#fff4c0");
+    g.addColorStop(0.55, "#ffd75e");
+    g.addColorStop(1, "#c38b1a");
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fillStyle = g;
+    ctx.fill();
+
+    ctx.strokeStyle = "rgba(255,255,255,.35)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(x, y, r * 0.72, -0.9, 0.2);
+    ctx.stroke();
+  }
+
+  function drawPowerup(p) {
+    // match edge glow to current background theme
+    const theme = playerStyle.background || "neon";
+    const edgeColor = (theme === "sunset") ? "rgba(255,215,94,.16)" : (theme === "forest") ? "rgba(0,211,122,.16)" : "rgba(124,246,255,.14)";
+
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r + 12, 0, Math.PI*2);
+    ctx.fillStyle = edgeColor;
+    ctx.fill();
+
+    ctx.fillStyle = "rgba(255,255,255,.10)";
+    ctx.strokeStyle = "rgba(255,255,255,.28)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+    ctx.fill();
+    ctx.stroke();
+
+    const icon = p.type === "shield" ? "🛡" : p.type === "magnet" ? "🧲" : p.type === "slow" ? "🐢" : "🚀";
+    ctx.font = "16px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText(icon, p.x, p.y + 0.5);
+  }
+
+  function drawObstacle(o) {
+    if (o.type === "danger" && o.segments) {
+      const warning = !o.active; // during warn period
+      // draw each segment (leaving a clear gap at safeLane)
+      for (const seg of o.segments) {
+        // base
+        ctx.fillStyle = playerStyle.obstacleColor;
+        obstaclePath(ctx, seg.x, seg.y, seg.w, seg.h, playerStyle.obstacleShape, 10);
+        ctx.fill();
+
+        // glow (stronger during warning)
+        ctx.save();
+        const pulse = warning ? (0.25 + 0.25*Math.sin(timeAlive*10)) : 0.18;
+        ctx.globalAlpha = pulse;
+        ctx.fillStyle = playerStyle.obstacleColor;
+        obstaclePath(ctx, seg.x - 4, seg.y - 4, seg.w + 8, seg.h + 8, playerStyle.obstacleShape, 12);
+        ctx.fill();
+        ctx.restore();
+
+        // stripes
+        ctx.save();
+        ctx.globalAlpha = 0.22;
+        ctx.translate(seg.x, seg.y);
+        ctx.rotate(-0.25);
+        ctx.fillStyle = "rgba(0,0,0,.18)";
+        for (let i = -80; i < 240; i += 14) ctx.fillRect(i, 0, 7, seg.h + 80);
+        ctx.restore();
+
+        // highlight
+        ctx.fillStyle = "rgba(255,255,255,.18)";
+        obstaclePath(ctx, seg.x + 6, seg.y + 4, Math.max(10, seg.w - 12), Math.max(6, seg.h * 0.35), playerStyle.obstacleShape, 8);
+        ctx.fill();
+      }
+
+      // label + safe lane hint
+      const laneW = roadWidth / 3;
+      const gapX = roadLeft + laneW*o.safeLane;
+      ctx.save();
+      ctx.font = "11px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = "rgba(255,255,255,.92)";
+      const labelY = o.y + o.h/2;
+      ctx.fillText(warning ? "DANGER (GET READY)" : "DANGER", W/2, labelY);
+
+      // subtle green outline over the safe lane during warning
+      if (warning) {
+        ctx.globalAlpha = 0.65;
+        ctx.strokeStyle = "rgba(124,246,255,.85)";
+        ctx.lineWidth = 2;
+        roundRect(ctx, gapX + 8, o.y + 3, laneW - 16, o.h - 6, 10);
+        ctx.stroke();
+      }
+      ctx.restore();
+      return;
+    }
+    if (o.type === "rotating") {
+      const cx = o.cx;
+      const cy = o.y;
+
+      const x1 = cx - Math.cos(o.angle) * (o.len/2);
+      const y1 = cy + Math.sin(o.angle) * (o.len/2);
+      const x2 = cx + Math.cos(o.angle) * (o.len/2);
+      const y2 = cy - Math.sin(o.angle) * (o.len/2);
+
+      ctx.save();
+      ctx.lineCap = "round";
+      ctx.strokeStyle = hexToRgba(playerStyle.obstacleColor, 0.95);
+      ctx.lineWidth = o.thick * 2;
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+
+      ctx.globalAlpha = 0.25;
+      ctx.strokeStyle = hexToRgba(playerStyle.obstacleColor, 1.0);
+      ctx.lineWidth = o.thick * 2 + 10;
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+      ctx.restore();
+      return;
+    }
+
+    let base = playerStyle.obstacleColor;
+    if (o.type === "breakable") base = playerStyle.obstacleColor;
+    if (o.type === "fake") base = `rgba(210,210,255,${(0.18 + o.reveal*0.55).toFixed(3)})`;
+    if (o.type === "danger") base = playerStyle.obstacleColor;
+    if (o.type === "moving") base = playerStyle.obstacleColor;
+
+    ctx.fillStyle = base;
+    obstaclePath(ctx, o.x, o.y, o.w, o.h, playerStyle.obstacleShape, 10);
+    ctx.fill();
+
+    ctx.save();
+    ctx.globalAlpha = o.type === "fake" ? (0.15 + o.reveal*0.25) : 0.25;
+    ctx.fillStyle = base;
+    obstaclePath(ctx, o.x - 3, o.y - 3, o.w + 6, o.h + 6, playerStyle.obstacleShape, 12);
+    ctx.fill();
+    ctx.restore();
+
+    if (o.type !== "fake") {
+      ctx.save();
+      ctx.beginPath();
+      obstaclePath(ctx, o.x + 2, o.y + 2, o.w - 4, o.h - 4, playerStyle.obstacleShape, 8);
+      ctx.clip();
+      ctx.translate(o.x, o.y);
+      ctx.rotate(-0.25);
+      ctx.fillStyle = "rgba(0,0,0,.18)";
+      for (let i = -80; i < 240; i += 14) ctx.fillRect(i, 0, 7, o.h + 80);
+      ctx.restore();
+    }
+
+    ctx.fillStyle = "rgba(255,255,255,.18)";
+    obstaclePath(ctx, o.x + 6, o.y + 4, Math.max(10, o.w - 12), Math.max(6, o.h * 0.35), playerStyle.obstacleShape, 8);
+    ctx.fill();
+
+    if (o.type === "danger") {
+      ctx.save();
+      ctx.font = "11px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+      ctx.fillStyle = "rgba(255,255,255,.9)";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("DANGER", o.x + o.w/2, o.y + o.h/2);
+      ctx.restore();
+    }
+  }
+
+  function drawRoad() {
+    // theme colors
+    const theme = playerStyle.background || "neon";
+    let bgA = "#070a12", bgB = "#000000", roadA = "#0c1223", roadB = "#05070f", edge = "rgba(124,246,255,.14)";
+    if (theme === "sunset") { bgA = "#140821"; bgB = "#06030a"; roadA = "#2a1240"; roadB = "#0a0613"; edge = "rgba(255,215,94,.16)"; }
+    if (theme === "forest") { bgA = "#03120c"; bgB = "#000604"; roadA = "#0a2418"; roadB = "#030a06"; edge = "rgba(0,211,122,.16)"; }
+
+    // background gradient
+    const bg = ctx.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0, bgA);
+    bg.addColorStop(1, bgB);
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, W, H);
+
+    // road gradient
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, roadA);
+    g.addColorStop(1, roadB);
+    ctx.fillStyle = g;
+    ctx.fillRect(roadLeft, 0, roadWidth, H);
+
+    // edges
+    ctx.fillStyle = edge;
+    ctx.fillRect(roadLeft-2, 0, 2, H);
+    ctx.fillRect(roadRight, 0, 2, H);
+
+    // lane lines
+    ctx.strokeStyle = "rgba(255,255,255,.10)";
+    ctx.lineWidth = 2;
+    ctx.setLineDash([8, 10]);
+    ctx.beginPath();
+    const x1 = roadLeft + roadWidth/3;
+    const x2 = roadLeft + (roadWidth*2)/3;
+    ctx.moveTo(x1, -H);
+    ctx.lineTo(x1, H*2);
+    ctx.moveTo(x2, -H);
+    ctx.lineTo(x2, H*2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // center dashed animation
+    ctx.strokeStyle = "rgba(255,255,255,.12)";
+    ctx.setLineDash([12, 16]);
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    const dashOff = (roadScroll % 28);
+    ctx.lineDashOffset = -dashOff;
+    ctx.moveTo(W/2, -H);
+    ctx.lineTo(W/2, H*2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.lineDashOffset = 0;
+
+    // subtle vignette
+    const vg = ctx.createRadialGradient(W/2, H/2, 80, W/2, H/2, 420);
+    vg.addColorStop(0, "rgba(0,0,0,0)");
+    vg.addColorStop(1, "rgba(0,0,0,0.55)");
+    ctx.fillStyle = vg;
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  function drawPlayer() {
+    // trail
+    for (const t of player.trail) {
+      ctx.save();
+      ctx.globalAlpha = clamp(t.t / 0.22, 0, 1) * 0.5;
+      drawNeonBall(t.x, t.y + 2, player.radius-2, playerStyle.ballColor, playerStyle.ballShape);
+      ctx.restore();
+    }
+
+    // stacked balls
+    const count = Math.min(player.stack, MAX_RENDER_STACK);
+    for (let s = count - 1; s >= 0; s--) {
+      const by = player.y - s * STACK_SPACING;
+      drawNeonBall(player.x, by, player.radius, playerStyle.ballColor, playerStyle.ballShape);
+    }
+
+    // shield ring
+    if (player.shieldHits > 0) {
+      ctx.save();
+      ctx.strokeStyle = "rgba(124,246,255,.9)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(player.x, player.y - 6, player.radius + 18, 0, Math.PI*2);
+      ctx.stroke();
+      ctx.globalAlpha = 0.25;
+      ctx.lineWidth = 10;
+      ctx.beginPath();
+      ctx.arc(player.x, player.y - 6, player.radius + 18, 0, Math.PI*2);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  function drawParticles() {
+    for (const p of particles) {
+      ctx.fillStyle = p.color;
+      ctx.fillRect(p.x, p.y, 2.5, 2.5);
+    }
+  }
+
+  function drawPlayerNameUI() {
+    namePulse += 0.08;
+    const t = (Math.sin(namePulse) + 1) * 0.5; // 0..1
+    const scale = 1 + t * 0.05;
+
+    ctx.save();
+    ctx.translate(W/2, 26);
+    ctx.scale(scale, scale);
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = "800 16px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+
+    ctx.shadowColor = "rgba(0,0,0,0.6)";
+    ctx.shadowBlur = 12;
+
+    ctx.fillStyle = "rgba(255,255,255,0.96)";
+    ctx.fillText(playerName || "Player", 0, 0);
+    ctx.restore();
+  }
+
+  function render() {
+    // screen shake
+    let sx = 0, sy = 0;
+    if (shakeT > 0) {
+      const k = shakeT / 14;
+      sx = (Math.random()*2-1) * 6 * k;
+      sy = (Math.random()*2-1) * 6 * k;
+    }
+
+    ctx.save();
+    ctx.translate(sx, sy);
+
+    drawRoad();
+
+    drawPlayerNameUI();
+
+    // items
+    for (const c of collectables) drawCoin(c.x, c.y, c.r);
+    for (const p of powerups) drawPowerup(p);
+    for (const o of obstacles) drawObstacle(o);
+
+    drawPlayer();
+    drawParticles();
+
+    // combo indicator
+    if (player.combo > 0) {
+      ctx.save();
+      ctx.font = "700 14px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+      ctx.fillStyle = "rgba(255,255,255,.85)";
+      ctx.textAlign = "center";
+      ctx.fillText(`Combo x${player.combo}`, W/2, 44);
+      ctx.restore();
+    }
+
+    ctx.restore();
+
+    // flash overlay
+    if (flashT > 0) {
+      ctx.save();
+      ctx.globalAlpha = (flashT/10) * 0.18;
+      ctx.fillStyle = "#7cf6ff";
+      ctx.fillRect(0, 0, W, H);
+      ctx.restore();
+    }
+  }
+
+  // -------- Loop --------
+  let last = performance.now();
+  function loop(now) {
+    const dt = Math.min(0.033, (now - last) / 1000);
+    last = now;
+
+    // Watchdog: never auto-resume while UI popups are open.
+    // Only kick in after the player pressed Play at least once.
+    if (hasStarted && !uiBlocking && !running && !gameOver && pauseReason === "" && (now - pausedAt) > 1200) {
+      console.log("Auto-resume watchdog triggered");
+      running = true;
+    }
+if (running && !gameOver && !uiBlocking) step(dt);
+    render();
+
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+
+  // -------- Input handling --------
+  function pointerToCanvasX(clientX) {
+    const rect = canvas.getBoundingClientRect();
+    const x = (clientX - rect.left) * (W / rect.width);
+    return x;
+  }
+
+  canvas.addEventListener('pointerdown', (e) => {
+    if (!running) return;
+    dragging = true;
+    const x = pointerToCanvasX(e.clientX);
+    dragOffsetX = x - player.targetX;
+    canvas.setPointerCapture(e.pointerId);
+  });
+
+  canvas.addEventListener('pointermove', (e) => {
+    if (!dragging || !running) return;
+    const x = pointerToCanvasX(e.clientX);
+    player.targetX = x - dragOffsetX;
+  });
+
+  canvas.addEventListener('pointerup', (e) => {
+    dragging = false;
+    try { canvas.releasePointerCapture(e.pointerId); } catch(_) {}
+  });
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') keyLeft = true;
+    if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') keyRight = true;
+    if (e.key === ' ' && !running && !gameOver) startGame();
+    if (e.key === 'Escape' && howOverlay.classList.contains('open')) hideOverlay(howOverlay);
+  });
+
+  window.addEventListener('keyup', (e) => {
+    if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') keyLeft = false;
+    if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') keyRight = false;
+  });
+
+  // -------- UI buttons --------
+  function startGame() {
+    resetGame();
+    hideOverlay(startOverlay);
+    hideOverlay(gameOverOverlay);
+    hideOverlay(howOverlay);
+    hideOverlay(setupOverlay);
+    hasStarted = true;
+    pauseReason = "";
+    pausedAt = performance.now();
+    uiBlocking = false;
+    running = true;
+  }
+
+btnPlay.addEventListener('click', () => {
+    unlockAudioOnce();
+    playSfx("click");
+    // If setup is open, ignore
+    if (setupOverlay.classList.contains('open')) return;
+
+    // ✅ GameMonetize requirement: show ad when Play is clicked
+    // Show ONE start-session ad on the first Play click, then start the game after the ad finishes.
+    if (!startAdShown) {
+      startAdShown = true;
+      pendingStartAfterAd = true;
+      // If an ad just finished, wait for cooldown to avoid "requested too soon".
+      const now = performance.now();
+      if (lastAdFinishedAt > 0 && (now - lastAdFinishedAt) < AD_COOLDOWN_MS) {
+        const waitMs = Math.ceil(AD_COOLDOWN_MS - (now - lastAdFinishedAt));
+        showToast(`Loading ad... (${Math.ceil(waitMs/1000)}s)`);
+        // Delay the ad request until cooldown passes.
+        setTimeout(() => {
+          let ok2 = false;
+          try { ok2 = showGMAd(); } catch {}
+          if (!ok2) { pendingStartAfterAd = false; startGame(); }
+        }, waitMs + 50);
+        return;
+      }
+      let ok = false;
+      try { ok = showGMAd(); } catch {}
+      // If SDK is not available / ad can't be requested, start immediately.
+      if (!ok) {
+        pendingStartAfterAd = false;
+        startGame();
+      }
+      return;
+    }
+
+    startGame();
+    try { if (playerStyle.sound === "on") SFX.bgm.play(); } catch {}
+  });
+
+  btnRestart.addEventListener('click', () => {
+    unlockAudioOnce();
+    playSfx("click");
+    startGame();
+    try { if (playerStyle.sound === "on") SFX.bgm.play(); } catch {}
+  });
+
+  btnCustomize.addEventListener('click', () => {
+    unlockAudioOnce();
+    playSfx("click");
+    openSetup();
+  });
+
+  btnSetupSave.addEventListener('click', async () => {
+    unlockAudioOnce();
+    playSfx("click");
+
+    const name = (playerNameInput.value || "").trim();
+    playerName = name ? name.slice(0,16) : "Player";
+    playerStyle.ballShape = ballShapeSelect.value;
+    playerStyle.ballColor = ballColorSelect.value;
+    playerStyle.obstacleShape = obShapeSelect.value;
+    playerStyle.obstacleColor = obColorSelect.value;
+    playerStyle.background = bgSelect.value;
+    playerStyle.sound = soundSelect.value;
+
+    savePlayerSettings();
+    await switchOverlay(setupOverlay, startOverlay);
+    setSoundEnabled(true);
+  });
+
+  
+  function reviveWithCountdown() {
+    // Show a simple 3-2-1-GO overlay, then revive and resume.
+    const overlay = document.createElement('div');
+    overlay.style.position = 'fixed';
+    overlay.style.inset = '0';
+    overlay.style.background = 'rgba(0,0,0,0.55)';
+    overlay.style.display = 'flex';
+    overlay.style.alignItems = 'center';
+    overlay.style.justifyContent = 'center';
+    overlay.style.zIndex = '99999';
+    overlay.style.fontFamily = 'system-ui,-apple-system,Segoe UI,Roboto,Arial';
+    overlay.style.fontSize = '72px';
+    overlay.style.fontWeight = '800';
+    overlay.style.color = '#fff';
+    overlay.style.pointerEvents = 'none';
+    document.body.appendChild(overlay);
+
+    let t = 3;
+    overlay.textContent = String(t);
+
+    const tick = () => {
+      t -= 1;
+      if (t > 0) {
+        overlay.textContent = String(t);
+        setTimeout(tick, 850);
+      } else {
+        overlay.textContent = 'GO!';
+        setTimeout(() => {
+          overlay.remove();
+          doRevive();
+          running = true;
+        }, 350);
+      }
+    };
+    setTimeout(tick, 850);
+  }
+
+function doRevive() {
+    // Revive: clear nearby hazards to avoid instant death, restore a small stack, and resume.
+    obstacles.length = 0;
+    collectables.length = 0;
+    powerups.length = 0;
+    tCollect = 0;
+    tObs = 0;
+    tPower = 0;
+
+    player.stack = Math.max(player.stack, 3);
+    gameOver = false;
+    hideGameOver();
+    running = true;
+  }
+
+  btnRevive.addEventListener('click', () => {
+    unlockAudioOnce();
+    playSfx('click');
+    // GameMonetize: show an ad, and revive when the SDK fires SDK_GAME_START.
+    requestRewardedAdForRevive();
+  });
+
+
+  btnHow.addEventListener('click', () => {
+    unlockAudioOnce();
+    playSfx('click');
+    const from = setupOverlay.classList.contains('open') ? setupOverlay : startOverlay;
+    switchOverlay(from, howOverlay);
+  });
+
+  btnCloseHow.addEventListener('click', async () => {
+    unlockAudioOnce();
+    playSfx('click');
+    if (!running && !gameOver) {
+      await switchOverlay(howOverlay, startOverlay);
+    } else {
+      hideOverlay(howOverlay);
+    }
+  });
+
+  btnBack.addEventListener('click', () => {
+    unlockAudioOnce();
+    playSfx('click');
+    try { SFX.bgm.pause(); SFX.bgm.currentTime = 0; } catch {}
+    hideGameOver();
+    showStart();
+    gameOver = false;
+    running = false;
+  });
+
+  // Kickoff
+  resetGame();
+
+  // Start in a true "loading" state: game must NOT run behind UI.
+  showOverlay(loadingOverlay);
+  hideOverlay(startOverlay);
+  hideOverlay(setupOverlay);
+  hideOverlay(howOverlay);
+  hideOverlay(gameOverOverlay);
+  setLoadingProgress(15, "Initializing…");
+
+  const hasSaved = loadPlayerSettings();
+  setSoundEnabled(true);
+
+  // Simulated loading bar for better UX (also waits for first frame/layout)
+  let p = 15;
+  const loadTimer = setInterval(() => {
+    p = Math.min(95, p + 10);
+    setLoadingProgress(p, "Loading assets…");
+  }, 120);
+
+  function finishLoading() {
+    // Prevent double-run
+    if (loadingOverlay && !loadingOverlay.classList.contains('open')) return;
+    setTimeout(() => {
+      clearInterval(loadTimer);
+      setLoadingProgress(100, "Ready!");
+      hideOverlay(loadingOverlay);
+      // Show main menu after loading (always)
+      showStart();
+
+      // Do NOT open Customize automatically.
+      // User requirement: after loading, show only the main menu (Play / Customize / How to Play).
+      // Customize opens only when user presses the Customize button.
+      recomputeUIBlocking();
+    }, 350);
+  }
+
+  // IMPORTANT: if this script is evaluated after the window 'load' event already fired,
+  // adding a 'load' listener will never run and the game would remain stuck on Loading.
+  // So we handle both cases.
+  if (document.readyState === 'complete') {
+    finishLoading();
+  } else {
+    window.addEventListener('load', finishLoading, { once:true });
+  }
+
+})(); 
+</script>
+
+</body>
+</html>

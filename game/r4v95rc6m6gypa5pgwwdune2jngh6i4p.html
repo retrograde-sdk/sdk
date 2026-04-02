@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+      <title>Neon Ping Pong Game</title>
+        
+  
+  <style type="text/css">@font-face {font-family:Orbitron;font-style:normal;font-weight:400;src:url(/cf-fonts/v/orbitron/5.0.18/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Orbitron;font-style:normal;font-weight:700;src:url(/cf-fonts/v/orbitron/5.0.18/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Orbitron;font-style:normal;font-weight:900;src:url(/cf-fonts/v/orbitron/5.0.18/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}</style>
+  <style>
+    * { box-sizing: border-box; margin:0; padding:0; -webkit-tap-highlight-color: transparent; }
+    body { font-family: 'Orbitron', sans-serif; background: radial-gradient(circle at 50% 50%, #0a0e27 0%, #000000 100%); display:flex; justify-content:center; align-items:center; min-height:100vh; color:#fff; }
+    #container{ position:relative; max-width:100%; max-height:100vh; }
+    canvas{ display:block; background:linear-gradient(180deg,#0a0e27 0%,#1a1f3a 100%); border:3px solid #00ffff; box-shadow:0 0 60px rgba(0,255,255,.5), inset 0 0 100px rgba(0,255,255,.1); max-width:100%; height:auto; }
+
+    .menu{ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:linear-gradient(135deg, rgba(10,14,39,.98) 0%, rgba(26,31,58,.98) 100%); padding:40px; border:3px solid #00ffff; box-shadow:0 0 50px rgba(0,255,255,.6), inset 0 0 50px rgba(0,255,255,.1); text-align:center; z-index:10; min-width:360px; backdrop-filter: blur(8px); opacity:0; pointer-events:none; transition:opacity .25s ease, transform .25s ease; transform-origin:center; }
+    .menu.visible{ opacity:1; pointer-events:auto; transform:translate(-50%,-50%) scale(1); }
+    .menu.hidden{ display:none; }
+    .menu h1{ font-size:34px; margin-bottom:10px; background:linear-gradient(90deg,#00ffff,#ff00ff,#00ffff); -webkit-background-clip:text; -webkit-text-fill-color:transparent; font-weight:900; letter-spacing:3px; }
+    .menu-subtitle{ font-size:12px; color:#00ffff; margin-bottom:18px; opacity:.8; }
+    .menu-btn{ display:block; width:100%; padding:14px; margin:10px 0; font-size:14px; font-weight:700; background:linear-gradient(135deg,#00ffff 0%,#0099cc 100%); color:#0a0e27; border:2px solid #00ffff; cursor:pointer; text-transform:uppercase; letter-spacing:2px; position:relative; overflow:hidden; transition:transform .18s ease, box-shadow .18s ease; }
+    .menu-btn::before{ content:''; position:absolute; top:0; left:-100%; width:100%; height:100%; background:linear-gradient(90deg, transparent, rgba(255,255,255,.25), transparent); transition:left .5s; }
+    .menu-btn:hover::before{ left:100%; }
+    .menu-btn:hover{ transform:translateY(-3px); box-shadow:0 6px 25px rgba(0,255,255,.25); }
+    .menu-btn.secondary{ background:linear-gradient(135deg,#ff00ff 0%,#cc0099 100%); border-color:#ff00ff; }
+    .menu-btn.support{ background:linear-gradient(135deg,#ffd700 0%,#ff8c00 100%); border-color:#ffd700; color:#0a0e27; }
+    .menu-footer{ margin-top:14px; font-size:12px; color:#00ffff; opacity:.9; }
+
+    .countdown{ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:120px; font-weight:900; color:#00ffff; text-shadow:0 0 30px #00ffff, 0 0 60px #00ffff; z-index:5; pointer-events:none; animation:countPulse 1s ease-in-out; }
+    @keyframes countPulse{ 0%{ transform:translate(-50%,-50%) scale(.6); opacity:0 }50%{ transform:translate(-50%,-50%) scale(1.15); opacity:1 }100%{ transform:translate(-50%,-50%) scale(1); opacity:1 } }
+
+    .pause-overlay{ position:absolute; top:0; left:0; right:0; bottom:0; background:rgba(10,14,39,.85); display:flex; flex-direction:column; justify-content:center; align-items:center; z-index:20; backdrop-filter: blur(4px); opacity:0; pointer-events:none; transition:opacity .18s ease; }
+    .pause-overlay.visible{ opacity:1; pointer-events:auto; }
+    .pause-box{ background:linear-gradient(135deg, rgba(255,255,255,.03), rgba(255,255,255,.01)); border:2px solid rgba(0,255,255,.12); padding:18px; border-radius:12px; min-width:320px; text-align:center; }
+    .pause-text{ font-size:40px; font-weight:900; background:linear-gradient(90deg,#00ffff,#ff00ff); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:10px; }
+    .pause-hint{ font-size:12px; color:#00ffff; opacity:.8; margin-bottom:10px; }
+
+    .about-content{ text-align:left; font-size:13px; line-height:1.6; color:#dfefff; }
+    .about-content strong{ color:#00ffff; }
+
+    .orientation-notice{ position:fixed; inset:0; background:#0a0e27; display:none; flex-direction:column; justify-content:center; align-items:center; z-index:1000; color:#00ffff; text-align:center; padding:20px; }
+    .rotate-icon{ font-size:80px; margin-bottom:20px; animation:rotate 2s infinite; }
+    @keyframes rotate{ 0%,100%{ transform:rotate(0deg) }50%{ transform:rotate(90deg) } }
+
+    @media (max-width:768px){ .menu{ min-width:300px; padding:26px; } .menu h1{ font-size:26px } .countdown{ font-size:80px } .pause-text{ font-size:28px } }
+
+    .match-indicator{ position:absolute; top:18px; left:50%; transform:translateX(-50%); background:rgba(0,255,255,.12); border:2px solid #00ffff; padding:6px 16px; border-radius:18px; font-size:12px; font-weight:700; color:#00ffff; z-index:1; }
+
+    .small-footer{ position:absolute; bottom:8px; left:50%; transform:translateX(-50%); font-size:12px; color:#00ffff; opacity:.9; z-index:11; }
+
+    #fullscreenBtn {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  z-index: 1001;
+  font-size: 24px;
+  background: rgba(0, 255, 255, 0.1);
+  color: #00ffff;
+  border: 2px solid #00ffff;
+  border-radius: 10px;
+  padding: 6px 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(6px);
+}
+#fullscreenBtn:hover {
+  background: rgba(0, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+  </style>
+</head>
+<body>
+
+  <script type = "text/javascript" >
+    window.SDK_OPTIONS = {
+      gameId: "r4v95rc6m6gypa5pgwwdune2jngh6i4p", // Game ID is preserved
+      onEvent: function (a) {
+        switch (a.name) {
+          case "SDK_GAME_PAUSE":
+            // pause game logic / mute audio
+            if(window.game) window.game.sdkPause();
+            break;
+          case "SDK_GAME_START":
+            // advertisement done, resume game logic and unmute audio
+            if(window.game) window.game.sdkResume();
+            break;
+          case "SDK_READY":
+            console.log("GameMonetize SDK is ready.");
+            // when sdk is ready
+            break;
+          case "SDK_ERROR":
+            console.error("GameMonetize SDK error:", a.message);
+            // when sdk get error
+            break;
+        }
+      }
+    };
+(function (a, b, c) {
+    var d = a.getElementsByTagName(b)[0];
+    a.getElementById(c) || (a = a.createElement(b), a.id = c, 
+    a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+})(document, "script", "gamemonetize-sdk"); 
+</script>
+
+
+  <div class="orientation-notice">
+    <div class="rotate-icon">📱</div>
+    <h2>Please Rotate Your Device</h2>
+    <p>This game is best played in landscape mode</p>
+  </div>
+
+  <div id="container">
+    <canvas id="gameCanvas"></canvas>
+    <div id="matchIndicator" class="match-indicator hidden"></div>
+
+    <div id="mainMenu" class="menu visible">
+      <h1>NEON PING PONG</h1>
+      <div class="menu-subtitle">CHAMPIONSHIP EDITION</div>
+      <button class="menu-btn" onclick="game.showModeMenu()">Start Game</button>
+      <button id="continueBtn" class="menu-btn secondary" style="display:none;" onclick="game.continueMatch()">Continue Match</button>
+      <button class="menu-btn" onclick="game.showSettings()">Settings</button> <button class="menu-btn" onclick="game.showControls()">Controls</button>
+      <button class="menu-btn" onclick="game.showAbout()">About Game</button>
+      <button class="menu-btn support" onclick="window.open('https://www.sternenkofund.org/en/donate', '_blank')">💛💙 Support Ukraine</button>
+      <div class="menu-footer">Game by Ihor Khodakivskyi</div>
+    </div>
+
+    <div id="modeMenu" class="menu hidden">
+      <h1>Select Mode</h1>
+      <div class="menu-subtitle">Choose your challenge</div>
+      <button class="menu-btn" onclick="game.showDifficultyMenu()">1 Player vs AI</button>
+      <button class="menu-btn secondary" onclick="game.setMode('2player')">2 Players</button>
+      <button class="menu-btn" style="background:#333; border-color:#666;" onclick="game.showMainMenu()">Back</button>
+    </div>
+
+    <div id="difficultyMenu" class="menu hidden">
+      <h1>Select Difficulty</h1>
+      <div class="menu-subtitle">Choose AI strength</div>
+      <div class="difficulty-grid">
+        <button class="menu-btn" onclick="game.setDifficulty('easy')">🟢 Easy</button>
+        <button class="menu-btn" onclick="game.setDifficulty('normal')">🟡 Normal</button>
+        <button class="menu-btn" onclick="game.setDifficulty('hard')">🔴 Hard</button>
+      </div>
+      <button class="menu-btn" style="background:#333; border-color:#666; margin-top:10px;" onclick="game.showModeMenu()">Back</button>
+    </div>
+    
+    <div id="settingsMenu" class="menu hidden">
+      <h1>Game Settings</h1>
+      <div class="menu-subtitle">Adjust parameters for V2.0</div>
+      
+      <h3 style="font-size:16px; margin-top:15px; margin-bottom:5px; color:#fff;">Paddle Size</h3>
+      <div style="display:flex; justify-content:space-around;">
+          <button class="menu-btn" style="width:30%; padding:8px 0; margin:5px; font-size:12px;" onclick="game.setPaddleSize(80)">Normal</button>
+          <button class="menu-btn" style="width:30%; padding:8px 0; margin:5px; font-size:12px;" onclick="game.setPaddleSize(120)">Large</button>
+          <button class="menu-btn" style="width:30%; padding:8px 0; margin:5px; font-size:12px;" onclick="game.setPaddleSize(50)">Small</button>
+      </div>
+
+      <h3 style="font-size:16px; margin-top:15px; margin-bottom:5px; color:#fff;">Max Ball Speed</h3>
+      <div style="display:flex; justify-content:space-around;">
+          <button class="menu-btn secondary" style="width:30%; padding:8px 0; margin:5px; font-size:12px;" onclick="game.setMaxSpeed(15)">Fast</button>
+          <button class="menu-btn secondary" style="width:30%; padding:8px 0; margin:5px; font-size:12px;" onclick="game.setMaxSpeed(20)">Very Fast</button>
+          <button class="menu-btn secondary" style="width:30%; padding:8px 0; margin:5px; font-size:12px;" onclick="game.setMaxSpeed(30)">Extreme</button>
+      </div>
+
+      <h3 style="font-size:16px; margin-top:15px; margin-bottom:5px; color:#fff;">Sound Volume</h3>
+<input id="volumeSlider" type="range" min="0" max="100" value="100"
+       style="width:100%; margin:10px 0;" 
+       oninput="game.setVolume(this.value)">
+
+
+      <button class="menu-btn" style="background:#333; border-color:#666; margin-top:20px;" onclick="game.showMainMenu()">Back</button>
+    </div>
+
+    <div id="controlsMenu" class="menu hidden">
+      <h1>Controls</h1>
+      <div class="menu-subtitle">How to play</div>
+      <div class="about-content" style="margin-top:12px;">
+        <p><strong>PLAYER 1:</strong> W / S keys • Mouse • Touch (left side)</p>
+        <p><strong>PLAYER 2:</strong> Arrow Up / Arrow Down • Touch (right side)</p>
+        <p><strong>PAUSE:</strong> ESC or P</p>
+        <p style="margin-top:8px; font-size:13px; color:#bfefff;">In 2-player mode, keyboard inputs are limited to W/S and Arrow Up/Down plus touch controls on screen.</p>
+      </div>
+      <button class="menu-btn" onclick="game.showMainMenu()">Back</button>
+    </div>
+
+    <div id="aboutMenu" class="menu hidden">
+      <h1>About Game</h1>
+      <div class="menu-subtitle">Retro Pong Championship 2025</div>
+      <div class="about-content" style="margin-top:8px;">
+        <p><strong>Developed by:</strong> Ihor Khodakivskyi</p>
+        <p><strong>© 2025 All Rights Reserved</strong></p>
+        <p style="margin-top:8px;">Retro-inspired Pong with modern effects, AI difficulty system, and smooth 2-player controls. Built for fun and nostalgia!</p>
+      </div>
+      <button class="menu-btn" onclick="game.showMainMenu()">Back</button>
+    </div>
+
+    <div id="pauseOverlay" class="pause-overlay">
+      <div class="pause-box">
+        <div class="pause-text">Paused</div>
+        <div class="pause-hint">Game is paused - your match will remain saved</div>
+        <button class="menu-btn" onclick="game.togglePause()">Resume Game</button>
+        <button class="menu-btn" onclick="game.showMainMenuFromPause()">Main Menu</button>
+        <!-- <button class="menu-btn" onclick="game.showAbout()">About Game</button>-->
+      </div>
+    </div>
+
+    <div id="setPopup" class="pause-overlay">
+  <div class="pause-box">
+    <div id="setPopupTitle" class="pause-text"></div>
+    <div id="setPopupInfo" class="pause-hint" style="margin-bottom:18px;"></div>
+
+    <button class="menu-btn" onclick="game.nextSet()">Next Set</button>
+    <button class="menu-btn" onclick="game.showMainMenu()">Main Menu</button>
+  </div>
+</div>
+
+<div id="matchPopup" class="pause-overlay">
+  <div class="pause-box">
+    <div id="matchPopupTitle" class="pause-text"></div>
+    <div id="matchPopupInfo" class="pause-hint" style="margin-bottom:18px;"></div>
+
+    <button class="menu-btn" onclick="game.restartMatch()">Play Again</button>
+    <button class="menu-btn" onclick="game.showMainMenu()">Main Menu</button>
+  </div>
+</div>
+
+
+    <div class="small-footer">Neon Ping Pong by Ihor Khodakivskyi • 2025</div>
+
+    <button id="fullscreenBtn" title="Fullscreen">⛶</button>
+
+  </div>
+
+  <script>
+    class PongGame {
+      setVolume(val) {
+    const v = Math.max(0, Math.min(100, val)) / 100;
+    this.gameSettings.volume = v;
+    this.saveSettings();
+}
+
+      
+      constructor(canvas) {
+        this.canvas = canvas;
+        this.ctx = canvas.getContext('2d');
+        
+        // Settings with defaults (V2.0)
+        this.gameSettings = {
+          paddleHeight: 80,
+          maxBallSpeed: 20,
+          volume: 1.0, 
+        };
+        this.loadSettings();
+
+        // Apply volume to UI
+setTimeout(() => {
+    const vs = document.getElementById('volumeSlider');
+    if (vs) vs.value = Math.round(this.gameSettings.volume * 100);
+}, 10);
+
+
+        this.resizeCanvas();
+        window.addEventListener('resize', () => this.resizeCanvas());
+
+        // constants
+        this.FPS = 60;
+        this.PADDLE_THICKNESS = 12;
+        this.PADDLE_HEIGHT = this.gameSettings.paddleHeight; 
+        this.BALL_SIZE = 8;
+        this.POINTS_TO_WIN_SET = 11;
+        this.MAX_SETS = 5; 
+        this.SERVE_CHANGES = 2; 
+
+        // state
+        this.mode = '1player';
+        this.difficulty = 'normal';
+        this.isPaused = false;
+        this.isPlaying = false;
+        this.isSdkPaused = false; 
+        this.countdown = 0;
+        this.currentServer = 1;
+        this.pointsSinceServeChange = 0;
+        this.controlsLocked = false;
+        this.countdownInterval = null;
+        this.pausedMatchExists = false; 
+
+        // scoring
+        this.sets = { p1:0, p2:0 };
+        this.points = { p1:0, p2:0 };
+
+        // objects
+        this.ball = { x:0, y:0, speedX:0, speedY:0, baseSpeed:6 };
+        this.paddle1 = { y:0, speed:8 };
+        this.paddle2 = { y:0, speed:8 };
+
+        // AI
+        this.aiSpeeds = { easy:4, normal:6, hard:8 };
+        this.aiReaction = { easy:60, normal:40, hard:20 };
+
+        // other
+        this.ballTrail = [];
+        this.particles = [];
+          // --- WebAudio API Sound System ---
+this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+this.playTone = (freq, duration = 0.08, volume = 0.2) => {
+    const osc = this.audioCtx.createOscillator();
+    const gain = this.audioCtx.createGain();
+
+    osc.frequency.value = freq;
+    osc.type = "square";
+
+   gain.gain.value = volume * this.gameSettings.volume;
+gain.gain.exponentialRampToValueAtTime(0.001, this.audioCtx.currentTime + duration);
+
+    osc.connect(gain);
+    gain.connect(this.audioCtx.destination);
+
+    osc.start();
+    osc.stop(this.audioCtx.currentTime + duration);
+};
+
+// Sound events
+this.sfx = {
+    bounce: ()=> this.playTone(440, 0.05, 0.15),
+    score:  ()=> this.playTone(220, 0.1, 0.3),
+    setWin: ()=> this.playTone(880, 0.3, 0.25),
+    matchWin: ()=> this.playTone(660, 0.5, 0.3)
+};
+
+        this.touches = { left:null, right:null };
+
+        this.setupControls();
+        this.updateContinueButton();
+      }
+
+      // V2.0: Apply settings to game constants
+      applySettings() {
+        this.PADDLE_HEIGHT = this.gameSettings.paddleHeight;
+        // Re-center paddles if a match is active or paused
+        if(this.isPlaying || this.pausedMatchExists){
+             this.paddle1.y = this.canvas.height/2 - this.PADDLE_HEIGHT/2; 
+             this.paddle2.y = this.canvas.height/2 - this.PADDLE_HEIGHT/2;
+        }
+      }
+
+      // V2.0: Save and load settings using localStorage
+      saveSettings() {
+        localStorage.setItem('neonPingPongSettings', JSON.stringify(this.gameSettings));
+      }
+
+      
+
+      loadSettings() {
+        // Update UI slider if it exists
+const vs = document.getElementById('volumeSlider');
+if (vs) vs.value = Math.round(this.gameSettings.volume * 100);
+
+        const saved = localStorage.getItem('neonPingPongSettings');
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            this.gameSettings = { ...this.gameSettings, ...parsed };
+          } catch (e) {
+            console.error("Error loading settings:", e);
+          }
+        }
+        this.applySettings();
+      }
+
+      // V2.0: Settings Menu Handlers
+      showSettings(){ 
+        document.getElementById('mainMenu').classList.remove('visible'); 
+        document.getElementById('mainMenu').classList.add('hidden'); 
+        ['modeMenu','difficultyMenu','controlsMenu','aboutMenu'].forEach(id=>document.getElementById(id).classList.add('hidden')); 
+        document.getElementById('settingsMenu').classList.remove('hidden'); 
+        document.getElementById('settingsMenu').classList.add('visible'); 
+      }
+
+      setPaddleSize(height) {
+        this.gameSettings.paddleHeight = height;
+        this.applySettings();
+        this.saveSettings();
+        // Optional: Provide feedback to the user, like an alert or in-menu text update
+      }
+
+      setMaxSpeed(speed) {
+        this.gameSettings.maxBallSpeed = speed;
+        this.saveSettings();
+        // Optional: Provide feedback
+      }
+
+
+      resizeCanvas(){
+        const maxWidth = Math.min(900, window.innerWidth - 20);
+        const maxHeight = Math.min(600, window.innerHeight - 20);
+        this.canvas.width = maxWidth;
+        this.canvas.height = maxHeight;
+        // Adjust paddle position based on new PADDLE_HEIGHT
+        if(this.isPlaying || this.pausedMatchExists){ 
+             this.paddle1.y = this.canvas.height/2 - this.PADDLE_HEIGHT/2; 
+             this.paddle2.y = this.canvas.height/2 - this.PADDLE_HEIGHT/2; 
+        }
+      }
+
+      setupControls(){
+        // mouse for player1
+this.canvas.addEventListener('mousemove', (e)=>{
+  if (this.mode === '2player') return;  // FIX
+  if(!this.isPlaying || this.isPaused || this.isSdkPaused || this.countdown>0 || this.controlsLocked) return;
+
+  const rect = this.canvas.getBoundingClientRect();
+  const mouseY = e.clientY - rect.top;
+  let newY = mouseY - this.PADDLE_HEIGHT/2;
+  this.paddle1.y = Math.max(0, Math.min(this.canvas.height - this.PADDLE_HEIGHT, newY)); 
+});
+
+
+        this.keys = {};
+        window.addEventListener('keydown', (e)=>{
+          const k = e.key.toLowerCase();
+          // pause only when countdown finished and not SDK paused
+          if((e.key==='Escape' || k==='p') && this.isPlaying && this.countdown===0 && !this.isSdkPaused){ this.togglePause(); return; }
+          if(this.controlsLocked || this.isSdkPaused) return;
+
+          // Only allow W/S and Arrow keys
+          if(k==='w' || k==='s' || k==='arrowup' || k==='arrowdown'){
+            this.keys[k]=true;
+          }
+        });
+
+        window.addEventListener('keyup', (e)=>{ const k=e.key.toLowerCase(); if(['w','s','arrowup','arrowdown'].includes(k)) this.keys[k]=false; });
+
+        // touch controls
+        this.canvas.addEventListener('touchstart', (e)=>{
+          e.preventDefault();
+          if(this.controlsLocked || this.isSdkPaused) return;
+          Array.from(e.touches).forEach(touch=>{
+            const rect = this.canvas.getBoundingClientRect();
+            const touchX = touch.clientX - rect.left;
+            if(touchX < this.canvas.width/2){ this.touches.left = touch.identifier; }
+            else { this.touches.right = touch.identifier; }
+          });
+        }, {passive:false});
+
+        this.canvas.addEventListener('touchmove', (e)=>{
+          e.preventDefault();
+          if(!this.isPlaying || this.isPaused || this.isSdkPaused || this.countdown>0 || this.controlsLocked) return;
+          const rect = this.canvas.getBoundingClientRect();
+          Array.from(e.touches).forEach(touch=>{
+            const touchY = touch.clientY - rect.top;
+            let newY = touchY - this.PADDLE_HEIGHT/2;
+
+            if(touch.identifier === this.touches.left && this.mode !== '2player') {
+    this.paddle1.y = Math.max(0, Math.min(this.canvas.height - this.PADDLE_HEIGHT, newY)); 
+}
+            else if(touch.identifier===this.touches.right && this.mode==='2player'){ 
+              this.paddle2.y = Math.max(0, Math.min(this.canvas.height - this.PADDLE_HEIGHT, newY)); 
+            }
+          });
+        }, {passive:false});
+
+        this.canvas.addEventListener('touchend', (e)=>{ Array.from(e.changedTouches).forEach(touch=>{ if(touch.identifier===this.touches.left) this.touches.left=null; if(touch.identifier===this.touches.right) this.touches.right=null; }); });
+      }
+
+      // SDK Integration Methods
+      sdkPause(){
+        this.isSdkPaused = true;
+        // Logic to mute audio if needed
+      }
+
+      sdkResume(){
+        this.isSdkPaused = false;
+        // Logic to unmute audio if needed
+        if(this.isPlaying && !this.isPaused) {
+          this.startCountdown();
+        }
+      }
+
+      // Menu functions
+      showMainMenu(){
+        document.getElementById('mainMenu').classList.add('visible'); document.getElementById('mainMenu').classList.remove('hidden');
+        ['modeMenu','difficultyMenu','controlsMenu','aboutMenu', 'settingsMenu'].forEach(id=>document.getElementById(id).classList.add('hidden'));
+        document.getElementById('pauseOverlay').classList.remove('visible');
+        if(!this.isPaused && !this.isSdkPaused){ 
+          this.isPlaying=false; if(this.gameLoop){ clearInterval(this.gameLoop); this.gameLoop=null; }
+          this.pausedMatchExists=false; this.updateContinueButton();
+        }
+      }
+
+      showModeMenu(){ document.getElementById('mainMenu').classList.remove('visible'); document.getElementById('mainMenu').classList.add('hidden'); ['controlsMenu','difficultyMenu','aboutMenu', 'settingsMenu'].forEach(id=>document.getElementById(id).classList.add('hidden')); document.getElementById('modeMenu').classList.remove('hidden'); document.getElementById('modeMenu').classList.add('visible'); }
+
+      showDifficultyMenu(){ document.getElementById('modeMenu').classList.add('hidden'); document.getElementById('difficultyMenu').classList.remove('hidden'); document.getElementById('difficultyMenu').classList.add('visible'); }
+
+      showControls(){ document.getElementById('mainMenu').classList.remove('visible'); document.getElementById('mainMenu').classList.add('hidden'); document.getElementById('controlsMenu').classList.remove('hidden'); document.getElementById('controlsMenu').classList.add('visible'); }
+
+      showAbout(){ ['mainMenu','modeMenu','difficultyMenu','controlsMenu', 'settingsMenu'].forEach(id=>document.getElementById(id).classList.add('hidden')); document.getElementById('aboutMenu').classList.remove('hidden'); document.getElementById('aboutMenu').classList.add('visible'); }
+
+      setMode(mode){ this.mode=mode; this.difficulty=null; ['mainMenu','modeMenu','difficultyMenu','controlsMenu','aboutMenu', 'settingsMenu'].forEach(id=>document.getElementById(id).classList.add('hidden')); this.startGame(); }
+
+      setDifficulty(difficulty){ this.difficulty=difficulty; this.mode='1player'; document.getElementById('difficultyMenu').classList.add('hidden'); this.startGame(); }
+
+      startGame(){ 
+        ['mainMenu','modeMenu','difficultyMenu','controlsMenu','aboutMenu', 'settingsMenu'].forEach(id=>document.getElementById(id).classList.add('hidden')); 
+        this.isPlaying=true;
+        if (window.innerWidth < 1024) {
+          const el = document.documentElement;
+          if (el.requestFullscreen) el.requestFullscreen();
+          else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+        } 
+        this.isPaused=false; 
+        this.isSdkPaused=false; 
+        this.resetMatch(); 
+        document.getElementById('matchIndicator').classList.remove('hidden'); 
+        if(!this.gameLoop){ 
+          this.gameLoop = setInterval(()=>this.update(), 1000/this.FPS); 
+        } 
+        this.startCountdown(); 
+        this.pausedMatchExists=false; 
+        this.updateContinueButton(); 
+        // Show ad upon starting a new game
+        if (typeof sdk !== 'undefined' && sdk.showBanner) {
+            sdk.showBanner();
+        }
+      }
+
+      // Continue paused match
+      continueMatch(){ 
+        if(this.pausedMatchExists){ 
+          document.getElementById('mainMenu').classList.remove('visible'); 
+          document.getElementById('mainMenu').classList.add('hidden'); 
+          this.isPlaying=true; 
+          this.isPaused=false; 
+          this.isSdkPaused=false; 
+          document.getElementById('matchIndicator').classList.remove('hidden'); 
+          if(!this.gameLoop){ 
+            this.gameLoop = setInterval(()=>this.update(), 1000/this.FPS); 
+          } 
+          this.togglePause(); 
+          // Show ad upon continuing a match
+          if (typeof sdk !== 'undefined' && sdk.showBanner) {
+              sdk.showBanner();
+          }
+        } 
+      }
+
+      startCountdown(){ 
+        if(this.countdownInterval){ clearInterval(this.countdownInterval); this.countdownInterval=null; } 
+        this.countdown=3; 
+        this.controlsLocked=false; 
+        this.keys={}; 
+        const existing=document.querySelector('.countdown'); 
+        if(existing) existing.remove(); 
+        const countdownEl=document.createElement('div'); 
+        countdownEl.className='countdown'; 
+        countdownEl.textContent=this.countdown; 
+        document.getElementById('container').appendChild(countdownEl); 
+        this.countdownInterval = setInterval(()=>{
+          this.countdown--; 
+          if(this.countdown>0){ 
+            countdownEl.textContent=this.countdown; 
+            countdownEl.style.animation='none'; 
+            setTimeout(()=>countdownEl.style.animation='',10); 
+          }
+          else { 
+            countdownEl.textContent='GO!'; 
+            setTimeout(()=>{ 
+              countdownEl.remove(); 
+              this.countdown=0; 
+              this.controlsLocked=false; 
+              this.canvas.style.pointerEvents='auto'; 
+            },500); 
+            clearInterval(this.countdownInterval); 
+            this.countdownInterval=null; 
+          }
+        },1000);
+      }
+
+      togglePause(){ 
+        if(this.isSdkPaused) return; 
+        this.isPaused = !this.isPaused; 
+        document.getElementById('pauseOverlay').classList.toggle('visible', this.isPaused); 
+        if(this.isPaused){ 
+          this.pausedMatchExists = true; 
+          this.updateContinueButton(); 
+        } else { 
+          this.startCountdown();
+        }
+      }
+
+      // When Main Menu clicked from Pause: keep game paused but show main menu and leave state preserved for Continue
+      showMainMenuFromPause(){ 
+        this.isPaused = true; 
+        document.getElementById('pauseOverlay').classList.remove('visible'); 
+        document.getElementById('mainMenu').classList.remove('hidden'); 
+        document.getElementById('mainMenu').classList.add('visible'); 
+        this.pausedMatchExists = true; 
+        this.updateContinueButton(); 
+      }
+
+      updateContinueButton(){ const btn = document.getElementById('continueBtn'); if(this.pausedMatchExists){ btn.style.display='block'; } else { btn.style.display='none'; } }
+
+      resetMatch(){ this.sets={p1:0,p2:0}; this.points={p1:0,p2:0}; this.currentServer=1; this.pointsSinceServeChange=0; this.resetPoint(); }
+
+      resetPoint(){ 
+        this.ball.x = this.canvas.width/2; 
+        this.ball.y = this.canvas.height/2; 
+        const angle = (Math.random()-0.5) * Math.PI/3; 
+        const direction = this.currentServer===1 ? 1 : -1; 
+        this.ball.speedX = Math.cos(angle)*this.ball.baseSpeed*direction; 
+        this.ball.speedY = Math.sin(angle)*this.ball.baseSpeed; 
+        this.paddle1.y = this.canvas.height/2 - this.PADDLE_HEIGHT/2; 
+        this.paddle2.y = this.canvas.height/2 - this.PADDLE_HEIGHT/2; 
+        this.ballTrail=[]; 
+      }
+
+      scorePoint(player){ 
+        this.points[player]++; 
+        this.pointsSinceServeChange++; 
+        
+        const inDeuce = this.points.p1>=this.POINTS_TO_WIN_SET-1 && this.points.p2>=this.POINTS_TO_WIN_SET-1; 
+        
+        if(inDeuce){ 
+          this.currentServer = this.currentServer===1?2:1; 
+          if(Math.abs(this.points.p1 - this.points.p2) >=2){ 
+            this.endSet(this.points.p1>this.points.p2?'p1':'p2'); 
+            return; 
+          } 
+        } else { 
+          if(this.pointsSinceServeChange >= this.SERVE_CHANGES){ 
+            this.currentServer = this.currentServer===1?2:1; 
+            this.pointsSinceServeChange=0; 
+          } 
+          if(this.points.p1 >= this.POINTS_TO_WIN_SET || this.points.p2 >= this.POINTS_TO_WIN_SET){ 
+            if(Math.abs(this.points.p1 - this.points.p2) >=2){ 
+              this.endSet(this.points.p1>this.points.p2?'p1':'p2'); 
+              return; 
+            } 
+          } 
+        }
+        this.startCountdown(); this.resetPoint(); 
+      }
+
+endSet(winner) {
+  this.sets[winner]++;
+
+  // Show ad after set
+  if (typeof sdk !== 'undefined' && sdk.showBanner) {
+      sdk.showBanner();
+  }
+
+  const popup = document.getElementById("setPopup");
+  const title = document.getElementById("setPopupTitle");
+  const info = document.getElementById("setPopupInfo");
+
+  title.textContent = (winner === "p1" ? "Player 1 Wins Set!" :
+                      (this.mode === "1player" ? "AI Wins Set!" : "Player 2 Wins Set!"));
+
+  info.textContent = `Set Score: ${this.sets.p1} - ${this.sets.p2}`;
+
+  popup.classList.add("visible");
+
+  // If match finished → go to match popup instead
+  if (this.sets.p1 === 3 || this.sets.p2 === 3) {
+    popup.classList.remove("visible");
+     this.isPaused = false; // FIX: unlock UI state
+    this.endMatch(winner);
+    return;
+  }
+
+  // Prepare for next set
+  this.points = { p1: 0, p2: 0 };
+  this.pointsSinceServeChange = 0;
+  this.isPaused = true;
+}
+
+
+nextSet() {
+  document.getElementById("setPopup").classList.remove("visible");
+
+  this.isPaused = false;
+  this.points = { p1: 0, p2: 0 };
+  this.pointsSinceServeChange = 0;
+
+  // FIX: Reset ball speed between sets
+  this.ball.speedX = 0;
+  this.ball.speedY = 0;
+  this.ball.baseSpeed = 6;
+
+  // FIX: Alternate server properly
+  this.currentServer = (this.sets.p1 + this.sets.p2) % 2 === 0 ? 1 : 2;
+
+  this.startCountdown();
+  this.resetPoint();
+}
+
+
+
+endMatch(winner) {
+  this.isPlaying = false;
+  this.pausedMatchExists = false;
+
+  // Show ad after match
+  if (typeof sdk !== 'undefined' && sdk.showBanner) {
+      sdk.showBanner();
+  }
+
+  const popup = document.getElementById("matchPopup");
+  const title = document.getElementById("matchPopupTitle");
+  const info = document.getElementById("matchPopupInfo");
+
+  const winnerName = winner === "p1" ? "Player 1" :
+        (this.mode === "1player" ? "AI" : "Player 2");
+
+  title.textContent = `${winnerName} Wins The Match!`;
+  info.textContent = `Final Score: ${this.sets.p1} - ${this.sets.p2}`;
+
+  popup.classList.add("visible");
+}
+
+
+restartMatch() {
+  document.getElementById("matchPopup").classList.remove("visible");
+  this.startGame();
+}
+
+
+      handleKeyboard(){ 
+        if(this.keys['w']) this.paddle1.y -= this.paddle1.speed; 
+        if(this.keys['s']) this.paddle1.y += this.paddle1.speed; 
+        
+        if(this.mode==='2player'){ 
+          if(this.keys['arrowup']) this.paddle2.y -= this.paddle2.speed; 
+          if(this.keys['arrowdown']) this.paddle2.y += this.paddle2.speed; 
+        } 
+        
+        // Constraint paddles
+        this.paddle1.y = Math.max(0, Math.min(this.canvas.height - this.PADDLE_HEIGHT, this.paddle1.y)); 
+        this.paddle2.y = Math.max(0, Math.min(this.canvas.height - this.PADDLE_HEIGHT, this.paddle2.y)); 
+      }
+
+      updateAI() {
+  if (this.mode !== '1player') return;
+
+  const difficulty = this.difficulty;
+
+  // AI stats per difficulty
+  const config = {
+    easy:    { speed: 7, reaction: 45, missChance: 0.15 },
+    normal:  { speed: 9, reaction: 25, missChance: 0.07 },
+    hard:    { speed: 11, reaction: 10, missChance: 0.0 }
+  };
+
+  const ai = config[difficulty];
+
+  // Predict ball future Y position
+  let predictedY = this.ball.y;
+  if (this.ball.speedX > 0) {
+    const framesUntilContact = (this.canvas.width - this.PADDLE_THICKNESS - this.ball.x) / Math.abs(this.ball.speedX);
+    predictedY = this.ball.y + this.ball.speedY * framesUntilContact;
+  }
+
+  // Bounce prediction if ball would hit top/bottom before reaching AI
+  while (predictedY < 0 || predictedY > this.canvas.height) {
+    if (predictedY < 0) predictedY = -predictedY;
+    if (predictedY > this.canvas.height) predictedY = this.canvas.height - (predictedY - this.canvas.height);
+  }
+
+  // MISS factor (easy mode mostly)
+  if (Math.random() < ai.missChance) {
+    predictedY += (Math.random() - 0.5) * 200;
+  }
+
+  // Reaction delay (AI waits before moving)
+  if (Math.random() * 100 > ai.reaction) {
+    const paddleCenter = this.paddle2.y + this.PADDLE_HEIGHT / 2;
+    if (paddleCenter < predictedY - 10) this.paddle2.y += ai.speed;
+    if (paddleCenter > predictedY + 10) this.paddle2.y -= ai.speed;
+  }
+
+  // Clamp
+  this.paddle2.y = Math.max(0, Math.min(this.canvas.height - this.PADDLE_HEIGHT, this.paddle2.y));
+}
+
+
+      createParticles(x,y,color){ for(let i=0;i<6;i++){ this.particles.push({ x,y, vx:(Math.random()-0.5)*7, vy:(Math.random()-0.5)*7, life:0.8, color }); } } 
+
+      update(){ 
+        // only draw while paused, SDK paused, or countdown
+        if(!this.isPlaying || this.isPaused || this.isSdkPaused || this.countdown>0){ this.draw(); return; }
+        
+        this.handleKeyboard(); 
+        this.updateAI(); 
+        
+        this.ballTrail.push({ x:this.ball.x, y:this.ball.y }); 
+        if(this.ballTrail.length>10) this.ballTrail.shift(); 
+        
+        this.ball.x += this.ball.speedX; 
+        this.ball.y += this.ball.speedY; 
+        
+        // V2.0 Logic: Speed increases but with a cap.
+        const speedMultiplier = 1.0005; 
+        const maxSpeed = this.gameSettings.maxBallSpeed;
+        
+        if (Math.abs(this.ball.speedX) < maxSpeed) {
+            this.ball.speedX *= speedMultiplier; 
+        }
+        if (Math.abs(this.ball.speedY) < maxSpeed) {
+            this.ball.speedY *= speedMultiplier; 
+        }
+
+        // collisions
+        const p1PaddleX = this.PADDLE_THICKNESS;
+        const p2PaddleX = this.canvas.width - this.PADDLE_THICKNESS;
+
+        // Player 1 Collision
+        if(this.ball.x - this.BALL_SIZE <= p1PaddleX && this.ball.x - this.BALL_SIZE > 0 &&
+           this.ball.y >= this.paddle1.y && this.ball.y <= this.paddle1.y + this.PADDLE_HEIGHT){ 
+          
+          this.ball.speedX = Math.abs(this.ball.speedX); 
+          this.sfx.bounce();
+          const deltaY = this.ball.y - (this.paddle1.y + this.PADDLE_HEIGHT/2); 
+          this.ball.speedY = deltaY * 0.15; 
+          this.createParticles(p1PaddleX, this.ball.y, '#00ffff'); 
+        }
+        
+        // Player 2 Collision (AI or Human)
+ // --- CONTINUOUS COLLISION DETECTION FOR PLAYER 1 ---
+let nextX = this.ball.x + this.ball.speedX;
+let nextY = this.ball.y + this.ball.speedY;
+
+// Ball crossing P1 paddle line
+if (this.ball.x >= this.PADDLE_THICKNESS &&
+    nextX <= this.PADDLE_THICKNESS + this.BALL_SIZE) {
+
+    // Check if vertical range overlaps paddle
+    if (nextY >= this.paddle1.y - this.BALL_SIZE &&
+        nextY <= this.paddle1.y + this.PADDLE_HEIGHT + this.BALL_SIZE) {
+
+        // FIX: place ball exactly at surface
+        this.ball.x = this.PADDLE_THICKNESS + this.BALL_SIZE;
+
+        // Bounce
+        this.ball.speedX = Math.abs(this.ball.speedX);
+
+        // Add angle based on hit position
+        const deltaY = nextY - (this.paddle1.y + this.PADDLE_HEIGHT / 2);
+        this.ball.speedY = deltaY * 0.15;
+
+        this.createParticles(this.PADDLE_THICKNESS, nextY, '#00ffff');
+        this.sfx.bounce();
+    }
+}
+
+
+// --- CONTINUOUS COLLISION DETECTION FOR PLAYER 2 ---
+if (this.ball.x <= this.canvas.width - this.PADDLE_THICKNESS &&
+    nextX >= this.canvas.width - this.PADDLE_THICKNESS - this.BALL_SIZE) {
+
+    if (nextY >= this.paddle2.y - this.BALL_SIZE &&
+        nextY <= this.paddle2.y + this.PADDLE_HEIGHT + this.BALL_SIZE) {
+
+        // FIX: place ball exactly at surface
+        this.ball.x = this.canvas.width - this.PADDLE_THICKNESS - this.BALL_SIZE;
+
+        this.ball.speedX = -Math.abs(this.ball.speedX);
+
+        const deltaY = nextY - (this.paddle2.y + this.PADDLE_HEIGHT / 2);
+        this.ball.speedY = deltaY * 0.15;
+
+        this.createParticles(this.canvas.width - this.PADDLE_THICKNESS, nextY, '#ff00ff');
+        this.sfx.bounce();
+    }
+}
+
+
+        // Scoring
+        if(this.ball.x < 0){ 
+          this.sfx.score();
+          this.scorePoint('p2'); 
+          return; 
+        }
+        if(this.ball.x > this.canvas.width){ 
+          this.sfx.score();
+          this.scorePoint('p1'); 
+          return; 
+        }
+
+        // Top/Bottom Wall Collision
+        if(this.ball.y <= this.BALL_SIZE || this.ball.y >= this.canvas.height - this.BALL_SIZE){ 
+          this.ball.speedY = -this.ball.speedY; 
+          this.ball.y = Math.max(this.BALL_SIZE, Math.min(this.canvas.height - this.BALL_SIZE, this.ball.y)); 
+        }
+
+        this.particles = this.particles.filter(p=>{ p.x += p.vx; p.y += p.vy; p.life -= 0.02; return p.life>0; });
+        this.draw(); 
+      }
+
+      draw(){ 
+        const gradient = this.ctx.createLinearGradient(0,0,0,this.canvas.height); 
+        gradient.addColorStop(0,'#0a0e27'); 
+        gradient.addColorStop(1,'#1a1f3a'); 
+        this.ctx.fillStyle = gradient; 
+        this.ctx.fillRect(0,0,this.canvas.width,this.canvas.height);
+        
+        // Particles
+        this.particles.forEach(p=>{ this.ctx.globalAlpha = p.life; this.ctx.fillStyle = p.color; this.ctx.fillRect(p.x,p.y,3,3); }); 
+        this.ctx.globalAlpha = 1;
+        
+        // net
+        this.ctx.strokeStyle = 'rgba(0,255,255,0.3)'; 
+        this.ctx.lineWidth = 2; 
+        this.ctx.setLineDash([10,10]); 
+        this.ctx.beginPath(); 
+        this.ctx.moveTo(this.canvas.width/2,0); 
+        this.ctx.lineTo(this.canvas.width/2,this.canvas.height); 
+        this.ctx.stroke(); 
+        this.ctx.setLineDash([]);
+        
+        // paddles (V2.0 Design Tweak: Increased shadow blur)
+        this.ctx.shadowBlur = 30; 
+        this.ctx.shadowColor = '#00ffff'; 
+        this.ctx.fillStyle = '#00ffff'; 
+        this.ctx.fillRect(0,this.paddle1.y,this.PADDLE_THICKNESS,this.PADDLE_HEIGHT);
+        
+        this.ctx.shadowColor = '#ff00ff'; 
+        this.ctx.fillStyle = '#ff00ff'; 
+        this.ctx.fillRect(this.canvas.width - this.PADDLE_THICKNESS, this.paddle2.y, this.PADDLE_THICKNESS, this.PADDLE_HEIGHT);
+        this.ctx.shadowBlur = 0;
+        
+        // trail
+        this.ballTrail.forEach((pos,i)=>{ 
+          const alpha = i/this.ballTrail.length; 
+          this.ctx.globalAlpha = alpha * 0.5; 
+          this.ctx.fillStyle = '#ffffff'; 
+          this.ctx.beginPath(); 
+          this.ctx.arc(pos.x,pos.y,this.BALL_SIZE*alpha,0,Math.PI*2); 
+          this.ctx.fill(); 
+        }); 
+        this.ctx.globalAlpha = 1;
+        
+        // ball
+        this.ctx.shadowBlur = 25; 
+        this.ctx.shadowColor = '#ffffff'; 
+        this.ctx.fillStyle = '#ffffff'; 
+        this.ctx.beginPath(); 
+        this.ctx.arc(this.ball.x,this.ball.y,this.BALL_SIZE,0,Math.PI*2); 
+        this.ctx.fill(); 
+        this.ctx.shadowBlur = 0;
+        
+        // scores
+        this.ctx.font = 'bold 64px Orbitron'; 
+        this.ctx.textAlign = 'center'; 
+        this.ctx.fillStyle = '#00ffff'; 
+        this.ctx.fillText(this.points.p1, this.canvas.width/4,80); 
+        this.ctx.font='20px Orbitron'; 
+        this.ctx.fillText(`Sets: ${this.sets.p1}`, this.canvas.width/4,110);
+        
+        this.ctx.fillStyle = '#ff00ff'; 
+        this.ctx.font='bold 64px Orbitron'; 
+        this.ctx.fillText(this.points.p2, this.canvas.width*3/4,80); 
+        this.ctx.font='20px Orbitron'; 
+        this.ctx.fillText(`Sets: ${this.sets.p2}`, this.canvas.width*3/4,110);
+        
+        // serve
+        const serverX = this.currentServer===1 ? this.canvas.width/4 : this.canvas.width*3/4; 
+        this.ctx.font='16px Orbitron'; 
+        this.ctx.fillStyle = this.currentServer===1? '#00ffff' : '#ff00ff'; 
+        this.ctx.fillText('●', serverX, 135);
+        
+        // match indicator
+        const matchText = `BEST OF 3 SETS • FIRST TO ${this.POINTS_TO_WIN_SET} POINTS`; 
+        const deuce = this.points.p1>=this.POINTS_TO_WIN_SET-1 && this.points.p2>=this.POINTS_TO_WIN_SET-1; 
+        document.getElementById('matchIndicator').textContent = deuce ? 'DEUCE!' : matchText;
+
+        // win screen
+        if(!this.isPlaying && (this.sets.p1 >= Math.ceil(this.MAX_SETS/2) || this.sets.p2 >= Math.ceil(this.MAX_SETS/2))){ 
+          this.ctx.fillStyle='rgba(0,0,0,0.8)'; 
+          this.ctx.fillRect(0,0,this.canvas.width,this.canvas.height); 
+          const winner = this.sets.p1>this.sets.p2 ? 'PLAYER 1' : (this.mode==='1player' ? 'AI' : 'PLAYER 2'); 
+          const winColor = this.sets.p1>this.sets.p2 ? '#00ffff' : '#ff00ff'; 
+          this.ctx.font='bold 48px Orbitron'; 
+          this.ctx.fillStyle = winColor; 
+          this.ctx.textAlign='center'; 
+          this.ctx.fillText(`${winner} WINS!`, this.canvas.width/2, this.canvas.height/2 - 40); 
+          this.ctx.font='24px Orbitron'; 
+          this.ctx.fillStyle='#ffffff'; 
+          this.ctx.fillText(`${this.sets.p1} - ${this.sets.p2} SETS`, this.canvas.width/2, this.canvas.height/2 + 10); 
+          this.ctx.font='16px Orbitron'; 
+          this.ctx.fillStyle='#00ffff'; 
+          this.ctx.fillText('Returning to menu...', this.canvas.width/2, this.canvas.height/2 + 60); 
+        }
+
+        // controls hint
+        if(this.countdown===0 && this.isPlaying){ 
+          this.ctx.font='10px Orbitron'; 
+          this.ctx.fillStyle='rgba(255,255,255,0.3)'; 
+          this.ctx.textAlign='left'; 
+          this.ctx.fillText('W/S • MOUSE • TOUCH', 10, this.canvas.height - 10); 
+          if(this.mode==='2player'){ 
+            this.ctx.textAlign='right'; 
+            this.ctx.fillText('ARROWS • TOUCH', this.canvas.width - 10, this.canvas.height - 10); 
+          } 
+          this.ctx.textAlign='center'; 
+          this.ctx.fillText('ESC/P: PAUSE', this.canvas.width/2, this.canvas.height - 10); 
+        }
+      }
+
+    }
+
+    let game;
+    window.onload = ()=>{ 
+      const canvas = document.getElementById('gameCanvas'); 
+      game = new PongGame(canvas); 
+      window.game = game; // Make game globally accessible for SDK events
+    };
+  function checkOrientation() {
+  const notice = document.querySelector('.orientation-notice');
+  if (window.innerHeight > window.innerWidth && window.innerWidth < 1024) {
+    notice.style.display = 'flex';
+  } else {
+    notice.style.display = 'none';
+  }
+}
+window.addEventListener('resize', checkOrientation);
+window.addEventListener('orientationchange', checkOrientation);
+checkOrientation();
+document.body.addEventListener('touchmove', (e) => {
+  if (game?.isPlaying) e.preventDefault();
+}, { passive: false });
+
+const fullscreenBtn = document.getElementById('fullscreenBtn');
+
+fullscreenBtn.addEventListener('click', () => {
+  if (!document.fullscreenElement) {
+    const el = document.documentElement;
+    if (el.requestFullscreen) el.requestFullscreen();
+    else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+  } else {
+    if (document.exitFullscreen) document.exitFullscreen();
+    else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+  }
+});
+
+document.addEventListener('fullscreenchange', () => {
+  fullscreenBtn.textContent = document.fullscreenElement ? '🡽' : '⛶';
+});
+  </script>
+</html>

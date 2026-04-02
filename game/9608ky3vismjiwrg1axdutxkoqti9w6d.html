@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Hill Climb Racing 2D - Final Version 2</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.20.0/matter.min.js"></script>
+    <script type="text/javascript">
+        window.SDK_OPTIONS = {
+            gameId: "9608ky3vismjiwrg1axdutxkoqti9w6d",
+            onEvent: function (a) {
+                switch (a.name) {
+                    case "SDK_GAME_PAUSE":
+                        // pause game logic / mute audio
+                        break;
+                    case "SDK_GAME_START":
+                        // advertisement done, resume game logic and unmute audio
+                        break;
+                    case "SDK_READY":
+                        // when sdk is ready
+                        break;
+                }
+            }
+        };
+        (function (a, b, c) {
+            var d = a.getElementsByTagName(b)[0];
+            a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+        })(document, "script", "gamemonetize-sdk"); 
+    </script>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2ecc71;
+            --danger-color: #e74c3c;
+            --light-color: #ecf0f1;
+            --dark-color: #2c3e50;
+            --locked-color: #7f8c8d;
+            --font-family: 'Arial', sans-serif;
+        }
+
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--dark-color);
+            font-family: var(--font-family);
+            user-select: none;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, #87CEEB 0%, #B0E0E6 70%, #98FB98 100%);
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            background: transparent;
+        }
+
+        .ui-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(44, 62, 80, 0.85);
+            color: var(--light-color);
+            z-index: 10;
+            backdrop-filter: blur(5px);
+            transition: opacity 0.5s ease;
+        }
+
+        /* Sisipkan kode ini di dalam tag <style> */
+
+        .guide-box {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+            text-align: left;
+            font-size: 0.9em;
+        }
+
+        .guide-box h4 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: var(--secondary-color);
+            text-align: center;
+        }
+
+        .guide-box p {
+            margin: 5px 0;
+            line-height: 1.4;
+        }
+
+        .hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .menu-box {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            min-width: 300px;
+        }
+
+        .menu-box h1,
+        .menu-box h2 {
+            margin-top: 0;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .btn {
+            background: linear-gradient(145deg, var(--primary-color), #2980b9);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.2em;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-weight: bold;
+            letter-spacing: 1px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            margin: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(145deg, #7f8c8d, #95a5a6);
+        }
+
+        .btn-success {
+            background: linear-gradient(145deg, var(--secondary-color), #27ae60);
+        }
+
+        #level-selection-container {
+            overflow-y: auto;
+            padding: 10px;
+            margin-top: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 15px;
+            max-width: 80vw;
+        }
+
+        .level-btn {
+            width: 80px;
+            height: 80px;
+            font-size: 1.5em;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .level-btn.unlocked {
+            background: var(--secondary-color);
+            color: white;
+            box-shadow: 0 4px #27ae60;
+        }
+
+        .level-btn.unlocked:hover {
+            background: #2ecc71;
+            transform: translateY(-2px);
+        }
+
+        .level-btn.locked {
+            background: var(--locked-color);
+            color: #bdc3c7;
+            cursor: not-allowed;
+            box-shadow: 0 4px #6c7a7b;
+        }
+
+        /* PERUBAHAN: HUD Layout */
+        #hud {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            pointer-events: none;
+            z-index: 5;
+            color: var(--dark-color);
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.7);
+        }
+
+        .hud-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .hud-item {
+            background: rgba(255, 255, 255, 0.7);
+            padding: 10px 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .hud-center-group {
+            text-align: center;
+        }
+
+        #fuel-gauge {
+            width: 150px;
+            height: 20px;
+            border: 2px solid var(--dark-color);
+            border-radius: 10px;
+            padding: 2px;
+            background: rgba(0, 0, 0, 0.2);
+            margin-top: 5px;
+        }
+
+        #fuel-bar {
+            width: 100%;
+            height: 100%;
+            background: #2ecc71;
+            border-radius: 8px;
+            transition: width 0.2s ease-out;
+        }
+
+        #pause-btn {
+            pointer-events: all;
+            cursor: pointer;
+            font-size: 2em;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* PERUBAHAN: Mobile Controls Always Visible */
+        #mobile-controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding: 20px;
+            box-sizing: border-box;
+            z-index: 6;
+            pointer-events: none;
+        }
+
+        .mobile-control-group {
+            display: flex;
+            gap: 15px;
+            pointer-events: all;
+        }
+
+        .mobile-btn {
+            width: 70px;
+            height: 70px;
+            background: rgba(255, 255, 255, 0.5);
+            border: 2px solid rgba(0, 0, 0, 0.3);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2em;
+            font-weight: bold;
+            color: var(--dark-color);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+            -webkit-tap-highlight-color: transparent;
+            cursor: pointer;
+        }
+
+        .mobile-btn:active {
+            transform: scale(0.95);
+        }
+
+        #stats-summary {
+            font-size: 1.2em;
+            text-align: left;
+            margin: 20px 0;
+            line-height: 1.6;
+        }
+
+        #game-over-reason {
+            font-weight: bold;
+            color: var(--danger-color);
+        }
+    </style>
+</head>
+
+<body>
+    <audio id="bg-music" loop src="https://assets.mixkit.co/music/846/846.mp3"></audio>
+    <audio id="coin-sfx" src="https://assets.mixkit.co/active_storage/sfx/269/269.wav"></audio>
+
+    <div id="game-container">
+        <canvas id="game-canvas"></canvas>
+
+        <div id="main-menu" class="ui-overlay">
+            <div class="menu-box">
+                <h1>Hill Racer 2D</h1>
+                <p>Hill Racer 2D</p>
+                <div class="guide-box">
+                    <h4>How to Play</h4>
+                    <p><strong>PC:</strong> Use buttons <strong>'A' / 'D'</strong> or <strong>Arrow ← / →</strong>
+                        to control the car.</p>
+                    <p><strong>Mobile:</strong> Use buttons <strong>◀</strong> (brakes) and <strong>▶</strong> (gas) on
+                        the screen.</p>
+                    <p>Your goal is to reach the finish line without flipping over or running out of gas.!</p>
+                </div><button id="play-button" class="btn">Start</button><button id="settings-button"
+                    class="btn btn-secondary">Settings</button>
+            </div>
+        </div>
+        <div id="level-select-screen" class="ui-overlay hidden">
+            <div class="menu-box">
+                <h1>Select Levels</h1>
+                <div id="level-selection-container"></div><button id="back-to-main-menu-button"
+                    class="btn btn-secondary">Back</button>
+            </div>
+        </div>
+        <div id="settings-screen" class="ui-overlay hidden">
+            <div class="menu-box">
+                <h2>Audio Settings</h2>
+                <div class="settings-item"><label for="master-volume">Master Volumes</label><input type="range"
+                        id="master-volume" min="0" max="1" step="0.01"></div>
+                <div class="settings-item"><label for="music-volume">Music Volume</label><input type="range"
+                        id="music-volume" min="0" max="1" step="0.01"></div>
+                <div class="settings-item"><label for="sfx-volume">Effect Volume</label><input type="range"
+                        id="sfx-volume" min="0" max="1" step="0.01"></div><button id="back-from-settings-button"
+                    class="btn btn-secondary">Save & Back</button>
+            </div>
+        </div>
+        <div id="level-complete-screen" class="ui-overlay hidden">
+            <div class="menu-box">
+                <h2>Level Complete!</h2><button id="next-level-button" class="btn btn-success">Levels
+                    Next</button><button id="main-menu-button-win" class="btn btn-secondary">Main course</button>
+            </div>
+        </div>
+        <div id="game-over-screen" class="ui-overlay hidden">
+            <div class="menu-box">
+                <h2 id="game-over-title">Game Over!</h2>
+                <p id="game-over-reason"></p>
+                <div id="stats-summary">Progress: <span id="final-distance">0</span>m / <span
+                        id="final-goal">0</span>m<br>Coin: <span id="final-coins">0</span></div><button
+                    id="retry-button" class="btn">Try again</button><button id="main-menu-button-lose"
+                    class="btn btn-secondary">Main course</button>
+            </div>
+        </div>
+
+        <!-- PERUBAHAN: Pause Screen -->
+        <div id="pause-screen" class="ui-overlay hidden">
+            <div class="menu-box">
+                <h2>Paused</h2>
+                <button id="resume-button" class="btn">Continue</button>
+                <button id="restart-button-pause" class="btn btn-secondary">Repeat Levels</button>
+                <button id="main-menu-button-pause" class="btn btn-secondary">Main course</button>
+            </div>
+        </div>
+
+        <!-- PERUBAHAN: HUD Structure -->
+        <div id="hud" class="hidden">
+            <div class="hud-top">
+                <div class="hud-item" id="distance-counter">Distance: 0m</div>
+                <div class="hud-item hud-center-group">
+                    <div id="coin-counter">Coin: 0</div>
+                    <div id="fuel-gauge">
+                        <div id="fuel-bar"></div>
+                    </div>
+                </div>
+                <div id="pause-btn" class="hud-item">❚❚</div>
+            </div>
+            <div id="mobile-controls">
+                <!-- Grup Tombol Kiri -->
+                <div class="mobile-control-group">
+                    <div id="brake-btn" class="mobile-btn">◀</div>
+                </div>
+
+                <!-- Grup Tombol Kanan -->
+                <div class="mobile-control-group">
+                    <div id="gas-btn" class="mobile-btn">▶</div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const { Engine, Render, Runner, World, Bodies, Body, Composite, Constraint, Events, Vector } = Matter;
+
+                // --- DOM Elements ---
+                const canvas = document.getElementById('game-canvas');
+                const hud = document.getElementById('hud');
+                // Screens
+                const mainMenu = document.getElementById('main-menu');
+                const levelSelectScreen = document.getElementById('level-select-screen');
+                const settingsScreen = document.getElementById('settings-screen');
+                const gameOverScreen = document.getElementById('game-over-screen');
+                const levelCompleteScreen = document.getElementById('level-complete-screen');
+                const pauseScreen = document.getElementById('pause-screen');
+                // Buttons
+                const playButton = document.getElementById('play-button');
+                const settingsButton = document.getElementById('settings-button');
+                const backToMainMenuButton = document.getElementById('back-to-main-menu-button');
+                const backFromSettingsButton = document.getElementById('back-from-settings-button');
+                const nextLevelButton = document.getElementById('next-level-button');
+                const retryButton = document.getElementById('retry-button');
+                const pauseBtn = document.getElementById('pause-btn');
+                const resumeButton = document.getElementById('resume-button');
+                const restartButtonPause = document.getElementById('restart-button-pause');
+                const mainMenuButtonWin = document.getElementById('main-menu-button-win');
+                const mainMenuButtonLose = document.getElementById('main-menu-button-lose');
+                const mainMenuButtonPause = document.getElementById('main-menu-button-pause');
+                // HUD & Stats
+                const distanceCounter = document.getElementById('distance-counter');
+                const coinCounter = document.getElementById('coin-counter');
+                const fuelBar = document.getElementById('fuel-bar');
+                const gameOverReason = document.getElementById('game-over-reason');
+                const finalDistance = document.getElementById('final-distance');
+                const finalGoal = document.getElementById('final-goal');
+                const finalCoins = document.getElementById('final-coins');
+                // Mobile Controls
+                const gasBtn = document.getElementById('gas-btn');
+                const brakeBtn = document.getElementById('brake-btn');
+
+                // --- Audio Manager ---
+                const audioManager = { /* ... (Tidak ada perubahan di sini) ... */ };
+                Object.assign(audioManager, {
+                    bgMusic: document.getElementById('bg-music'),
+                    coinSfx: document.getElementById('coin-sfx'),
+                    volumes: {
+                        master: parseFloat(localStorage.getItem('masterVolume')) || 0.5,
+                        music: parseFloat(localStorage.getItem('musicVolume')) || 0.3,
+                        sfx: parseFloat(localStorage.getItem('sfxVolume')) || 0.8,
+                    },
+                    init() {
+                        document.getElementById('master-volume').value = this.volumes.master;
+                        document.getElementById('music-volume').value = this.volumes.music;
+                        document.getElementById('sfx-volume').value = this.volumes.sfx;
+                        this.updateAllVolumes();
+                    },
+                    playMusic() { this.bgMusic.play().catch(e => { }); },
+                    stopMusic() { this.bgMusic.pause(); this.bgMusic.currentTime = 0; },
+                    pauseMusic() { this.bgMusic.pause(); },
+                    playSfx(sfx) {
+                        if (sfx === 'coin') { this.coinSfx.currentTime = 0; this.coinSfx.play(); }
+                    },
+                    updateAllVolumes() {
+                        this.bgMusic.volume = this.volumes.master * this.volumes.music;
+                        this.coinSfx.volume = this.volumes.master * this.volumes.sfx;
+                    },
+                    saveSettings() {
+                        localStorage.setItem('masterVolume', this.volumes.master);
+                        localStorage.setItem('musicVolume', this.volumes.music);
+                        localStorage.setItem('sfxVolume', this.volumes.sfx);
+                    }
+                });
+
+                // --- Game State ---
+                let engine, world, render, runner;
+                let vehicle = null;
+                let isGameOver = false;
+                let gameStarted = false;
+                let isPaused = false; // PERUBAHAN: State untuk pause
+
+                const gameState = {
+                    distance: 0, coins: 0, fuel: 100, maxFuel: 100, flipTimer: 0, gameOverReason: '',
+                    currentLevelIndex: 0,
+                    highestUnlockedLevel: parseInt(localStorage.getItem('hillRacerUnlockedLevel')) || 0,
+                };
+                const levels = [];
+                const controls = { gas: false, brake: false };
+                // --- MODIFIED CONFIG ---
+                const config = { gravity: 1, vehicle: { torque: 0.05, brakeTorque: -0.04, maxSpeed: 1.5, chassisFrictionAir: 0.015, leanTorque: 0.005 }, fuel: { consumptionRate: 0.018, idleConsumption: 0.003, refillAmount: 50 }, flip: { threshold: 2.8, timeToGameOver: 2000 }, camera: { smoothness: 0.05 } };
+
+                // --- Initialization & Setup ---
+                function init() {
+                    engine = Engine.create();
+                    world = engine.world;
+                    world.gravity.y = config.gravity;
+                    render = Render.create({ canvas, engine, options: { width: window.innerWidth, height: window.innerHeight, wireframes: false, background: 'transparent' } });
+                    runner = Runner.create();
+                    generateLevelData();
+                    setupEventListeners();
+                    audioManager.init();
+                    showScreen('main-menu');
+                }
+
+                // --- Pause & Resume Logic ---
+                // PERUBAHAN: Fungsi-fungsi baru
+                function pauseGame() {
+                    if (!gameStarted || isGameOver) return;
+                    isPaused = true;
+                    Runner.stop(runner);
+                    audioManager.pauseMusic();
+                    showScreen('pause-screen');
+                }
+
+                function resumeGame() {
+                    if (!gameStarted || !isPaused) return;
+                    isPaused = false;
+                    Runner.run(runner, engine);
+                    audioManager.playMusic();
+                    showScreen('none'); // Sembunyikan semua overlay
+                }
+
+                function returnToMainMenu() {
+                    Runner.stop(runner);
+                    audioManager.stopMusic();
+                    gameStarted = false;
+                    isPaused = false;
+                    hud.classList.add('hidden');
+                    showScreen('main-menu');
+                }
+
+                // --- Game Flow ---
+                function startLevel(levelIndex) {
+                    // PERUBAHAN: Reset pause state
+                    isPaused = false;
+                    gameState.currentLevelIndex = levelIndex;
+                    resetGameState();
+                    isGameOver = false;
+                    gameStarted = true;
+                    World.clear(world);
+                    generateFiniteTerrain(levels[levelIndex]);
+                    vehicle = createVehicle(150, window.innerHeight / 2 - 200);
+                    Runner.run(runner, engine);
+                    Render.run(render);
+                    Events.on(engine, 'beforeUpdate', gameLoop);
+                    showScreen('none');
+                    hud.classList.remove('hidden');
+                    audioManager.playMusic();
+                }
+
+                function endGame() {
+                    if (!gameStarted) return; gameStarted = false;
+                    Runner.stop(runner); audioManager.stopMusic();
+                    gameOverReason.textContent = gameState.gameOverReason;
+                    finalDistance.textContent = gameState.distance;
+                    finalGoal.textContent = levels[gameState.currentLevelIndex].goalDistance;
+                    finalCoins.textContent = gameState.coins;
+                    hud.classList.add('hidden');
+                    showScreen('game-over-screen');
+                }
+
+                function winLevel() {
+                    if (!gameStarted) return; gameStarted = false;
+                    Runner.stop(runner); audioManager.stopMusic();
+                    const nextLevelIndex = gameState.currentLevelIndex + 1;
+                    gameState.highestUnlockedLevel = Math.max(gameState.highestUnlockedLevel, nextLevelIndex);
+                    localStorage.setItem('hillRacerUnlockedLevel', gameState.highestUnlockedLevel);
+                    if (nextLevelIndex >= levels.length) { nextLevelButton.textContent = 'Finished!'; nextLevelButton.disabled = true; }
+                    else { nextLevelButton.textContent = 'Next Level'; nextLevelButton.disabled = false; nextLevelButton.onclick = () => startLevel(nextLevelIndex); }
+                    hud.classList.add('hidden');
+                    showScreen('level-complete-screen');
+                }
+
+                // --- Game Loop ---
+                function gameLoop(event) {
+                    // PERUBAHAN: Cek pause state di awal
+                    if (isPaused || isGameOver || !gameStarted || !vehicle) return;
+
+                    handleControls();
+                    updateFuel();
+                    updateDistance();
+                    updateCamera();
+                    checkFlipCondition(event.delta);
+                    updateHUD();
+                    checkGameConditions();
+                }
+
+                // --- Event Listeners ---
+                function setupEventListeners() {
+                    // Menu Navigation
+                    playButton.onclick = () => {
+                        showScreen('level-select-screen');
+
+                        if (typeof sdk !== 'undefined' && typeof sdk.showBanner === 'function') {
+                            sdk.showBanner();
+                        }
+                    };
+                    settingsButton.onclick = () => showScreen('settings-screen');
+                    backToMainMenuButton.onclick = returnToMainMenu;
+                    backFromSettingsButton.onclick = () => { audioManager.saveSettings(); showScreen('main-menu'); };
+                    mainMenuButtonWin.onclick = returnToMainMenu;
+                    mainMenuButtonLose.onclick = returnToMainMenu;
+                    retryButton.onclick = () => startLevel(gameState.currentLevelIndex);
+                    // PERUBAHAN: Pause button listeners
+                    pauseBtn.onclick = pauseGame;
+                    resumeButton.onclick = resumeGame;
+                    restartButtonPause.onclick = () => {
+                        startLevel(gameState.currentLevelIndex);
+
+                        if (typeof sdk !== 'undefined' && typeof sdk.showBanner === 'function') {
+                            sdk.showBanner();
+                        }
+                    };
+                    mainMenuButtonPause.onclick = returnToMainMenu;
+
+                    // Audio Settings
+                    document.getElementById('master-volume').oninput = e => { audioManager.volumes.master = parseFloat(e.target.value); audioManager.updateAllVolumes(); };
+                    document.getElementById('music-volume').oninput = e => { audioManager.volumes.music = parseFloat(e.target.value); audioManager.updateAllVolumes(); };
+                    document.getElementById('sfx-volume').oninput = e => { audioManager.volumes.sfx = parseFloat(e.target.value); audioManager.updateAllVolumes(); };
+
+                    // Keyboard Controls
+                    window.addEventListener('keydown', e => {
+                        if (e.key === 'd' || e.key === 'ArrowRight') controls.gas = true;
+                        if (e.key === 'a' || e.key === 'ArrowLeft') controls.brake = true;
+                    });
+                    window.addEventListener('keyup', e => {
+                        if (e.key === 'd' || e.key === 'ArrowRight') controls.gas = false;
+                        if (e.key === 'a' || e.key === 'ArrowLeft') controls.brake = false;
+                    });
+
+                    // PERUBAHAN: Touch and Mouse Controls for buttons
+                    const controlButtonHandler = (btn, control) => {
+                        const start = (e) => { e.preventDefault(); controls[control] = true; };
+                        const end = (e) => { e.preventDefault(); controls[control] = false; };
+                        btn.addEventListener('mousedown', start);
+                        btn.addEventListener('mouseup', end);
+                        btn.addEventListener('mouseleave', end); // Stop if mouse leaves button
+                        btn.addEventListener('touchstart', start);
+                        btn.addEventListener('touchend', end);
+                    };
+                    controlButtonHandler(gasBtn, 'gas');
+                    controlButtonHandler(brakeBtn, 'brake');
+
+                    window.addEventListener('resize', () => {
+                        render.canvas.width = window.innerWidth; render.canvas.height = window.innerHeight;
+                        render.options.width = window.innerWidth; render.options.height = window.innerHeight;
+                    });
+                }
+
+                // --- Helper Functions (Tidak ada perubahan signifikan di sini) ---
+                function showScreen(screenId) { document.querySelectorAll('.ui-overlay').forEach(el => el.classList.add('hidden')); if (document.getElementById(screenId)) document.getElementById(screenId).classList.remove('hidden'); if (screenId === 'level-select-screen') populateLevelSelection(); }
+                function populateLevelSelection() { /* ... */ const c = document.getElementById('level-selection-container'); c.innerHTML = ''; for (let i = 0; i < levels.length; i++) { const b = document.createElement('button'); b.innerHTML = i + 1; b.classList.add('level-btn'); if (i <= gameState.highestUnlockedLevel) { b.classList.add('unlocked'); b.onclick = () => startLevel(i); } else { b.classList.add('locked'); b.innerHTML = `🔒`; b.disabled = true; } c.appendChild(b); } }
+                function resetGameState() { gameState.distance = 0; gameState.coins = 0; gameState.fuel = gameState.maxFuel; gameState.flipTimer = 0; gameState.gameOverReason = ''; if (vehicle) Composite.remove(world, vehicle.composite); vehicle = null; }
+                function generateLevelData() { for (let i = 0; i < 250; i++)levels.push({ level: i + 1, goalDistance: 500 + i * 150, amplitude: 100 + i * 5, smoothness: 200 - i * .5, fuelPacks: 1 + Math.floor(i / 10), }); }
+                function createVehicle(x, y) { const g = Body.nextGroup(true), c = Bodies.rectangle(x, y, 80, 30, { collisionFilter: { group: g }, label: "playerChassis", density: .002, frictionAir: config.vehicle.chassisFrictionAir }), wA = Bodies.circle(x - 35, y + 20, 20, { collisionFilter: { group: g }, friction: .9, label: "playerWheel" }), wB = Bodies.circle(x + 35, y + 20, 20, { collisionFilter: { group: g }, friction: .9, label: "playerWheel" }), sA = Constraint.create({ bodyA: c, pointA: { x: -35, y: 15 }, bodyB: wA, stiffness: .2, damping: .1, render: { visible: !1 } }), sB = Constraint.create({ bodyA: c, pointA: { x: 35, y: 15 }, bodyB: wB, stiffness: .2, damping: .1, render: { visible: !1 } }), v = Composite.create({ label: 'vehicle' }); Composite.add(v, [c, wA, wB, sA, sB]); World.add(world, v); return { composite: v, chassis: c, wheelA: wA, wheelB: wB }; }
+                function generateFiniteTerrain(ld) { let ly = window.innerHeight * .8, p = [], sw = 100, ns = Math.ceil(ld.goalDistance * 10 / sw) + 20; for (let i = 0; i < ns; i++) { const x = i * sw; let y = (i < 5) ? ly : ly + (Math.random() - .5) * ld.amplitude; y = Math.max(y, window.innerHeight * .4); y = Math.min(y, window.innerHeight * .95); p.push(Vector.create(x, y)); ly = y; if (i > 5 && i < ns - 5) { if (Math.random() < .2) addCollectible(x, y - 60, 'coin'); if (Math.random() < ld.fuelPacks / ns) addCollectible(x, y - 60, 'fuel'); } } for (let i = 0; i < p.length - 1; i++) { const s = p[i], e = p[i + 1], dx = e.x - s.x, dy = e.y - s.y; const seg = Bodies.rectangle(s.x + dx / 2, s.y + dy / 2, Math.sqrt(dx * dx + dy * dy), 10, { isStatic: !0, angle: Math.atan2(dy, dx), friction: 1, render: { fillStyle: '#4CAF50' } }); World.add(world, seg); } }
+                function addCollectible(x, y, t) { const r = t === 'fuel' ? 15 : 10, c = t === 'fuel' ? '#e74c3c' : '#f1c40f', cl = Bodies.circle(x, y, r, { isStatic: !0, isSensor: !0, label: `collectible_${t}`, render: { fillStyle: c, strokeStyle: 'white', lineWidth: 2 } }); World.add(world, cl); Events.on(engine, 'collisionStart', (ev) => { ev.pairs.forEach(p => { const iP = p.bodyA.label.startsWith('player') || p.bodyB.label.startsWith('player'), iTC = p.bodyA === cl || p.bodyB === cl; if (iP && iTC && !cl.isConsumed) { if (t === 'coin') { gameState.coins++; audioManager.playSfx('coin'); } else if (t === 'fuel') { gameState.fuel = Math.min(gameState.maxFuel, gameState.fuel + config.fuel.refillAmount); } cl.isConsumed = !0; World.remove(world, cl); } }); }); }
+                
+                // --- MODIFIED CONTROLS ---
+                function handleControls() {
+                    if (!vehicle) return;
+                    if (controls.gas) {
+                        // Apply torque to both wheels for AWD
+                        Body.setAngularVelocity(vehicle.wheelA, Math.min(vehicle.wheelA.angularVelocity + config.vehicle.torque, config.vehicle.maxSpeed));
+                        Body.setAngularVelocity(vehicle.wheelB, Math.min(vehicle.wheelB.angularVelocity + config.vehicle.torque, config.vehicle.maxSpeed));
+                    }
+                    if (controls.brake) {
+                        // Apply brake torque to both wheels for better stopping
+                        Body.setAngularVelocity(vehicle.wheelA, Math.max(vehicle.wheelA.angularVelocity + config.vehicle.brakeTorque, -config.vehicle.maxSpeed));
+                        Body.setAngularVelocity(vehicle.wheelB, Math.max(vehicle.wheelB.angularVelocity + config.vehicle.brakeTorque, -config.vehicle.maxSpeed));
+                    }
+                }
+
+                function updateFuel() {
+                    if (controls.gas) gameState.fuel -= config.fuel.consumptionRate;
+                    gameState.fuel = Math.max(0, gameState.fuel - config.fuel.idleConsumption);
+                }
+
+                function updateDistance() {
+                    if (vehicle) gameState.distance = Math.max(gameState.distance, Math.floor(vehicle.chassis.position.x / 10));
+                }
+
+                function checkFlipCondition(dt) {
+                    if (!vehicle) return;
+                    const a = Math.abs(vehicle.chassis.angle % (2 * Math.PI));
+                    if (a > config.flip.threshold && a < (2 * Math.PI - config.flip.threshold) && Math.abs(vehicle.chassis.angularVelocity) < 0.05) {
+                        gameState.flipTimer += dt;
+                    } else {
+                        gameState.flipTimer = 0;
+                    }
+                    if (gameState.flipTimer > config.flip.timeToGameOver) {
+                        isGameOver = true;
+                        gameState.gameOverReason = 'Reverse Car!';
+                    }
+                }
+
+                function checkGameConditions() {
+                    if (gameState.fuel <= 0 && !isGameOver) {
+                        isGameOver = true;
+                        gameState.gameOverReason = 'Running out of petrol!';
+                    }
+                    if (vehicle && vehicle.chassis.position.y > render.canvas.height + 200 && !isGameOver) {
+                        isGameOver = true;
+                        gameState.gameOverReason = 'Falling off the Track!';
+                    }
+                    if (gameState.distance >= levels[gameState.currentLevelIndex].goalDistance) {
+                        winLevel();
+                    } else if (isGameOver) {
+                        endGame();
+                    }
+                }
+
+                function updateHUD() {
+                    distanceCounter.innerHTML = `Distance: ${gameState.distance}m / ${levels[gameState.currentLevelIndex].goalDistance}m`;
+                    coinCounter.textContent = `Coin: ${gameState.coins}`;
+                    const fp = (gameState.fuel / gameState.maxFuel) * 100;
+                    fuelBar.style.width = `${fp}%`;
+                    fuelBar.style.background = `hsl(${(fp / 100) * 120}, 80%, 50%)`;
+                }
+
+                function updateCamera() {
+                    if (!vehicle) return;
+                    const tX = vehicle.chassis.position.x - window.innerWidth / 4;
+                    const tY = vehicle.chassis.position.y - window.innerHeight / 2;
+                    const nX = render.bounds.min.x + (tX - render.bounds.min.x) * config.camera.smoothness;
+                    const nY = render.bounds.min.y + (tY - render.bounds.min.y) * config.camera.smoothness;
+                    Render.lookAt(render, { min: { x: nX, y: nY }, max: { x: nX + window.innerWidth, y: nY + window.innerHeight } });
+                }
+
+                // --- Start the application ---
+                init();
+            });
+        </script>
+</body>
+
+</html>

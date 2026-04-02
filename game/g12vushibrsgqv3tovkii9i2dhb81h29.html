@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Cat Girl Skater</title>
+    <link rel="shortcut icon" href="TemplateData/favicon.ico">
+    <link rel="stylesheet" href="TemplateData/style.css">
+    <style>
+        /* 1. Force the page to fill the browser window exactly */
+        html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            /* Gradient background to match the image */
+            background: radial-gradient(circle, #4b2a6d 0%, #1e122a 100%);
+        }
+
+        .webgl-content { 
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100% !important; 
+            height: 100% !important; 
+        }
+
+        #gameContainer {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        #gameContainer canvas {
+            width: 100% !important;
+            height: 100% !important;
+            display: block;
+        }
+
+        /* 2. Enhanced Loading Screen Style */
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, #3d225a 0%, #160e1d 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        .bounce-logo {
+            max-width: 280px;
+            height: auto;
+            margin-bottom: 40px;
+            /* Subtle float animation */
+            animation: float 2s infinite ease-in-out;
+        }
+
+        /* 3. The New Progress Bar Container */
+        .progress-container {
+            width: 320px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 15px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .progress-bar-empty {
+            width: 100%;
+            height: 12px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-bar-full {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #8e44ad, #c39bd3);
+            transition: width 0.3s ease;
+            box-shadow: 0 0 10px rgba(142, 68, 173, 0.5);
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+    </style>
+    
+    <script src="TemplateData/UnityProgress.javascript"></script>
+    <script src="Build/UnityLoader.js"></script>
+    <script>
+        var gameInstance = UnityLoader.instantiate("gameContainer", "Build/aaaaaaa.json", {
+            onProgress: function(gameInstance, progress) {
+                // Update percentage text
+                var pText = document.getElementById("progress-percent");
+                if (pText) {
+                    pText.innerHTML = Math.round(progress * 100) + "%";
+                }
+
+                // Update the visual bar width
+                var pBar = document.getElementById("progress-fill");
+                if (pBar) {
+                    pBar.style.width = (progress * 100) + "%";
+                }
+
+                UnityProgress(gameInstance, progress);
+                
+                if (progress === 1) {
+                    document.getElementById("loading-overlay").style.display = "none";
+                    window.dispatchEvent(new Event('resize'));
+                }
+            }
+        });
+
+        window.addEventListener('resize', function() {
+            var canvas = document.querySelector('canvas');
+            if (canvas) {
+                canvas.style.width = "100%";
+                canvas.style.height = "100%";
+            }
+        });
+    </script>
+</head>
+<body>
+    <div id="loading-overlay">
+        <img src="logo.png" class="bounce-logo" alt="Logo">
+
+        <div class="progress-container">
+            <div class="progress-info">
+                <span>LOADING</span>
+                <span id="progress-percent">0%</span>
+            </div>
+            <div class="progress-bar-empty">
+                <div id="progress-fill" class="progress-bar-full"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="webgl-content">
+        <div id="gameContainer"></div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Optics Knockout Quiz</title>
+  <style>
+    :root{
+      /* Fresh palette: deep indigo + lime + sky */
+      --bg:#121326; --panel:#17193b; --text:#f5f7ff; --muted:#bfc5e1;
+      --accent:#84cc16; /* lime */
+      --accent2:#38bdf8; /* sky */
+      --danger:#ef4444; --gold:#f59e0b; --ink:#0b0e14;
+      --glow:0 10px 30px rgba(56,189,248,.2);
+    }
+    *{box-sizing:border-box}
+    body{margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif; background:radial-gradient(1200px 800px at 50% -10%, #1a1c48, var(--bg)); color:var(--text); min-height:100dvh; display:grid; place-items:center}
+    .wrap{width:min(1000px,92vw)}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02)); border:1px solid rgba(255,255,255,0.1); border-radius:20px; padding:22px; box-shadow:var(--glow)}
+    h1{margin:0 0 6px; font-weight:900}
+    .muted{color:var(--muted)}
+    .row{display:flex; gap:12px; flex-wrap:wrap; align-items:center; justify-content:space-between}
+    .badge{background:rgba(255,255,255,.08); padding:8px 10px; border-radius:10px}
+    .gold{color:var(--gold)}
+    .center{display:grid; place-items:center; text-align:center; gap:14px; padding:20px}
+
+    /* Layout: 2-col rounded cards (differs from earlier vertical/two‑column styles) */
+    .board{ margin-top:14px; padding:16px; border-radius:16px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08)}
+    .question{ font-size:clamp(22px, 4.2vw, 40px); font-weight:900; text-align:center; margin:10px 0 14px }
+    .choices{ display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:12px }
+    @media (max-width:640px){ .choices{ grid-template-columns:1fr } }
+    .choice{ position:relative; overflow:hidden; padding:14px 16px; border-radius:16px; border:1px solid rgba(255,255,255,.14); background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02)); color:var(--text); cursor:pointer; font-weight:800; letter-spacing:.2px; box-shadow:0 8px 18px rgba(132,204,22,.18); transition:.14s transform, .2s box-shadow, .2s border-color }
+    .choice:hover{ transform:translateY(-1px); box-shadow:0 10px 22px rgba(56,189,248,.28); border-color:rgba(255,255,255,.24) }
+
+    .status{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:space-between; margin-top:8px }
+    .timer{flex:1; height:10px; background:rgba(255,255,255,.1); border-radius:999px; overflow:hidden}
+    .bar{height:100%; width:100%; background:linear-gradient(90deg, var(--accent), var(--accent2)); transform-origin:left center}
+    .small{font-size:13px}
+    .hide{ display:none !important }
+    .pulse{ animation:pulse .9s infinite }
+    .btn{background:var(--accent2); color:var(--ink); border:0; padding:12px 16px; border-radius:12px; font-weight:800; cursor:pointer; box-shadow:0 8px 18px rgba(56,189,248,.35)}
+    .ghost{background:transparent; border:1px solid rgba(255,255,255,.18); color:var(--text)}
+    @keyframes pulse{ 0%{transform:scale(1)} 50%{transform:scale(1.04)} 100%{transform:scale(1)} }
+  </style>
+</head>
+<body>
+
+
+<script type="text/javascript">
+   window.SDK_OPTIONS = {
+      gameId: "jyfikmb02do9u5niahe16vt1641y2c2z",
+      onEvent: function (a) {
+         switch (a.name) {
+            case "SDK_GAME_PAUSE":
+               // pause game logic / mute audio
+               break;
+            case "SDK_GAME_START":
+               // advertisement done, resume game logic and unmute audio
+               break;
+            case "SDK_READY":
+               // when sdk is ready
+               break;
+         }
+      }
+   };
+(function (a, b, c) {
+   var d = a.getElementsByTagName(b)[0];
+   a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+})(document, "script", "gamemonetize-sdk"); 
+</script>
+
+
+
+
+  <div class="wrap">
+    <div class="card">
+      <div class="row">
+        <div>
+          <h1>Optics Knockout Quiz</h1>
+          <p class="muted">Geometric optics • Refraction & TIR • Lenses & Mirrors • Prisms & Dispersion • Interference & Diffraction • Polarization • Instruments • Photometry • 100+ MCQs • One wrong answer ends the game.</p>
+        </div>
+        <div class="row">
+          <div class="badge">Best: <span id="best" class="gold">0</span></div>
+          <div class="badge">Streak: <span id="streak">0</span></div>
+          <div class="badge">Last: <span id="last">0</span></div>
+        </div>
+      </div>
+
+      <div id="intro" class="center">
+        <div style="font-size:clamp(30px,6vw,50px); font-weight:900">Lights on?</div>
+        <p class="muted">Answer multiple-choice <b>optics</b> questions. Each is <b>timed</b>. <br><b>Knockout rule:</b> one mistake or timeout ends your run.</p>
+        <div class="row" style="justify-content:center">
+          <button id="start" class="btn pulse">Start</button>
+          <button id="how" class="btn ghost">How to play</button>
+        </div>
+        <p class="small muted">Shortcuts: <b>1–4</b> to answer • <b>Enter</b> to start/restart</p>
+      </div>
+
+      <div id="board" class="board hide" role="group" aria-label="Question and answers">
+        <div class="status">
+          <div class="badge">Q <span id="qnum">1</span></div>
+          <div class="timer" aria-label="Time remaining"><div class="bar" id="bar"></div></div>
+          <div class="badge">Time: <span id="time">0</span>s</div>
+        </div>
+        <div id="q" class="question">—</div>
+        <div id="choices" class="choices"></div>
+      </div>
+
+      <div id="summary" class="center hide">
+        <div style="font-size:clamp(30px,6vw,50px); font-weight:900" id="sumTitle">Game Over</div>
+        <p class="muted" id="sumReason"></p>
+        <div class="row" style="justify-content:center">
+          <button id="again" class="btn">Play Again</button>
+          <button id="back" class="btn ghost">Back</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  const TIME_PER_Q = 12; // seconds
+
+  // ====== State ======
+  let best = Number(localStorage.getItem('optics.best')) || 0;
+  let last = Number(localStorage.getItem('optics.last')) || 0;
+  let streak = 0; let qIndex = 0; let ticking = null; let current = null; let bank = [];
+
+  // ====== Elements ======
+  const elBest = document.getElementById('best');
+  const elLast = document.getElementById('last');
+  const elStreak = document.getElementById('streak');
+  const elIntro = document.getElementById('intro');
+  const elBoard = document.getElementById('board');
+  const elSummary = document.getElementById('summary');
+  const elBar = document.getElementById('bar');
+  const elTime = document.getElementById('time');
+  const elQ = document.getElementById('q');
+  const elChoices = document.getElementById('choices');
+  const elQnum = document.getElementById('qnum');
+  const elSumTitle = document.getElementById('sumTitle');
+  const elSumReason = document.getElementById('sumReason');
+  elBest.textContent = best; elLast.textContent = last; elStreak.textContent = 0;
+
+  // ====== Util ======
+  const rand = (a,b)=> Math.floor(Math.random()*(b-a+1))+a;
+  function shuffle(arr){ for(let i=arr.length-1;i>0;i--){ const j = rand(0,i); [arr[i],arr[j]]=[arr[j],arr[i]] } return arr }
+
+  // ====== Question Banks ======
+  function basicsBank(){
+    const items = [
+      ['Speed of light in vacuum (c) ≈', '3.0 × 10^8 m/s', ['3.0 × 10^6 m/s','3.0 × 10^5 km/s (unit mix)','1.5 × 10^8 m/s']],
+      ['Refractive index n is defined as', 'n = c / v', ['n = v / c','n = c × v','n = v² / c²']],
+      ['Law of reflection states', 'Angle of incidence = angle of reflection', ['Angle of refraction = angle of incidence','Angles sum to 90°','Independent of surface']],
+      ['Snell’s law is', 'n₁ sinθ₁ = n₂ sinθ₂', ['n₁ tanθ₁ = n₂ tanθ₂','n₁ cosθ₁ = n₂ cosθ₂','n₁/θ₁ = n₂/θ₂']],
+      ['Total internal reflection occurs when light goes from', 'Higher to lower n with θ > θ_c', ['Lower to higher n','Any direction if θ small','Vacuum to glass always']],
+      ['Critical angle θ_c satisfies', 'sinθ_c = n₂ / n₁ (n₁>n₂)', ['cosθ_c = n₂/n₁','tanθ_c = n₂/n₁','sinθ_c = n₁/n₂']],
+      ['Dispersion is', 'Variation of n with wavelength', ['Scattering by particles','Polarization of light','Diffraction through aperture']],
+      ['A converging lens is a', 'Convex lens', ['Concave lens','Cylindrical lens','Fresnel mirror']],
+      ['A diverging lens is a', 'Concave lens', ['Convex lens','Plano-convex only','Cylindrical lens']],
+      ['Real image forms when', 'Rays actually converge', ['Rays appear to diverge','Only with mirrors','Only on screens in darkness']],
+      ['Virtual image forms when', 'Rays appear to diverge from a point', ['Rays physically meet','Only in water','Impossible with lenses']],
+      ['Power of lens P equals', '1 / f (in metres) dioptres', ['f (metres)','−1/f²','1/f (cm)']],
+      ['Magnification m for lenses (sign convention)', 'm = v / u', ['m = u / v','m = f / v','m = v / f']],
+      ['Mirror formula is', '1/f = 1/u + 1/v', ['f = u + v','1/f = u + v','f = 1/u + 1/v']],
+      ['Lens formula is', '1/f = 1/v + 1/u', ['f = u + v','1/f = u − v','v = f + u']],
+    ];
+    return items.map(([q,a,wrong])=>({ q, choices: shuffle([a,...wrong]), answer: a }));
+  }
+
+  function mirrorsLensesBank(){
+    const items = [
+      ['Concave mirror can form', 'Real and inverted image (object beyond focus)', ['Only virtual','Only real erect','No image']],
+      ['Convex mirror always forms', 'Virtual, erect, diminished image', ['Real inverted','Same size real','No image']],
+      ['Convex lens forms real inverted image when object is', 'Beyond focus (u > f)', ['Within focus (u < f)','At focus gives virtual','Only at 2f']],
+      ['Concave lens forms', 'Virtual, erect, diminished image', ['Real inverted','Same size virtual','No image']],
+      ['At u = 2f for convex lens, image is at', 'v = 2f (same size, inverted)', ['v = f/2','At infinity','Between lens and f']],
+      ['Object at focus of concave mirror produces image at', 'Infinity', ['Focus','Centre of curvature','Between focus and pole']],
+      ['If m = +2 (magnification +ve)', 'Image is virtual and erect, twice size', ['Real inverted','Virtual inverted','Real erect']],
+      ['If image distance v is negative (lens sign conv.)', 'Image is virtual (on same side as object)', ['Image is real','No image','Data insufficient']],
+      ['Power of +2 D lens corresponds to', 'f = +0.5 m', ['f = +2 m','f = −0.5 m','f = −2 m']],
+      ['Two thin lenses in contact: equivalent power', 'P_eq = P₁ + P₂', ['P_eq = P₁ P₂','P_eq = P₁ − P₂','P_eq = 1/(P₁+P₂)']],
+      ['Spherical aberration reduces by', 'Using stops/apertures or aspheric lenses', ['Increasing aperture','Using rough surfaces','Shorter wavelengths only']],
+      ['Chromatic aberration arises due to', 'Dispersion (n depends on λ)', ['Diffraction only','Polarization only','Mirror coatings']],
+    ];
+    return items.map(([q,a,wrong])=>({ q, choices: shuffle([a,...wrong]), answer: a }));
+  }
+
+  function refractionTIRBank(){
+    const items = [
+      ['When light enters denser medium (n increases)', 'Speed decreases, wavelength decreases', ['Frequency decreases','Frequency increases','Wavelength increases']],
+      ['Bending towards normal occurs when', 'Entering higher n (slower medium)', ['Entering lower n','At normal incidence','During reflection']],
+      ['Brewster angle satisfies', 'tanθ_B = n₂/n₁', ['sinθ_B = n₂/n₁','cosθ_B = n₂/n₁','θ_B = n₂/n₁']],
+      ['At Brewster angle, reflected light is', 'Fully plane-polarized', ['Unpolarized','Circularly polarized','Elliptically polarized only']],
+      ['Total internal reflection is used in', 'Optical fibers', ['Microscopes only','Sunglasses','Mirrors only']],
+      ['Mirage on hot road is due to', 'Refraction through density gradient (varying n)', ['Diffraction','Interference','Polarization']],
+      ['Apparent depth in water appears', 'Less than real depth', ['Greater than real depth','Same as real depth','Zero']],
+      ['Lateral shift in a slab', 'Increases with thickness and incidence angle', ['Decreases with thickness','Independent of angle','Zero always']],
+      ['Critical angle is defined for', 'From denser to rarer medium', ['Rarer to denser','Any interface','Mirrors only']],
+      ['If n₁ = 1.5, n₂ = 1.0, sinθ_c =', '2/3', ['3/2','1/3','1/2']],
+    ];
+    return items.map(([q,a,wrong])=>({ q, choices: shuffle([a,...wrong]), answer: a }));
+  }
+
+  function prismDispersionBank(){
+    const items = [
+      ['Angle of deviation in prism depends on', 'Angle of incidence, refractive index, prism angle', ['Wavelength only','Thickness only','Ambient pressure only']],
+      ['Minimum deviation occurs when', 'Ray passes symmetrically (i = e)', ['i = 0','e = 0','At critical angle']],
+      ['Cauchy relation describes', 'n(λ) variation with wavelength', ['Absorption lines','Photoelectric effect','Scattering only']],
+      ['For normal dispersion', 'n decreases with increasing λ', ['n increases with λ','n independent of λ','n oscillates with λ only']],
+      ['Blue light deviates', 'More than red in a prism', ['Less than red','Same as red','Opposite direction']],
+      ['Condition at minimum deviation gives', 'n = sin((A + D_min)/2) / sin(A/2)', ['n = sin(A)/sin(D)','n = tan(A/2)','n = 2 sin(A/2)']],
+      ['Dispersive power is a measure of', 'Separation between colors produced by prism', ['Reflectivity','Transmission only','Absorptivity']],
+      ['Achromatic doublet uses', 'Convex and concave lenses of different glass', ['Two convex lenses same glass','Two concave same glass','Lens and mirror pair']],
+    ];
+    return items.map(([q,a,wrong])=>({ q, choices: shuffle([a,...wrong]), answer: a }));
+  }
+
+  function waveOpticsBank(){
+    const items = [
+      ['Huygens’ principle explains', 'Wavefront propagation & refraction', ['Photoelectric effect','Polarization by scattering','Laser action']],
+      ['Young’s double-slit fringe spacing β =', 'β = λ D / d', ['β = d / λ D','β = λ d / D','β = D / λ d']],
+      ['Central maximum in YDSE is', 'Bright (constructive)', ['Dark','Absent','Random']],
+      ['Path difference for m-th bright fringe', 'm λ', ['(m + 1/2) λ','m λ/2','(2m+1) λ/2 for bright']],
+      ['Single-slit diffraction first minimum at', 'a sinθ = λ', ['a sinθ = λ/2','d sinθ = m λ','2a sinθ = λ']],
+      ['Increasing slit width a (fixed λ)', 'Narrows diffraction pattern', ['Widens pattern','Unchanged','Eliminates maxima']],
+      ['Rayleigh criterion for circular aperture', 'θ_min ≈ 1.22 λ / D', ['θ_min ≈ λ / a²','θ_min ≈ 0.5 λ / D','θ_min ≈ 2.44 D / λ']],
+      ['Coherent sources have', 'Constant phase difference & same frequency', ['Same amplitude only','Same polarization only','Same intensity only']],
+      ['Thin-film colors arise from', 'Interference of reflected waves', ['Diffraction only','Absorption only','Scattering only']],
+      ['Michelson interferometer measures', 'Wavelength / small length changes', ['Refractive index only','Laser coherence length only','Polarization purity']],
+    ];
+    return items.map(([q,a,wrong])=>({ q, choices: shuffle([a,...wrong]), answer: a }));
+  }
+
+  function polarizationBank(){
+    const items = [
+      ['Light that can be polarized must be', 'Transverse wave', ['Longitudinal wave','Scalar wave','Sound-like wave']],
+      ['Malus’ law states', 'I = I₀ cos²θ', ['I = I₀ sinθ','I = I₀ tan²θ','I = I₀/ cos²θ']],
+      ['Polaroids are used to', 'Produce & analyze plane-polarized light', ['Increase intensity','Change wavelength','Focus light']],
+      ['Double refraction (birefringence) occurs in', 'Anisotropic crystals (e.g., calcite)', ['Isotropic glass','Metals','Liquids only']],
+      ['Quarter-wave plate converts', 'Linear ↔ circular polarization (with orientation)', ['Changes intensity only','Acts as polarizer','Doubles frequency']],
+      ['Polarization by reflection maximum at', 'Brewster angle', ['Critical angle','Minimum deviation angle','45° always']],
+      ['Unpolarized light intensity after ideal polarizer is', 'I₀/2', ['I₀','I₀/4','0']],
+      ['Analyzer crossed with polarizer ideally transmits', 'Zero (dark)', ['I₀/2','I₀','I₀/4']],
+    ];
+    return items.map(([q,a,wrong])=>({ q, choices: shuffle([a,...wrong]), answer: a }));
+  }
+
+  function instrumentsBank(){
+    const items = [
+      ['Simple microscope magnification ≈', '1 + D/f (D≈25 cm)', ['D/f','f/D','1 + f/D']],
+      ['Astronomical telescope in normal adjustment', 'Image at infinity', ['Image at least distance of distinct vision','At focal plane of objective','At focal plane of eyepiece']],
+      ['Angular magnification of telescope (normal adj.)', 'M ≈ f_obj / f_eye', ['M ≈ f_eye / f_obj','M ≈ f_obj × f_eye','M ≈ f_eye − f_obj']],
+      ['Compound microscope magnification roughly', 'M ≈ (L/f_obj) (D/f_eye)', ['M ≈ f_obj/f_eye','M ≈ D/L','M ≈ f_eye/L']],
+      ['Resolving power increases with', 'Shorter wavelength and larger aperture', ['Longer wavelength, smaller aperture','Lower NA','Lower illumination']],
+      ['Optical fiber uses', 'TIR within core (n_core > n_clad)', ['Diffraction guiding','Magnetic guiding','Mirror reflections only']],
+      ['Spherical mirror used in headlamps', 'Parabolic preferred; concave mirrors approximate', ['Convex only','Plane only','Cylindrical only']],
+      ['Anti-reflection coating uses', 'Quarter-wave thickness with n ≈ √(n_substrate)', ['Half-wave thickness','Random thickness','Very thick layers']],
+      ['Laser light is', 'Monochromatic, coherent, directional', ['Incoherent, broadband','Only intense','Only polarized']],
+      ['CCD/CMOS sensors convert', 'Light to electrical signals (photoelectric effect)', ['Heat to light','Sound to light','Magnetic flux to light']],
+    ];
+    return items.map(([q,a,wrong])=>({ q, choices: shuffle([a,...wrong]), answer: a }));
+  }
+
+  function photometryBank(){
+    const items = [
+      ['Luminous intensity SI unit', 'Candela (cd)', ['Lumen (lm)','Lux (lx)','Nit']],
+      ['Luminous flux SI unit', 'Lumen (lm)', ['Lux (lx)','Candela (cd)','Watt (W)']],
+      ['Illuminance SI unit', 'Lux (lx)', ['Lumen (lm)','Candela (cd)','Nit']],
+      ['1 lux equals', '1 lumen per square metre', ['1 lumen per steradian','1 candela per metre','1 watt per metre²']],
+      ['Luminance common unit (display tech)', 'Nit (cd/m²)', ['Lux','Lumen','Candela only']],
+      ['Inverse square law (illumination)', 'E ∝ 1/r²', ['E ∝ 1/r','E ∝ r²','E ∝ 1/√r']],
+      ['Human eye peak photopic sensitivity near', '≈555 nm (green)', ['≈650 nm (red)','≈450 nm (blue)','≈700 nm']],
+      ['Color temperature measured in', 'Kelvin (K)', ['Degree Celsius','Candela','Lumen']],
+    ];
+    return items.map(([q,a,wrong])=>({ q, choices: shuffle([a,...wrong]), answer: a }));
+  }
+
+  function eyeVisionBank(){
+    const items = [
+      ['Near point for normal eye is about', '25 cm', ['2.5 cm','2.5 m','50 cm']],
+      ['Far point of a normal eye', 'Infinity', ['25 cm','1 m','Finite near distance']],
+      ['Myopia (short-sightedness) corrected by', 'Diverging (concave) lens', ['Converging lens','Cylindrical lens only','Prism']],
+      ['Hypermetropia corrected by', 'Converging (convex) lens', ['Concave lens','Cylindrical lens only','No lens']],
+      ['Astigmatism corrected by', 'Cylindrical lenses', ['Prisms','Concave only','Convex only']],
+      ['Accommodation is', 'Adjustment of eye lens curvature', ['Pupil size change only','Cornea growth','Retina movement']],
+      ['Presbyopia due to', 'Reduced accommodation with age', ['Retina detachment','Cornea scratch','High IOP only']],
+      ['Power of corrective lens depends on', 'Far/near point distances', ['Pupil size','Iris color','Eyelid shape']],
+    ];
+    return items.map(([q,a,wrong])=>({ q, choices: shuffle([a,...wrong]), answer: a }));
+  }
+
+  function numericsBank(){
+    const items = [];
+    // Thin lens (use magnitudes, assume real-is-positive sign convention for simplicity in statements)
+    items.push({ q:'Convex lens with f = 10 cm, object at 30 cm. Image distance v =', choices: shuffle(['15 cm','10 cm','20 cm','30 cm']), answer:'15 cm' });
+    items.push({ q:'Convex lens f = 20 cm, object at 40 cm. Image distance v =', choices: shuffle(['40 cm','20 cm','60 cm','10 cm']), answer:'40 cm' });
+    items.push({ q:'Convex lens f = 12 cm, object at 24 cm. v =', choices: shuffle(['24 cm','12 cm','18 cm','6 cm']), answer:'24 cm' });
+    items.push({ q:'Diverging lens f = −10 cm, object at 20 cm. v (virtual, magnitude) ≈', choices: shuffle(['6.7 cm','10 cm','20 cm','5 cm']), answer:'6.7 cm' });
+    items.push({ q:'Lens power for f = +0.5 m is', choices: shuffle(['+2 D','+0.5 D','+1 D','−2 D']), answer:'+2 D' });
+    items.push({ q:'Lens power for f = −0.25 m is', choices: shuffle(['−4 D','−2 D','+4 D','+0.25 D']), answer:'−4 D' });
+    items.push({ q:'YDSE: λ = 600 nm, D = 2.0 m, d = 0.50 mm. Fringe spacing β ≈', choices: shuffle(['2.4 mm','1.2 mm','0.60 mm','0.24 mm']), answer:'2.4 mm' });
+    items.push({ q:'Single-slit: a = 0.20 mm, λ = 600 nm. First minimum at sinθ ≈', choices: shuffle(['3.0×10⁻³','1.2×10⁻³','6.0×10⁻⁴','6.0×10⁻³']), answer:'3.0×10⁻³' });
+    items.push({ q:'Critical angle: n₁ = 1.5 (glass), n₂ = 1.0 (air). θ_c ≈', choices: shuffle(['41.8°','30.0°','48.6°','60.0°']), answer:'41.8°' });
+    items.push({ q:'Brewster angle for glass–air (n≈1.5 to 1.0, incidence in glass): tanθ_B = 1.0/1.5 ⇒ θ_B ≈', choices: shuffle(['33.7°','56.3°','41.8°','45°']), answer:'33.7°' });
+    items.push({ q:'Telescope: f_obj = 100 cm, f_eye = 5 cm. Angular magnification ≈', choices: shuffle(['20×','5×','10×','50×']), answer:'20×' });
+    items.push({ q:'Microscope: L = 16 cm, f_obj = 1.6 cm, f_eye = 4 cm, D = 25 cm. Rough M ≈ (L/f_obj)(D/f_eye) =', choices: shuffle(['625×','250×','100×','25×']), answer:'625×' });
+    items.push({ q:'Rayleigh limit: λ = 500 nm, D = 5.0 cm. θ_min ≈ 1.22 λ/D ≈', choices: shuffle(['1.22×10⁻⁵ rad','1.22×10⁻⁶ rad','2.44×10⁻⁵ rad','6.10×10⁻⁶ rad']), answer:'1.22×10⁻⁵ rad' });
+    items.push({ q:'Prism: A = 60°, n = 1.5. At minimum deviation, D_min satisfies n = sin((A + D)/2)/sin(A/2). D_min ≈', choices: shuffle(['40°','30°','20°','50°']), answer:'40°' });
+    items.push({ q:'Optical fiber NA ≈ √(n_core² − n_clad²). For n_core=1.50, n_clad=1.48, NA ≈', choices: shuffle(['0.244','0.173','0.02','0.50']), answer:'0.244' });
+    items.push({ q:'Illuminance at 2 m from a point source is E. At 4 m it is', choices: shuffle(['E/4','E/2','E/8','E/16']), answer:'E/4' });
+    items.push({ q:'A 1000 lm source uniformly over 1 m² gives', choices: shuffle(['1000 lx','1000 cd','1000 W','1 lx']), answer:'1000 lx' });
+    return items;
+  }
+
+  function buildBank(){
+    const pool = [
+      ...basicsBank(),
+      ...mirrorsLensesBank(),
+      ...refractionTIRBank(),
+      ...prismDispersionBank(),
+      ...waveOpticsBank(),
+      ...polarizationBank(),
+      ...instrumentsBank(),
+      ...photometryBank(),
+      ...eyeVisionBank(),
+      ...numericsBank(),
+    ];
+    // Ensure uniqueness by text
+    const seen = new Set(); const unique = [];
+    for(const item of pool){ if(!seen.has(item.q)){ seen.add(item.q); unique.push(item); } }
+    // Top up to at least 125 by reordering choices (keeps gameplay varied)
+    while(unique.length < 125){
+      const base = unique[rand(0, unique.length-1)];
+      unique.push({ q: base.q + ' ', choices: shuffle([...base.choices]), answer: base.answer });
+    }
+    return shuffle(unique);
+  }
+
+  // ====== Game Flow ======
+  function startGame(){
+    streak = 0; qIndex = 0; current=null; elStreak.textContent = 0;
+    bank = buildBank();
+    elIntro.classList.add('hide');
+    elSummary.classList.add('hide');
+    elBoard.classList.remove('hide');
+    nextQuestion();
+  }
+
+  function nextQuestion(){
+    if(bank.length === 0) bank = buildBank();
+    current = bank.pop(); qIndex++;
+    elQnum.textContent = qIndex; elQ.textContent = current.q; elChoices.innerHTML = '';
+    current.choices.forEach((c)=>{
+      const btn = document.createElement('button');
+      btn.className = 'choice'; btn.textContent = c; btn.addEventListener('click', ()=> choose(c));
+      elChoices.appendChild(btn);
+    });
+    startTimer();
+  }
+
+  function startTimer(){
+    stopTimer(); const start = performance.now(); const total = TIME_PER_Q * 1000;
+    (function tick(){
+      const elapsed = performance.now() - start; const left = Math.max(0, total - elapsed);
+      elTime.textContent = Math.ceil(left/1000);
+      const r = left/total; const bar = Math.max(0, Math.min(1,r));
+      elBar.style.transform = `scaleX(${bar.toFixed(4)})`;
+      elBar.style.background = bar < 0.25 ? `linear-gradient(90deg, var(--danger), #dc2626)` :
+                               bar < 0.5 ? `linear-gradient(90deg, var(--gold), #f59e0b)` :
+                                            `linear-gradient(90deg, var(--accent), var(--accent2))`;
+      if(left <= 0){ stopTimer(); endGame('⏰ Time up!'); }
+      else { ticking = requestAnimationFrame(tick); }
+    })();
+  }
+
+  function stopTimer(){ if(ticking){ cancelAnimationFrame(ticking); ticking=null; } }
+
+  function choose(val){
+    if(String(val) === String(current.answer)){
+      streak++; elStreak.textContent = streak; flash(true); nextQuestion();
+    } else {
+      endGame(`❌ Incorrect. Correct answer: ${current.answer}`);
+    }
+  }
+
+  function flash(ok){
+    elBoard.style.outline = `3px solid ${ok? 'var(--accent2)':'var(--danger)'}`;
+    setTimeout(()=> elBoard.style.outline='none', 140);
+  }
+
+  function endGame(reason){
+    stopTimer(); 
+
+if (typeof sdk !== 'undefined' && sdk.showBanner !== 'undefined') {
+sdk.showBanner();
+}
+
+console.log("Start");
+
+setTimeout(() => {
+  console.log("Waited 5 seconds!");
+}, 5000);
+
+
+elBoard.classList.add('hide'); elSummary.classList.remove('hide');
+    elSumTitle.textContent = `Game Over — Streak ${streak}`; elSumReason.textContent = reason || '';
+    last = streak; localStorage.setItem('optics.last', String(last));
+    if(streak > best){ best = streak; localStorage.setItem('optics.best', String(best)); }
+    elBest.textContent = best; elLast.textContent = last;
+  }
+
+  // ====== Events ======
+  document.getElementById('start').addEventListener('click', startGame);
+  document.getElementById('how').addEventListener('click', ()=>{
+    alert('Answer each optics question before the timer ends. One mistake or timeout ends your run. Build the longest streak!');
+  });
+  document.getElementById('again').addEventListener('click', startGame);
+  document.getElementById('back').addEventListener('click', ()=>{ elSummary.classList.add('hide'); elIntro.classList.remove('hide'); });
+
+  // Keyboard: Enter, 1-4
+  window.addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter'){ if(!elBoard.classList.contains('hide')) return; startGame(); }
+    const map = { '1':0, '2':1, '3':2, '4':3 };
+    if(map.hasOwnProperty(e.key) && !elBoard.classList.contains('hide')){
+      const idx = map[e.key]; const btn = elChoices.children[idx]; if(btn) btn.click();
+    }
+  });
+
+  // Focus first answer when rendered
+  const observer = new MutationObserver(()=>{ const first = elChoices.querySelector('button'); if(first) first.focus({preventScroll:true}); });
+  observer.observe(elChoices, {childList:true});
+})();
+</script>
+</body>
+</html>

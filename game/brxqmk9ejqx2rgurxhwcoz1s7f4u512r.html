@@ -1,0 +1,1685 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Game Simulator 3D</title>
+    <script type="text/javascript">
+        window.SDK_OPTIONS = {
+            gameId: "brxqmk9ejqx2rgurxhwcoz1s7f4u512r",
+            onEvent: function (a) {
+                switch (a.name) {
+                    case "SDK_GAME_PAUSE":
+                        // pause game logic / mute audio
+                        break;
+                    case "SDK_GAME_START":
+                        // advertisement done, resume game logic and unmute audio
+                        break;
+                    case "SDK_READY":
+                        // when sdk is ready
+                        break;
+                }
+            }
+        };
+        (function (a, b, c) {
+            var d = a.getElementsByTagName(b)[0];
+            a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+        })(document, "script", "gamemonetize-sdk"); 
+    </script>
+    <style>
+        :root {
+            --glass-bg: rgba(0, 0, 0, 0.35);
+            --glass-border: rgba(255, 255, 255, 0.18);
+            --text-color: #ffffff;
+            --shadow-color: rgba(31, 38, 135, 0.37);
+            --primary-color: #ff6b35;
+            --secondary-color: #1a1a2e;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+            user-select: none;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 8px 32px 0 var(--shadow-color);
+            color: var(--text-color);
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+        }
+
+        /* -- Menu Canvas -- */
+        #menu-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 99;
+            transition: opacity 0.5s ease;
+        }
+
+        #menu-canvas.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* -- Main Menu -- */
+
+        /* Main Menu */
+        #main-menu {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(255, 190, 190, 0.8) 0%, rgba(196, 196, 255, 0.9) 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 1;
+            transition: opacity 0.1s ease;
+        }
+
+        #main-menu.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .menu-title {
+            font-size: 4rem;
+            font-weight: bold;
+            margin-bottom: 2rem;
+            background: linear-gradient(45deg, #ff6b35, #f7931e, #ffd700);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: titlePulse 2s ease-in-out infinite alternate;
+            text-align: center;
+        }
+
+        @keyframes titlePulse {
+            from {
+                transform: scale(1);
+            }
+
+            to {
+                transform: scale(1.05);
+            }
+        }
+
+        .menu-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .menu-btn {
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .menu-btn:hover:not(:disabled) {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 15px 45px rgba(255, 107, 53, 0.4);
+        }
+
+        .menu-btn:active {
+            transform: translateY(0) scale(0.98);
+        }
+
+        .menu-btn:disabled {
+            cursor: wait;
+            opacity: 0.7;
+        }
+
+        .menu-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .menu-btn:hover:not(:disabled)::before {
+            left: 100%;
+        }
+
+        /* Game HUD */
+        #game-hud {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 50;
+            display: none;
+        }
+
+        #game-hud.active {
+            display: block;
+        }
+
+        #hud-top {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: all;
+        }
+
+        .hud-panel {
+            padding: 15px 25px;
+            font-size: 1.1rem;
+            min-width: 120px;
+            text-align: center;
+        }
+
+        /* Controls */
+        #control-instructions {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 25px;
+            text-align: center;
+            font-size: 0.9rem;
+            pointer-events: all;
+        }
+
+        /* Settings Panel */
+        #settings-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 20px;
+            display: none;
+            flex-direction: column;
+            gap: 15px;
+            min-width: 300px;
+            pointer-events: all;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        #settings-panel.active {
+            display: flex;
+        }
+
+        .settings-title {
+            font-size: 1.2rem;
+            text-align: center;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .settings-group {
+            margin-bottom: 15px;
+        }
+
+        .settings-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .settings-group input[type="range"] {
+            width: 100%;
+            margin-bottom: 5px;
+        }
+
+        .settings-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .settings-buttons .btn {
+            flex: 1;
+            padding: 8px 12px;
+            font-size: 0.85rem;
+            min-width: 60px;
+        }
+
+        .settings-buttons .btn.selected {
+            background: var(--primary-color);
+        }
+
+        .settings-buttons .btn.locked {
+            background: #555;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .settings-close-btn {
+            margin-top: 10px;
+            align-self: center;
+            padding: 10px 20px;
+        }
+
+        #virtual-controls {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: none;
+            gap: 20px;
+            pointer-events: all;
+            z-index: 60;
+        }
+
+        .control-cluster {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .control-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .virtual-btn {
+            width: 60px;
+            height: 60px;
+            font-size: 24px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+        }
+
+        .virtual-btn:active {
+            transform: scale(0.9);
+            box-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .virtual-btn:hover {
+            transform: scale(1.05);
+        }
+
+        /* Paint Shop */
+        #paint-shop {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 20px;
+            display: none;
+            flex-direction: column;
+            gap: 15px;
+            min-width: 200px;
+            pointer-events: all;
+        }
+
+        #paint-shop.active {
+            display: flex;
+        }
+
+        .paint-title {
+            font-size: 1.2rem;
+            text-align: center;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .color-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .color-swatch {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .color-swatch:hover {
+            transform: scale(1.2);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .color-swatch.selected {
+            border-color: #ffd700;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
+        }
+
+        /* Modal */
+        #modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+            backdrop-filter: blur(5px);
+        }
+
+        #modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            padding: 40px;
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-content h2 {
+            margin-top: 0;
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+
+        .modal-content p {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            white-space: pre-line;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            font-size: 1rem;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #e55a2b;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: var(--text-color);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        /* -- Settings Modal Specifics -- */
+        .settings-group {
+            margin-bottom: 25px;
+            text-align: left;
+        }
+
+        .settings-group label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .settings-group input[type="range"] {
+            width: 100%;
+        }
+
+        .quality-buttons .btn,
+        .car-select-buttons .btn {
+            flex-grow: 1;
+        }
+
+        .quality-buttons .btn.selected,
+        .car-select-buttons .btn.selected {
+            background: var(--primary-color);
+        }
+
+        .car-select-buttons .btn.locked {
+            background: #555;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        /* Loading Screen */
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #000 0%, #1a1a2e 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 300;
+            transition: opacity 0.5s ease;
+        }
+
+        #loading-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loading-text {
+            font-size: 1.5rem;
+            margin-bottom: 30px;
+            color: var(--text-color);
+        }
+
+        .loading-bar {
+            width: 300px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .loading-progress {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), #ffd700);
+            border-radius: 3px;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .menu-title {
+                font-size: 2.5rem;
+            }
+
+            #virtual-controls {
+                display: flex;
+            }
+
+            #control-instructions {
+                display: none;
+            }
+
+            .modal-content {
+                padding: 20px;
+                width: 95%;
+            }
+
+            .menu-btn {
+                padding: 12px 30px;
+                font-size: 1rem;
+            }
+
+            #paint-shop {
+                right: 10px;
+                top: 10px;
+                min-width: 180px;
+            }
+        }
+
+        @media (pointer: coarse) {
+            #virtual-controls {
+                display: flex;
+            }
+
+            #control-instructions {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="menu-canvas"></canvas>
+
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+        <div class="loading-text">Loading Game World...</div>
+        <div class="loading-bar">
+            <div class="loading-progress" id="loading-progress"></div>
+        </div>
+    </div>
+
+    <!-- Main Menu -->
+    <div id="main-menu">
+        <h1 class="menu-title">Game Simulator 3D</h1>
+        <div class="menu-buttons">
+            <button class="menu-btn glass-panel" id="start-game">🏁 Start Game</button>
+            <button class="menu-btn glass-panel" id="continue-game" style="display:none;">📱 Continue</button>
+
+            <button class="menu-btn glass-panel" id="show-controls">🎮 Controls</button>
+            <button class="menu-btn glass-panel" id="show-about">ℹ️ About</button>
+        </div>
+    </div>
+
+    <!-- Game HUD -->
+    <div id="game-hud">
+        <div id="hud-top">
+            <div class="hud-panel glass-panel">
+                <div id="coin-display">💰 0</div>
+                <div id="speed-display">🚗 0 km/h</div>
+            </div>
+
+            <div class="hud-panel glass-panel">
+                <button id="pause-btn" class="btn btn-secondary">⏸️ Pause</button>
+                <button id="settings-btn" class="btn btn-secondary">⚙️ Settings</button>
+                <button id="paint-shop-btn" class="btn btn-secondary">🎨 Paint</button>
+            </div>
+        </div>
+
+        <div id="fps-counter" class="glass-panel"
+            style="position: absolute; bottom: 20px; right: 20px; padding: 10px; display: none;">FPS: 0</div>
+        <!-- Paint Shop -->
+        <div id="paint-shop" class="glass-panel">
+            <div class="paint-title">🎨 Paint Shop</div>
+            <div class="color-grid" id="color-grid">
+                <!-- Colors will be generated dynamically -->
+            </div>
+            <button id="close-paint-shop" class="btn btn-secondary" style="margin-top: 10px;">Close</button>
+        </div>
+
+        <!-- Control Instructions -->
+        <div id="control-instructions" class="glass-panel">
+            <div><strong>Controls:</strong></div>
+            <div>W/↑: Accelerate | S/↓: Brake | A/←: Turn Left | D/→: Turn Right</div>
+            <div>ESC: Pause | Space: Handbrake</div>
+        </div>
+        <div id="settings-panel" class="glass-panel">
+            <div class="settings-title">⚙️ Settings</div>
+
+            <div class="settings-group">
+                <label for="music-vol">Music Volume</label>
+                <input type="range" id="music-vol" min="0" max="1" step="0.05">
+            </div>
+
+            <div class="settings-group">
+                <label for="sfx-vol">Sound Effects Volume</label>
+                <input type="range" id="sfx-vol" min="0" max="1" step="0.05">
+            </div>
+
+            <div class="settings-group">
+                <label>Graphics Quality</label>
+                <div class="settings-buttons quality-btns">
+                    <button class="btn btn-secondary" data-quality="low">Low</button>
+                    <button class="btn btn-secondary" data-quality="medium">Mid</button>
+                    <button class="btn btn-secondary" data-quality="high">High</button>
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <label>Select Car</label>
+                <div class="settings-buttons car-btns">
+                    <button class="btn btn-secondary" data-car="ferrari">Ferrari</button>
+                    <button class="btn btn-secondary" data-car="bmw">BMW M4</button>
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <label style="display: inline-block; margin-right: 10px;">Show FPS</label>
+                <input type="checkbox" id="fps-toggle">
+            </div>
+
+            <button id="close-settings-panel" class="btn btn-secondary settings-close-btn">Close</button>
+        </div>
+    </div>
+
+    <!-- Virtual Controls -->
+    <div id="virtual-controls">
+        <div class="control-cluster">
+            <div class="control-row">
+                <button class="virtual-btn glass-panel" id="vc-forward">↑</button>
+            </div>
+            <div class="control-row">
+                <button class="virtual-btn glass-panel" id="vc-left">←</button>
+                <button class="virtual-btn glass-panel" id="vc-brake">🛑</button>
+                <button class="virtual-btn glass-panel" id="vc-right">→</button>
+            </div>
+            <div class="control-row">
+                <button class="virtual-btn glass-panel" id="vc-reverse">↓</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="modal-overlay">
+        <div class="modal-content glass-panel">
+            <h2 id="modal-title"></h2>
+            <p id="modal-text"></p>
+            <div class="btn-group" id="modal-buttons">
+                <button id="modal-close" class="btn btn-primary">OK</button>
+            </div>
+        </div>
+    </div>
+    <!-- Settings Modal -->
+
+
+    <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.179.1/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.179.1/examples/jsm/"
+      }
+    }
+  </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+
+
+        // Game State
+        let scene, camera, renderer, clock;
+        const objectsToAnimate = [];
+        const clockk = new THREE.Clock(); // Pastikan Anda memiliki clock ini
+        let car = { model: null, ready: false };
+        let keys = {};
+        let coins = [];
+        let isPaused = false;
+        let gameStarted = false;
+
+        let audioListener, engineSound, music, coinSound, unlockSound;
+        let userInteracted = false, fpsCounter;
+
+        // Menu Scene Vars
+        let menuScene, menuCamera, menuRenderer, menuCar, menuAnimationId;
+
+        // Default Game State & Settings
+        const defaultGameState = {
+            coinsCollected: 0,
+            paintShopUnlocked: false,
+            unlockedBMW: false,
+            selectedCar: 'ferrari',
+            totalDistance: 0
+        };
+        const defaultSettings = {
+            musicVolume: 0.3,
+            sfxVolume: 0.8,
+            graphics: 'medium',
+            showFPS: false
+        };
+        let gameState = { ...defaultGameState };
+        let settings = { ...defaultSettings };
+
+        class SimplePhysics {
+            constructor() {
+                this.staticBodies = [];
+            }
+
+            addStaticBody(mesh) {
+                const body = {
+                    mesh: mesh,
+                    box: new THREE.Box3().setFromObject(mesh)
+                };
+                this.staticBodies.push(body);
+                return body;
+            }
+
+            update(deltaTime, car) {
+                if (!car || !car.ready) return;
+
+                const carPos = car.model.position;
+                const carVel = car.physics.velocity;
+
+                const worldLimit = 490;
+
+                if (carPos.x > worldLimit) { carPos.x = worldLimit; carVel.x = 0; }
+                if (carPos.x < -worldLimit) { carPos.x = -worldLimit; carVel.x = 0; }
+                if (carPos.z > worldLimit) { carPos.z = worldLimit; carVel.z = 0; }
+                if (carPos.z < -worldLimit) { carPos.z = -worldLimit; carVel.z = 0; }
+
+                const carBox = new THREE.Box3().setFromObject(car.model);
+                const restitution = -0.3;
+
+                this.staticBodies.forEach(staticBody => {
+                    const objectBox = staticBody.box;
+                    if (carBox.intersectsBox(objectBox)) {
+                        const overlapX = (carBox.max.x - carBox.min.x + objectBox.max.x - objectBox.min.x) / 2 - Math.abs(carPos.x - staticBody.mesh.position.x);
+                        const overlapZ = (carBox.max.z - carBox.min.z + objectBox.max.z - objectBox.min.z) / 2 - Math.abs(carPos.z - staticBody.mesh.position.z);
+
+                        if (overlapX < overlapZ) {
+                            const sign = Math.sign(carPos.x - staticBody.mesh.position.x);
+                            carPos.x += overlapX * sign;
+                            carVel.x *= restitution;
+                        } else {
+                            const sign = Math.sign(carPos.z - staticBody.mesh.position.z);
+                            carPos.z += overlapZ * sign;
+                            carVel.z *= restitution;
+                        }
+                    }
+                });
+            }
+        }
+
+        const physics = new SimplePhysics();
+
+        function simulateLoading() {
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        document.getElementById('loading-screen').classList.add('hidden');
+                    }, 500);
+                }
+                document.getElementById('loading-progress').style.width = progress + '%';
+            }, 100);
+        }
+
+        function handleFirstInteraction() {
+            if (userInteracted) return;
+            userInteracted = true;
+            if (camera && !audioListener) setupAudio();
+        }
+        document.body.addEventListener('click', handleFirstInteraction, { once: true });
+        document.body.addEventListener('keydown', handleFirstInteraction, { once: true });
+
+        // Main Menu Handlers
+        document.getElementById('start-game').addEventListener('click', startNewGame);
+        document.getElementById('continue-game').addEventListener('click', continueGame);
+
+        document.getElementById('settings-panel').addEventListener('click', () => {
+            setupSettingsPanel();
+        });
+
+        document.getElementById('show-controls').addEventListener('click', () => {
+            showModal('Controls',
+                'W/↑ - Accelerate\nS/↓ - Brake/Reverse\nA/← - Turn Left\nD/→ - Turn Right\nSpace - Handbrake\nESC - Pause',
+                [{ text: 'Got it!', action: closeModal }]
+            );
+        });
+
+        document.getElementById('show-about').addEventListener('click', () => {
+            showModal('About',
+                'Lamborghini World - Enhanced Edition\n\nCollect coins, customize your car, and explore the open world!\n\nUse WASD or arrow keys to drive around.',
+                [{ text: 'Awesome!', action: closeModal }]
+            );
+        });
+
+        // --- MAIN GAME ---
+        function startNewGame() {
+            if (typeof sdk !== 'undefined' && sdk.showBanner !== 'undefined') {
+                sdk.showBanner();
+            }
+            gameState = { ...defaultGameState, selectedCar: gameState.selectedCar, unlockedBMW: gameState.unlockedBMW };
+            saveGameState();
+            initGame();
+        }
+
+        function continueGame() { initGame(); }
+        function initGame() {
+            teardownMenuScene();
+            document.getElementById('main-menu').classList.add('hidden');
+            document.getElementById('game-hud').classList.add('active');
+            gameStarted = true;
+            if (!scene) {
+                setupScene();
+                if (userInteracted) setupAudio();
+                setupWorld();
+                setupCar();
+                setupCoins();
+                setupUI();
+                setupSettingsPanel();
+                setupControls();
+                clock = new THREE.Clock();
+                animate();
+            }
+        }
+        function setupAudio() {
+            audioListener = new THREE.AudioListener();
+            camera.add(audioListener);
+            const audioLoader = new THREE.AudioLoader();
+
+            engineSound = new THREE.PositionalAudio(audioListener);
+            music = new THREE.Audio(audioListener);
+            coinSound = new THREE.Audio(audioListener);
+            unlockSound = new THREE.Audio(audioListener);
+
+            audioLoader.load('assets/engine.wav', b => { engineSound.setBuffer(b); engineSound.setLoop(true); engineSound.setRefDistance(20); if (!engineSound.isPlaying) engineSound.play(); });
+            audioLoader.load('assets/music.wav', b => { music.setBuffer(b); music.setLoop(true); if (!music.isPlaying) music.play(); });
+
+            try {
+                const audioCtx = audioListener.context;
+                const coinBuffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.1, audioCtx.sampleRate);
+                const coinChannel = coinBuffer.getChannelData(0);
+                for (let i = 0; i < coinChannel.length; i++) {
+                    coinChannel[i] = Math.sin(i / audioCtx.sampleRate * 800 * Math.PI * 2) * Math.exp(-i * 0.0005);
+                }
+                coinSound.setBuffer(coinBuffer);
+                const unlockBuffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.3, audioCtx.sampleRate);
+                const unlockChannel = unlockBuffer.getChannelData(0);
+                for (let i = 0; i < unlockChannel.length; i++) {
+                    unlockChannel[i] = Math.sin(i / audioCtx.sampleRate * 1000 * Math.PI * 2) * Math.exp(-i * 0.0002);
+                }
+                unlockSound.setBuffer(unlockBuffer);
+            } catch (e) { console.warn("Synth sound creation failed."); }
+
+            applySettings();
+        }
+        function setupSettingsPanel() {
+            // Cek apakah elemen ada sebelum menambahkan event listener
+            const settingsBtn = document.getElementById('settings-btn');
+            const settingsPanel = document.getElementById('settings-panel');
+            const closeSettingsBtn = document.getElementById('close-settings-panel');
+
+            if (!settingsBtn || !settingsPanel || !closeSettingsBtn) {
+                console.warn('Settings elements not found');
+                return;
+            }
+
+            // Toggle settings panel
+            settingsBtn.addEventListener('click', () => {
+                settingsPanel.classList.toggle('active');
+                updateSettingsPanel();
+            });
+
+            closeSettingsBtn.addEventListener('click', () => {
+                settingsPanel.classList.remove('active');
+            });
+
+            // Settings controls - dengan null check
+            const musicSlider = document.getElementById('music-vol');
+            const sfxSlider = document.getElementById('sfx-vol');
+            const qualityButtons = document.querySelectorAll('.quality-btns .btn');
+            const carButtons = document.querySelectorAll('.car-btns .btn');
+            const fpsToggle = document.getElementById('fps-toggle');
+
+            const updateAndSave = () => {
+                if (musicSlider) settings.musicVolume = parseFloat(musicSlider.value);
+                if (sfxSlider) settings.sfxVolume = parseFloat(sfxSlider.value);
+                if (fpsToggle) settings.showFPS = fpsToggle.checked;
+                applySettings();
+                saveSettings();
+            };
+
+            if (musicSlider) musicSlider.addEventListener('input', updateAndSave);
+            if (sfxSlider) sfxSlider.addEventListener('input', updateAndSave);
+            if (fpsToggle) fpsToggle.addEventListener('change', updateAndSave);
+
+            qualityButtons.forEach(b => b.addEventListener('click', () => {
+                settings.graphics = b.dataset.quality;
+                updateAndSave();
+                updateSettingsPanel();
+            }));
+
+            carButtons.forEach(b => b.addEventListener('click', () => {
+                if (b.classList.contains('locked')) return;
+                gameState.selectedCar = b.dataset.car;
+                updateSettingsPanel();
+                saveGameState();
+                showModal("Car Changed", "Your new car will be available the next time you start the game from the main menu.", [{ text: "OK", action: closeModal }]);
+            }));
+        }
+
+        function updateSettingsPanel() {
+            // Update sliders - dengan null check
+            const musicSlider = document.getElementById('music-vol');
+            const sfxSlider = document.getElementById('sfx-vol');
+            const fpsToggle = document.getElementById('fps-toggle');
+
+            if (musicSlider) musicSlider.value = settings.musicVolume;
+            if (sfxSlider) sfxSlider.value = settings.sfxVolume;
+            if (fpsToggle) fpsToggle.checked = settings.showFPS;
+
+            // Update quality buttons
+            document.querySelectorAll('.quality-btns .btn').forEach(b => {
+                b.classList.toggle('selected', b.dataset.quality === settings.graphics);
+            });
+
+            // Update car buttons
+            document.querySelectorAll('.car-btns .btn').forEach(b => {
+                b.classList.remove('selected', 'locked');
+                if (b.dataset.car === 'bmw' && !gameState.unlockedBMW) {
+                    b.classList.add('locked');
+                    b.title = "Collect 100 coins to unlock!";
+                }
+                if (b.dataset.car === gameState.selectedCar) {
+                    b.classList.add('selected');
+                }
+            });
+        }
+
+        function setupScene() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x87ceeb);
+            scene.fog = new THREE.Fog(0x87ceeb, 100, 500);
+
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 5, 10);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            document.body.appendChild(renderer.domElement);
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+
+            const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+            dirLight.position.set(100, 100, 50);
+            dirLight.castShadow = true;
+            dirLight.shadow.mapSize.width = 1024;
+            dirLight.shadow.mapSize.height = 1024;
+            dirLight.shadow.camera.left = -200;
+            dirLight.shadow.camera.right = 200;
+            dirLight.shadow.camera.top = 200;
+            dirLight.shadow.camera.bottom = -200;
+            scene.add(dirLight);
+        }
+
+        function setupWorld() {
+            // --- PENCAHAYAAN (PENTING UNTUK REALISME) ---
+            // AmbientLight memberikan cahaya dasar ke seluruh scene agar tidak ada bagian yang benar-benar hitam.
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+
+            // DirectionalLight mensimulasikan cahaya matahari dari satu arah.
+            // Ini penting untuk menciptakan bayangan (shadows).
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            dirLight.position.set(-30, 50, -30); // Posisi cahaya dari atas-kiri-depan
+            dirLight.castShadow = true;
+            dirLight.shadow.mapSize.width = 2048;
+            dirLight.shadow.mapSize.height = 2048;
+            scene.add(dirLight);
+
+
+            // --- TANAH (GROUND) ---
+            const groundGeo = new THREE.PlaneGeometry(1000, 1000);
+            // Menggunakan warna hijau rumput yang sedikit lebih natural
+            const groundMat = new THREE.MeshLambertMaterial({ color: 0x5a8c55 });
+            const ground = new THREE.Mesh(groundGeo, groundMat);
+            ground.rotation.x = -Math.PI / 2;
+            ground.receiveShadow = true; // Tanah menerima bayangan dari objek lain
+            scene.add(ground);
+
+            createBuildings();
+            createRoads();
+            createTrees();
+        }
+
+        function createRealisticBuilding() {
+            const buildingColors = [0xACACAC, 0x828282, 0x959595, 0xBDA285, 0xB4A594];
+            const buildingBaseColor = new THREE.Color(buildingColors[Math.floor(Math.random() * buildingColors.length)]);
+
+            // 1. Membuat Badan Utama Bangunan
+            const width = 15 + Math.random() * 20;
+            const height = 20 + Math.random() * 60;
+            const depth = 15 + Math.random() * 20;
+            const buildingGeo = new THREE.BoxGeometry(width, height, depth);
+
+            // =======================================================================
+            // KUNCI PERUBAHAN #1: Menggeser pivot point geometri ke dasar.
+            // Ini memindahkan semua titik (vertex) ke atas sejauh setengah tinggi.
+            // Sekarang, origin (0,0,0) dari mesh ini ada di tengah-tengah dasarnya.
+            buildingGeo.translate(0, height / 2, 0);
+            // =======================================================================
+
+            // 2. Membuat Tekstur Jendela Prosedural dengan Canvas (kode ini tidak berubah)
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.width = 128;
+            canvas.height = 256;
+            context.fillStyle = `#${buildingBaseColor.getHexString()}`;
+            context.fillRect(0, 0, canvas.width, canvas.height);
+            const windowColor = '#111827';
+            const litWindowColor = '#FFD700';
+            const windowWidth = 20;
+            const windowHeight = 30;
+            const windowSpacingX = 10;
+            const windowSpacingY = 20;
+            for (let y = windowSpacingY; y < canvas.height - windowHeight; y += windowHeight + windowSpacingY) {
+                for (let x = windowSpacingX; x < canvas.width - windowWidth; x += windowWidth + windowSpacingX) {
+                    context.fillStyle = (Math.random() > 0.1) ? windowColor : litWindowColor;
+                    context.fillRect(x, y, windowWidth, windowHeight);
+                }
+            }
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(width / 20, height / 20);
+
+            const buildingMat = new THREE.MeshStandardMaterial({
+                map: texture,
+                roughness: 0.8,
+                metalness: 0.1
+            });
+
+            const buildingBody = new THREE.Mesh(buildingGeo, buildingMat);
+            buildingBody.castShadow = true;
+            buildingBody.receiveShadow = true;
+
+            // 3. Membuat Struktur Atap
+            const roofHeight = 2 + Math.random() * 4;
+            const roofGeo = new THREE.BoxGeometry(width * 0.8, roofHeight, depth * 0.8);
+            const roofMat = new THREE.MeshStandardMaterial({ color: 0x444444, roughness: 0.9 });
+            const roof = new THREE.Mesh(roofGeo, roofMat);
+            // KUNCI PERUBAHAN #2: Posisikan atap relatif terhadap tinggi total gedung.
+            roof.position.y = height + (roofHeight / 2); // Atap berada di atas badan gedung
+            roof.castShadow = true;
+
+            // 4. Membuat Antena
+            const antennaBaseGeo = new THREE.CylinderGeometry(0.2, 0.2, 4, 8);
+            const antennaBaseMat = new THREE.MeshStandardMaterial({ color: 0x666666, metalness: 0.8, roughness: 0.5 });
+            const antenna = new THREE.Mesh(antennaBaseGeo, antennaBaseMat);
+            // KUNCI PERUBAHAN #3: Posisikan antena di atas atap.
+            antenna.position.y = height + roofHeight + 2; // Tinggi total + tinggi atap + setengah tinggi antena
+
+            // Kelompokkan semua bagian menjadi satu objek
+            const buildingGroup = new THREE.Group();
+            buildingGroup.add(buildingBody);
+            buildingGroup.add(roof);
+            buildingGroup.add(antenna);
+
+            buildingGroup.userData.collisionBox = buildingBody;
+            // Simpan tinggi untuk referensi di luar fungsi
+            buildingGroup.userData.height = height;
+
+            return buildingGroup;
+        }
+
+
+        function createBuildings() {
+            for (let i = 0; i < 40; i++) {
+                const building = createRealisticBuilding();
+
+                let x, z;
+                do {
+                    x = (Math.random() - 0.5) * 800;
+                    z = (Math.random() - 0.5) * 800;
+                } while (Math.abs(x) < 80 && Math.abs(z) < 80);
+
+                // =======================================================================
+                // KUNCI PERUBAHAN #4: Posisikan bangunan di y=0.
+                // Karena pivotnya sudah di dasar, ini akan meletakkannya pas di atas tanah.
+                building.position.set(x, 0, z);
+                // =======================================================================
+
+                scene.add(building);
+
+                // Untuk fisika, kita perlu membuat objek fisika yang terpisah
+                // dengan posisi dan orientasi yang sama dengan objek visualnya.
+                // Cara terbaik adalah dengan meng-clone mesh utama dan menambahkannya ke fisika.
+                // Ini mencegah konflik antara scene graph Three.js dan world state mesin fisika.
+                const physicsMesh = building.userData.collisionBox.clone();
+                physicsMesh.position.copy(building.position);
+                physicsMesh.quaternion.copy(building.quaternion);
+
+                // Asumsi `physics.addStaticBody` menerima sebuah Mesh.
+                physics.addStaticBody(physicsMesh);
+            }
+        }
+
+        function createRoads() {
+            const roadMaterial = new THREE.MeshLambertMaterial({ color: 0x333333 });
+            const mainRoadGeo = new THREE.PlaneGeometry(20, 1000);
+            const mainRoad = new THREE.Mesh(mainRoadGeo, roadMaterial);
+            mainRoad.rotation.x = -Math.PI / 2;
+            mainRoad.position.y = 0.01;
+            scene.add(mainRoad);
+            const crossRoadGeo = new THREE.PlaneGeometry(1000, 20);
+            const crossRoad = new THREE.Mesh(crossRoadGeo, roadMaterial);
+            crossRoad.rotation.x = -Math.PI / 2;
+            crossRoad.position.y = 0.01;
+            scene.add(crossRoad);
+        }
+
+        function createTrees() {
+            for (let i = 0; i < 60; i++) {
+                const treeGroup = new THREE.Group();
+
+                // --- Batang Pohon (Trunk) ---
+                // Menambahkan sedikit variasi pada tinggi batang
+                const trunkHeight = 6 + Math.random() * 2; // Tinggi antara 6 dan 8
+                const trunkGeo = new THREE.CylinderGeometry(0.5, 0.8, trunkHeight);
+                const trunkMat = new THREE.MeshLambertMaterial({ color: 0x8b4513 }); // SaddleBrown
+                const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+                trunk.position.y = trunkHeight / 2; // Sesuaikan posisi y berdasarkan tinggi
+                trunk.castShadow = true;
+                treeGroup.add(trunk);
+
+                // --- Daun/Kanopi (Leaves) yang lebih realistis ---
+                // Kita akan membuat grup untuk semua bagian daun
+                const leavesGroup = new THREE.Group();
+                const leavesColor = 0x228b22; // ForestGreen
+                const leavesMat = new THREE.MeshLambertMaterial({ color: leavesColor });
+
+                // Buat beberapa gumpalan daun (misalnya 5 gumpalan)
+                for (let j = 0; j < 5; j++) {
+                    // Menggunakan Icosahedron untuk bentuk yang kurang sempurna dibandingkan bola
+                    const leavesGeo = new THREE.IcosahedronGeometry(2.5, 0); // Radius 2.5, detail 0
+                    const leaves = new THREE.Mesh(leavesGeo, leavesMat);
+
+                    // Posisikan gumpalan daun secara acak di sekitar puncak batang
+                    leaves.position.set(
+                        (Math.random() - 0.5) * 2.5,
+                        0, // Posisi y relatif terhadap leavesGroup
+                        (Math.random() - 0.5) * 2.5
+                    );
+
+                    // Beri sedikit rotasi acak
+                    leaves.rotation.set(Math.random(), Math.random(), Math.random());
+
+                    leaves.castShadow = true;
+                    leavesGroup.add(leaves);
+                }
+
+                // Posisikan grup daun di atas batang
+                leavesGroup.position.y = trunkHeight;
+                treeGroup.add(leavesGroup);
+
+                // --- Menyimpan referensi untuk animasi ---
+                // Kita hanya akan menganimasikan daunnya, bukan seluruh pohon
+                objectsToAnimate.push({
+                    mesh: leavesGroup,
+                    // Faktor acak untuk memastikan setiap pohon bergoyang dengan pola yang berbeda
+                    randomFactorX: Math.random() * Math.PI * 2,
+                    randomFactorZ: Math.random() * Math.PI * 2
+                });
+
+                // --- Posisi Pohon di Dunia ---
+                let x, z;
+                do {
+                    x = (Math.random() - 0.5) * 900;
+                    z = (Math.random() - 0.5) * 900;
+                } while (Math.abs(x) < 60 && Math.abs(z) < 60);
+
+                treeGroup.position.set(x, 0, z);
+                scene.add(treeGroup);
+
+                // Catatan: Jika physics engine Anda memerlukan satu body, 
+                // pastikan ia menangani treeGroup dengan benar.
+                // Jika tidak, Anda mungkin perlu membuat collider terpisah yang lebih sederhana.
+                physics.addStaticBody(treeGroup);
+            }
+        }
+
+        function setupCar() {
+            const loader = new GLTFLoader();
+            const dracoLoader = new DRACOLoader();
+            dracoLoader.setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/libs/draco/gltf/');
+            loader.setDRACOLoader(dracoLoader);
+
+            const carPaths = {
+                ferrari: 'assets/ferrari.glb',
+                bmw: 'assets/bmw_m4_f821.glb'
+            };
+            const path = carPaths[gameState.selectedCar] || carPaths.ferrari;
+
+            loader.load(path, (gltf) => {
+                car.model = gltf.scene;
+                car.model.position.set(0, 0, 0);
+                const scale = gameState.selectedCar === 'bmw' ? 1.0 : 0.8;
+                car.model.scale.set(scale, scale, scale);
+                car.model.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+                if (engineSound) car.model.add(engineSound);
+                scene.add(car.model);
+                car.physics = { velocity: new THREE.Vector3(), handling: 3.5, acceleration: 60, braking: 80, maxSpeed: 97.22, steering: 0, turnSpeed: 3, friction: 0.5, maxSteering: 0.3 };
+                car.ready = true;
+            }, undefined, (error) => {
+                console.error("Failed to load car model, creating fallback.", error);
+                createFallbackCar();
+            });
+        }
+
+        function createFallbackCar() {
+            const carGeo = new THREE.BoxGeometry(2, 1, 4.5);
+            const carMat = new THREE.MeshLambertMaterial({ color: 0xff0000 });
+            car.model = new THREE.Mesh(carGeo, carMat);
+            car.model.position.set(0, 0.5, 0);
+            car.model.castShadow = true;
+            if (engineSound) car.model.add(engineSound);
+            scene.add(car.model);
+
+            car.physics = { velocity: new THREE.Vector3(), handling: 3.5, acceleration: 60, braking: 80, maxSpeed: 97.22, steering: 0, turnSpeed: 3, friction: 0.5, maxSteering: 0.3 };
+            car.ready = true;
+        }
+
+        function setupCoins() {
+            const coinGeo = new THREE.TorusGeometry(0.8, 0.3, 8, 30);
+            const coinMat = new THREE.MeshLambertMaterial({ color: 0xffd700, emissive: 0xffaa00, emissiveIntensity: 0.3 });
+            for (let i = 0; i < 1111; i++) spawnCoin(coinGeo, coinMat);
+        }
+
+
+        function spawnCoin(geo, mat) {
+            const coin = new THREE.Mesh(geo, mat);
+            let x, z;
+            do { x = (Math.random() - 0.5) * 800; z = (Math.random() - 0.5) * 800; } while (Math.abs(x) < 20 && Math.abs(z) < 20);
+            coin.position.set(x, 2, z);
+            coin.rotation.x = Math.PI / 2;
+            coin.castShadow = true;
+            coin.userData = { originalY: 2, floatSpeed: Math.random() * 2 + 1, floatOffset: Math.random() * Math.PI * 2 };
+            coins.push(coin);
+            scene.add(coin);
+        }
+
+        function setupUI() {
+            createPaintShop();
+            updateCoinDisplay();
+            document.getElementById('pause-btn').addEventListener('click', togglePause);
+            document.getElementById('settings-btn').addEventListener('click', () => {
+                document.getElementById('settings-panel').classList.toggle('active');
+            });
+            document.getElementById('paint-shop-btn').addEventListener('click', togglePaintShop);
+            document.getElementById('close-paint-shop').addEventListener('click', togglePaintShop);
+            document.getElementById('modal-close').addEventListener('click', closeModal);
+        }
+
+        function createPaintShop() {
+            const colorGrid = document.getElementById('color-grid');
+            const colors = ['#ff0000', '#0000ff', '#00ff00', '#ffff00', '#ff00ff', '#00ffff', '#ffffff', '#000000', '#ff8800', '#8800ff', '#333333', '#c0c0c0', '#800080', '#008080', '#800000', '#008000'];
+            colorGrid.innerHTML = '';
+            colors.forEach(color => {
+                const swatch = document.createElement('div');
+                swatch.className = 'color-swatch';
+                swatch.style.backgroundColor = color;
+                swatch.addEventListener('click', () => {
+                    changeCarColor(color);
+                    document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+                    swatch.classList.add('selected');
+                });
+                colorGrid.appendChild(swatch);
+            });
+        }
+
+        function setupControls() {
+            window.addEventListener('keydown', (e) => { keys[e.code] = true; if (e.code === 'Escape') { e.preventDefault(); togglePause(); } });
+            window.addEventListener('keyup', (e) => keys[e.code] = false);
+            const virtualControls = { 'vc-forward': 'ArrowUp', 'vc-reverse': 'ArrowDown', 'vc-left': 'ArrowLeft', 'vc-right': 'ArrowRight' };
+            Object.entries(virtualControls).forEach(([id, key]) => {
+                const btn = document.getElementById(id);
+                if (btn) {
+                    btn.addEventListener('touchstart', (e) => { e.preventDefault(); keys[key] = true; btn.style.transform = 'scale(0.9)'; });
+                    btn.addEventListener('touchend', (e) => { e.preventDefault(); keys[key] = false; btn.style.transform = 'scale(1)'; });
+                    btn.addEventListener('mousedown', (e) => { keys[key] = true; btn.style.transform = 'scale(0.9)'; });
+                    btn.addEventListener('mouseup', (e) => { keys[key] = false; btn.style.transform = 'scale(1)'; });
+                }
+            });
+            const brakeBtn = document.getElementById('vc-brake');
+            if (brakeBtn) {
+                brakeBtn.addEventListener('touchstart', (e) => { e.preventDefault(); keys['Space'] = true; brakeBtn.style.transform = 'scale(0.9)'; });
+                brakeBtn.addEventListener('touchend', (e) => { e.preventDefault(); keys['Space'] = false; brakeBtn.style.transform = 'scale(1)'; });
+                brakeBtn.addEventListener('mousedown', (e) => { keys['Space'] = true; });
+                brakeBtn.addEventListener('mouseup', (e) => { keys['Space'] = false; });
+            }
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        function updateCar(deltaTime) {
+            if (!car.ready || isPaused) return;
+
+            const { physics: carPhysics } = car;
+            let { steering } = carPhysics;
+            const currentSpeed = carPhysics.velocity.length();
+
+            let thrust = 0;
+            if (keys['KeyW'] || keys['ArrowUp']) thrust = carPhysics.acceleration;
+            if (keys['KeyS'] || keys['ArrowDown']) thrust = -carPhysics.braking;
+            if (keys['Space']) carPhysics.velocity.multiplyScalar(1 - 2.5 * deltaTime);
+
+            let steerInput = 0;
+            if (keys['KeyA'] || keys['ArrowLeft']) steerInput = -1;
+            if (keys['KeyD'] || keys['ArrowRight']) steerInput = 1;
+
+            if (steerInput === 0) { steering *= (1 - carPhysics.turnSpeed * 2 * deltaTime); }
+            else { steering += steerInput * carPhysics.turnSpeed * deltaTime; }
+            steering = Math.max(-carPhysics.maxSteering, Math.min(carPhysics.maxSteering, steering));
+            carPhysics.steering = steering;
+
+            const forwardDir = new THREE.Vector3(0, 0, -1).applyQuaternion(car.model.quaternion);
+            if (thrust !== 0) carPhysics.velocity.add(forwardDir.clone().multiplyScalar(thrust * deltaTime));
+            if (carPhysics.velocity.length() > carPhysics.maxSpeed) carPhysics.velocity.normalize().multiplyScalar(carPhysics.maxSpeed);
+
+            const turnFactor = 1.0 - (currentSpeed / (carPhysics.maxSpeed * 1.5));
+            car.model.rotation.y -= steering * turnFactor * deltaTime;
+
+            const forwardSpeed = carPhysics.velocity.dot(forwardDir);
+            const targetVelocity = forwardDir.clone().multiplyScalar(forwardSpeed);
+            const grip = carPhysics.handling * deltaTime;
+            carPhysics.velocity.lerp(targetVelocity, grip);
+            carPhysics.velocity.multiplyScalar(1 - carPhysics.friction * deltaTime);
+
+            car.model.position.add(carPhysics.velocity.clone().multiplyScalar(deltaTime));
+
+            gameState.totalDistance += carPhysics.velocity.length() * deltaTime;
+            document.getElementById('speed-display').textContent = `🚗 ${Math.abs(currentSpeed * 3.6).toFixed(0)} km/h`;
+        }
+
+        function updateCamera() {
+            if (!car.ready) return;
+            const offset = new THREE.Vector3(0, 4, 8);
+            offset.applyQuaternion(car.model.quaternion);
+            offset.add(car.model.position);
+            camera.position.lerp(offset, 0.1);
+            camera.lookAt(car.model.position.clone().add(new THREE.Vector3(0, 1, 0)));
+        }
+
+        function updateCoins(deltaTime) {
+            if (isPaused) return;
+            for (let i = coins.length - 1; i >= 0; i--) {
+                const coin = coins[i];
+                const userData = coin.userData;
+                userData.floatOffset += userData.floatSpeed * deltaTime;
+                coin.position.y = userData.originalY + Math.sin(userData.floatOffset) * 0.5;
+                coin.rotation.z += deltaTime * 2;
+                if (car.ready && car.model.position.distanceTo(coin.position) < 3) {
+                    collectCoin(coin, i);
+                }
+            }
+        }
+
+        function collectCoin(coin, i) {
+            scene.remove(coin); coins.splice(i, 1);
+            gameState.coinsCollected++;
+            updateCoinDisplay();
+            if (coinSound?.buffer) { if (coinSound.isPlaying) coinSound.stop(); coinSound.play(); }
+
+            if (!gameState.paintShopUnlocked && gameState.coinsCollected >= 10) unlockPaintShop();
+            if (!gameState.unlockedBMW && gameState.coinsCollected >= 100) unlockNewCar();
+
+            saveGameState();
+            spawnCoin(coin.geometry, coin.material);
+        }
+
+        function unlockPaintShop() {
+            gameState.paintShopUnlocked = true;
+            saveGameState();
+            if (unlockSound?.buffer) { if (unlockSound.isPlaying) unlockSound.stop(); unlockSound.play(0.1); } // Play softly
+            showModal('🎉 Paint Shop Unlocked!', 'You collected 10 coins! You can now customize your car colors.', [
+                { text: 'Awesome!', action: closeModal }
+            ]);
+        }
+        function unlockNewCar() {
+            gameState.unlockedBMW = true;
+            if (unlockSound?.buffer) { if (unlockSound.isPlaying) unlockSound.stop(); unlockSound.play(); }
+            saveGameState();
+            showModal('🎉 New Car Unlocked!', 'Congratulations! You can now select the BMW M4 from the Settings menu.', [{ text: 'Awesome!', action: closeModal }]);
+            updateCarSelectionUI();
+        }
+
+        function changeCarColor(color) {
+            if (!car.ready) return;
+            const targetMaterialNames = ['paint', 'body', 'car_paint', 'primary', 'main'];
+            car.model.traverse((child) => {
+                if (child.isMesh && child.material) {
+                    const materials = Array.isArray(child.material) ? child.material : [child.material];
+                    materials.forEach(material => {
+                        if (material.name && targetMaterialNames.some(name => material.name.toLowerCase().includes(name))) {
+                            material.color.set(color);
+                        }
+                    });
+                }
+            });
+        }
+
+        function updateCarSelectionUI() {
+            const carButtons = document.querySelectorAll('.car-select-buttons .btn');
+            carButtons.forEach(b => {
+                b.classList.remove('selected', 'locked');
+                if (b.dataset.car === 'bmw' && !gameState.unlockedBMW) {
+                    b.classList.add('locked');
+                    b.title = "Collect 100 coins to unlock!";
+                }
+                if (b.dataset.car === gameState.selectedCar) b.classList.add('selected');
+            });
+        }
+        // --- PERSISTENCE ---
+        function saveSettings() { localStorage.setItem('lw_settings', JSON.stringify(settings)); }
+        function loadSettings() { const saved = localStorage.getItem('lw_settings'); if (saved) settings = { ...defaultSettings, ...JSON.parse(saved) }; }
+        function saveGameState() { localStorage.setItem('lw_gamestate', JSON.stringify(gameState)); }
+        function loadGameState() { const saved = localStorage.getItem('lw_gamestate'); if (saved) gameState = { ...defaultGameState, ...JSON.parse(saved) }; }
+
+        function onWindowResize() {
+            const w = window.innerWidth, h = window.innerHeight;
+            const activeCam = gameStarted ? camera : menuCamera;
+            const activeRenderer = gameStarted ? renderer : menuRenderer;
+            if (activeCam && activeRenderer) {
+                activeCam.aspect = w / h;
+                activeCam.updateProjectionMatrix();
+                activeRenderer.setSize(w, h);
+            }
+        }
+
+        function applySettings() {
+            if (music) music.setVolume(settings.musicVolume);
+            if (engineSound) engineSound.setVolume(settings.sfxVolume);
+            if (coinSound) coinSound.setVolume(settings.sfxVolume);
+            if (unlockSound) unlockSound.setVolume(settings.sfxVolume);
+
+            if (renderer) {
+                const ratios = { low: 0.5, medium: 1, high: Math.min(window.devicePixelRatio, 2) };
+                renderer.setPixelRatio(ratios[settings.graphics] || 1);
+            }
+
+            const fpsCounter = document.getElementById('fps-counter');
+            if (fpsCounter) fpsCounter.style.display = settings.showFPS ? 'block' : 'none';
+
+            const musicVol = document.getElementById('music-vol');
+            const sfxVol = document.getElementById('sfx-vol');
+            const fpsToggle = document.getElementById('fps-toggle');
+
+            if (musicVol) musicVol.value = settings.musicVolume;
+            if (sfxVol) sfxVol.value = settings.sfxVolume;
+            if (fpsToggle) fpsToggle.checked = settings.showFPS;
+
+            document.querySelectorAll('.quality-btns .btn').forEach(b =>
+                b.classList.toggle('selected', b.dataset.quality === settings.graphics));
+        }
+
+        function updateCoinDisplay() { document.getElementById('coin-display').textContent = `💰 ${gameState.coinsCollected}`; }
+
+        function togglePause() {
+            if (!gameStarted) return;
+            isPaused = !isPaused;
+
+            document.getElementById('pause-btn').textContent = isPaused ? '▶️ Resume' : '⏸️ Pause';
+            if (isPaused) {
+                document.getElementById('modal-overlay').classList.add('active');
+                showModal('Game Paused', 'Game is paused. Choose an option:', [
+                    { text: 'Resume', action: () => { closeModal(); togglePause(); } },
+                    { text: 'Settings', action: () => { closeModal(); document.getElementById('settings-panel').classList.add('active'); } },
+                    { text: 'Main Menu', action: () => { location.reload(); } }
+                ]);
+            } else {
+                closeModal();
+            }
+        }
+
+        function togglePaintShop() {
+            const paintShop = document.getElementById('paint-shop');
+            if (gameState.paintShopUnlocked) { paintShop.classList.toggle('active'); }
+            else { showModal('🔒 Paint Shop Locked', 'Collect 10 coins to unlock the Paint Shop!', [{ text: 'OK', action: closeModal }]); }
+        }
+
+        function showModal(title, text, buttons = []) {
+            document.getElementById('modal-title').textContent = title;
+            document.getElementById('modal-text').textContent = text;
+            const buttonContainer = document.getElementById('modal-buttons');
+            buttonContainer.innerHTML = '';
+            buttons.forEach(btnInfo => {
+                const button = document.createElement('button');
+                button.textContent = btnInfo.text;
+                button.className = 'btn btn-primary';
+                button.addEventListener('click', btnInfo.action);
+                buttonContainer.appendChild(button);
+            });
+            if (buttons.length === 0) {
+                const okBtn = document.createElement('button');
+                okBtn.textContent = 'OK'; okBtn.className = 'btn btn-primary';
+                okBtn.addEventListener('click', closeModal);
+                buttonContainer.appendChild(okBtn);
+            }
+            document.getElementById('modal-overlay').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('modal-overlay').classList.remove('active');
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const elapsedTime = clockk.getElapsedTime();
+            objectsToAnimate.forEach(obj => {
+                obj.mesh.rotation.x = Math.sin(elapsedTime * 0.5 + obj.randomFactorX) * 0.02;
+                obj.mesh.rotation.z = Math.sin(elapsedTime * 0.3 + obj.randomFactorZ) * 0.02;
+            });
+
+            if (!gameStarted || !clock) return;
+            const deltaTime = Math.min(clock.getDelta(), 0.1);
+            if (settings.showFPS) { document.getElementById('fps-counter').textContent = `FPS: ${Math.round(1 / deltaTime)}`; }
+            if (!isPaused) {
+                updateCar(deltaTime);
+                if (car.ready) physics.update(deltaTime, car);
+                updateCamera();
+                updateCoins(deltaTime);
+            }
+            if (renderer) renderer.render(scene, camera);
+        }
+
+        function initMenuScene() {
+            const canvas = document.getElementById('menu-canvas');
+            menuScene = new THREE.Scene();
+            menuScene.background = new THREE.Color(0x1a1a2e);
+            menuCamera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
+            menuCamera.position.set(0, 0.8, 4);
+            menuRenderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+            menuRenderer.setSize(window.innerWidth, window.innerHeight);
+            menuRenderer.setPixelRatio(window.devicePixelRatio);
+            const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 2);
+            hemiLight.position.set(0, 20, 0);
+            menuScene.add(hemiLight);
+            const dirLight = new THREE.DirectionalLight(0xffffff, 3);
+            dirLight.position.set(3, 10, 10);
+            menuScene.add(dirLight);
+
+            const loader = new GLTFLoader();
+            const dracoLoader = new DRACOLoader();
+            dracoLoader.setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/libs/draco/gltf/');
+            loader.setDRACOLoader(dracoLoader);
+
+            loader.load('assets/bmw_m4_f821.glb', (gltf) => {
+                menuCar = gltf.scene;
+                menuCar.scale.set(1.5, 1.5, 1.5);
+                menuCar.position.y = -0.5;
+                menuScene.add(menuCar);
+            }, undefined, (e) => console.error('Error loading menu car', e));
+            animateMenu();
+        }
+
+        function animateMenu() {
+            menuAnimationId = requestAnimationFrame(animateMenu);
+            if (menuCar) menuCar.rotation.y += 0.005;
+            if (menuRenderer) menuRenderer.render(menuScene, menuCamera);
+        }
+
+        function teardownMenuScene() {
+            cancelAnimationFrame(menuAnimationId);
+            document.getElementById('menu-canvas').classList.add('hidden');
+        }
+
+        /**
+         * **NEW FUNCTION**
+         * Starts a 10-second countdown on the "Start Game" button, disabling it during the countdown.
+         */
+        function startButtonCountdown() {
+            const startGameBtn = document.getElementById('start-game');
+            if (!startGameBtn) return; // Safety check
+
+            let countdown = 10;
+            startGameBtn.disabled = true;
+            startGameBtn.textContent = `Loading Game ${countdown}s`;
+
+            const intervalId = setInterval(() => {
+                countdown--;
+                if (countdown > 0) {
+                    startGameBtn.textContent = `Loading Game ${countdown}s`;
+                } else {
+                    clearInterval(intervalId);
+                    startGameBtn.textContent = '🏁 Start Game';
+                    startGameBtn.disabled = false;
+                }
+            }, 1000); // Run every 1 second
+        }
+
+        window.addEventListener('load', () => {
+            simulateLoading();
+            loadGameState();
+            loadSettings();
+            setupSettingsPanel();
+            initMenuScene();
+            applySettings();
+            if (gameState.coinsCollected > 0) document.getElementById('continue-game').style.display = 'block';
+
+            // **MODIFIED**: Call the new countdown function when the page loads.
+            startButtonCountdown();
+        });
+
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Electro‑Magnetism Knockout Quiz</title>
+  <style>
+    :root{
+      /* Fresh palette: charcoal + cyan + tangerine */
+      --bg:#0b1014; --panel:#0f151b; --text:#f1f7fb; --muted:#a9b8c7;
+      --accent:#06b6d4; /* cyan */
+      --accent2:#fb923c; /* tangerine */
+      --danger:#ef4444; --gold:#f59e0b; --ink:#0a0f14;
+      --glow:0 12px 32px rgba(6,182,212,.22);
+    }
+    *{box-sizing:border-box}
+    body{margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif; background:radial-gradient(1200px 800px at 50% -10%, #16222b, var(--bg)); color:var(--text); min-height:100dvh; display:grid; place-items:center}
+    .wrap{width:min(1040px,92vw)}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02)); border:1px solid rgba(255,255,255,0.1); border-radius:22px; padding:22px; box-shadow:var(--glow)}
+    h1{margin:0 0 6px; font-weight:900}
+    .muted{color:var(--muted)}
+    .row{display:flex; gap:12px; flex-wrap:wrap; align-items:center; justify-content:space-between}
+    .badge{background:rgba(255,255,255,.08); padding:8px 10px; border-radius:10px}
+    .gold{color:var(--gold)}
+    .center{display:grid; place-items:center; text-align:center; gap:14px; padding:20px}
+
+    /* New layout: diamond-button grid (2 columns), each with a right-corner glow chip */
+    .board{ margin-top:14px; padding:16px; border-radius:16px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08)}
+    .question{ font-size:clamp(22px, 4.2vw, 40px); font-weight:900; text-align:center; margin:10px 0 16px }
+    .choices{ display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:12px }
+    @media (max-width:640px){ .choices{ grid-template-columns:1fr } }
+    .choice{ position:relative; overflow:hidden; padding:16px 18px; border-radius:16px; border:1px solid rgba(255,255,255,.16); background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02)); color:var(--text); cursor:pointer; font-weight:800; letter-spacing:.2px; box-shadow:0 10px 22px rgba(251,146,60,.16); transition:.14s transform, .2s box-shadow, .2s border-color }
+    .choice:hover{ transform:translateY(-1px); box-shadow:0 12px 26px rgba(6,182,212,.28); border-color:rgba(255,255,255,.24) }
+    .chip{ position:absolute; right:10px; top:10px; width:26px; height:26px; display:grid; place-items:center; border-radius:6px; background:linear-gradient(135deg, var(--accent), var(--accent2)); color:var(--ink); font-weight:900; font-size:12px; transform:rotate(45deg) }
+    .chip > span{ transform:rotate(-45deg) }
+
+    .status{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:space-between; margin-top:8px }
+    .timer{flex:1; height:10px; background:rgba(255,255,255,.1); border-radius:999px; overflow:hidden}
+    .bar{height:100%; width:100%; background:linear-gradient(90deg, var(--accent), var(--accent2)); transform-origin:left center}
+    .small{font-size:13px}
+    .hide{ display:none !important }
+    .pulse{ animation:pulse .9s infinite }
+    .btn{background:var(--accent); color:var(--ink); border:0; padding:12px 16px; border-radius:12px; font-weight:800; cursor:pointer; box-shadow:0 8px 18px rgba(6,182,212,.35)}
+    .ghost{background:transparent; border:1px solid rgba(255,255,255,.18); color:var(--text)}
+    @keyframes pulse{ 0%{transform:scale(1)} 50%{transform:scale(1.04)} 100%{transform:scale(1)} }
+  </style>
+</head>
+<body>
+
+
+<script type="text/javascript">
+   window.SDK_OPTIONS = {
+      gameId: "your_game_id_here",
+      onEvent: function (a) {
+         switch (a.name) {
+            case "fi7gbbxtopjxhbm6j2kyufuxc0coam9i":
+               // pause game logic / mute audio
+               break;
+            case "SDK_GAME_START":
+               // advertisement done, resume game logic and unmute audio
+               break;
+            case "SDK_READY":
+               // when sdk is ready
+               break;
+         }
+      }
+   };
+(function (a, b, c) {
+   var d = a.getElementsByTagName(b)[0];
+   a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+})(document, "script", "gamemonetize-sdk"); 
+</script>
+
+
+
+  <div class="wrap">
+    <div class="card">
+      <div class="row">
+        <div>
+          <h1>Electro‑Magnetism — Knockout Quiz</h1>
+          <p class="muted">Electrostatics • Gauss • Potential & Capacitors • DC Circuits • RC/RL/RLC • Magnetostatics • Lorentz Force • Induction • AC & Transformers • EM Waves • Instruments • 100+ MCQs • One wrong answer ends the game.</p>
+        </div>
+        <div class="row">
+          <div class="badge">Best: <span id="best" class="gold">0</span></div>
+          <div class="badge">Streak: <span id="streak">0</span></div>
+          <div class="badge">Last: <span id="last">0</span></div>
+        </div>
+      </div>
+
+      <div id="intro" class="center">
+        <div style="font-size:clamp(30px,6vw,50px); font-weight:900">Charge up and go!</div>
+        <p class="muted">Answer multiple-choice <b>electro‑magnetism</b> questions. Each is <b>timed</b>. <br><b>Knockout rule:</b> one mistake or timeout ends your run.</p>
+        <div class="row" style="justify-content:center">
+          <button id="start" class="btn pulse">Start</button>
+          <button id="how" class="btn ghost">How to play</button>
+        </div>
+        <p class="small muted">Shortcuts: <b>1–4</b> to answer • <b>Enter</b> to start/restart</p>
+      </div>
+
+      <div id="board" class="board hide" role="group" aria-label="Question and answers">
+        <div class="status">
+          <div class="badge">Q <span id="qnum">1</span></div>
+          <div class="timer" aria-label="Time remaining"><div class="bar" id="bar"></div></div>
+          <div class="badge">Time: <span id="time">0</span>s</div>
+        </div>
+        <div id="q" class="question">—</div>
+        <div id="choices" class="choices"></div>
+      </div>
+
+      <div id="summary" class="center hide">
+        <div style="font-size:clamp(30px,6vw,50px); font-weight:900" id="sumTitle">Game Over</div>
+        <p class="muted" id="sumReason"></p>
+        <div class="row" style="justify-content:center">
+          <button id="again" class="btn">Play Again</button>
+          <button id="back" class="btn ghost">Back</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  const TIME_PER_Q = 12; // seconds
+
+  // ====== State ======
+  let best = Number(localStorage.getItem('em.best')) || 0;
+  let last = Number(localStorage.getItem('em.last')) || 0;
+  let streak = 0, qIndex = 0, ticking = null, current = null; let bank = [];
+
+  // ====== Elements ======
+  const elBest = document.getElementById('best');
+  const elLast = document.getElementById('last');
+  const elStreak = document.getElementById('streak');
+  const elIntro = document.getElementById('intro');
+  const elBoard = document.getElementById('board');
+  const elSummary = document.getElementById('summary');
+  const elBar = document.getElementById('bar');
+  const elTime = document.getElementById('time');
+  const elQ = document.getElementById('q');
+  const elChoices = document.getElementById('choices');
+  const elQnum = document.getElementById('qnum');
+  const elSumTitle = document.getElementById('sumTitle');
+  const elSumReason = document.getElementById('sumReason');
+  elBest.textContent = best; elLast.textContent = last; elStreak.textContent = 0;
+
+  // ====== Util ======
+  const rand = (a,b)=> Math.floor(Math.random()*(b-a+1))+a;
+  function shuffle(arr){ for(let i=arr.length-1;i>0;i--){ const j = rand(0,i); [arr[i],arr[j]]=[arr[j],arr[i]] } return arr }
+
+  // ====== Question Banks ======
+  function unitsBank(){
+    const items = [
+      ['SI unit of charge', 'Coulomb (C)', ['Ampere (A)','Volt (V)','Ohm (Ω)']],
+      ['SI unit of electric field', 'N/C (or V/m)', ['C/N','A/m','J/C²']],
+      ['SI unit of potential difference', 'Volt (V)', ['Watt (W)','Coulomb (C)','Tesla (T)']],
+      ['SI unit of capacitance', 'Farad (F)', ['Henry (H)','Weber (Wb)','Ohm (Ω)']],
+      ['SI unit of resistance', 'Ohm (Ω)', ['Siemens (S)','Tesla (T)','Volt (V)']],
+      ['SI unit of conductance', 'Siemens (S)', ['Ohm (Ω)','Watt (W)','Henry (H)']],
+      ['SI unit of magnetic field (flux density)', 'Tesla (T)', ['Weber (Wb)','Gauss (G) only','Ampere (A)']],
+      ['SI unit of magnetic flux', 'Weber (Wb)', ['Tesla (T)','Henry (H)','Joule (J)']],
+      ['SI unit of inductance', 'Henry (H)', ['Farad (F)','Weber (Wb)','Ohm (Ω)']],
+      ['Permeability free space μ₀ ≈', '4π×10⁻⁷ H/m', ['8.85×10⁻¹² F/m','9.8 m/s²','1 N/m²']],
+      ['Permittivity free space ε₀ ≈', '8.85×10⁻¹² F/m', ['4π×10⁻⁷ H/m','1.6×10⁻¹⁹ C','1 Ω']],
+      ['c relates to μ₀ and ε₀ as', 'c = 1/√(μ₀ ε₀)', ['c = √(μ₀/ε₀)','c = μ₀ ε₀','c = μ₀/ε₀']],
+      ['Unit of magnetic field strength H', 'A/m', ['T·m','Wb/m²','J/T']],
+      ['Unit of energy density of E‑field', 'J/m³', ['N/C','A·m','Wb/m']],
+    ];
+    return items.map(([q,a,wrong])=>({ q, choices: shuffle([a,...wrong]), answer: a }));
+  }
+
+  function electrostaticsBank(){
+    const items = [
+      ['Coulomb’s law force varies as', 'Inverse square of separation', ['Inverse','Square','Cube']],
+      ['Direction of electric field at a point is direction of', 'Force on a positive test charge', ['Force on a negative charge','Potential gradient only','Current flow']],
+      ['Field lines start on', 'Positive charges and end on negative', ['Negative to positive','Any direction','Closed loops']],
+      ['Conductor in electrostatic equilibrium has field inside', 'Zero', ['Maximum','Constant nonzero','Depends on shape only']],
+      ['Surface of a conductor in electrostatics is an', 'Equipotential', ['Isopotential only at corners','Not equipotential','Zero potential always']],
+      ['Electric flux through closed surface equals', 'Q_enclosed/ε₀', ['Q_total outside/ε₀','0 always','ε₀/Q_enclosed']],
+      ['Polarization of dielectric causes', 'Bound charges on surfaces', ['Free charges created','Mass change','No effect']],
+      ['Induced charge on a conductor resides', 'On the outer surface', ['Uniformly in volume','Only at center','Only at corners']],
+      ['Force between two like charges is', 'Repulsive', ['Attractive','Zero','Depends on medium only']],
+      ['Shielding of external electric fields achieved by', 'Enclosing with a conducting shell', ['Using glass shell','Using magnetic shield only','Cooling the charges']],
+      ['Electric dipole in uniform E‑field experiences', 'Torque but no net force', ['Net force only','Neither','Both torque and net force']],
+      ['Potential is related to field by', 'E = −∇V', ['V = ∇E','E = ∇²V','V = −∇·E']],
+      ['Work done around a closed path in electrostatics', 'Zero (conservative)', ['Positive','Negative','Random']],
+      ['Capacitance depends on', 'Geometry and dielectric', ['Voltage only','Charge only','Temperature only']],
+      ['Energy stored in a capacitor', 'U = 1/2 C V²', ['U = C V','U = V/C','U = 1/2 Q V²']],
+    ];
+    return items.map(([q,a,wrong])=>({ q, choices: shuffle([a,...wrong]), answer: a }));
+  }
+
+  function gaussBank(){
+    const items = [
+      ['Gauss’s law (integral form)', '∮ E·dA = Q_enclosed/ε₀', ['∮ B·dA = 0','∮ E·dl = μ₀ I','∮ E·dA = 0']],
+      ['Field of an infinitely long line charge (magnitude)', 'E = λ / (2π ε₀ r)', ['E = λ / (4π ε₀ r²)','E = 2π ε₀ r / λ','E = λ r / ε₀']],
+      ['Field of an infinite plane sheet of charge', 'E = σ / (2 ε₀)', ['E = σ / ε₀','E ∝ 1/r²','E = 0 inside']],
+      ['Field inside a conducting shell', 'Zero', ['Constant nonzero','Equal to outside','Depends on thickness']],
+      ['Outside a uniformly charged sphere, field is as if', 'All charge concentrated at center', ['At surface','At infinity','Zero']],
+      ['Flux through a closed surface due to external charges', 'Can be nonzero net only if enclosure includes net charge', ['Always zero','Always positive','Depends on shape']],
+      ['Inside a uniformly charged solid sphere, E varies', 'Linearly with r', ['As 1/r²','Constant','As 1/r']],
+      ['Gaussian surface choice is to exploit', 'Symmetry', ['Material','Color','Temperature']],
+      ['If total enclosed charge is zero, net flux is', 'Zero', ['Nonzero','Infinite','Negative only']],
+      ['Electric field is perpendicular to', 'Equipotential surfaces', ['Magnetic field lines','Current lines always','Charge paths']],
+    ];
+    return items.map(([q,a,wrong])=>({ q, choices: shuffle([a,...wrong]), answer: a }));
+  }
+
+  function potentialCapacitorsBank(){
+    const items = [
+      ['Potential of a point charge at distance r', 'V = k q / r', ['V = k q r','V = k / q r','V = q / k r']],
+      ['Capacitance of parallel‑plate capacitor (vacuum)', 'C = ε₀ A / d', ['C = A/(ε₀ d)','C = ε₀ d / A','C = d/(ε₀ A)']],
+      ['Introducing dielectric of κ between plates', 'Increases C by factor κ', ['Decreases by κ','Unchanged','C becomes κ²']],
+      ['Capacitors in series total C', '1/C_eq = Σ (1/C)', ['C_eq = Σ C','C_eq = product','C_eq = Σ √C']],
+      ['Capacitors in parallel total C', 'C_eq = Σ C', ['1/C_eq = Σ (1/C)','C_eq = product','C_eq = average']],
+      ['Energy density in electric field', 'u_E = 1/2 ε E²', ['u_E = ε E','u_E = E/2ε','u_E = 1/2 ε² E']],
+      ['Equipotential surfaces are always', 'Perpendicular to E‑field lines', ['Parallel to E','Random','Along current lines']],
+      ['If battery stays connected when dielectric inserted', 'Charge on plates increases', ['Voltage increases','Charge decreases','Energy constant']],
+      ['If capacitor disconnected then dielectric inserted', 'Voltage decreases', ['Charge decreases','Voltage increases','Nothing changes']],
+      ['Work to move charge against E‑field equals', 'Increase in potential energy qΔV', ['Decrease in kinetic always','Zero','qE/Δx']],
+    ];
+    return items.map(([q,a,wrong])=>({ q, choices: shuffle([a,...wrong]), answer: a }));
+  }
+
+  function circuitsBank(){
+    const items = [
+      ['Ohm’s law (lumped)', 'V = I R', ['I = V R','R = V I','V = I / R']],
+      ['Power dissipated by resistor', 'P = I² R = V²/R', ['P = I/R','P = V I²','P = R/V']],
+      ['Kirchhoff’s current law (KCL)', 'Sum of currents at a node = 0', ['Sum of voltages = 0','Sum of powers = 0','Sum of resistances = 0']],
+      ['Kirchhoff’s voltage law (KVL)', 'Sum of voltages around loop = 0', ['Sum of currents = 0','Sum of charges = 0','Sum of fields = 0']],
+      ['Resistors in series have', 'Same current', ['Same voltage','Same power','Same resistance']],
+      ['Resistors in parallel have', 'Same voltage', ['Same current','Same power','Same resistance']],
+      ['Internal resistance of a cell causes', 'Terminal voltage < emf under load', ['Terminal voltage > emf','No effect','Current independent of load']],
+      ['Wheatstone bridge balanced when', 'R1/R2 = R3/R4', ['R1+R2=R3+R4','R1 R2 = R3 R4','All equal']],
+      ['Potentiometer measures emf by', 'Null method (no current through cell)', ['Maximum deflection','Heating wire','Short circuit']],
+      ['Drift velocity increases when', 'Electric field increases', ['Cross‑section increases (for same I)','Charge decreases','Temperature always increases']],
+      ['Resistivity ρ depends on', 'Material and temperature', ['Length and area only','Current','Voltage']],
+      ['Temperature coefficient α positive means', 'Resistance increases with temperature', ['Decreases with temperature','Independent','Oscillates']],
+    ];
+    return items.map(([q,a,wrong])=>({ q, choices: shuffle([a,...wrong]), answer: a }));
+  }
+
+  function rcrcBank(){
+    const items = [
+      ['RC time constant τ equals', 'R C', ['R/C','1/RC','√(RC)']],
+      ['Charging capacitor voltage vs time', 'V(t)=V₀(1−e^{−t/RC})', ['V(t)=V₀ e^{−t/RC}','V(t)=V₀ t/RC','V(t)=V₀(1+t/RC)']],
+      ['Current at t=0⁺ in RC charging', 'I=V₀/R', ['I=0','I=∞','I=V₀ C']],
+      ['At t=τ during charging, voltage reaches ≈', '63% of final', ['50%','37%','86%']],
+      ['Energy stored in capacitor at V', 'U=1/2 C V²', ['U= C V','U= V/C','U=1/2 V²/C']],
+      ['RL time constant τ equals', 'L/R', ['LR','R/L','1/(LR)']],
+      ['Current growth in RL on step V follows', 'I(t)=I₀(1−e^{−tR/L})', ['I=I₀ e^{−tR/L}','I=tR/L','I=I₀/(1+t)']],
+      ['RLC resonance (underdamped) angular freq', 'ω₀=1/√(LC)', ['ω₀=√(LC)','ω₀=1/(LC)','ω₀=L/C']],
+      ['Quality factor Q (series RLC) ~', 'ω₀ L / R', ['R / (ω₀ L)','ω₀ R C','1/(ω₀ R C)']],
+      ['Impedance of capacitor (magnitude)', 'X_C = 1/(ω C)', ['X_C = ω C','X_C = 1/ω','X_C = √(L/C)']],
+    ];
+    return items.map(([q,a,wrong])=>({ q, choices: shuffle([a,...wrong]), answer: a }));
+  }
+
+  function magnetismBank(){
+    const items = [
+      ['Magnetic field of long straight wire', 'B = μ₀ I / (2π r)', ['B = μ₀ I / r²','B = μ₀ I r','B = I / (4π ε₀ r²)']],
+      ['Right‑hand rule gives', 'Direction of B around current', ['Magnitude of B','Sign of charge','Voltage polarity']],
+      ['Field at center of circular loop of radius R', 'B = μ₀ I / (2 R)', ['B = μ₀ I / (4π R²)','B = μ₀ I R','B = μ₀ I / (π R)']],
+      ['Field inside ideal solenoid', 'B = μ₀ n I', ['B = μ₀ I /(2R)','B ∝ 1/n','B = ε₀ n I']],
+      ['Magnetic field lines are', 'Closed loops', ['Start on north end','Start on south end','Open lines']],
+      ['Magnetic dipole moment of a loop', 'm = I A (area vector ⟂ plane)', ['m = A/I','m = I² A','m = I/ A']],
+      ['Torque on dipole in uniform B', 'τ = m × B (mB sinθ)', ['τ = q E r','τ = I R²','τ = B/ m']],
+      ['Potential energy of dipole in B', 'U = − m · B', ['U = m B','U = + m · B','U = − q V']],
+      ['Force on a current‑carrying wire', 'F = I L × B', ['F = q v × B','F = m g','F = V/R']],
+      ['Magnetization M is', 'Magnetic moment per unit volume', ['Flux per area','Field per length','Charge per mass']],
+    ];
+    return items.map(([q,a,wrong])=>({ q, choices: shuffle([a,...wrong]), answer: a }));
+  }
+
+  function forceMotionBank(){
+    const items = [
+      ['Lorentz force on charge q', 'F = q (E + v × B)', ['F = qE + qB','F = q v B (always along v)','F = m v × B']],
+      ['For v ⟂ B and E = 0, motion is', 'Uniform circular', ['Straight line','Oscillatory','Spiral outward']],
+      ['Radius of circular path in B', 'r = m v /(q B)', ['r = q B /(m v)','r = m q /(v B)','r = v /(m q B)']],
+      ['Cyclotron frequency (non‑rel.)', 'f = q B /(2π m)', ['f = qB/m²','f = 2π m /(q B)','f = v/r²']],
+      ['Velocity selector condition', 'E = v B', ['E = B / v','E = v / B','E = v² B']],
+      ['Pitch of helical path equals', 'v_∥ × period', ['v_⊥ / period','v × radius','qB/m']],
+      ['Force on moving charge is zero when', 'v parallel to B and E = 0', ['v ⟂ B','Always zero','B = 0 only']],
+      ['Hall effect measures', 'Sign and density of carriers', ['Only resistivity','Only mobility','Only temperature']],
+      ['Magnetic rigidity p/q relates to', 'r B in circular motion', ['B/r','r/B','p B']],
+      ['EDL (electric double layer) relates to', 'Charge separation at interfaces (qualitative)', ['Superconductivity','Ferromagnetism','Nuclear forces']],
+    ];
+    return items.map(([q,a,wrong])=>({ q, choices: shuffle([a,...wrong]), answer: a }));
+  }
+
+  function inductionBank(){
+    const items = [
+      ['Faraday’s law of induction', 'ε = − dΦ/dt (or −N dΦ/dt)', ['ε = dQ/dt','ε = −∇·E','ε = I R']],
+      ['Lenz’s law gives', 'Direction opposing change', ['Direction aiding change','Magnitude only','No direction']],
+      ['Motional emf across rod length ℓ moving at v in B', 'ε = B ℓ v (⊥ orientation)', ['ε = B v / ℓ','ε = ℓ /(B v)','ε = B/(ℓ v)']],
+      ['Self‑inductance unit', 'Henry (H)', ['Farad','Tesla','Weber']],
+      ['Energy stored in inductor', 'U = 1/2 L I²', ['U = L I','U = I²/L','U = 1/2 C V²']],
+      ['Induced E‑field due to changing B is', 'Non‑conservative (∮ E·dl = − dΦ_B/dt)', ['Conservative','Zero','Perpendicular to B always']],
+      ['Eddy currents are', 'Circulating currents induced in conductors', ['Surface charges','Static fields','Ion drifts only']],
+      ['Transformer ideal relation', 'V_p/V_s = N_p/N_s', ['V_p V_s = N_p N_s','V_p/V_s = I_p/I_s','V_p = V_s always']],
+      ['In step‑up transformer (ideal),', 'Voltage increases, current decreases', ['Voltage and current increase','Power increases','Frequency increases']],
+      ['Back emf in a motor is', 'Opposes applied voltage', ['Aids applied voltage','Zero at steady state','Independent of speed']],
+    ];
+    return items.map(([q,a,wrong])=>({ q, choices: shuffle([a,...wrong]), answer: a }));
+  }
+
+  function emwavesBank(){
+    const items = [
+      ['Maxwell added the concept of', 'Displacement current', ['Magnetic charge','Frictional current','Thermal current']],
+      ['In EM waves, E and B are', 'Perpendicular to each other and to direction of propagation', ['Parallel to each other','Along propagation','Random']],
+      ['Speed of EM waves in vacuum is', 'c = 1/√(μ₀ ε₀)', ['c = √(μ₀ ε₀)','c = μ₀ ε₀','Independent of μ₀, ε₀']],
+      ['Poynting vector S equals', 'S = E × H (direction of energy flow)', ['S = E H','S = E + H','S = B × E / μ₀']],
+      ['Impedance of free space Z₀ ≈', '≈ 377 Ω', ['≈ 50 Ω','≈ 100 Ω','≈ 1 kΩ']],
+      ['Intensity of EM wave ∝', 'E₀² (or B₀²)', ['E₀','B₀','E₀³']],
+      ['Polarization describes', 'Orientation of E‑field', ['Orientation of B only','Frequency spread','Phase noise']],
+      ['Spectrum order (low→high f) includes', 'Radio, micro, IR, visible, UV, X, γ', ['γ, X, UV, visible, IR, micro, radio','Visible, IR, radio, X, γ','UV, visible, IR, radio, X']],
+      ['Microwaves primarily heat by', 'Dielectric loss (dipole rotation)', ['Ionization','Nuclear resonance','Photoelectric effect']],
+      ['UV can cause', 'Photoelectric/photochemical effects', ['Only heating','Nuclear transmutation','Superconductivity']],
+    ];
+    return items.map(([q,a,wrong])=>({ q, choices: shuffle([a,...wrong]), answer: a }));
+  }
+
+  function instrumentsBank(){
+    const items = [
+      ['Galvanometer measures', 'Small currents (deflection)', ['Large voltages','Magnetic flux','Capacitance']],
+      ['To convert galvanometer to ammeter, add', 'Low shunt resistance in parallel', ['High series resistance','High parallel resistance','Inductor in series']],
+      ['To convert galvanometer to voltmeter, add', 'High series resistance', ['Low shunt','Transformer','Capacitor only']],
+      ['Ballistic galvanometer measures', 'Charge/impulse of current', ['Power factor','Frequency','Voltage only']],
+      ['Cathode‑ray oscilloscope (CRO) displays', 'Voltage vs time (or X‑Y)', ['Current vs resistance','Mass vs charge','Flux vs area']],
+      ['Ammeter is connected', 'In series (low R)', ['In parallel','Across source with high R','To ground only']],
+      ['Voltmeter is connected', 'In parallel (high R)', ['In series','To earth only','Across ammeter']],
+      ['Potentiometer advantage', 'Measures emf without drawing current', ['Measures power factor','Measures flux density only','Works only with AC']],
+    ];
+    return items.map(([q,a,wrong])=>({ q, choices: shuffle([a,...wrong]), answer: a }));
+  }
+
+  function acBank(){
+    const items = [
+      ['For sinusoidal signal, V_rms equals', 'V₀/√2', ['V₀','V₀/2','V₀×√2']],
+      ['Current lags voltage by 90° in a', 'Pure inductor', ['Pure capacitor','Pure resistor','RL at resonance']],
+      ['Current leads voltage by 90° in a', 'Pure capacitor', ['Pure inductor','Pure resistor','RLC at resonance']],
+      ['Power factor cosφ equals', 'R/Z in series RLC', ['Z/R','X/R','R/X']],
+      ['True power in AC', 'P = V_rms I_rms cosφ', ['P = V_rms I_rms','P = I² X','P = V²/Z only']],
+      ['At resonance in series RLC', 'Z is minimum and equals R', ['Z is maximum','X_L = X_C ≠ 0','Current minimum']],
+      ['Inductive reactance', 'X_L = ω L', ['X_L = 1/(ω L)','X_L = ω / L','X_L = L/ω']],
+      ['Capacitive reactance', 'X_C = 1/(ω C)', ['X_C = ω C','X_C = C/ω','X_C = 1/ω² C']],
+      ['Transformer frequency (ideal)', 'Same in primary and secondary', ['Higher in secondary','Lower in secondary','Zero in secondary']],
+      ['AC average over a full cycle of pure sine', 'Zero', ['V₀/2','V₀/√2','I₀/2']],
+    ];
+    return items.map(([q,a,wrong])=>({ q, choices: shuffle([a,...wrong]), answer: a }));
+  }
+
+  function numericsBank(){
+    const items = [];
+    const k = 9e9; // Coulomb constant
+    // Simple Coulomb forces
+    [[1e-6,1e-6,0.1,0.9],[2e-6,3e-6,0.2,1.35],[1e-6,4e-6,0.05,14.4]].forEach(([q1,q2,r,ans])=>{
+      const F = Math.round((k*q1*q2/(r*r))/1e-1)/10; // approx N
+      items.push({ q:`Two charges ${q1} C and ${q2} C separated by ${r} m. Force ≈`, choices: shuffle([`${ans} N`,`$${ans/2} N`,`$${ans*2} N`,`$${ans+0.5} N`].map(s=>s.replace('$',''))), answer:`${ans} N`});
+    });
+    // Electric field E = V/d
+    [[100,0.5,200],[12,0.04,300],[5,0.01,500]].forEach(([V,d,E])=>{
+      items.push({ q:`Parallel plates: V=${V} V, separation d=${d} m. Field E ≈`, choices: shuffle([`${E} V/m`,`$${E/2} V/m`,`$${E*2} V/m`,`$${E+50} V/m`].map(s=>s.replace('$',''))), answer:`${E} V/m`});
+    });
+    // Capacitance C=ε0 A/d (ε0≈8.85e-12)
+    [[0.02,0.001,1.77e-10],[0.01,0.0005,1.77e-10]].forEach(([A,d,C])=>{
+      items.push({ q:`Parallel‑plate: A=${A} m², d=${d} m (vacuum). C ≈`, choices: shuffle([`${C} F`,`$${(C*2).toExponential(2)} F`,`$${(C/2).toExponential(2)} F`,`$${(C*5).toExponential(2)} F`].map(s=>s.replace('$',''))), answer:`${C} F`});
+    });
+    // Series/parallel resistors
+    items.push({ q:'Two resistors 4 Ω and 6 Ω in series. R_eq =', choices: shuffle(['10 Ω','2.4 Ω','24 Ω','4 Ω']), answer:'10 Ω' });
+    items.push({ q:'Two resistors 4 Ω and 6 Ω in parallel. R_eq =', choices: shuffle(['2.4 Ω','10 Ω','24 Ω','5 Ω']), answer:'2.4 Ω' });
+    // Power and current
+    items.push({ q:'A 12 V battery across 3 Ω: current =', choices: shuffle(['4 A','3 A','36 A','0.25 A']), answer:'4 A' });
+    items.push({ q:'Current 2 A through 5 Ω for 10 s: heat (J) = I² R t =', choices: shuffle(['200 J','100 J','20 J','500 J']), answer:'200 J' });
+    // Magnetic force q v B
+    [[1e-6,2,0.5,1e-6],[2e-6,3,0.2,1.2e-6]].forEach(([q,v,B,F])=>{
+      items.push({ q:`Charge ${q} C moving at ${v} m/s ⟂ to B=${B} T. Force =`, choices: shuffle([`${F} N`,`$${F/2} N`,`$${F*2} N`,`$${F+1e-6} N`].map(s=>s.replace('$',''))), answer:`${F} N`});
+    });
+    // Radius r = m v /(q B) (electron m≈9.1e-31 kg, q≈1.6e-19 C)
+    items.push({ q:'Electron with v=3.2×10^6 m/s in B=0.2 T (⊥). r ≈', choices: shuffle(['9.1×10⁻⁵ m','9.1×10⁻⁴ m','9.1×10⁻³ m','9.1×10⁻⁶ m']), answer:'9.1×10⁻⁵ m' });
+    // Induced emf ε = B l v
+    items.push({ q:'Rod length 0.5 m moves at 10 m/s ⟂ to B=0.2 T. ε =', choices: shuffle(['1.0 V','0.1 V','2.0 V','5.0 V']), answer:'1.0 V' });
+    // RC constant
+    items.push({ q:'R=1 kΩ, C=100 μF. RC time constant τ =', choices: shuffle(['0.1 s','1 s','0.01 s','10 s']), answer:'0.1 s' });
+    // L/R constant
+    items.push({ q:'L=2 H, R=4 Ω. RL time constant τ =', choices: shuffle(['0.5 s','2 s','8 s','0.25 s']), answer:'0.5 s' });
+    // Transformer ratio
+    items.push({ q:'Np:Ns = 500:50 with 120 V primary. Secondary voltage ≈', choices: shuffle(['12 V','1200 V','60 V','24 V']), answer:'12 V' });
+    // AC RMS
+    items.push({ q:'Sine with peak 10 V. V_rms =', choices: shuffle(['≈7.07 V','10 V','5 V','≈6.28 V']), answer:'≈7.07 V' });
+    // Solenoid B = μ0 n I with n=1000/m, I=2A
+    items.push({ q:'Long solenoid: n=1000 m⁻¹, I=2 A. B ≈', choices: shuffle(['≈2.51×10⁻³ T','≈2×10⁻³ T','≈1×10⁻² T','≈1×10⁻³ T']), answer:'≈2.51×10⁻³ T' });
+    // Energy capacitor
+    items.push({ q:'C=100 μF at 10 V. Energy = 1/2 C V² =', choices: shuffle(['0.005 J','0.05 J','0.5 J','5 J']), answer:'0.005 J' });
+    // Current density J = I/A
+    items.push({ q:'Wire area 1 mm² carries 2 A. Current density J =', choices: shuffle(['2×10⁶ A/m²','2×10³ A/m²','2×10⁴ A/m²','2×10⁵ A/m²']), answer:'2×10⁶ A/m²' });
+    return items;
+  }
+
+  function buildBank(){
+    const pool = [
+      ...unitsBank(),
+      ...electrostaticsBank(),
+      ...gaussBank(),
+      ...potentialCapacitorsBank(),
+      ...circuitsBank(),
+      ...rcrcBank(),
+      ...magnetismBank(),
+      ...forceMotionBank(),
+      ...inductionBank(),
+      ...emwavesBank(),
+      ...instrumentsBank(),
+      ...acBank(),
+      ...numericsBank(),
+    ];
+    const seen = new Set(); const unique = [];
+    for(const item of pool){ if(!seen.has(item.q)){ seen.add(item.q); unique.push(item); } }
+    // Top up to ≥ 135 by re‑ordering answer choices of random items to increase variety
+    while(unique.length < 135){
+      const base = unique[rand(0, unique.length-1)];
+      unique.push({ q: base.q + ' ', choices: shuffle([...base.choices]), answer: base.answer });
+    }
+    return shuffle(unique);
+  }
+
+  // ====== Game Flow ======
+  function startGame(){
+    streak = 0; qIndex = 0; current=null; elStreak.textContent = 0;
+    bank = buildBank();
+    elIntro.classList.add('hide');
+    elSummary.classList.add('hide');
+    elBoard.classList.remove('hide');
+    nextQuestion();
+  }
+
+  function nextQuestion(){
+    if(bank.length === 0) bank = buildBank();
+    current = bank.pop(); qIndex++;
+    elQnum.textContent = qIndex; elQ.textContent = current.q; elChoices.innerHTML = '';
+    const letters = ['A','B','C','D'];
+    current.choices.forEach((c, i)=>{
+      const btn = document.createElement('button');
+      btn.className = 'choice'; btn.setAttribute('data-val', c);
+      btn.innerHTML = `<span class="chip"><span>${letters[i]||''}</span></span>${c}`;
+      btn.addEventListener('click', ()=> choose(btn.getAttribute('data-val')));
+      elChoices.appendChild(btn);
+    });
+    startTimer();
+  }
+
+  function startTimer(){
+    stopTimer(); const start = performance.now(); const total = TIME_PER_Q * 1000;
+    (function tick(){
+      const elapsed = performance.now() - start; const left = Math.max(0, total - elapsed);
+      elTime.textContent = Math.ceil(left/1000);
+      const r = left/total; const bar = Math.max(0, Math.min(1,r));
+      elBar.style.transform = `scaleX(${bar.toFixed(4)})`;
+      elBar.style.background = bar < 0.25 ? `linear-gradient(90deg, var(--danger), #dc2626)` :
+                               bar < 0.5 ? `linear-gradient(90deg, var(--gold), #f59e0b)` :
+                                            `linear-gradient(90deg, var(--accent), var(--accent2))`;
+      if(left <= 0){ stopTimer(); endGame('⏰ Time up!'); }
+      else { ticking = requestAnimationFrame(tick); }
+    })();
+  }
+
+  function stopTimer(){ if(ticking){ cancelAnimationFrame(ticking); ticking=null; } }
+
+  function choose(val){
+    if(String(val) === String(current.answer)){
+      streak++; elStreak.textContent = streak; flash(true); nextQuestion();
+    } else {
+      endGame(`❌ Incorrect. Correct answer: ${current.answer}`);
+    }
+  }
+
+  function flash(ok){
+    elBoard.style.outline = `3px solid ${ok? 'var(--accent)':'var(--danger)'}`;
+    setTimeout(()=> elBoard.style.outline='none', 140);
+  }
+
+  function endGame(reason){
+    stopTimer(); 
+
+if (typeof sdk !== 'undefined' && sdk.showBanner !== 'undefined') {
+sdk.showBanner();
+}
+
+console.log("Start");
+
+setTimeout(() => {
+  console.log("Waited 5 seconds!");
+}, 5000);
+
+console.log("End");
+
+
+
+
+
+elBoard.classList.add('hide'); elSummary.classList.remove('hide');
+    elSumTitle.textContent = `Game Over — Streak ${streak}`; elSumReason.textContent = reason || '';
+    last = streak; localStorage.setItem('em.last', String(last));
+    if(streak > best){ best = streak; localStorage.setItem('em.best', String(best)); }
+    elBest.textContent = best; elLast.textContent = last;
+  }
+
+  // ====== Events ======
+  document.getElementById('start').addEventListener('click', startGame);
+  document.getElementById('how').addEventListener('click', ()=>{
+    alert('Answer each Electromagnetism question before the timer ends. One mistake or timeout ends your run. Build the longest streak!');
+  });
+  document.getElementById('again').addEventListener('click', startGame);
+  document.getElementById('back').addEventListener('click', ()=>{ elSummary.classList.add('hide'); elIntro.classList.remove('hide'); });
+
+  // Keyboard: Enter, 1-4
+  window.addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter'){ if(!elBoard.classList.contains('hide')) return; startGame(); }
+    const map = { '1':0, '2':1, '3':2, '4':3 };
+    if(map.hasOwnProperty(e.key) && !elBoard.classList.contains('hide')){
+      const idx = map[e.key]; const btn = elChoices.children[idx]; if(btn) btn.click();
+    }
+  });
+
+  // Focus first answer when rendered
+  const observer = new MutationObserver(()=>{ const first = elChoices.querySelector('button'); if(first) first.focus({preventScroll:true}); });
+  observer.observe(elChoices, {childList:true});
+})();
+</script>
+</body>
+</html>

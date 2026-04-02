@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="icon" type="image/png" href="textures/favicon.png">
+  <title>3D Curling</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body { margin: 0; overflow: hidden; }
+    canvas { display: block; }
+  </style>
+</head>
+<body>
+  <div id="loadingScreen" class="loading-screen">
+    <div class="loading-card">
+      <div class="loading-title">Loading...</div>
+      <div class="loading-bar-track">
+        <div id="loadingBarFill" class="loading-bar-fill"></div>
+      </div>
+      <div id="loadingStatusText" class="loading-status-text">Preparing scene</div>
+    </div>
+  </div>
+
+  <!-- Main Menu -->
+<div id="mainMenu" class="menu hidden">
+  <div class="menu-card">
+    <img src="textures/logo.png" alt="3D Curling Logo" class="logo">
+    <button id="singlePlayerBtn">1 Player</button>
+    <button id="twoPlayerBtn">2 Players</button>
+    <button id="settingsBtn">Settings</button>
+    <button id="aboutBtn">About</button>
+  </div>
+</div>
+
+  <!-- In-Game Menu -->
+  <div id="gameMenu" class="menu hidden">
+    <h2>Game Menu</h2>
+    <button id="resumeBtn">Resume Game</button>
+    <button id="gameSettingsBtn">Settings</button>
+    <button id="newGameBtn">New Game</button>
+    <button id="mainMenuBtn">Main Menu</button>
+  </div>
+
+  <!-- Game UI -->
+  <div id="powerContainer" class="hidden">
+    <div id="powerBar"></div>
+  </div>
+
+  <div id="gameUI" class="hidden">
+    <div id="playerInfo" class="player-info"></div>
+    <div id="scoreBoard" class="score-board"></div>
+    <div id="setResultToast" class="set-result-toast hidden"></div>
+    <button id="menuBtn" aria-label="Menu">
+      <img src="textures/menu_icon.png" alt="Menu">
+    </button>
+  </div>
+
+  <!-- Game Over Screen -->
+  <div id="gameOverScreen" class="menu hidden">
+    <h2 id="gameOverTitle">Game Over</h2>
+    <div id="gameOverMessage"></div>
+    <button id="playAgainBtn">Play Again</button>
+    <button id="gameOverMenuBtn">Main Menu</button>
+  </div>
+
+  <!-- About Screen -->
+  <div id="aboutScreen" class="menu hidden">
+    <div class="menu-card info-card">
+      <h2>About</h2>
+      <div id="aboutContent">
+        <div><strong>Developer:</strong> Koartist Games</div>
+        <div><strong>Made with:</strong> Three.js</div>
+        <div><strong>Contact:</strong> <a href="https://koartistgames.com" target="_blank" rel="noopener noreferrer">koartistgames.com</a></div>
+      </div>
+      <button id="aboutCloseBtn">Back</button>
+    </div>
+  </div>
+
+  <!-- Settings Screen -->
+  <div id="settingsScreen" class="menu hidden">
+    <div class="menu-card info-card">
+      <h2>Settings</h2>
+      <div id="settingsContent">
+        <div class="settings-row">
+          <button id="toggleMusicBtn">Music</button>
+          <span id="musicStatusText">Music: ON</span>
+        </div>
+        <div class="settings-row">
+          <button id="toggleSfxBtn">SFX</button>
+          <span id="sfxStatusText">SFX: ON</span>
+        </div>
+      </div>
+      <button id="settingsCloseBtn">Back</button>
+    </div>
+  </div>
+
+  <!-- Three.js library -->
+  <script src="libs/three.min.js"></script>
+
+  <!-- GameMonetize SDK -->
+  <script type="text/javascript">
+    window.SDK_OPTIONS = {
+      gameId: "bxciimfxqlxjyw9vvm7fm7qcz0uqamix",
+      onEvent: function (a) {
+        switch (a.name) {
+          case "SDK_GAME_PAUSE":
+            // Pause game logic / mute audio during ads.
+            if (typeof window.pauseGameForAd === "function") {
+              window.pauseGameForAd();
+            }
+            break;
+          case "SDK_GAME_START":
+            // Resume game logic / unmute audio after ads.
+            if (typeof window.resumeGameFromAd === "function") {
+              window.resumeGameFromAd();
+            }
+            break;
+          case "SDK_READY":
+            // SDK is ready.
+            break;
+        }
+      }
+    };
+    (function (a, b, c) {
+      var d = a.getElementsByTagName(b)[0];
+      a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d));
+    })(document, "script", "gamemonetize-sdk");
+  </script>
+  
+  <!-- Game script -->
+  <script src="game.js"></script>
+
+  <!-- SDK banner trigger helper -->
+  <script type="text/javascript">
+    function showGameMonetizeBanner() {
+      if (typeof sdk !== "undefined" && typeof sdk.showBanner !== "undefined") {
+        sdk.showBanner();
+      }
+    }
+
+    window.addEventListener("load", function () {
+      var adTriggerButtonIds = ["singlePlayerBtn", "twoPlayerBtn", "playAgainBtn", "newGameBtn"];
+      adTriggerButtonIds.forEach(function (id) {
+        var btn = document.getElementById(id);
+        if (btn) {
+          btn.addEventListener("click", showGameMonetizeBanner);
+        }
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Physics Knockout Quiz</title>
+  <style>
+    :root{
+      --bg:#0b1220; --panel:#0f172a; --text:#e5e7eb; --muted:#9ca3af;
+      --accent:#3b82f6; --accent2:#22c55e; --danger:#ef4444; --gold:#f59e0b;
+    }
+    *{box-sizing:border-box}
+    body{margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif; background:radial-gradient(1200px 800px at 50% -10%, #172036, var(--bg)); color:var(--text); min-height:100dvh; display:grid; place-items:center}
+    .wrap{width:min(980px,92vw)}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02)); border:1px solid rgba(255,255,255,0.1); border-radius:20px; padding:22px; box-shadow:0 10px 30px rgba(0,0,0,.35)}
+    h1{margin:0 0 6px; font-weight:900}
+    .muted{color:var(--muted)}
+    .row{display:flex; gap:12px; flex-wrap:wrap; align-items:center; justify-content:space-between}
+    .badge{background:rgba(255,255,255,.08); padding:8px 10px; border-radius:10px}
+    .gold{color:var(--gold)}
+    .center{display:grid; place-items:center; text-align:center; gap:14px; padding:20px}
+    .btn{background:var(--accent); color:white; border:0; padding:12px 16px; border-radius:12px; font-weight:800; cursor:pointer; box-shadow:0 8px 18px rgba(59,130,246,.35)}
+    .ghost{background:transparent; border:1px solid rgba(255,255,255,.18)}
+    .board{ margin-top:14px; padding:16px; border-radius:16px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08)}
+    .question{ font-size:clamp(22px, 4.2vw, 40px); font-weight:900; text-align:center; margin:10px 0 14px }
+    .choices{ display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:10px }
+    .choices button{ font-size:18px; padding:14px; border-radius:14px }
+    @media (max-width:560px){ .choices{ grid-template-columns:1fr } }
+    .status{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:space-between; margin-top:8px }
+    .timer{flex:1; height:10px; background:rgba(255,255,255,.1); border-radius:999px; overflow:hidden}
+    .bar{height:100%; width:100%; background:linear-gradient(90deg, var(--accent2), var(--accent)); transform-origin:left center}
+    .small{font-size:13px}
+    .hide{ display:none !important }
+    .pulse{ animation:pulse .9s infinite }
+    @keyframes pulse{ 0%{transform:scale(1)} 50%{transform:scale(1.04)} 100%{transform:scale(1)} }
+  </style>
+</head>
+<body>
+
+<script type="text/javascript">
+   window.SDK_OPTIONS = {
+      gameId: "9i02rpc309q7yj95vpttlhruabr2aag1",
+      onEvent: function (a) {
+         switch (a.name) {
+            case "SDK_GAME_PAUSE":
+               // pause game logic / mute audio
+               break;
+            case "SDK_GAME_START":
+               // advertisement done, resume game logic and unmute audio
+               break;
+            case "SDK_READY":
+               // when sdk is ready
+               break;
+         }
+      }
+   };
+(function (a, b, c) {
+   var d = a.getElementsByTagName(b)[0];
+   a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+})(document, "script", "gamemonetize-sdk"); 
+</script>
+
+
+  <div class="wrap">
+    <div class="card">
+      <div class="row">
+        <div>
+          <h1>Physics Knockout Quiz</h1>
+          <p class="muted">Basic physics • 100+ unique MCQs • One wrong answer ends the game — score as high as you can!</p>
+        </div>
+        <div class="row">
+          <div class="badge">Best: <span id="best" class="gold">0</span></div>
+          <div class="badge">Streak: <span id="streak">0</span></div>
+          <div class="badge">Last: <span id="last">0</span></div>
+        </div>
+      </div>
+
+      <div id="intro" class="center">
+        <div style="font-size:clamp(30px,6vw,50px); font-weight:900">Ready?</div>
+        <p class="muted">Answer a stream of fundamental physics questions (mechanics, energy, waves, optics, electricity, magnetism, heat, units, space). Each is timed.<br><b>Knockout rule:</b> one mistake or timeout ends your run.</p>
+        <div class="row" style="justify-content:center">
+          <button id="start" class="btn pulse">Start</button>
+          <button id="how" class="btn ghost">How to play</button>
+        </div>
+        <p class="small muted">Shortcuts: <b>1–4</b> to answer • <b>Enter</b> to start/restart</p>
+      </div>
+
+      <div id="board" class="board hide" role="group" aria-label="Question and answers">
+        <div class="status">
+          <div class="badge">Q <span id="qnum">1</span></div>
+          <div class="timer" aria-label="Time remaining"><div class="bar" id="bar"></div></div>
+          <div class="badge">Time: <span id="time">0</span>s</div>
+        </div>
+        <div id="q" class="question">—</div>
+        <div id="choices" class="choices"></div>
+      </div>
+
+      <div id="summary" class="center hide">
+        <div style="font-size:clamp(30px,6vw,50px); font-weight:900" id="sumTitle">Game Over</div>
+        <p class="muted" id="sumReason"></p>
+        <div class="row" style="justify-content:center">
+          <button id="again" class="btn">Play Again</button>
+          <button id="back" class="btn ghost">Back</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  const TIME_PER_Q = 12; // seconds
+  const NUM_CHOICES = 4;
+
+  // ====== State ======
+  let best = Number(localStorage.getItem('phys.best')) || 0;
+  let last = Number(localStorage.getItem('phys.last')) || 0;
+  let streak = 0;
+  let qIndex = 0;
+  let ticking = null;
+  let current = null;
+  let bank = [];
+
+  // ====== Elements ======
+  const elBest = document.getElementById('best');
+  const elLast = document.getElementById('last');
+  const elStreak = document.getElementById('streak');
+  const elIntro = document.getElementById('intro');
+  const elBoard = document.getElementById('board');
+  const elSummary = document.getElementById('summary');
+  const elBar = document.getElementById('bar');
+  const elTime = document.getElementById('time');
+  const elQ = document.getElementById('q');
+  const elChoices = document.getElementById('choices');
+  const elQnum = document.getElementById('qnum');
+  const elSumTitle = document.getElementById('sumTitle');
+  const elSumReason = document.getElementById('sumReason');
+
+  elBest.textContent = best; elLast.textContent = last; elStreak.textContent = 0;
+
+  // ====== Util ======
+  const rand = (a,b)=> Math.floor(Math.random()*(b-a+1))+a;
+  function shuffle(arr){ for(let i=arr.length-1;i>0;i--){ const j = rand(0,i); [arr[i],arr[j]]=[arr[j],arr[i]] } return arr }
+  function pick(n, pool){ const copy=[...pool]; shuffle(copy); return copy.slice(0,n) }
+
+  // ====== Question Generators ======
+  function unitsBank(){
+    const items = [
+      ['force','Newton (N)',['Joule (J)','Watt (W)','Pascal (Pa)']],
+      ['work/energy','Joule (J)',['Newton (N)','Watt (W)','Volt (V)']],
+      ['power','Watt (W)',['Joule (J)','Ampere (A)','Pascal (Pa)']],
+      ['pressure','Pascal (Pa)',['Newton (N)','Joule (J)','Ohm (Ω)']],
+      ['electric current','Ampere (A)',['Volt (V)','Ohm (Ω)','Coulomb (C)']],
+      ['electric charge','Coulomb (C)',['Ampere (A)','Volt (V)','Tesla (T)']],
+      ['potential difference','Volt (V)',['Watt (W)','Coulomb (C)','Henry (H)']],
+      ['resistance','Ohm (Ω)',['Volt (V)','Farad (F)','Watt (W)']],
+      ['capacitance','Farad (F)',['Henry (H)','Ohm (Ω)','Weber (Wb)']],
+      ['inductance','Henry (H)',['Farad (F)','Tesla (T)','Volt (V)']],
+      ['magnetic flux','Weber (Wb)',['Tesla (T)','Henry (H)','Coulomb (C)']],
+      ['magnetic flux density','Tesla (T)',['Weber (Wb)','Pascal (Pa)','Hertz (Hz)']],
+      ['frequency','Hertz (Hz)',['Newton (N)','Joule (J)','Decibel (dB)']],
+      ['luminous intensity','Candela (cd)',['Kelvin (K)','Lux (lx)','Lumen (lm)']],
+      ['temperature (SI)','Kelvin (K)',['Celsius (°C)','Fahrenheit (°F)','Joule (J)']],
+      ['time','Second (s)',['Hertz (Hz)','Newton (N)','Watt (W)']],
+      ['length','Metre (m)',['Foot (ft)','Inch (in)','Second (s)']],
+      ['mass','Kilogram (kg)',['Gram (g)','Newton (N)','Joule (J)']],
+      ['momentum','kg·m/s',['Newton (N)','Joule (J)','Watt (W)']],
+      ['pressure × volume','Joule (J)',['Pascal (Pa)','Watt (W)','Volt (V)']],
+      ['electric field','N/C',['N·m','Wb/m²','A·s']],
+      ['gravitational field','N/kg',['J/kg','N·m²/kg²','m/s²']],
+      ['acceleration','m/s²',['m/s','m','N/s']],
+      ['velocity','m/s',['m/s²','m','km']],
+      ['density','kg/m³',['kg/m²','N/m²','J/m³']],
+    ];
+    return items.map(([what, corr, wrong]) => ({
+      q:`SI unit of ${what} is:`,
+      choices: shuffle([corr, ...wrong]),
+      answer: corr
+    }));
+  }
+
+  function formulaBank(){
+    const items = [
+      ['Ohm\'s law relates', 'V = I R', ['P = I V','Q = m c ΔT','F = m a']],
+      ['kinetic energy', 'K = 1/2 m v²', ['U = m g h','p = m v','F = m a']],
+      ['gravitational potential energy near Earth', 'U = m g h', ['K = 1/2 m v²','W = F d','p = m v']],
+      ['power (electric)', 'P = V I', ['P = W/t','E = I R','V = I/R']],
+      ['work done by constant force', 'W = F d', ['W = m g','W = Δp','W = P t']],
+      ['momentum', 'p = m v', ['F = m a','a = Δv/Δt','ρ = m/V']],
+      ['density', 'ρ = m / V', ['p = m v','P = F / A','n = m/M']],
+      ['pressure', 'P = F / A', ['W = F d','ρ = m/V','P = V I']],
+      ['wave speed', 'v = f λ', ['v = λ / f','f = v λ','λ = f / v']],
+      ['Hooke\'s law', 'F = k x', ['F = m a','p = m v','W = F d']],
+      ['Coulomb\'s law (magnitude)', 'F = k q₁ q₂ / r²', ['F = q v B','V = I R','P = V I']],
+      ['ideal gas law', 'P V = n R T', ['P = F/A','Q = m c ΔT','E = m c²']],
+      ['Snell\'s law', 'n₁ sinθ₁ = n₂ sinθ₂', ['sinθ = v/f','c = λ f','v = u + a t']],
+      ['magnification (lens)', 'm = v / u (with sign)', ['m = u / v','m = f / v','m = v / f']],
+      ['mirror/lens formula', '1/f = 1/v + 1/u', ['f = v + u','f = v u','f = v/u']],
+      ['acceleration (kinematics)', 'a = (v − u) / t', ['a = v t','a = u + v','a = s / t']],
+      ['distance (uniform accel.)', 's = u t + 1/2 a t²', ['s = (u+v)/2 t','s = v t','s = a t']],
+      ['power (mechanical)', 'P = W / t', ['P = F / A','P = I / t','P = m g h']],
+      ['resistors in series', 'R_eq = R₁ + R₂ + …', ['1/R_eq = 1/R₁ + 1/R₂ + …','R_eq = R₁ R₂','R_eq = (R₁+R₂)/2']],
+      ['resistors in parallel', '1/R_eq = 1/R₁ + 1/R₂ + …', ['R_eq = R₁ + R₂ + …','R_eq = R₁ R₂','R_eq = (R₁+R₂)/2']],
+      ['charge definition', 'Q = I t', ['Q = V I','Q = P t','Q = m g']],
+      ['specific heat', 'Q = m c ΔT', ['Q = n R T','Q = m g h','Q = I² R t']],
+      ['kinematics (no time)', 'v² = u² + 2 a s', ['v = u + a t','s = v t','a = (v−u)/t']],
+      ['mirror magnification', 'm = − v / u', ['m = v/u²','m = u/v','m = f/u']],
+      ['electric power (alt.)', 'P = I² R', ['P = I/R','P = R/I²','P = Q/t']],
+    ];
+    return items.map(([topic, corr, wrong]) => ({
+      q:`Formula for ${topic} is:`,
+      choices: shuffle([corr, ...wrong]),
+      answer: corr
+    }));
+  }
+
+  function conceptBank(){
+    const items = [
+      ['Which quantity is a vector?', 'Acceleration', ['Speed','Temperature','Energy']],
+      ['What causes the blue color of the sky?', 'Scattering of light', ['Refraction','Reflection','Interference']],
+      ['Which travels fastest?', 'Light in vacuum', ['Sound in air','Light in glass','Sound in water']],
+      ['What device measures current?', 'Ammeter', ['Voltmeter','Ohmmeter','Barometer']],
+      ['What device measures potential difference?', 'Voltmeter', ['Ammeter','Hygrometer','Altimeter']],
+      ['Work is zero when the force is', 'Perpendicular to displacement', ['Along displacement','Opposite to displacement','At any angle']],
+      ['Inertia is the tendency of a body to', 'Resist changes in motion', ['Gain speed','Lose mass','Change direction']],
+      ['Action and reaction forces are', 'Equal and opposite', ['Unequal and opposite','Equal and same direction','Zero']],
+      ['When an object floats, its weight equals', 'Buoyant force', ['Upthrust plus weight','Displaced volume','Surface tension']],
+      ['Echo is due to', 'Reflection of sound', ['Refraction of sound','Diffraction of sound','Interference of sound']],
+      ['Convex lens can', 'Converge parallel rays', ['Diverge parallel rays','Always give virtual image','Reflect light']],
+      ['Concave lens generally forms', 'Virtual, upright, diminished image', ['Real, inverted, magnified','Virtual, inverted','Real, upright']],
+      ['A rainbow is formed by', 'Dispersion and total internal reflection', ['Diffraction only','Polarization','Interference only']],
+      ['Fuse wire is made of', 'Low melting point alloy', ['High melting point metal','Superconductor','Insulator']],
+      ['A neutral atom has', 'Equal protons and electrons', ['More electrons','More protons','No neutrons']],
+      ['The unit of sound intensity level (log scale) is', 'Decibel (dB)', ['Hertz (Hz)','Pascal (Pa)','Watt (W)']],
+      ['Transformer works on', 'Electromagnetic induction', ['Electrolysis','Photoelectric effect','Thermionic emission']],
+      ['Current in a series circuit is', 'Same through all components', ['Different in each component','Zero in resistors','Max in the largest resistor']],
+      ['Voltage in a parallel circuit is', 'Same across branches', ['Different across each branch','Zero in one branch','Inversely proportional to resistance']],
+      ['If net force is zero, momentum is', 'Conserved', ['Doubled','Zero','Halved']],
+      ['Terminal velocity occurs when', 'Drag force equals weight', ['Upthrust equals weight','Net force is upward','Area is maximum']],
+      ['Diffraction is more pronounced when', 'Aperture size ≈ wavelength', ['Aperture ≫ wavelength','Aperture ≪ wavelength','Source is monochromatic']],
+      ['Brownian motion is evidence for', 'Molecular motion', ['Gravitational attraction','Electrostatic forces','Nuclear forces']],
+      ['Specific heat is', 'Heat needed to raise 1 kg by 1 K', ['Heat per mole','Heat needed to melt','Latent heat']],
+      ['Latent heat is', 'Heat absorbed/released at constant temperature during phase change', ['Heat raising temperature','Heat lost by radiation','Work done per unit time']],
+      ['The direction of induced current is given by', 'Lenz’s law', ['Snell’s law','Hooke’s law','Boyle’s law']],
+      ['The magnetic field inside a long straight solenoid is', 'Nearly uniform', ['Zero','Highly non-uniform','Opposite at ends only']],
+      ['A proton and electron in same magnetic field moving perpendicular to B will', 'Curve in opposite directions', ['Not experience force','Curve in same direction','Move straight']],
+      ['When light passes from air to water', 'It bends toward the normal', ['It bends away from normal','It stops','Frequency increases']],
+      ['Image in a plane mirror is', 'Virtual, upright, same size', ['Real, inverted','Virtual, inverted','Real, upright']],
+      ['Sound cannot travel through', 'Vacuum', ['Air','Water','Steel']],
+      ['The unit of frequency is', 'Hertz', ['Joule','Newton','Candela']],
+      ['Good conductors have', 'Low resistivity', ['High resistivity','Zero capacitance','High inductance']],
+      ['Friction is a force that', 'Opposes relative motion', ['Assists motion','Acts only in fluids','Acts only on smooth surfaces']],
+      ['Free fall near Earth has', 'Acceleration ~ 9.8 m/s² downward', ['Constant velocity','Upward acceleration','Zero acceleration']],
+      ['Escape velocity depends on', 'Mass and radius of planet', ['Mass of object','Object shape','Atmospheric pressure']],
+      ['Sound pitch depends on', 'Frequency', ['Amplitude','Speed','Wavelength only']],
+      ['Loudness depends on', 'Amplitude', ['Frequency','Velocity','Phase']],
+      ['Polarization is a property of', 'Transverse waves', ['Longitudinal waves','All waves','Only sound']],
+      ['Photoelectric current increases with', 'Light intensity', ['Photon frequency only','Stopping potential','Work function']],
+      ['The color with highest frequency is', 'Violet', ['Red','Green','Yellow']],
+      ['State of an ideal gas is defined by', 'P, V, T (and amount)', ['Mass only','Volume only','Temperature only']],
+      ['Heat flows spontaneously from', 'High temp to low temp', ['Low to high','Cold to colder','Depends on mass only']],
+      ['Buoyant force equals', 'Weight of displaced fluid', ['Volume of object','Mass of object','Density difference only']],
+      ['A convex mirror gives', 'Wider field of view', ['Narrow view','No image','Real image at focus']],
+      ['Critical angle is defined for', 'Denser to rarer medium', ['Rarer to denser','Any pair of media','Only mirrors']],
+      ['Transformer changes', 'AC voltage levels', ['DC voltage','Frequency of DC','Chemical energy']],
+      ['Earth’s magnetic field lines emerge', 'Near the south magnetic pole', ['From north magnetic pole','From equator','From geographic north']],
+    ];
+    return items.map(([qq, corr, wrong]) => ({ q: qq, choices: shuffle([corr, ...wrong]), answer: corr }));
+  }
+
+  function numericBank(){
+    // Simple compute questions (easy mental math)
+    const items = [];
+    // speed = distance/time
+    const ds = [[100,10],[150,15],[200,20],[90,10],[60,5]]; // m, s
+    ds.forEach(([d,t])=>{
+      const v = d/t; // m/s
+      const wrong = [v+1, Math.max(1,v-1), v+2].map(x=>`${x} m/s`);
+      items.push({ q:`An object travels ${d} m in ${t} s at constant speed. What is its speed?`, choices: shuffle([`${v} m/s`, ...wrong]), answer: `${v} m/s`});
+    });
+    // work = F d
+    const fd = [[10,5],[6,8],[12,4],[20,2],[15,3]];
+    fd.forEach(([F,d])=>{
+      const w = F*d;
+      const wrong = [w+5, Math.max(0,w-5), w+10].map(x=>`${x} J`);
+      items.push({ q:`A constant ${F} N force moves a box ${d} m. Work done is:`, choices: shuffle([`${w} J`, ...wrong]), answer: `${w} J`});
+    });
+    // power = work/time
+    const wt = [[100,5],[60,3],[150,10],[90,9],[200,20]];
+    wt.forEach(([W,t])=>{
+      const P = W/t;
+      const wrong = [P+2, Math.max(1,P-2), P+4].map(x=>`${x} W`);
+      items.push({ q:`If ${W} J of work is done in ${t} s, power is:`, choices: shuffle([`${P} W`, ...wrong]), answer: `${P} W`});
+    });
+    // density = m/V
+    const mv = [[200,100],[300,150],[500,250],[90,30]]; // g, cm^3 (assume unit)
+    mv.forEach(([m,V])=>{
+      const rho = m/V; // g/cm^3
+      const wrong = [rho+1, Math.max(1,rho-1), rho+2].map(x=>`${x} g/cm³`);
+      items.push({ q:`A block has mass ${m} g and volume ${V} cm³. Density is:`, choices: shuffle([`${rho} g/cm³`, ...wrong]), answer: `${rho} g/cm³`});
+    });
+    return items;
+  }
+
+  function definitionToTermBank(){
+    const pairs = [
+      ['Product of mass and velocity','Momentum'],
+      ['Rate of doing work','Power'],
+      ['Energy possessed due to motion','Kinetic energy'],
+      ['Energy possessed due to position','Potential energy'],
+      ['Opposition to flow of electric current','Resistance'],
+      ['Amount of charge flowing per unit time','Electric current'],
+      ['Rate of change of velocity','Acceleration'],
+      ['Tendency of a body to resist change in motion','Inertia'],
+      ['Force per unit area','Pressure'],
+      ['Heat required to raise unit mass by 1 K','Specific heat capacity'],
+      ['Heat absorbed at constant temperature during phase change','Latent heat'],
+      ['Number of oscillations per unit time','Frequency'],
+      ['Maximum displacement from mean position','Amplitude'],
+      ['Bending of light as it passes between media','Refraction'],
+      ['Spreading of light into colors','Dispersion'],
+      ['Bending of waves around obstacles','Diffraction'],
+      ['Induced EMF opposes the change causing it','Lenz’s law'],
+      ['Current induced by changing magnetic field','Electromagnetic induction'],
+      ['Process of heat transfer without medium','Radiation'],
+      ['Upward force on a body in a fluid','Buoyant force'],
+      ['Random zig-zag motion of tiny particles in fluid','Brownian motion'],
+      ['Force that opposes motion between surfaces','Friction'],
+      ['Point where total weight of a body acts','Center of mass'],
+      ['Rate of change of displacement','Velocity'],
+      ['Distance traveled per unit time','Speed'],
+      ['Change of phase from liquid to gas at any temperature','Evaporation'],
+      ['Change of phase from liquid to gas at fixed temperature','Boiling'],
+      ['Force needed to keep an object moving in a circle','Centripetal force'],
+      ['Resistance of a fluid to flow','Viscosity'],
+      ['Minimum speed to escape a planet','Escape velocity'],
+      ['EM radiation causing electron emission from metal','Photoelectric effect'],
+      ['Weak nuclear force is responsible for','Beta decay'],
+      ['Strong nuclear force binds','Protons and neutrons in nucleus'],
+      ['Amount of matter in a body','Mass'],
+      ['Pull of Earth on an object','Weight'],
+    ];
+    const terms = pairs.map(p=>p[1]);
+    return pairs.map(([def, term])=>{
+      const wrong = pick(3, terms.filter(t=>t!==term));
+      return { q:`Which term best matches: “${def}”?`, choices: shuffle([term, ...wrong]), answer: term };
+    });
+  }
+
+  function factBank(){
+    const items = [
+      ['Acceleration due to gravity on Earth is approximately', '9.8 m/s²', ['6.5 m/s²','12.5 m/s²','0 m/s²']],
+      ['Speed of light in vacuum is approximately', '3.0 × 10^8 m/s', ['3.0 × 10^6 m/s','3.0 × 10^5 km/s (wrong units)','3.0 × 10^7 m/s']],
+      ['Speed of sound in air at room temp is about', '343 m/s', ['1500 m/s','3×10^8 m/s','100 m/s']],
+      ['Electron charge is', '−1 e', ['+1 e','0','−2 e']],
+      ['Proton charge is', '+1 e', ['−1 e','0','+2 e']],
+      ['Neutral atom has', 'Equal protons and electrons', ['No neutrons','More electrons','More protons']],
+      ['Earth’s gravity pulls objects', 'Toward Earth’s center', ['Away from Earth','Sideways only','Not at all']],
+      ['SI base unit of temperature is', 'Kelvin', ['Celsius','Fahrenheit','Joule']],
+      ['Work is measured in', 'Joule', ['Newton','Watt','Pascal']],
+      ['Power is measured in', 'Watt', ['Joule','Volt','Tesla']],
+      ['Pressure is measured in', 'Pascal', ['Joule','Newton','Henry']],
+      ['A fuse protects a circuit by', 'Melting when current is high', ['Increasing voltage','Storing charge','Reducing resistance at high temp']],
+      ['A battery is a source of', 'DC', ['AC','Mechanical energy only','Magnetic flux']],
+      ['Household supply is typically', 'AC', ['DC','Static electricity','Direct heat']],
+      ['Gravitational force is always', 'Attractive', ['Repulsive','Zero','Only sideways']],
+      ['Magnetic field around a straight current-carrying wire is', 'Concentric circles', ['Straight lines','Radial lines','No field']],
+      ['Energy cannot be created or destroyed, it', 'Transforms from one form to another', ['Is lost as heat','Is created by motion','Is destroyed in nuclear reactions']],
+    ];
+    return items.map(([qq,corr,wrong])=>({ q: qq, choices: shuffle([corr, ...wrong]), answer: corr }));
+  }
+
+  function buildBank(){
+    const pool = [
+      ...unitsBank(),
+      ...formulaBank(),
+      ...conceptBank(),
+      ...numericBank(),
+      ...definitionToTermBank(),
+      ...factBank(),
+    ];
+    // Ensure uniqueness by question text
+    const seen = new Set();
+    const unique = [];
+    for(const item of pool){
+      if(!seen.has(item.q)){
+        seen.add(item.q); unique.push(item);
+      }
+    }
+    // If fewer than 120, duplicate-with-variant (e.g., reorder choices) harmlessly
+    while(unique.length < 120){
+      const base = unique[rand(0, unique.length-1)];
+      unique.push({ q: base.q + ' ', choices: shuffle([...base.choices]), answer: base.answer }); // appended space keeps key unique
+    }
+    return shuffle(unique);
+  }
+
+  // ====== Game Flow ======
+  function startGame(){
+    streak = 0; qIndex = 0; current=null; elStreak.textContent = 0;
+    bank = buildBank();
+    elIntro.classList.add('hide');
+    elSummary.classList.add('hide');
+    elBoard.classList.remove('hide');
+    nextQuestion();
+  }
+
+  function nextQuestion(){
+    if(bank.length === 0) bank = buildBank();
+    current = bank.pop();
+    qIndex++;
+    elQnum.textContent = qIndex;
+    elQ.textContent = current.q;
+    elChoices.innerHTML = '';
+    current.choices.forEach((c,i)=>{
+      const btn = document.createElement('button');
+      btn.className = 'btn';
+      btn.textContent = c;
+      btn.addEventListener('click', ()=> choose(c));
+      elChoices.appendChild(btn);
+    });
+    startTimer();
+  }
+
+  function startTimer(){
+    stopTimer();
+    const start = performance.now();
+    const total = TIME_PER_Q * 1000;
+    (function tick(){
+      const elapsed = performance.now() - start;
+      const left = Math.max(0, total - elapsed);
+      elTime.textContent = Math.ceil(left/1000);
+      const r = left/total; const bar = Math.max(0, Math.min(1,r));
+      elBar.style.transform = `scaleX(${bar.toFixed(4)})`;
+      elBar.style.background = bar < 0.25 ? `linear-gradient(90deg, var(--danger), #dc2626)` :
+                             bar < 0.5 ? `linear-gradient(90deg, var(--gold), #f59e0b)` :
+                                          `linear-gradient(90deg, var(--accent2), var(--accent))`;
+      if(left <= 0){ stopTimer(); endGame('⏰ Time up!'); }
+      else { ticking = requestAnimationFrame(tick); }
+    })();
+  }
+
+  function stopTimer(){ if(ticking){ cancelAnimationFrame(ticking); ticking=null; } }
+
+  function choose(val){
+    if(String(val) === String(current.answer)){
+      streak++; elStreak.textContent = streak; flash(true); nextQuestion();
+    } else {
+      endGame(`❌ Incorrect. Correct answer: ${current.answer}`);
+    }
+  }
+
+  function flash(ok){
+    elBoard.style.outline = `3px solid ${ok? 'var(--accent2)':'var(--danger)'}`;
+    setTimeout(()=> elBoard.style.outline='none', 140);
+  }
+
+  function endGame(reason){
+    stopTimer();
+
+if (typeof sdk !== 'undefined' && sdk.showBanner !== 'undefined') {
+sdk.showBanner();
+}
+
+console.log("Start");
+
+setTimeout(() => {
+  console.log("Waited 5 seconds!");
+}, 5000);
+
+console.log("End");
+
+
+
+    elBoard.classList.add('hide');
+    elSummary.classList.remove('hide');
+    elSumTitle.textContent = `Game Over — Streak ${streak}`;
+    elSumReason.textContent = reason || '';
+    last = streak; localStorage.setItem('phys.last', String(last));
+    if(streak > best){ best = streak; localStorage.setItem('phys.best', String(best)); }
+    elBest.textContent = best; elLast.textContent = last;
+  }
+
+  // ====== Events ======
+  document.getElementById('start').addEventListener('click', startGame);
+  document.getElementById('how').addEventListener('click', ()=>{
+    alert('Answer each multiple-choice physics question before the timer ends. One mistake or timeout ends your run. Build the longest streak!');
+  });
+  document.getElementById('again').addEventListener('click', startGame);
+  document.getElementById('back').addEventListener('click', ()=>{ elSummary.classList.add('hide'); elIntro.classList.remove('hide'); });
+
+  // Keyboard: Enter, 1-4
+  window.addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter'){
+      if(!elBoard.classList.contains('hide')) return; startGame();
+    }
+    const map = { '1':0, '2':1, '3':2, '4':3 };
+    if(map.hasOwnProperty(e.key) && !elBoard.classList.contains('hide')){
+      const idx = map[e.key];
+      const btn = elChoices.children[idx]; if(btn) btn.click();
+    }
+  });
+
+  // Focus first answer when rendered
+  const observer = new MutationObserver(()=>{
+    const first = elChoices.querySelector('button'); if(first) first.focus({preventScroll:true});
+  });
+  observer.observe(elChoices, {childList:true});
+})();
+</script>
+</body>
+</html>

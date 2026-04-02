@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Find the Intruder</title>
+  
+  <!-- GameMonetize SDK -->
+  <script type="text/javascript">
+    window.SDK_OPTIONS = {
+      gameId: "9b1kjwz4qya40ukb5s8fg9v27oh90jmb",
+      onEvent: function (a) {
+        switch (a.name) {
+          case "SDK_GAME_PAUSE":
+            // Pause game and mute audio when ad is about to play
+            if (typeof sdkPauseForAd === 'function') sdkPauseForAd();
+            break;
+          case "SDK_GAME_START":
+            // Resume game and unmute audio when ad is done
+            if (typeof sdkResumeAfterAd === 'function') sdkResumeAfterAd();
+            break;
+          case "SDK_READY":
+            // SDK is ready - show banner on game load
+            if (typeof sdk !== 'undefined' && sdk.showBanner !== 'undefined') {
+              sdk.showBanner();
+            }
+            break;
+        }
+      }
+    };
+    (function (a, b, c) {
+      var d = a.getElementsByTagName(b)[0];
+      a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src =
+        "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+    })(document, "script", "gamemonetize-sdk");
+  </script>
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Loading Screen -->
+  <div id="loading-screen" class="screen active">
+    <div class="loading-content">
+      <h1 class="game-title">Find the Intruder</h1>
+      <div class="spinner"></div>
+      <p>Loading...</p>
+    </div>
+  </div>
+
+  <!-- Main Menu -->
+  <div id="main-menu" class="screen">
+    <div class="menu-content">
+      <h1 class="game-title">Find the Intruder</h1>
+      <p class="subtitle">Find the different emoji before time runs out!</p>
+      
+      <div class="high-score-display">
+        <div class="stat-label">High Score</div>
+        <div class="stat-value" id="high-score-display">0</div>
+      </div>
+
+      <button class="btn btn-primary btn-large" id="play-btn">Play Game</button>
+      
+      <div class="instructions">
+        <p>⏱️ 90 seconds to score as many points as possible</p>
+        <p>🔥 Combo streak multiplies your points</p>
+        <p>📺 Watch ads for bonuses!</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game Screen -->
+  <div id="game-screen" class="screen">
+    <div class="game-header">
+      <div class="stat-box">
+        <div class="stat-label">Time</div>
+        <div class="stat-value" id="timer">90</div>
+      </div>
+      
+      <div class="stat-box">
+        <div class="stat-label">Score</div>
+        <div class="stat-value" id="score">0</div>
+      </div>
+      
+      <div class="stat-box">
+        <div class="stat-label">Combo</div>
+        <div class="stat-value combo-value" id="combo">x1</div>
+      </div>
+
+      <button class="btn btn-icon" id="pause-btn" aria-label="Pause">⏸️</button>
+    </div>
+
+    <div class="game-content">
+      <div id="message" class="message"></div>
+      <div id="grid" class="grid"></div>
+      
+      <!-- Mobile Controls -->
+      <div class="mobile-controls">
+        <p class="mobile-hint">👆 Tap the different emoji</p>
+      </div>
+    </div>
+
+    <!-- Time Bonus Button (appears at certain intervals) -->
+    <button class="btn btn-bonus" id="time-bonus-btn" style="display: none;">
+      +30 Seconds 📺
+    </button>
+  </div>
+
+  <!-- Pause Screen -->
+  <div id="pause-screen" class="screen overlay">
+    <div class="modal">
+      <h2>Game Paused</h2>
+      <button class="btn btn-primary" id="resume-btn">Resume</button>
+      <button class="btn btn-secondary" id="restart-btn">Restart</button>
+      <button class="btn btn-secondary" id="menu-btn">Main Menu</button>
+    </div>
+  </div>
+
+  <!-- Keep Streak Modal -->
+  <div id="keep-streak-modal" class="screen overlay">
+    <div class="modal">
+      <h2>Wrong Answer!</h2>
+      <p class="modal-text">Your combo streak is broken!</p>
+      <div class="streak-info">
+        <p class="streak-lost">Streak Lost: <span id="lost-streak">0</span>x</p>
+      </div>
+      <p class="ad-notice">Watch an ad to keep your streak going?</p>
+      <button class="btn btn-primary" id="keep-streak-btn">Keep Streak 📺</button>
+      <button class="btn btn-secondary" id="continue-without-streak-btn">Continue (Reset to x1)</button>
+    </div>
+  </div>
+
+  <!-- Game Over Screen -->
+  <div id="game-over-screen" class="screen overlay">
+    <div class="modal modal-large">
+      <h2>Time's Up!</h2>
+      
+      <div class="final-stats">
+        <div class="stat-row">
+          <span>Final Score:</span>
+          <span class="stat-highlight" id="final-score">0</span>
+        </div>
+        <div class="stat-row">
+          <span>High Score:</span>
+          <span class="stat-highlight" id="final-high-score">0</span>
+        </div>
+        <div class="stat-row" id="new-record-row" style="display: none;">
+          <span class="new-record">🎉 New Record! 🎉</span>
+        </div>
+      </div>
+
+      <div class="double-points-section" id="double-points-section">
+        <p class="ad-notice">Watch an ad to double your points?</p>
+        <div class="points-preview">
+          <span id="current-points">0</span> → <span class="highlight" id="doubled-points">0</span>
+        </div>
+        <button class="btn btn-primary" id="double-points-btn">Double Points 📺</button>
+      </div>
+
+      <div class="game-over-actions">
+        <button class="btn btn-primary btn-large" id="try-again-btn">Try Again</button>
+        <button class="btn btn-secondary" id="game-over-menu-btn">Main Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Education - Modern Learning Game</title>
+    
+    
+    <style type="text/css">@font-face {font-family:Poppins;font-style:normal;font-weight:400;src:url(/cf-fonts/s/poppins/5.0.11/latin-ext/400/normal.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:Poppins;font-style:normal;font-weight:400;src:url(/cf-fonts/s/poppins/5.0.11/devanagari/400/normal.woff2);unicode-range:U+0900-097F,U+1CD0-1CF9,U+200C-200D,U+20A8,U+20B9,U+25CC,U+A830-A839,U+A8E0-A8FF;font-display:swap;}@font-face {font-family:Poppins;font-style:normal;font-weight:400;src:url(/cf-fonts/s/poppins/5.0.11/latin/400/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Poppins;font-style:normal;font-weight:500;src:url(/cf-fonts/s/poppins/5.0.11/latin-ext/500/normal.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:Poppins;font-style:normal;font-weight:500;src:url(/cf-fonts/s/poppins/5.0.11/devanagari/500/normal.woff2);unicode-range:U+0900-097F,U+1CD0-1CF9,U+200C-200D,U+20A8,U+20B9,U+25CC,U+A830-A839,U+A8E0-A8FF;font-display:swap;}@font-face {font-family:Poppins;font-style:normal;font-weight:500;src:url(/cf-fonts/s/poppins/5.0.11/latin/500/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Poppins;font-style:normal;font-weight:600;src:url(/cf-fonts/s/poppins/5.0.11/devanagari/600/normal.woff2);unicode-range:U+0900-097F,U+1CD0-1CF9,U+200C-200D,U+20A8,U+20B9,U+25CC,U+A830-A839,U+A8E0-A8FF;font-display:swap;}@font-face {font-family:Poppins;font-style:normal;font-weight:600;src:url(/cf-fonts/s/poppins/5.0.11/latin/600/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Poppins;font-style:normal;font-weight:600;src:url(/cf-fonts/s/poppins/5.0.11/latin-ext/600/normal.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:Poppins;font-style:normal;font-weight:700;src:url(/cf-fonts/s/poppins/5.0.11/latin/700/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Poppins;font-style:normal;font-weight:700;src:url(/cf-fonts/s/poppins/5.0.11/latin-ext/700/normal.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:Poppins;font-style:normal;font-weight:700;src:url(/cf-fonts/s/poppins/5.0.11/devanagari/700/normal.woff2);unicode-range:U+0900-097F,U+1CD0-1CF9,U+200C-200D,U+20A8,U+20B9,U+25CC,U+A830-A839,U+A8E0-A8FF;font-display:swap;}</style>
+    <style>
+        :root {
+            --primary-color: #5b21b6;
+            --secondary-color: #9d34da;
+            --accent-color: #0ea5e9;
+            --background-start: #1e1b4b;
+            --background-end: #312e81;
+            --text-light: #f8fafc;
+            --text-dark: #334155;
+            --text-muted: #64748b;
+            --card-bg: rgba(255, 255, 255, 0.7);
+            --border-color: rgba(255, 255, 255, 0.2);
+            --correct-color: #22c55e;
+            --wrong-color: #ef4444;
+            --font-family: 'Poppins', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        /* KUNCI RESPONSIVITAS 1: Mencegah scroll di body */
+        html, body {
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background: linear-gradient(135deg, var(--background-start), var(--background-end));
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+        }
+
+        /* KUNCI RESPONSIVITAS 2: Container yang fleksibel */
+        .container {
+            width: 100%;
+            max-width: 700px;
+            height: 100%;
+            max-height: 95vh; /* Tidak akan pernah lebih tinggi dari layar */
+            background: var(--card-bg);
+            border-radius: 24px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            padding: 25px;
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            
+            /* Mengatur layout internal dengan flexbox */
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* Sembunyikan overflow dari container utama */
+        }
+
+        /* KUNCI RESPONSIVITAS 3: Wrapper konten dengan scroll internal */
+        .screen-wrapper {
+            overflow-y: auto; /* SCROLLBAR vertikal akan muncul DI SINI jika konten terlalu panjang */
+            overflow-x: hidden;
+            flex-grow: 1; /* Ambil semua sisa ruang vertikal */
+            padding-right: 10px; 
+            margin-right: -10px;
+        }
+        
+        /* Custom Scrollbar */
+        .screen-wrapper::-webkit-scrollbar { width: 8px; }
+        .screen-wrapper::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); border-radius: 10px; }
+        .screen-wrapper::-webkit-scrollbar-thumb { background: linear-gradient(var(--primary-color), var(--secondary-color)); border-radius: 10px; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        
+        .question-card.fade-out {
+            animation: fadeOut 0.4s ease-out forwards;
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; transform: scale(1); }
+            to { opacity: 0; transform: scale(0.95); }
+        }
+
+        /* START SCREEN */
+        .start-screen {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+        }
+        .start-title { font-size: 3em; font-weight: 700; color: var(--text-light); margin-bottom: 15px; }
+        .start-description { font-size: 1em; color: #d1d5db; margin: 0 auto 30px auto; max-width: 550px; line-height: 1.6; }
+        .start-button { background: linear-gradient(90deg, var(--accent-color), #38bdf8); color: white; border: none; padding: 16px 45px; border-radius: 50px; font-size: 1.2em; cursor: pointer; transition: all 0.3s ease; }
+        .start-button:hover { transform: translateY(-5px); }
+
+        /* QUIZ SCREEN */
+        .header { text-align: center; margin-bottom: 20px; flex-shrink: 0; }
+        .title { font-size: 2em; color: var(--text-light); }
+        .score-section { display: flex; justify-content: space-around; margin-bottom: 20px; padding: 10px; background: rgba(0, 0, 0, 0.1); border-radius: 15px; color: var(--text-light); flex-shrink: 0; }
+        .score-item { text-align: center; }
+        .score-item span:first-child { font-size: 0.8em; opacity: 0.8; }
+        .score-number { font-size: 1.8em; font-weight: 600; }
+        .progress-bar { width: 100%; height: 10px; background: rgba(0, 0, 0, 0.2); border-radius: 10px; overflow: hidden; margin-bottom: 20px; flex-shrink: 0; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent-color), #38bdf8); border-radius: 10px; transition: width 0.4s ease-in-out; }
+        
+        .question-card {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .category-badge { display: inline-block; background: linear-gradient(90deg, var(--primary-color), var(--secondary-color)); color: white; padding: 5px 14px; border-radius: 20px; font-size: 0.8em; margin-bottom: 12px; }
+        .question-number { color: var(--text-muted); font-size: 0.9em; margin-bottom: 8px; }
+        .question-text { font-size: 1.25em; font-weight: 600; color: var(--text-dark); margin-bottom: 20px; line-height: 1.5; }
+        
+        .options-container { display: grid; gap: 10px; }
+        .option-button { width: 100%; text-align: left; background: #f1f5f9; border: 2px solid #e2e8f0; padding: 12px 18px; border-radius: 12px; font-size: 1em; color: var(--text-dark); cursor: pointer; transition: all 0.2s ease; }
+        .option-button:not(.disabled):hover { transform: translateY(-2px); border-color: var(--accent-color); }
+        .option-button.correct { background: var(--correct-color); border-color: var(--correct-color); color: white; font-weight: 600; }
+        .option-button.wrong { background: var(--wrong-color); border-color: var(--wrong-color); color: white; font-weight: 600; }
+        .option-button.disabled { cursor: not-allowed; opacity: 0.7; }
+
+        /* RESULTS SCREEN */
+        .results-card { text-align: center; padding: 40px 20px; background: white; border-radius: 20px; animation: fadeIn 0.6s ease-out; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; }
+        .results-title { font-size: 2.5em; font-weight: 700; color: var(--text-dark); margin-bottom: 15px; }
+        .results-score { font-size: 3em; color: var(--primary-color); margin-bottom: 15px; font-weight: 700; }
+        .results-message { font-size: 1.15em; color: var(--text-muted); margin-bottom: 25px; }
+        .control-button { background: linear-gradient(90deg, var(--primary-color), var(--secondary-color)); color: white; border: none; padding: 12px 35px; border-radius: 50px; font-size: 1em; cursor: pointer; transition: all 0.3s ease; }
+        .control-button:hover { transform: translateY(-3px); }
+
+        .hidden { display: none !important; }
+
+        /* KUNCI RESPONSIVITAS 4: Media Query untuk layar kecil */
+        @media (max-width: 600px) {
+            body { padding: 0; }
+            .container { height: 100%; max-height: 100vh; border-radius: 0; padding: 15px; }
+            .screen-wrapper { padding-right: 5px; margin-right: -5px; }
+            .start-title, .results-title { font-size: 2.2em; }
+            .title { font-size: 1.8em; }
+            .question-text { font-size: 1.1em; }
+            .option-button { padding: 10px 15px; font-size: 0.95em; }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Start Screen -->
+        <div id="startScreen" class="start-screen">
+            <h1 class="start-title">🎓 Quiz Education</h1>
+            <p class="start-description">
+                Test your knowledge in this responsive quiz. One question per screen for the best experience.
+            </p>
+            <button class="start-button" onclick="startQuiz()">Start Quiz</button>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quizScreen" class="hidden" style="display: flex; flex-direction: column; height: 100%;">
+            <div class="header">
+                <h1 class="title">🎓 Quiz Education</h1>
+            </div>
+            <div class="score-section">
+                <div class="score-item"><span>Question</span><span id="currentQuestion" class="score-number">1</span></div>
+                <div class="score-item"><span>Score</span><span id="score" class="score-number">0</span></div>
+                <div class="score-item"><span>Correct</span><span id="correctCount" class="score-number">0</span></div>
+            </div>
+            <div class="progress-bar">
+                <div id="progressFill" class="progress-fill" style="width: 0%"></div>
+            </div>
+            
+            <div class="screen-wrapper">
+                <!-- Konten pertanyaan akan dimuat di sini oleh JavaScript -->
+                <div id="questionCard" class="question-card"></div>
+            </div>
+        </div>
+
+        <!-- Results Screen -->
+        <div id="resultsScreen" class="hidden">
+            <div class="results-card">
+                <div class="results-title">🎉 Quiz Complete!</div>
+                <div id="finalScore" class="results-score"></div>
+                <div id="resultsMessage" class="results-message"></div>
+                <button class="control-button" onclick="restartQuiz()">Play Again</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // KODE JAVASCRIPT LENGKAP DI SINI
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let correctAnswers = 0;
+        let questions = [];
+
+        // All Questions Data
+        const questionsData = [
+            // SCIENCE (Biology, Chemistry, Physics, Astronomy)
+            { text: 'What is known as the \'powerhouse\' of the cell?', options: ['Nucleus', 'Ribosome', 'Mitochondrion', 'Cell Membrane'], correct: 2 },
+            { text: 'What is the chemical symbol for Gold?', options: ['Ag', 'Au', 'Gd', 'Fe'], correct: 1 },
+            { text: 'Which planet is known as the Red Planet?', options: ['Venus', 'Mars', 'Jupiter', 'Saturn'], correct: 1 },
+            { text: 'What is the process by which plants make their own food using sunlight?', options: ['Respiration', 'Transpiration', 'Photosynthesis', 'Germination'], correct: 2 },
+            { text: 'Sound travels fastest through which of these?', options: ['Air', 'Water', 'Steel', 'Vacuum'], correct: 2 },
+            { text: 'How many bones are in the adult human body?', options: ['206', '216', '300', '196'], correct: 0 },
+            { text: 'What gas do humans exhale when they breathe?', options: ['Oxygen', 'Nitrogen', 'Carbon Dioxide', 'Hydrogen'], correct: 2 },
+            { text: 'What does DNA stand for?', options: ['Deoxyribonucleic Acid', 'Deoxyribo Nutrient Acid', 'Dyna Nucleic Acid', 'Duplex Nucleic Acid'], correct: 0 },
+            { text: 'H2O is the chemical formula for what?', options: ['Salt', 'Sugar', 'Vinegar', 'Water'], correct: 3 },
+            { text: 'Who formulated the theory of relativity?', options: ['Isaac Newton', 'Galileo Galilei', 'Albert Einstein', 'Nikola Tesla'], correct: 2 },
+            { text: 'What is the largest planet in our solar system?', options: ['Earth', 'Mars', 'Jupiter', 'Uranus'], correct: 2 },
+            { text: 'What force keeps us on the ground?', options: ['Magnetism', 'Gravity', 'Friction', 'Tension'], correct: 1 },
+            { text: 'What is the main component of the sun?', options: ['Oxygen and Nitrogen', 'Hydrogen and Helium', 'Carbon and Oxygen', 'Liquid Rock'], correct: 1 },
+            { text: 'Which element has the atomic number 1?', options: ['Helium', 'Oxygen', 'Hydrogen', 'Carbon'], correct: 2 },
+            { text: 'What is the largest organ of the human body?', options: ['Liver', 'Heart', 'Brain', 'Skin'], correct: 3 },
+            { text: 'A substance with a pH less than 7 is considered?', options: ['Neutral', 'Alkaline', 'Acidic', 'Basic'], correct: 2 },
+            { text: 'What is the hardest natural substance on Earth?', options: ['Gold', 'Iron', 'Diamond', 'Quartz'], correct: 2 },
+            { text: 'The Earth is located in which galaxy?', options: ['Andromeda', 'Triangulum', 'Whirlpool', 'Milky Way'], correct: 3 },
+            { text: 'Which blood type is known as the universal donor?', options: ['A', 'B', 'AB', 'O'], correct: 3 },
+            { text: 'What is the boiling point of water at sea level?', options: ['90°C', '100°C', '110°F', '200°F'], correct: 1 },
+            { text: 'Which animal is a mammal?', options: ['Shark', 'Lizard', 'Whale', 'Frog'], correct: 2 },
+            { text: 'What is the study of fossils called?', options: ['Geology', 'Paleontology', 'Archeology', 'Biology'], correct: 1 },
+            { text: 'What is the speed of light?', options: ['300,000 km/s', '150,000 km/s', '500,000 km/s', '1,000,000 km/s'], correct: 0 },
+            { text: 'Which of these is NOT a state of matter?', options: ['Solid', 'Liquid', 'Gas', 'Energy'], correct: 3 },
+            { text: 'What part of the plant absorbs water and nutrients?', options: ['Leaves', 'Stem', 'Flower', 'Roots'], correct: 3 },
+            { text: 'Anemometers are used to measure what?', options: ['Rainfall', 'Temperature', 'Wind speed', 'Air pressure'], correct: 2 },
+            { text: 'How long does it take for Earth to orbit the Sun?', options: ['365 days', '30 days', '24 hours', '7 days'], correct: 0 },
+            { text: 'What is the common name for Sodium Chloride?', options: ['Sugar', 'Baking Soda', 'Vinegar', 'Table Salt'], correct: 3 },
+            { text: 'What instrument is used to see very small objects?', options: ['Telescope', 'Microscope', 'Binoculars', 'Periscope'], correct: 1 },
+            { text: 'An animal that eats both plants and animals is called?', options: ['Herbivore', 'Carnivore', 'Omnivore', 'Insectivore'], correct: 2 },
+
+            // MATHEMATICS
+            { text: 'What is 15% of 200?', options: ['15', '20', '30', '40'], correct: 2 },
+            { text: 'How many sides does a hexagon have?', options: ['5', '6', '7', '8'], correct: 1 },
+            { text: 'What is the value of Pi (π) to two decimal places?', options: ['3.14', '3.15', '3.16', '3.12'], correct: 0 },
+            { text: 'What is the square root of 81?', options: ['7', '8', '9', '10'], correct: 2 },
+            { text: 'In a right-angled triangle, the longest side is called the...', options: ['Adjacent', 'Opposite', 'Hypotenuse', 'Base'], correct: 2 },
+            { text: 'How many degrees are in a full circle?', options: ['90', '180', '270', '360'], correct: 3 },
+            { text: 'What is 7 multiplied by 8?', options: ['48', '54', '56', '64'], correct: 2 },
+            { text: 'Which of the following is a prime number?', options: ['4', '9', '15', '11'], correct: 3 },
+            { text: 'A field is 50 meters long and 20 meters wide. What is its area?', options: ['100 sq m', '140 sq m', '70 sq m', '1000 sq m'], correct: 3 },
+            { text: 'What does "kilo" represent in the metric system?', options: ['10', '100', '1000', '0.01'], correct: 2 },
+            { text: 'If x - 5 = 10, what is the value of x?', options: ['5', '10', '15', '20'], correct: 2 },
+            { text: 'How many vertices does a cube have?', options: ['6', '8', '10', '12'], correct: 1 },
+            { text: 'What is the Roman numeral for 50?', options: ['C', 'D', 'M', 'L'], correct: 3 },
+            { text: 'What is the next number in the sequence: 2, 4, 8, 16, ...?', options: ['24', '30', '32', '64'], correct: 2 },
+            { text: 'What is 9 squared (9²)?', options: ['18', '72', '81', '90'], correct: 2 },
+            { text: 'How many millimeters are in one centimeter?', options: ['10', '100', '1000', '1'], correct: 0 },
+            { text: 'A decade is a period of how many years?', options: ['5', '10', '50', '100'], correct: 1 },
+            { text: 'A shape with 8 sides is called an...', options: ['Hexagon', 'Heptagon', 'Octagon', 'Nonagon'], correct: 2 },
+            { text: 'What is 1/2 as a decimal?', options: ['0.25', '0.5', '0.75', '2.0'], correct: 1 },
+            { text: 'What is the perimeter of a square with a side length of 5 cm?', options: ['10 cm', '15 cm', '20 cm', '25 cm'], correct: 2 },
+
+            // GEOGRAPHY
+            { text: 'What is the capital city of Australia?', options: ['Sydney', 'Melbourne', 'Canberra', 'Perth'], correct: 2 },
+            { text: 'What is the longest river in the world?', options: ['Amazon', 'Nile', 'Yangtze', 'Mississippi'], correct: 1 },
+            { text: 'Mount Everest is located in which mountain range?', options: ['The Alps', 'The Andes', 'The Rockies', 'The Himalayas'], correct: 3 },
+            { text: 'Which is the largest desert in the world?', options: ['Sahara Desert', 'Gobi Desert', 'Arabian Desert', 'Antarctic Polar Desert'], correct: 3 },
+            { text: 'How many continents are there?', options: ['5', '6', '7', '8'], correct: 2 },
+            { text: 'What is the capital of Japan?', options: ['Kyoto', 'Osaka', 'Tokyo', 'Hiroshima'], correct: 2 },
+            { text: 'Which country is known as the Land of the Rising Sun?', options: ['China', 'South Korea', 'Japan', 'Thailand'], correct: 2 },
+            { text: 'The Great Wall is located in which country?', options: ['India', 'Mongolia', 'China', 'Russia'], correct: 2 },
+            { text: 'What is the largest ocean on Earth?', options: ['Atlantic', 'Indian', 'Arctic', 'Pacific'], correct: 3 },
+            { text: 'Which river flows through Paris?', options: ['Thames', 'Seine', 'Danube', 'Rhine'], correct: 1 },
+            { text: 'What is the capital of Canada?', options: ['Toronto', 'Vancouver', 'Montreal', 'Ottawa'], correct: 3 },
+            { text: 'Which country has the largest population in the world?', options: ['India', 'USA', 'Indonesia', 'China'], correct: 0 },
+            { text: 'What is the smallest country in the world?', options: ['Monaco', 'Vatican City', 'San Marino', 'Liechtenstein'], correct: 1 },
+            { text: 'The ancient pyramids of Giza are in which country?', options: ['Sudan', 'Libya', 'Egypt', 'Jordan'], correct: 2 },
+            { text: 'Which continent is also a country?', options: ['Africa', 'Europe', 'Australia', 'Antarctica'], correct: 2 },
+            { text: 'What is the capital of Italy?', options: ['Milan', 'Venice', 'Rome', 'Naples'], correct: 2 },
+            { text: 'Victoria Falls is located on the border of which two countries?', options: ['Zambia and Zimbabwe', 'Kenya and Tanzania', 'Brazil and Argentina', 'USA and Canada'], correct: 0 },
+            { text: 'Which country is famous for its fjords?', options: ['Sweden', 'Finland', 'Denmark', 'Norway'], correct: 3 },
+            { text: 'What is the currency of the United Kingdom?', options: ['Euro', 'Pound Sterling', 'Franc', 'Dollar'], correct: 1 },
+            { text: 'Which is the only city in the world located on two continents?', options: ['Cairo', 'Istanbul', 'Panama City', 'Suez'], correct: 1 },
+
+            // HISTORY
+            { text: 'Who was the first President of the United States?', options: ['Abraham Lincoln', 'Thomas Jefferson', 'George Washington', 'John Adams'], correct: 2 },
+            { text: 'In what year did World War II end?', options: ['1943', '1944', '1945', '1946'], correct: 2 },
+            { text: 'The Renaissance period began in which country?', options: ['France', 'Spain', 'England', 'Italy'], correct: 3 },
+            { text: 'Who discovered America in 1492?', options: ['Ferdinand Magellan', 'Christopher Columbus', 'Vasco da Gama', 'James Cook'], correct: 1 },
+            { text: 'The ancient Romans spoke which language?', options: ['Greek', 'Latin', 'Italian', 'Romanian'], correct: 1 },
+            { text: 'Who was the famous queen of ancient Egypt?', options: ['Nefertiti', 'Hatshepsut', 'Cleopatra', 'Sobekneferu'], correct: 2 },
+            { text: 'The Titanic sank in which year?', options: ['1905', '1912', '1918', '1921'], correct: 1 },
+            { text: 'What was the main purpose of the Great Wall of China?', options: ['Trade Route', 'Flood Control', 'Ceremonial Site', 'Defense'], correct: 3 },
+            { text: 'Who was the leader of the Soviet Union during World War II?', options: ['Lenin', 'Stalin', 'Trotsky', 'Gorbachev'], correct: 1 },
+            { text: 'The Industrial Revolution began in which country?', options: ['USA', 'Germany', 'France', 'Great Britain'], correct: 3 },
+            { text: 'Who invented the printing press?', options: ['Johannes Gutenberg', 'Leonardo da Vinci', 'Galileo Galilei', 'Alexander Graham Bell'], correct: 0 },
+            { text: 'Which civilization built the Machu Picchu complex in Peru?', options: ['Aztec', 'Maya', 'Inca', 'Olmec'], correct: 2 },
+            { text: 'The Magna Carta was signed in which country?', options: ['France', 'England', 'Spain', 'Germany'], correct: 1 },
+            { text: 'Who was the first person to walk on the moon?', options: ['Buzz Aldrin', 'Yuri Gagarin', 'Neil Armstrong', 'Michael Collins'], correct: 2 },
+            { text: 'The Battle of Waterloo in 1815 marked the final defeat of which leader?', options: ['King Louis XVI', 'Napoleon Bonaparte', 'Julius Caesar', 'Alexander the Great'], correct: 1 },
+            { text: 'Which empire was ruled by Genghis Khan?', options: ['Roman Empire', 'Ottoman Empire', 'Mongol Empire', 'Persian Empire'], correct: 2 },
+            { text: 'The fall of the Berlin Wall in 1989 led to the reunification of which country?', options: ['Poland', 'Austria', 'Yugoslavia', 'Germany'], correct: 3 },
+            { text: 'Who wrote the Declaration of Independence?', options: ['George Washington', 'Benjamin Franklin', 'Thomas Jefferson', 'John Hancock'], correct: 2 },
+            { text: 'What were ancient Egyptian rulers called?', options: ['Kings', 'Emperors', 'Pharaohs', 'Sultans'], correct: 2 },
+            { text: 'The Cold War was a standoff between the USA and which other superpower?', options: ['China', 'Soviet Union', 'United Kingdom', 'Japan'], correct: 1 },
+
+            // ENGLISH LANGUAGE & LITERATURE
+            { text: 'Which word is a synonym for "begin"?', options: ['End', 'Stop', 'Finish', 'Start'], correct: 3 },
+            { text: 'Who wrote the play "Romeo and Juliet"?', options: ['Charles Dickens', 'William Shakespeare', 'Jane Austen', 'Mark Twain'], correct: 1 },
+            { text: 'What is the past tense of the verb "go"?', options: ['Goed', 'Gone', 'Went', 'Going'], correct: 2 },
+            { text: 'Which of the following is a noun?', options: ['Run', 'Happy', 'Quickly', 'House'], correct: 3 },
+            { text: 'What is an antonym for "hot"?', options: ['Warm', 'Cold', 'Spicy', 'Sunny'], correct: 1 },
+            { text: 'In the Harry Potter series, who is the author?', options: ['J.R.R. Tolkien', 'C.S. Lewis', 'J.K. Rowling', 'George R.R. Martin'], correct: 2 },
+            { text: 'A story that is not real is called...', options: ['Biography', 'Fiction', 'History', 'Autobiography'], correct: 1 },
+            { text: 'What do you call a word that sounds the same as another but has a different meaning?', options: ['Synonym', 'Antonym', 'Homophone', 'Acronym'], correct: 2 },
+            { text: 'What is the plural of "mouse"?', options: ['Mouses', 'Mice', 'Mouse', 'Mooses'], correct: 1 },
+            { text: 'Which punctuation mark is used to end a question?', options: ['Period (.)', 'Comma (,)', 'Exclamation mark (!)', 'Question mark (?)'], correct: 3 },
+            { text: 'Who is the famous detective created by Sir Arthur Conan Doyle?', options: ['Hercule Poirot', 'Sherlock Holmes', 'Miss Marple', 'Sam Spade'], correct: 1 },
+            { text: 'A verb is a word that describes an...', options: ['Object', 'Action', 'Description', 'Place'], correct: 1 },
+            { text: 'What is the comparative form of "good"?', options: ['Gooder', 'Best', 'Better', 'More good'], correct: 2 },
+            { text: 'The sentence "The quick brown fox jumps over the lazy dog" is famous because it...', options: ['Is very long', 'Contains all letters of the alphabet', 'Is a perfect rhyme', 'Is from a famous book'], correct: 1 },
+            { text: 'What is the main character in "The Lord of the Rings"?', options: ['Harry Potter', 'Frodo Baggins', 'Luke Skywalker', 'Bilbo Baggins'], correct: 1 },
+            { text: 'What does the prefix "un-" mean, as in "unhappy"?', options: ['Again', 'Before', 'Very', 'Not'], correct: 3 },
+            { text: 'A poem of fourteen lines is called a...', options: ['Haiku', 'Limerick', 'Sonnet', 'Ballad'], correct: 2 },
+            { text: 'Which of these is a coordinating conjunction?', options: ['Because', 'Although', 'And', 'While'], correct: 2 },
+            { text: 'What type of book tells the story of a person\'s life written by that person?', options: ['Biography', 'Fiction', 'Fantasy', 'Autobiography'], correct: 3 },
+            { text: 'The phrase "it\'s raining cats and dogs" is an example of an...', options: ['Idiom', 'Simile', 'Metaphor', 'Alliteration'], correct: 0 },
+
+            // GENERAL KNOWLEDGE (Art, Music, Tech, Sports, etc.)
+            { text: 'Who painted the Mona Lisa?', options: ['Vincent van Gogh', 'Pablo Picasso', 'Leonardo da Vinci', 'Claude Monet'], correct: 2 },
+            { text: 'How many players are on a standard soccer team on the field?', options: ['9', '10', '11', '12'], correct: 2 },
+            { text: 'What does "CPU" stand for in computing?', options: ['Central Processing Unit', 'Computer Personal Unit', 'Central Power Unit', 'Core Processing Unit'], correct: 0 },
+            { text: 'The Olympic Games are held every how many years?', options: ['2', '3', '4', '5'], correct: 2 },
+            { text: 'What instrument did Ludwig van Beethoven primarily play and compose for?', options: ['Violin', 'Flute', 'Piano', 'Cello'], correct: 2 },
+            { text: 'In Greek mythology, who is the king of the gods?', options: ['Apollo', 'Hades', 'Poseidon', 'Zeus'], correct: 3 },
+            { text: 'What type of data for TRUE/FALSE is used in programming?', options: ['String', 'Integer', 'Boolean', 'Character'], correct: 2 },
+            { text: 'Which company developed the iPhone?', options: ['Samsung', 'Google', 'Microsoft', 'Apple'], correct: 3 },
+            { text: 'In which sport would you perform a slam dunk?', options: ['Volleyball', 'Basketball', 'Tennis', 'American Football'], correct: 1 },
+            { text: 'Who is known as the "King of Pop"?', options: ['Elvis Presley', 'Michael Jackson', 'James Brown', 'Frank Sinatra'], correct: 1 },
+            { text: 'What does "www" stand for in a website address?', options: ['World Wide Web', 'Web World Wide', 'Wide World Web', 'World Web Wide'], correct: 0 },
+            { text: 'Which artist cut off part of his own ear?', options: ['Pablo Picasso', 'Salvador Dalí', 'Vincent van Gogh', 'Claude Monet'], correct: 2 },
+            { text: 'How many rings are in the Olympic logo?', options: ['4', '5', '6', '7'], correct: 1 },
+            { text: 'What is the main programming language used for Android development?', options: ['Swift', 'Kotlin/Java', 'C#', 'Python'], correct: 1 },
+            { text: 'The famous statue "David" was sculpted by which artist?', options: ['Donatello', 'Raphael', 'Leonardo da Vinci', 'Michelangelo'], correct: 3 },
+            { text: 'In chess, which piece can only move diagonally?', options: ['Rook', 'Knight', 'Bishop', 'Pawn'], correct: 2 },
+            { text: 'What is the most popular video sharing website?', options: ['Vimeo', 'TikTok', 'YouTube', 'Dailymotion'], correct: 2 },
+            { text: 'Which band had a massive hit with the song "Bohemian Rhapsody"?', options: ['The Beatles', 'Queen', 'Led Zeppelin', 'The Rolling Stones'], correct: 1 },
+            { text: 'A marathon is a long-distance race of what length?', options: ['10 km', '21 km', '42.195 km', '50 km'], correct: 2 },
+            { text: 'What is the name of the wizard in The Lord of the Rings who guides the fellowship?', options: ['Dumbledore', 'Merlin', 'Saruman', 'Gandalf'], correct: 3 }
+        ];
+        
+        const categories = {
+            0: "🔬 Science", 30: "🔢 Mathematics", 50: "🌍 Geography", 70: "📚 History", 90: "📖 English", 110: "🎨 General Knowledge"
+        };
+
+        function initGame() {
+            questions = shuffleArray([...questionsData]).slice(0, 20);
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function startQuiz() {
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('quizScreen').classList.remove('hidden');
+            loadQuestion();
+            showInterstitialAd();
+        }
+
+        function getCategory(index) {
+            const originalIndex = questionsData.findIndex(q => q.text === questions[index].text);
+            for (let catIndex of Object.keys(categories).sort((a, b) => b - a)) {
+                if (originalIndex >= parseInt(catIndex)) return categories[catIndex];
+            }
+            return categories[0];
+        }
+
+        function loadQuestion() {
+            if (currentQuestionIndex >= questions.length) {
+                finishQuiz();
+                return;
+            }
+
+            const questionCard = document.getElementById('questionCard');
+            const question = questions[currentQuestionIndex];
+            const category = getCategory(currentQuestionIndex);
+            
+            // Update UI Header
+            document.getElementById('currentQuestion').textContent = currentQuestionIndex + 1;
+            document.getElementById('score').textContent = score;
+            document.getElementById('correctCount').textContent = correctAnswers;
+            const progress = ((currentQuestionIndex) / questions.length) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+
+            // Bangun HTML untuk kartu pertanyaan
+            let optionsHTML = '';
+            question.options.forEach((option, index) => {
+                optionsHTML += `<button class="option-button" onclick="selectAnswer(${index}, this)">${option}</button>`;
+            });
+
+            questionCard.innerHTML = `
+                <div class="category-badge">${category}</div>
+                <div class="question-number">Question ${currentQuestionIndex + 1} of ${questions.length}</div>
+                <div class="question-text">${question.text}</div>
+                <div class="options-container">${optionsHTML}</div>
+            `;
+            
+            // Reset animasi
+            questionCard.classList.remove('fade-out');
+            questionCard.style.animation = 'fadeIn 0.5s ease-out';
+            
+            // Scroll ke atas jika kontennya panjang
+            document.querySelector('#quizScreen .screen-wrapper').scrollTop = 0;
+        }
+
+        function selectAnswer(answerIndex, buttonElement) {
+            const parentCard = buttonElement.closest('.question-card');
+            if (parentCard.querySelector('.disabled')) return; // Sudah dijawab
+
+            const question = questions[currentQuestionIndex];
+            const isCorrect = answerIndex === question.correct;
+            
+            const buttons = parentCard.querySelectorAll('.option-button');
+            buttons.forEach(btn => btn.classList.add('disabled'));
+
+            if (isCorrect) {
+                buttonElement.classList.add('correct');
+                score += 10;
+                correctAnswers++;
+            } else {
+                buttonElement.classList.add('wrong');
+                buttons[question.correct].classList.add('correct'); // Tunjukkan jawaban yang benar
+            }
+            
+            // Otomatis lanjut ke pertanyaan berikutnya
+            setTimeout(() => {
+                document.getElementById('questionCard').classList.add('fade-out');
+            }, 1500);
+
+            setTimeout(() => {
+                currentQuestionIndex++;
+                loadQuestion();
+            }, 1900); // Harus lebih lama dari animasi fade-out
+        }
+
+        function finishQuiz() {
+            document.getElementById('quizScreen').classList.add('hidden');
+            document.getElementById('resultsScreen').classList.remove('hidden');
+
+            const percentage = Math.round((correctAnswers / questions.length) * 100);
+            document.getElementById('finalScore').textContent = `${correctAnswers}/${questions.length} (${percentage}%)`;
+
+            let message = '';
+            if (percentage >= 90) message = '🌟 Outstanding! You\'re a true scholar!';
+            else if (percentage >= 70) message = '🎉 Excellent work!';
+            else if (percentage >= 50) message = '👍 Good job! Keep practicing!';
+            else message = '💪 Don\'t give up! Every attempt is a step forward!';
+            document.getElementById('resultsMessage').textContent = message;
+        }
+
+        function restartQuiz() {
+            currentQuestionIndex = 0;
+            score = 0;
+            correctAnswers = 0;
+            initGame(); // Acak pertanyaan lagi
+            document.getElementById('resultsScreen').classList.add('hidden');
+            document.getElementById('startScreen').classList.remove('hidden');
+        }
+
+        window.onload = initGame;
+
+        // GameMonetize SDK
+        window.SDK_OPTIONS = {
+            gameId: "zg27rg61nqjy6oaxt5puqpcn78g6q46a",
+            onEvent: function (event) {
+                switch (event.name) {
+                    case "SDK_GAME_PAUSE": break;
+                    case "SDK_GAME_START": break;
+                    case "SDK_READY": console.log('GameMonetize SDK Ready'); break;
+                }
+            }
+        };
+        (function (a, b, c) {var d = a.getElementsByTagName(b)[0]; if (!a.getElementById(c)) {var e = a.createElement(b); e.id = c, e.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(e, d)}})(document, "script", "gamemonetize-sdk");
+
+        function showInterstitialAd() {
+            if (typeof sdk !== 'undefined' && sdk.showBanner) {
+                sdk.showBanner();
+            }
+        }
+
+    </script>
+</body>
+
+</html>

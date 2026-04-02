@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Boom Duello</title>
+  <link rel="shortcut icon" href="TemplateData/favicon.ico">
+  <link rel="stylesheet" href="TemplateData/style.css">
+
+</head>
+
+<body class="dark">
+  <div id="unity-container" class="unity-desktop">
+    <canvas id="unity-canvas"></canvas>
+  </div>
+  <div id="loading-cover" style="display:none;">
+    <div id="unity-loading-bar">
+      <div id="unity-logo"><img src="logo.png"></div>
+      <div id="unity-progress-bar-empty" style="display: none;">
+        <div id="unity-progress-bar-full"></div>
+      </div>
+      <div class="spinner"></div>
+    </div>
+  </div>
+  <div id="unity-fullscreen-button" style="display: none;"></div>
+  <script>
+    const hideFullScreenButton = "1";
+    const buildUrl = "Build";
+    const loaderUrl = buildUrl + "/Gm After Red.loader.js";
+    const config = {
+      dataUrl: buildUrl + "/Gm After Red.data",
+      frameworkUrl: buildUrl + "/Gm After Red.framework.js",
+      codeUrl: buildUrl + "/Gm After Red.wasm",
+        streamingAssetsUrl: "StreamingAssets",
+      companyName: "Mehter Games",
+      productName: "Boom Duello",
+      productVersion: "1.0.0",
+    };
+
+    const container = document.querySelector("#unity-container");
+    const canvas = document.querySelector("#unity-canvas");
+    const loadingCover = document.querySelector("#loading-cover");
+    const progressBarEmpty = document.querySelector("#unity-progress-bar-empty");
+    const progressBarFull = document.querySelector("#unity-progress-bar-full");
+    const fullscreenButton = document.querySelector("#unity-fullscreen-button");
+    const spinner = document.querySelector('.spinner');
+
+    const canFullscreen = (function () {
+      for (const key of [
+        'exitFullscreen',
+        'webkitExitFullscreen',
+        'webkitCancelFullScreen',
+        'mozCancelFullScreen',
+        'msExitFullscreen',
+      ]) {
+        if (key in document) {
+          return true;
+        }
+      }
+      return false;
+    }());
+
+    if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+      container.className = "unity-mobile";
+      config.devicePixelRatio = 1;
+    }
+    loadingCover.style.display = "";
+
+    const script = document.createElement("script");
+    var unityI = null;
+    script.src = loaderUrl;
+    script.onload = () => {
+      createUnityInstance(canvas, config, (progress) => {
+        spinner.style.display = "none";
+        progressBarEmpty.style.display = "";
+        progressBarFull.style.width = `${100 * progress}%`;
+      }).then((unityInstance) => {
+        unityI = unityInstance;
+        loadingCover.style.display = "none";
+        if (canFullscreen) {
+          if (!hideFullScreenButton) {
+            fullscreenButton.style.display = "";
+          }
+          fullscreenButton.onclick = () => {
+            unityInstance.SetFullscreen(1);
+          };
+        }
+      }).catch((message) => {
+        alert(message);
+      });
+    };
+    document.body.appendChild(script);
+  </script>
+
+  <script src="https://yandex.ru/games/sdk/v2"></script>
+  <script>
+    var player;
+    var sdk;
+    var payments = null;
+    var lb;
+
+
+    YaGames.init({
+      adv: {
+        onAdvClose: wasShown => {
+          console.info('adv closed!');
+        }
+      }
+    })
+      .then(ysdk => {
+        sdk = ysdk;
+        sdk.adv.showFullscreenAdv({ callbacks: {} });
+      });
+
+    function GetLeaderBoard() {
+      console.log("GetLeaderBoard");
+      sdk.getLeaderboards().then(_lb => lb = _lb);
+    }
+
+    function SetLeaderBoard(score) {
+      console.log("SetLeaderBoard " + score);
+      sdk.getLeaderboards()
+        .then(lb => {
+          console.log(score);
+          lb.setLeaderboardScore('LeaderBoard', score);
+        });
+    }
+
+    function GetLeaderBoardEntries() {
+      console.log("GetLeaderBoardEntries");
+      unityI.SendMessage('LanguageSetter', 'GetBrowserLanguage', sdk.environment.i18n.lang);
+      sdk.getLeaderboards()
+        .then(lb => {
+          lb.getLeaderboardEntries('LeaderBoard', { quantityTop: 100, includeUser: true, quantityAround: 3 }).then(res => {
+            console.log(res);
+            unityI.SendMessage('YandexSDK', 'BoardEntriesReady', JSON.stringify(res));
+          });
+        });
+    }
+
+    function auth(){
+        sdk.auth.openAuthDialog().then(() => {
+                // Игрок успешно авторизован, теперь объект Player будет инициализирован.
+                initPlayer();
+                console.log('auth ok');
+                unityI.SendMessage('YandexSDK', 'OnAuthenticateSuccess', player.getName());
+            }).catch(() => {
+                 // Игрок не авторизован.
+                 console.log('auth failed');
+            });
+      }
+
+
+    function initPlayer() {
+      console.log('InitPlayerTry')
+      return sdk.getPlayer().then(_player => {
+        console.log('InitPlayer2');
+        player = _player;
+      });
+    }
+
+    function getUser() {
+      console.log('try to get Name');
+      var data = player.getName();
+      console.log('getName done');
+      unityI.SendMessage('YandexSDK', 'AuthenticateSuccess', data);
+      console.log('AuthenticateSuccess called');
+    }
+
+    function getUserData() {
+      player.getData().then(stats => {
+        console.log('Data is getting');
+        console.log(JSON.stringify(stats));
+        GetLeaderBoard();
+        unityI.SendMessage('YandexSDK', 'DataGetting', JSON.stringify(stats));
+      });
+    }
+
+    function setUserData(_data) {
+      console.log('Try Save');
+      console.log(_data);
+      player.setData({ data: _data }).then(() => {
+        console.log('saved');
+      }).catch(() => { console.log('unsaved') });
+    }
+
+    function showFullscrenAd() {
+      sdk.adv.showFullscreenAdv({
+        callbacks: {
+          onOpen: function (wasShown) {
+            console.log('showFullscrenAd onOpen');
+            unityI.SendMessage('YandexSDK', 'OnInterstitialStarted');
+          },
+          onClose: function (wasShown) {
+            console.log('showFullscrenAd onClose');
+            unityI.SendMessage('YandexSDK', 'OnInterstitialShown');
+          }
+        }
+      })
+    }
+
+    function showRewardedAd(id) {
+      sdk.adv.showRewardedVideo({
+        callbacks: {
+          onOpen: () => {
+            unityI.SendMessage('YandexSDK', 'OnRewardedOpen', id);
+                console.log('Video ad open. Id: ' + id);
+            },
+            onRewarded: () => {
+              unityI.SendMessage('YandexSDK', 'OnRewarded', id);
+                console.log('Rewarded! Id: ' + id);
+            },
+            onClose: () => {
+              unityI.SendMessage('YandexSDK', 'OnRewardedClose', id);
+                console.log('Video ad closed. Id: ' + id);
+            }, 
+            onError: (e) => {
+                var data = {"id" : id, "error" : e};
+                unityI.SendMessage('YandexSDK', 'OnRewardedError', JSON.stringify(data));
+                console.log('Error while open video ad:', e);
+            }
+        }
+      })
+    }
+  </script>
+
+</body>
+
+</html>

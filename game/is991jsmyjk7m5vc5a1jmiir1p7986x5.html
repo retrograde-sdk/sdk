@@ -1,0 +1,1365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Hammer Strike: Destruction Zone</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        
+        body {
+            overflow: hidden;
+            background: #0a0a0a;
+            font-family: 'Impact', 'Arial Black', Arial, sans-serif;
+            touch-action: none;
+        }
+        
+        #gameCanvas {
+            display: block;
+            margin: 0 auto;
+            background: #0a0a0a;
+            cursor: pointer;
+            image-rendering: crisp-edges;
+        }
+        
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: radial-gradient(ellipse at center, rgba(20, 20, 20, 0.95) 0%, rgba(0, 0, 0, 0.98) 100%);
+            z-index: 10;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        .game-logo {
+            width: 500px;
+            max-width: 90%;
+            margin-bottom: 30px;
+            filter: drop-shadow(0 0 30px rgba(255, 140, 0, 0.8));
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { filter: drop-shadow(0 0 30px rgba(255, 140, 0, 0.6)); }
+            50% { filter: drop-shadow(0 0 50px rgba(255, 140, 0, 1)); }
+        }
+        
+        h1 {
+            color: #ff8c00;
+            font-size: 4em;
+            text-shadow: 
+                0 0 10px rgba(255, 140, 0, 0.8),
+                0 0 20px rgba(255, 140, 0, 0.6),
+                0 0 30px rgba(255, 69, 0, 0.4),
+                3px 3px 0px rgba(0, 0, 0, 0.8);
+            margin-bottom: 20px;
+            letter-spacing: 8px;
+            text-transform: uppercase;
+            animation: glow 2s ease-in-out infinite;
+        }
+        
+        @keyframes glow {
+            0%, 100% { text-shadow: 0 0 10px rgba(255, 140, 0, 0.8), 0 0 20px rgba(255, 140, 0, 0.6), 3px 3px 0px rgba(0, 0, 0, 0.8); }
+            50% { text-shadow: 0 0 20px rgba(255, 140, 0, 1), 0 0 30px rgba(255, 140, 0, 0.8), 3px 3px 0px rgba(0, 0, 0, 0.8); }
+        }
+        
+        .subtitle {
+            color: #c0c0c0;
+            font-size: 1.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+            margin-bottom: 40px;
+            letter-spacing: 4px;
+        }
+        
+        .btn {
+            padding: 18px 50px;
+            margin: 12px;
+            font-size: 1.3em;
+            font-weight: bold;
+            color: white;
+            background: linear-gradient(135deg, #ff8c00 0%, #ff4500 100%);
+            border: 3px solid #ffa500;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 
+                0 8px 20px rgba(255, 140, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+        
+        .btn:hover::before {
+            left: 100%;
+        }
+        
+        .btn:hover {
+            transform: translateY(-4px);
+            box-shadow: 
+                0 12px 25px rgba(255, 140, 0, 0.7),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            border-color: #ffcc00;
+        }
+        
+        .btn:active {
+            transform: translateY(-1px);
+            box-shadow: 
+                0 4px 10px rgba(255, 140, 0, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+        
+        .difficulty-buttons {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .score-text {
+            color: #ffd700;
+            font-size: 2.5em;
+            margin: 25px 0;
+            text-shadow: 
+                0 0 10px rgba(255, 215, 0, 0.8),
+                0 0 20px rgba(255, 215, 0, 0.5),
+                2px 2px 4px rgba(0, 0, 0, 0.8);
+            letter-spacing: 3px;
+        }
+        
+        .info-text {
+            color: #e0e0e0;
+            font-size: 1.2em;
+            margin: 12px 0;
+            text-align: center;
+            max-width: 80%;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+            font-family: Arial, sans-serif;
+        }
+        
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5em;
+                letter-spacing: 4px;
+            }
+            .subtitle {
+                font-size: 1.1em;
+            }
+            .btn {
+                font-size: 1.1em;
+                padding: 15px 35px;
+            }
+            .difficulty-buttons {
+                flex-direction: column;
+                width: 80%;
+            }
+            .game-logo {
+                width: 350px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="particles" id="bgParticles"></div>
+    <canvas id="gameCanvas"></canvas>
+    
+    <!-- Start Screen -->
+    <div id="startScreen" class="screen">
+        <h1>HAMMER STRIKE</h1>
+        <p class="subtitle">DESTRUCTION ZONE</p>
+        <p class="info-text">🔨 Drag hammer & Tap to SMASH! 🔨</p>
+        <p class="info-text">Crush blocks before time runs out!</p>
+        <div class="difficulty-buttons">
+            <button class="btn" onclick="startGame('easy')">⚡ EASY</button>
+            <button class="btn" onclick="startGame('normal')">🔥 NORMAL</button>
+            <button class="btn" onclick="startGame('hard')">💀 HARD</button>
+        </div>
+    </div>
+    
+    <!-- Game Over Screen -->
+    <div id="gameOverScreen" class="screen hidden">
+        <h1>TIME'S UP!</h1>
+        <p class="score-text">FINAL SCORE: <span id="finalScore">0</span></p>
+        <p class="info-text">⏰ Time ran out! ⏰</p>
+        <p class="info-text">Blocks destroyed: <span id="blocksDestroyed">0</span></p>
+        <button class="btn" onclick="restartGame()">⚡ RETRY</button>
+        <button class="btn" onclick="backToMenu()">📋 MENU</button>
+    </div>
+
+    <!-- GameMonetize SDK -->
+    <script type="text/javascript">
+        window.SDK_OPTIONS = {
+            gameId: "is991jsmyjk7m5vc5a1jmiir1p7986x5",
+            onEvent: function (a) {
+                switch (a.name) {
+                    case "SDK_GAME_PAUSE":
+                        if (window.game) {
+                            window.game.pause();
+                            window.game.muteAudio();
+                        }
+                        break;
+                    case "SDK_GAME_START":
+                        if (window.game) {
+                            window.game.resume();
+                            window.game.unmuteAudio();
+                        }
+                        break;
+                    case "SDK_READY":
+                        break;
+                }
+            }
+        };
+        (function (a, b, c) {
+            var d = a.getElementsByTagName(b)[0];
+            a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+        })(document, "script", "gamemonetize-sdk");
+    </script>
+
+    <script>
+        // Background particles effect
+        function createBgParticles() {
+            const container = document.getElementById('bgParticles');
+            for (let i = 0; i < 30; i++) {
+                const particle = document.createElement('div');
+                particle.style.position = 'absolute';
+                particle.style.width = Math.random() * 3 + 1 + 'px';
+                particle.style.height = particle.style.width;
+                particle.style.background = 'rgba(255, 140, 0, 0.3)';
+                particle.style.borderRadius = '50%';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.animation = `float ${Math.random() * 10 + 10}s linear infinite`;
+                particle.style.animationDelay = Math.random() * 5 + 's';
+                container.appendChild(particle);
+            }
+        }
+        
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes float {
+                0% { transform: translateY(0) translateX(0); opacity: 0; }
+                10% { opacity: 0.5; }
+                90% { opacity: 0.5; }
+                100% { transform: translateY(-100vh) translateX(${Math.random() * 100 - 50}px); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+        createBgParticles();
+
+        // Utility function to show ads safely
+        function showAd() {
+            if (typeof sdk !== 'undefined' && typeof sdk.showBanner !== 'undefined') {
+                sdk.showBanner();
+            }
+        }
+
+        // Show ad on first load
+        window.onload = function() {
+            showAd();
+        };
+
+        // Game Configuration
+        const CONFIG = {
+            canvas: {
+                width: 1280,
+                height: 720
+            },
+            gravity: 0.8,
+            difficulty: {
+                easy: { 
+                    durability: 0.4, 
+                    weight: 0.5, 
+                    timeIncreaseRate: 0.8,
+                    timeDecreasePerBlock: 3.0,
+                    spawnRate: 90
+                },
+                normal: { 
+                    durability: 1.0, 
+                    weight: 1.0, 
+                    timeIncreaseRate: 1.2,
+                    timeDecreasePerBlock: 2.0,
+                    spawnRate: 70
+                },
+                hard: { 
+                    durability: 1.6, 
+                    weight: 1.4, 
+                    timeIncreaseRate: 1.8,
+                    timeDecreasePerBlock: 1.5,
+                    spawnRate: 50
+                }
+            }
+        };
+
+        // Audio Manager with enhanced effects
+        class AudioManager {
+            constructor() {
+                this.enabled = true;
+                this.context = null;
+                this.sounds = {};
+                this.initAudio();
+            }
+
+            initAudio() {
+                try {
+                    this.context = new (window.AudioContext || window.webkitAudioContext)();
+                } catch (e) {
+                    console.warn('Web Audio API not supported');
+                    this.enabled = false;
+                }
+            }
+
+            playHit(intensity) {
+                if (!this.enabled || !this.context) return;
+                
+                const osc = this.context.createOscillator();
+                const gain = this.context.createGain();
+                const filter = this.context.createBiquadFilter();
+                
+                osc.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.context.destination);
+                
+                osc.frequency.value = 40 + (intensity * 120);
+                osc.type = 'sawtooth';
+                
+                filter.type = 'lowpass';
+                filter.frequency.value = 800 + (intensity * 1000);
+                
+                gain.gain.setValueAtTime(0.4, this.context.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.context.currentTime + 0.4);
+                
+                osc.start(this.context.currentTime);
+                osc.stop(this.context.currentTime + 0.4);
+            }
+
+            playDestruction() {
+                if (!this.enabled || !this.context) return;
+                
+                const osc = this.context.createOscillator();
+                const gain = this.context.createGain();
+                const noise = this.context.createBufferSource();
+                const noiseGain = this.context.createGain();
+                
+                const buffer = this.context.createBuffer(1, this.context.sampleRate * 0.3, this.context.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < data.length; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
+                noise.buffer = buffer;
+                
+                osc.connect(gain);
+                gain.connect(this.context.destination);
+                
+                noise.connect(noiseGain);
+                noiseGain.connect(this.context.destination);
+                
+                osc.frequency.setValueAtTime(300, this.context.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(30, this.context.currentTime + 0.5);
+                osc.type = 'square';
+                
+                gain.gain.setValueAtTime(0.25, this.context.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.context.currentTime + 0.5);
+                
+                noiseGain.gain.setValueAtTime(0.15, this.context.currentTime);
+                noiseGain.gain.exponentialRampToValueAtTime(0.01, this.context.currentTime + 0.3);
+                
+                osc.start(this.context.currentTime);
+                osc.stop(this.context.currentTime + 0.5);
+                noise.start(this.context.currentTime);
+                noise.stop(this.context.currentTime + 0.3);
+            }
+
+            playCombo() {
+                if (!this.enabled || !this.context) return;
+                
+                const osc = this.context.createOscillator();
+                const gain = this.context.createGain();
+                
+                osc.connect(gain);
+                gain.connect(this.context.destination);
+                
+                osc.frequency.setValueAtTime(400, this.context.currentTime);
+                osc.frequency.linearRampToValueAtTime(800, this.context.currentTime + 0.1);
+                osc.type = 'sine';
+                
+                gain.gain.setValueAtTime(0.2, this.context.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.context.currentTime + 0.2);
+                
+                osc.start(this.context.currentTime);
+                osc.stop(this.context.currentTime + 0.2);
+            }
+
+            playWarning() {
+                if (!this.enabled || !this.context) return;
+                
+                const osc = this.context.createOscillator();
+                const gain = this.context.createGain();
+                
+                osc.connect(gain);
+                gain.connect(this.context.destination);
+                
+                osc.frequency.value = 600;
+                osc.type = 'square';
+                
+                gain.gain.setValueAtTime(0.15, this.context.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.context.currentTime + 0.15);
+                
+                osc.start(this.context.currentTime);
+                osc.stop(this.context.currentTime + 0.15);
+            }
+
+            mute() {
+                this.enabled = false;
+            }
+
+            unmute() {
+                this.enabled = true;
+            }
+        }
+
+        // Particle Effect
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 12;
+                this.vy = (Math.random() - 0.5) * 12 - 3;
+                this.life = 60;
+                this.maxLife = 60;
+                this.size = Math.random() * 6 + 2;
+                this.color = color;
+                this.rotation = Math.random() * Math.PI * 2;
+                this.rotationSpeed = (Math.random() - 0.5) * 0.3;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy += CONFIG.gravity * 0.4;
+                this.vx *= 0.98;
+                this.rotation += this.rotationSpeed;
+                this.life--;
+            }
+
+            draw(ctx) {
+                const alpha = this.life / this.maxLife;
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+                ctx.globalAlpha = alpha;
+                ctx.fillStyle = this.color;
+                ctx.fillRect(-this.size/2, -this.size/2, this.size, this.size);
+                
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = this.color;
+                ctx.fillRect(-this.size/2, -this.size/2, this.size, this.size);
+                
+                ctx.restore();
+            }
+
+            isDead() {
+                return this.life <= 0;
+            }
+        }
+
+        // Block Class with enhanced visuals
+        class Block {
+            constructor(x, y, type, difficultyMod) {
+                this.x = x;
+                this.y = y;
+                this.width = 60;
+                this.height = 40;
+                this.vx = 0;
+                this.vy = 0;
+                this.rotation = 0;
+                this.angularVelocity = 0;
+                this.type = type;
+                this.destroyed = false;
+                
+                switch(type) {
+                    case 'concrete':
+                        this.durability = 100 * difficultyMod.durability;
+                        this.weight = 1.0 * difficultyMod.weight;
+                        this.color = '#6b7280';
+                        this.edgeColor = '#4b5563';
+                        this.breakThreshold = 40;
+                        break;
+                    case 'steel':
+                        this.durability = 150 * difficultyMod.durability;
+                        this.weight = 1.5 * difficultyMod.weight;
+                        this.color = '#3b82f6';
+                        this.edgeColor = '#1e40af';
+                        this.breakThreshold = 60;
+                        break;
+                    case 'reinforced':
+                        this.durability = 200 * difficultyMod.durability;
+                        this.weight = 2.0 * difficultyMod.weight;
+                        this.color = '#dc2626';
+                        this.edgeColor = '#991b1b';
+                        this.breakThreshold = 80;
+                        break;
+                }
+                this.maxDurability = this.durability;
+                this.hitFlash = 0;
+            }
+
+            update() {
+                if (this.destroyed) return;
+                
+                this.vy += CONFIG.gravity * this.weight;
+                this.x += this.vx;
+                this.y += this.vy;
+                this.rotation += this.angularVelocity;
+                
+                this.vx *= 0.98;
+                this.angularVelocity *= 0.96;
+                
+                if (this.hitFlash > 0) this.hitFlash -= 0.1;
+                
+                if (this.y + this.height > CONFIG.canvas.height - 50) {
+                    this.y = CONFIG.canvas.height - 50 - this.height;
+                    this.vy *= -0.35;
+                    this.vx *= 0.85;
+                    if (Math.abs(this.vy) < 1) this.vy = 0;
+                }
+                
+                if (this.x < 0) {
+                    this.x = 0;
+                    this.vx *= -0.5;
+                } else if (this.x + this.width > CONFIG.canvas.width) {
+                    this.x = CONFIG.canvas.width - this.width;
+                    this.vx *= -0.5;
+                }
+            }
+
+            takeDamage(amount) {
+                this.durability -= amount;
+                this.hitFlash = 1;
+                if (this.durability <= 0) {
+                    this.destroyed = true;
+                    return true;
+                }
+                return false;
+            }
+
+            draw(ctx) {
+                if (this.destroyed) return;
+                
+                ctx.save();
+                ctx.translate(this.x + this.width/2, this.y + this.height/2);
+                ctx.rotate(this.rotation);
+                
+                const healthPercent = this.durability / this.maxDurability;
+                
+                const gradient = ctx.createLinearGradient(-this.width/2, -this.height/2, this.width/2, this.height/2);
+                gradient.addColorStop(0, this.lightenColor(this.color, 20));
+                gradient.addColorStop(1, this.darkenColor(this.color, 20));
+                
+                ctx.fillStyle = gradient;
+                ctx.fillRect(-this.width/2, -this.height/2, this.width, this.height);
+                
+                if (this.hitFlash > 0) {
+                    ctx.fillStyle = `rgba(255, 200, 100, ${this.hitFlash * 0.6})`;
+                    ctx.fillRect(-this.width/2, -this.height/2, this.width, this.height);
+                }
+                
+                ctx.fillStyle = this.edgeColor;
+                ctx.fillRect(this.width/2 - 4, -this.height/2, 4, this.height);
+                ctx.fillRect(-this.width/2, this.height/2 - 4, this.width, 4);
+                
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+                ctx.fillRect(-this.width/2 + 3, -this.height/2 + 3, this.width - 6, 4);
+                
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(-this.width/2, -this.height/2, this.width, this.height);
+                
+                if (healthPercent < 0.7) {
+                    ctx.strokeStyle = 'rgba(0, 0, 0, 0.6)';
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    ctx.moveTo(-this.width/3, -this.height/2);
+                    ctx.lineTo(-this.width/4, 0);
+                    ctx.lineTo(-this.width/3, this.height/2);
+                    ctx.stroke();
+                }
+                
+                if (healthPercent < 0.4) {
+                    ctx.beginPath();
+                    ctx.moveTo(this.width/4, -this.height/2);
+                    ctx.lineTo(this.width/5, this.height/2);
+                    ctx.stroke();
+                }
+                
+                const barWidth = this.width - 10;
+                const barHeight = 4;
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+                ctx.fillRect(-barWidth/2, -this.height/2 - 10, barWidth, barHeight);
+                
+                const healthColor = healthPercent > 0.6 ? '#22c55e' : healthPercent > 0.3 ? '#f59e0b' : '#ef4444';
+                ctx.fillStyle = healthColor;
+                ctx.fillRect(-barWidth/2, -this.height/2 - 10, barWidth * healthPercent, barHeight);
+                
+                ctx.restore();
+            }
+
+            lightenColor(color, percent) {
+                const num = parseInt(color.replace("#",""), 16);
+                const amt = Math.round(2.55 * percent);
+                const R = Math.min(255, (num >> 16) + amt);
+                const G = Math.min(255, (num >> 8 & 0x00FF) + amt);
+                const B = Math.min(255, (num & 0x0000FF) + amt);
+                return `rgb(${R}, ${G}, ${B})`;
+            }
+
+            darkenColor(color, percent) {
+                const num = parseInt(color.replace("#",""), 16);
+                const amt = Math.round(2.55 * percent);
+                const R = Math.max(0, (num >> 16) - amt);
+                const G = Math.max(0, (num >> 8 & 0x00FF) - amt);
+                const B = Math.max(0, (num & 0x0000FF) - amt);
+                return `rgb(${R}, ${G}, ${B})`;
+            }
+        }
+
+        // Enhanced Hammer Class with drag support
+        class Hammer {
+            constructor() {
+                this.x = CONFIG.canvas.width / 2;
+                this.targetX = this.x;
+                this.y = CONFIG.canvas.height - 150;
+                this.width = 120;
+                this.height = 90;
+                this.restY = CONFIG.canvas.height - 150;
+                this.maxLiftHeight = 250;
+                this.lifting = false;
+                this.slamming = false;
+                this.liftPower = 0;
+                this.velocity = 0;
+                this.power = 1.0;
+                this.glow = 0;
+                this.pistonOffset = 0;
+                this.isDragging = false;
+            }
+
+            setTargetX(x) {
+                this.targetX = Math.max(this.width/2, Math.min(CONFIG.canvas.width - this.width/2, x));
+            }
+
+            startLift() {
+                if (!this.slamming) {
+                    this.lifting = true;
+                }
+            }
+
+            releaseLift() {
+                if (this.lifting) {
+                    this.lifting = false;
+                    this.slamming = true;
+                }
+            }
+
+            update() {
+                // Smooth movement towards target
+                const diff = this.targetX - this.x;
+                this.x += diff * 0.2;
+                
+                if (this.lifting) {
+                    this.liftPower = Math.min(this.liftPower + 0.018, 1);
+                    this.y = this.restY - (this.maxLiftHeight * this.liftPower);
+                    this.glow = this.liftPower;
+                    this.pistonOffset = -this.liftPower * 30;
+                } else if (this.slamming) {
+                    this.velocity += 1.8;
+                    this.y += this.velocity;
+                    this.glow = Math.max(0, this.glow - 0.05);
+                    this.pistonOffset = Math.min(0, this.pistonOffset + 5);
+                    
+                    if (this.y >= this.restY) {
+                        this.y = this.restY;
+                        this.slamming = false;
+                        this.velocity = 0;
+                        this.glow = 0;
+                        return this.liftPower;
+                    }
+                } else {
+                    this.glow = Math.max(0, this.glow - 0.03);
+                    this.pistonOffset = 0;
+                }
+                return 0;
+            }
+
+            reset() {
+                this.liftPower = 0;
+                this.velocity = 0;
+            }
+
+            draw(ctx) {
+                ctx.save();
+                
+                const pistonHeight = 120;
+                const pistonY = this.y + this.height;
+                
+                for (let i = -1; i <= 1; i += 2) {
+                    const pistonX = this.x + (i * 35);
+                    
+                    ctx.fillStyle = '#2a2a2a';
+                    ctx.fillRect(pistonX - 8, pistonY, 16, pistonHeight);
+                    
+                    ctx.strokeStyle = '#1a1a1a';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(pistonX - 8, pistonY, 16, pistonHeight);
+                    
+                    ctx.fillStyle = '#4a4a4a';
+                    ctx.fillRect(pistonX - 4, pistonY + this.pistonOffset, 8, pistonHeight - this.pistonOffset);
+                    
+                    ctx.fillStyle = '#3a3a3a';
+                    ctx.fillRect(pistonX - 10, pistonY + pistonHeight, 20, 8);
+                }
+                
+                const gradient = ctx.createLinearGradient(
+                    this.x - this.width/2, this.y,
+                    this.x + this.width/2, this.y + this.height
+                );
+                gradient.addColorStop(0, '#606060');
+                gradient.addColorStop(0.3, '#808080');
+                gradient.addColorStop(0.7, '#606060');
+                gradient.addColorStop(1, '#404040');
+                
+                ctx.fillStyle = gradient;
+                ctx.fillRect(
+                    this.x - this.width/2,
+                    this.y,
+                    this.width,
+                    this.height
+                );
+                
+                if (this.glow > 0) {
+                    ctx.shadowBlur = 30 * this.glow;
+                    ctx.shadowColor = `rgba(255, 140, 0, ${this.glow})`;
+                    ctx.strokeStyle = `rgba(255, 140, 0, ${this.glow * 0.8})`;
+                    ctx.lineWidth = 4;
+                    ctx.strokeRect(
+                        this.x - this.width/2 - 2,
+                        this.y - 2,
+                        this.width + 4,
+                        this.height + 4
+                    );
+                    ctx.shadowBlur = 0;
+                }
+                
+                ctx.fillStyle = '#505050';
+                for (let i = 0; i < 3; i++) {
+                    const lineY = this.y + 20 + (i * 25);
+                    ctx.fillRect(this.x - this.width/2 + 10, lineY, this.width - 20, 3);
+                }
+                
+                ctx.fillStyle = '#353535';
+                ctx.fillRect(this.x - this.width/2, this.y, 8, this.height);
+                ctx.fillRect(this.x + this.width/2 - 8, this.y, 8, this.height);
+                
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+                ctx.fillRect(
+                    this.x - this.width/2 + 15,
+                    this.y + 8,
+                    this.width - 30,
+                    6
+                );
+                
+                const edgeGradient = ctx.createLinearGradient(
+                    this.x - this.width/2, this.y + this.height - 15,
+                    this.x + this.width/2, this.y + this.height
+                );
+                edgeGradient.addColorStop(0, '#ff8c00');
+                edgeGradient.addColorStop(0.5, '#ffa500');
+                edgeGradient.addColorStop(1, '#ff8c00');
+                
+                ctx.fillStyle = edgeGradient;
+                ctx.fillRect(
+                    this.x - this.width/2,
+                    this.y + this.height - 15,
+                    this.width,
+                    15
+                );
+                
+                ctx.fillStyle = '#000000';
+                for (let i = 0; i < 5; i++) {
+                    if (i % 2 === 0) {
+                        ctx.fillRect(
+                            this.x - this.width/2 + (i * this.width/5),
+                            this.y + this.height - 15,
+                            this.width/5,
+                            15
+                        );
+                    }
+                }
+                
+                ctx.fillStyle = '#2a2a2a';
+                const rivetPositions = [
+                    [-this.width/2 + 15, this.y + 15],
+                    [this.width/2 - 15, this.y + 15],
+                    [-this.width/2 + 15, this.y + this.height - 25],
+                    [this.width/2 - 15, this.y + this.height - 25]
+                ];
+                
+                rivetPositions.forEach(([offsetX, posY]) => {
+                    ctx.beginPath();
+                    ctx.arc(this.x + offsetX, posY, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+                
+                if (this.lifting || this.glow > 0) {
+                    const powerBarWidth = this.width - 30;
+                    const powerBarHeight = 6;
+                    const powerBarX = this.x - powerBarWidth/2;
+                    const powerBarY = this.y - 20;
+                    
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                    ctx.fillRect(powerBarX, powerBarY, powerBarWidth, powerBarHeight);
+                    
+                    const powerGradient = ctx.createLinearGradient(powerBarX, powerBarY, powerBarX + powerBarWidth, powerBarY);
+                    powerGradient.addColorStop(0, '#ff4500');
+                    powerGradient.addColorStop(0.5, '#ff8c00');
+                    powerGradient.addColorStop(1, '#ffd700');
+                    
+                    ctx.fillStyle = powerGradient;
+                    ctx.fillRect(powerBarX, powerBarY, powerBarWidth * this.liftPower, powerBarHeight);
+                    
+                    ctx.strokeStyle = 'rgba(255, 140, 0, 0.8)';
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(powerBarX, powerBarY, powerBarWidth, powerBarHeight);
+                }
+                
+                ctx.restore();
+            }
+        }
+
+        // Main Game Class
+        class Game {
+            constructor() {
+                this.canvas = document.getElementById('gameCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.setupCanvas();
+                
+                this.audioManager = new AudioManager();
+                this.hammer = new Hammer();
+                this.blocks = [];
+                this.particles = [];
+                
+                this.score = 0;
+                this.blocksDestroyedCount = 0;
+                this.timeBar = 0;
+                this.maxTimeBar = 100;
+                this.difficulty = 'normal';
+                this.difficultyMod = CONFIG.difficulty.normal;
+                
+                this.paused = false;
+                this.gameState = 'menu';
+                
+                this.screenShake = 0;
+                this.backgroundParticles = [];
+                this.initBackgroundParticles();
+                
+                this.spawnTimer = 0;
+                
+                this.setupControls();
+                this.setupVisibilityChange();
+            }
+
+            setupCanvas() {
+                const scale = Math.min(
+                    window.innerWidth / CONFIG.canvas.width,
+                    window.innerHeight / CONFIG.canvas.height
+                );
+                
+                this.canvas.width = CONFIG.canvas.width;
+                this.canvas.height = CONFIG.canvas.height;
+                this.canvas.style.width = (CONFIG.canvas.width * scale) + 'px';
+                this.canvas.style.height = (CONFIG.canvas.height * scale) + 'px';
+            }
+
+            initBackgroundParticles() {
+                for (let i = 0; i < 20; i++) {
+                    this.backgroundParticles.push({
+                        x: Math.random() * CONFIG.canvas.width,
+                        y: Math.random() * CONFIG.canvas.height,
+                        vx: (Math.random() - 0.5) * 0.5,
+                        vy: (Math.random() - 0.5) * 0.5,
+                        size: Math.random() * 2 + 1,
+                        alpha: Math.random() * 0.3 + 0.1
+                    });
+                }
+            }
+
+            updateBackgroundParticles() {
+                this.backgroundParticles.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    
+                    if (p.x < 0) p.x = CONFIG.canvas.width;
+                    if (p.x > CONFIG.canvas.width) p.x = 0;
+                    if (p.y < 0) p.y = CONFIG.canvas.height;
+                    if (p.y > CONFIG.canvas.height) p.y = 0;
+                });
+            }
+
+            setupControls() {
+                let isDragging = false;
+                let isTouching = false;
+                
+                const getInputX = (e) => {
+                    const rect = this.canvas.getBoundingClientRect();
+                    const scaleX = this.canvas.width / rect.width;
+                    if (e.touches) {
+                        return (e.touches[0].clientX - rect.left) * scaleX;
+                    }
+                    return (e.clientX - rect.left) * scaleX;
+                };
+                
+                // Mouse events
+                this.canvas.addEventListener('mousedown', (e) => {
+                    if (this.gameState === 'playing' && !this.paused) {
+                        isDragging = true;
+                        this.hammer.setTargetX(getInputX(e));
+                        this.hammer.startLift();
+                    }
+                });
+                
+                this.canvas.addEventListener('mousemove', (e) => {
+                    if (this.gameState === 'playing' && !this.paused && isDragging) {
+                        this.hammer.setTargetX(getInputX(e));
+                    }
+                });
+                
+                this.canvas.addEventListener('mouseup', (e) => {
+                    if (this.gameState === 'playing' && !this.paused && isDragging) {
+                        isDragging = false;
+                        this.hammer.releaseLift();
+                    }
+                });
+                
+                this.canvas.addEventListener('mouseleave', (e) => {
+                    if (isDragging) {
+                        isDragging = false;
+                        this.hammer.releaseLift();
+                    }
+                });
+                
+                // Touch events
+                this.canvas.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    if (this.gameState === 'playing' && !this.paused) {
+                        isTouching = true;
+                        this.hammer.setTargetX(getInputX(e));
+                        this.hammer.startLift();
+                    }
+                });
+                
+                this.canvas.addEventListener('touchmove', (e) => {
+                    e.preventDefault();
+                    if (this.gameState === 'playing' && !this.paused && isTouching) {
+                        this.hammer.setTargetX(getInputX(e));
+                    }
+                });
+                
+                this.canvas.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    if (this.gameState === 'playing' && !this.paused && isTouching) {
+                        isTouching = false;
+                        this.hammer.releaseLift();
+                    }
+                });
+            }
+
+            setupVisibilityChange() {
+                document.addEventListener('visibilitychange', () => {
+                    if (document.hidden) {
+                        this.pause();
+                        this.muteAudio();
+                    } else {
+                        this.resume();
+                        this.unmuteAudio();
+                    }
+                });
+            }
+
+            start(difficulty) {
+                this.difficulty = difficulty;
+                this.difficultyMod = CONFIG.difficulty[difficulty];
+                this.score = 0;
+                this.blocksDestroyedCount = 0;
+                this.timeBar = 0;
+                this.gameState = 'playing';
+                this.particles = [];
+                this.blocks = [];
+                this.spawnTimer = 0;
+                
+                this.gameLoop();
+            }
+
+            spawnBlock() {
+                const types = ['concrete', 'steel', 'reinforced'];
+                const type = types[Math.floor(Math.random() * types.length)];
+                const x = Math.random() * (CONFIG.canvas.width - 60);
+                
+                this.blocks.push(new Block(x, -50, type, this.difficultyMod));
+            }
+
+            checkHammerCollision(impact) {
+                let blocksDestroyed = 0;
+                const hammerRect = {
+                    x: this.hammer.x - this.hammer.width/2,
+                    y: this.hammer.y,
+                    width: this.hammer.width,
+                    height: this.hammer.height
+                };
+                
+                let hitSomething = false;
+                
+                this.blocks.forEach(block => {
+                    if (block.destroyed) return;
+                    
+                    const blockRect = {
+                        x: block.x,
+                        y: block.y,
+                        width: block.width,
+                        height: block.height
+                    };
+                    
+                    if (this.rectCollision(hammerRect, blockRect)) {
+                        hitSomething = true;
+                        const damage = impact * 120 * this.hammer.power;
+                        
+                        block.vx = (Math.random() - 0.5) * impact * 15;
+                        block.vy = -impact * 10;
+                        block.angularVelocity = (Math.random() - 0.5) * 0.25;
+                        
+                        if (block.takeDamage(damage)) {
+                            blocksDestroyed++;
+                            this.blocksDestroyedCount++;
+                            this.score += Math.floor(10 + (impact * 20));
+                            
+                            // Decrease time bar when block is destroyed
+                            this.timeBar = Math.max(0, this.timeBar - this.difficultyMod.timeDecreasePerBlock);
+                            
+                            this.audioManager.playDestruction();
+                            this.createExplosionParticles(block.x + block.width/2, block.y + block.height/2, block.color);
+                            this.screenShake = 10;
+                        } else {
+                            this.audioManager.playHit(impact);
+                            this.createImpactParticles(block.x + block.width/2, block.y + block.height/2);
+                            this.screenShake = 5;
+                        }
+                    }
+                });
+                
+                if (blocksDestroyed > 1) {
+                    this.audioManager.playCombo();
+                }
+            }
+
+            rectCollision(r1, r2) {
+                return r1.x < r2.x + r2.width &&
+                       r1.x + r1.width > r2.x &&
+                       r1.y < r2.y + r2.height &&
+                       r1.y + r1.height > r2.y;
+            }
+
+            createExplosionParticles(x, y, color) {
+                for (let i = 0; i < 20; i++) {
+                    this.particles.push(new Particle(x, y, color));
+                }
+                for (let i = 0; i < 10; i++) {
+                    this.particles.push(new Particle(x, y, '#ff8c00'));
+                }
+            }
+
+            createImpactParticles(x, y) {
+                for (let i = 0; i < 5; i++) {
+                    this.particles.push(new Particle(x, y, '#ffffff'));
+                }
+            }
+
+            updateParticles() {
+                this.particles.forEach(p => p.update());
+                this.particles = this.particles.filter(p => !p.isDead());
+            }
+
+            checkGameOver() {
+                if (this.timeBar >= this.maxTimeBar) {
+                    this.gameOver();
+                }
+            }
+
+            gameOver() {
+                this.gameState = 'gameover';
+                document.getElementById('finalScore').textContent = this.score;
+                document.getElementById('blocksDestroyed').textContent = this.blocksDestroyedCount;
+                document.getElementById('gameOverScreen').classList.remove('hidden');
+                showAd();
+            }
+
+            pause() {
+                this.paused = true;
+            }
+
+            resume() {
+                this.paused = false;
+            }
+
+            muteAudio() {
+                this.audioManager.mute();
+            }
+
+            unmuteAudio() {
+                this.audioManager.unmute();
+            }
+
+            update() {
+                if (this.paused || this.gameState !== 'playing') return;
+                
+                // Increase time bar
+                this.timeBar += this.difficultyMod.timeIncreaseRate / 60;
+                
+                // Warning sound when time is critical
+                if (this.timeBar > 80 && this.timeBar < 82 && Math.floor(this.timeBar) % 5 === 0) {
+                    this.audioManager.playWarning();
+                }
+                
+                // Spawn blocks
+                this.spawnTimer++;
+                if (this.spawnTimer >= this.difficultyMod.spawnRate) {
+                    this.spawnBlock();
+                    this.spawnTimer = 0;
+                }
+                
+                const impact = this.hammer.update();
+                if (impact > 0) {
+                    this.checkHammerCollision(impact);
+                    this.hammer.reset();
+                }
+                
+                this.blocks.forEach(block => block.update());
+                
+                // Remove blocks that fell off screen
+                this.blocks = this.blocks.filter(b => !b.destroyed && b.y < CONFIG.canvas.height + 100);
+                
+                this.updateParticles();
+                this.updateBackgroundParticles();
+                this.checkGameOver();
+                
+                if (this.screenShake > 0) {
+                    this.screenShake *= 0.9;
+                    if (this.screenShake < 0.5) this.screenShake = 0;
+                }
+            }
+
+            draw() {
+                this.ctx.save();
+                
+                if (this.screenShake > 0) {
+                    this.ctx.translate(
+                        (Math.random() - 0.5) * this.screenShake,
+                        (Math.random() - 0.5) * this.screenShake
+                    );
+                }
+                
+                const bgGradient = this.ctx.createLinearGradient(0, 0, 0, CONFIG.canvas.height);
+                bgGradient.addColorStop(0, '#1a1a2e');
+                bgGradient.addColorStop(1, '#0a0a0a');
+                this.ctx.fillStyle = bgGradient;
+                this.ctx.fillRect(0, 0, CONFIG.canvas.width, CONFIG.canvas.height);
+                
+                this.backgroundParticles.forEach(p => {
+                    this.ctx.fillStyle = `rgba(255, 140, 0, ${p.alpha})`;
+                    this.ctx.fillRect(p.x, p.y, p.size, p.size);
+                });
+                
+                this.ctx.strokeStyle = 'rgba(255, 140, 0, 0.05)';
+                this.ctx.lineWidth = 1;
+                for (let x = 0; x < CONFIG.canvas.width; x += 50) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(x, 0);
+                    this.ctx.lineTo(x, CONFIG.canvas.height);
+                    this.ctx.stroke();
+                }
+                for (let y = 0; y < CONFIG.canvas.height; y += 50) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(0, y);
+                    this.ctx.lineTo(CONFIG.canvas.width, y);
+                    this.ctx.stroke();
+                }
+                
+                const groundGradient = this.ctx.createLinearGradient(0, CONFIG.canvas.height - 50, 0, CONFIG.canvas.height);
+                groundGradient.addColorStop(0, '#2a2a2a');
+                groundGradient.addColorStop(1, '#1a1a1a');
+                this.ctx.fillStyle = groundGradient;
+                this.ctx.fillRect(0, CONFIG.canvas.height - 50, CONFIG.canvas.width, 50);
+                
+                this.ctx.strokeStyle = '#ff8c00';
+                this.ctx.lineWidth = 2;
+                this.ctx.beginPath();
+                this.ctx.moveTo(0, CONFIG.canvas.height - 50);
+                this.ctx.lineTo(CONFIG.canvas.width, CONFIG.canvas.height - 50);
+                this.ctx.stroke();
+                
+                this.particles.forEach(p => p.draw(this.ctx));
+                
+                this.blocks.forEach(block => block.draw(this.ctx));
+                
+                this.hammer.draw(this.ctx);
+                
+                // UI
+                if (this.gameState === 'playing') {
+                    this.ctx.shadowBlur = 10;
+                    this.ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+                    
+                    this.ctx.fillStyle = '#ffffff';
+                    this.ctx.font = 'bold 28px Arial';
+                    this.ctx.fillText(`SCORE: ${this.score}`, 20, 40);
+                    
+                    this.ctx.fillStyle = '#ffd700';
+                    this.ctx.fillText(`BLOCKS: ${this.blocksDestroyedCount}`, 20, 75);
+                    
+                    // Time Bar
+                    const timeBarWidth = 400;
+                    const timeBarHeight = 30;
+                    const timeBarX = CONFIG.canvas.width / 2 - timeBarWidth / 2;
+                    const timeBarY = 20;
+                    
+                    // Background
+                    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                    this.ctx.fillRect(timeBarX - 5, timeBarY - 5, timeBarWidth + 10, timeBarHeight + 10);
+                    
+                    // Border
+                    this.ctx.strokeStyle = '#ff8c00';
+                    this.ctx.lineWidth = 3;
+                    this.ctx.strokeRect(timeBarX - 5, timeBarY - 5, timeBarWidth + 10, timeBarHeight + 10);
+                    
+                    // Fill
+                    const timePercent = this.timeBar / this.maxTimeBar;
+                    const fillWidth = timeBarWidth * timePercent;
+                    
+                    const timeGradient = this.ctx.createLinearGradient(timeBarX, timeBarY, timeBarX + timeBarWidth, timeBarY);
+                    if (timePercent < 0.5) {
+                        timeGradient.addColorStop(0, '#22c55e');
+                        timeGradient.addColorStop(1, '#86efac');
+                    } else if (timePercent < 0.8) {
+                        timeGradient.addColorStop(0, '#f59e0b');
+                        timeGradient.addColorStop(1, '#fbbf24');
+                    } else {
+                        timeGradient.addColorStop(0, '#dc2626');
+                        timeGradient.addColorStop(1, '#ef4444');
+                    }
+                    
+                    this.ctx.fillStyle = timeGradient;
+                    this.ctx.fillRect(timeBarX, timeBarY, fillWidth, timeBarHeight);
+                    
+                    // Pulsing effect when critical
+                    if (timePercent > 0.8) {
+                        const pulse = Math.sin(Date.now() / 100) * 0.3 + 0.7;
+                        this.ctx.shadowBlur = 20 * pulse;
+                        this.ctx.shadowColor = 'rgba(220, 38, 38, 1)';
+                        this.ctx.strokeStyle = `rgba(220, 38, 38, ${pulse})`;
+                        this.ctx.lineWidth = 4;
+                        this.ctx.strokeRect(timeBarX - 5, timeBarY - 5, timeBarWidth + 10, timeBarHeight + 10);
+                    }
+                    
+                    // Time text
+                    this.ctx.shadowBlur = 5;
+                    this.ctx.fillStyle = '#ffffff';
+                    this.ctx.font = 'bold 18px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.fillText('TIME PRESSURE', timeBarX + timeBarWidth/2, timeBarY + 20);
+                    
+                    // Warning text
+                    if (timePercent > 0.8) {
+                        this.ctx.fillStyle = '#ff4444';
+                        this.ctx.font = 'bold 24px Arial';
+                        this.ctx.fillText('⚠ CRITICAL ⚠', timeBarX + timeBarWidth/2, timeBarY + 60);
+                    }
+                    
+                    this.ctx.textAlign = 'left';
+                    this.ctx.shadowBlur = 0;
+                }
+                
+                this.ctx.restore();
+            }
+
+            gameLoop() {
+                this.update();
+                this.draw();
+                
+                if (this.gameState === 'playing') {
+                    requestAnimationFrame(() => this.gameLoop());
+                }
+            }
+        }
+
+        // Global game instance
+        let game = new Game();
+        window.game = game;
+
+        // UI Functions
+        function startGame(difficulty) {
+            document.getElementById('startScreen').classList.add('hidden');
+            game.start(difficulty);
+        }
+
+        function restartGame() {
+            document.getElementById('gameOverScreen').classList.add('hidden');
+            game.start(game.difficulty);
+        }
+
+        function backToMenu() {
+            document.getElementById('gameOverScreen').classList.add('hidden');
+            document.getElementById('startScreen').classList.remove('hidden');
+            game.gameState = 'menu';
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            game.setupCanvas();
+        });
+    </script>
+</body>
+</html>

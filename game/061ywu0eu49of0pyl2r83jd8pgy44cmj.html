@@ -1,0 +1,1855 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Argy Bird</title>
+    <script async src="https://api.gamemonetize.com/sdk.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #333;
+            font-family: 'Press Start 2P', cursive;
+            color: white;
+            text-shadow: 2px 2px 4px #000000;
+        }
+
+        #game-container {
+            position: relative;
+            border: 3px solid black;
+            border-radius: 10px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        @keyframes screenshake {
+            0%, 100% {
+                transform: translateX(0);
+            }
+
+            10%, 30%, 50%, 70%, 90% {
+                transform: translateX(-5px);
+            }
+
+            20%, 40%, 60%, 80% {
+                transform: translateX(5px);
+            }
+        }
+
+        .shake {
+            animation: screenshake 0.5s;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            pointer-events: none;
+            text-align: center;
+        }
+
+        #lives-display {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 1.5rem;
+            color: #E53935;
+            z-index: 10;
+        }
+
+        #ability-button {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background-color: #4CAF50;
+            border: 3px solid #3e8e41;
+            color: white;
+            font-size: 24px;
+            font-family: 'Press Start 2P', cursive;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            pointer-events: auto;
+            opacity: 1;
+            transition: opacity 0.3s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            z-index: 10;
+        }
+
+            #ability-button.disabled {
+                background-color: #666;
+                border-color: #444;
+                cursor: not-allowed;
+            }
+
+        #ability-button-cooldown {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 16px;
+            font-family: 'Press Start 2P', cursive;
+        }
+
+        #score {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 2rem;
+            font-weight: bold;
+            z-index: 10;
+            transition: transform 0.1s ease-out, color 0.1s ease-out;
+        }
+
+        .score-pop {
+            transform: translateX(-50%) scale(1.5);
+            color: #FFD700; /* Gold color */
+        }
+
+        #pause-indicator {
+            font-size: 2rem;
+            background-color: rgba(0,0,0,0.5);
+            padding: 10px 20px;
+            border-radius: 5px;
+        }
+
+        #new-high-score-text {
+            color: #FFD700;
+            font-size: 1rem;
+            animation: pulse 1s infinite;
+        }
+
+        #skin-unlocked-text {
+            color: #4CAF50;
+            font-size: 0.9rem;
+            animation: pulse 1.5s infinite;
+            margin-top: 10px;
+        }
+
+        #start-screen, #game-over-screen, .menu-panel {
+            background-color: rgba(0, 0, 0, 0.75);
+            padding: 20px;
+            border-radius: 10px;
+            pointer-events: auto;
+            width: 80%;
+            border: 2px solid white;
+            box-shadow: 0 0 15px rgba(255,255,255,0.3);
+        }
+
+            #start-screen p, #game-over-screen p, #medal-display, .menu-panel p {
+                font-size: 0.7rem;
+                line-height: 1.5;
+                margin: 8px 0;
+            }
+
+            #start-screen h1, #game-over-screen h1, .menu-panel h1 {
+                margin-top: 0;
+            }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .button {
+            background-image: linear-gradient(to bottom, #5cb85c, #4CAF50);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+            font-family: 'Press Start 2P', cursive;
+            margin-top: 10px;
+            cursor: pointer;
+            border-radius: 8px;
+            border-bottom: 4px solid #3e8e41;
+            text-shadow: 1px 1px 2px #000;
+            transition: all 0.1s ease-in-out;
+            animation: pulse 2s infinite ease-in-out;
+        }
+
+            .button.large-button {
+                padding: 12px 20px;
+                font-size: 14px;
+            }
+
+            .button:hover {
+                background-image: linear-gradient(to bottom, #6bc96b, #57bf5c);
+                animation-play-state: paused;
+            }
+
+            .button:active {
+                transform: translateY(2px);
+                border-bottom-width: 2px;
+            }
+
+        .button-group {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        #medal-list, #leaderboard-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            font-size: 1rem;
+            margin: 15px 0;
+        }
+
+        #leaderboard-list {
+            list-style: none;
+            padding: 0;
+            font-size: 0.8rem;
+        }
+
+            #leaderboard-list li {
+                background-color: rgba(255, 255, 255, 0.1);
+                padding: 8px 12px;
+                border-radius: 5px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+                #leaderboard-list li.current-user {
+                    background-color: rgba(255, 255, 255, 0.25);
+                    border: 1px solid #FFD700;
+                }
+
+        .medal-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: opacity 0.3s;
+        }
+
+            .medal-item.locked {
+                opacity: 0.4;
+            }
+
+        .medal-icon {
+            font-size: 1.8rem;
+        }
+
+        .medal-text p {
+            margin: 0;
+            text-align: left;
+        }
+
+        .medal-title {
+            font-size: 0.8rem;
+        }
+
+        .medal-description {
+            font-size: 0.7rem;
+            color: #ccc;
+        }
+
+        #achievements-mode-select .button, #leaderboard-mode-select .button {
+            padding: 8px 10px;
+            font-size: 10px;
+            background-image: linear-gradient(to bottom, #888, #666);
+            border-bottom-color: #444;
+            animation: none;
+        }
+
+            #achievements-mode-select .button.active-mode, #leaderboard-mode-select .button.active-mode {
+                background-image: linear-gradient(to bottom, #5cb85c, #4CAF50);
+                border-bottom-color: #3e8e41;
+            }
+
+        #skin-selection {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            align-items: center;
+            margin: 15px 0;
+        }
+
+        .skin-option {
+            border: 3px solid #666;
+            border-radius: 8px;
+            padding: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+            .skin-option.selected {
+                border-color: #FFD700;
+                box-shadow: 0 0 10px #FFD700;
+            }
+
+            .skin-option.locked {
+                opacity: 0.5;
+                cursor: not-allowed;
+                position: relative;
+            }
+
+                .skin-option.locked::after {
+                    content: '🔒';
+                    position: absolute;
+                    font-size: 24px;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    color: white;
+                    text-shadow: 0 0 5px black;
+                }
+
+        .skin-preview {
+            display: block;
+        }
+
+        #loading-indicator {
+            font-size: 0.8rem;
+            color: #ccc;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <canvas id="gameCanvas" width="320" height="480"></canvas>
+        <div id="ui-layer">
+            <div id="lives-display" class="hidden">❤️ x 0</div>
+            <div id="score">0</div>
+            <div id="pause-indicator" class="hidden">PAUSED</div>
+            <button id="ability-button" class="hidden">
+                <span id="ability-icon"></span>
+                <span id="ability-button-cooldown" class="hidden"></span>
+            </button>
+            <div id="start-screen">
+                <h1>Argy Bird</h1>
+                <p>High (Normal): <span id="high-score-start-normal">0</span> | High (Hard): <span id="high-score-start-hard">0</span></p>
+                <p>High (Super Hard): <span id="high-score-start-superhard">0</span> | High (Classic): <span id="high-score-start-classic">0</span></p>
+                <div class="button-group">
+                    <button class="button large-button" id="start-normal-button">Normal</button>
+                    <button class="button large-button" id="start-hard-button">Hard</button>
+                    <button class="button large-button" id="start-super-hard-button">Super Hard</button>
+                    <button class="button large-button" id="start-classic-button">Classic</button>
+                </div>
+                <div class="button-group">
+                    <button class="button" id="skins-button">Skins</button>
+                    <button class="button" id="achievements-button">Achievements</button>
+                    <button class="button" id="leaderboard-button">Leaderboard</button>
+                </div>
+            </div>
+
+            <div id="instructions-screen" class="hidden menu-panel">
+                <h1>Instructions</h1>
+                <p>Use <strong>Mouse</strong>/<strong>Space</strong>/<strong>Tap</strong> to fly.</p>
+                <p>Collect ⭐ for extra points!</p>
+                <p>Collect 💎 for more points!</p>
+                <p>Collect 🛡️ for protection.</p>
+                <p>Collect 🧪 to shrink the bird.</p>
+                <p>Collect 🕒 to slow down time.</p>
+                <p>Collect 🧲 to attract items.</p>
+                <p>Collect <strong>x2</strong> to double points.</p>
+                <p>Be careful with **bats**!</p>
+                <p>Press 'P' to pause.</p>
+                <p>Press 'A' to use ability.</p>
+                <button class="button" id="instructions-back-button">Back</button>
+            </div>
+
+            <div id="skins-screen" class="hidden menu-panel">
+                <h1>Skins</h1>
+                <div id="skin-selection">
+                </div>
+                <p id="skin-unlock-info"></p>
+                <button class="button" id="skins-back-button">Back</button>
+            </div>
+
+            <div id="achievements-screen" class="hidden menu-panel">
+                <h1>Achievements</h1>
+                <div id="achievements-mode-select" class="button-group">
+                    <button class="button" id="achievements-normal-tab">Normal</button>
+                    <button class="button" id="achievements-hard-tab">Hard</button>
+                    <button class="button" id="achievements-superhard-tab">Super Hard</button>
+                    <button class="button" id="achievements-classic-tab">Classic</button>
+                </div>
+                <div id="medal-list">
+                </div>
+                <button class="button" id="achievements-back-button">Back</button>
+            </div>
+
+            <div id="leaderboard-screen" class="hidden menu-panel">
+                <h1>Leaderboard</h1>
+                <p>Your ID: <br><span id="user-id-display">Loading...</span></p>
+                <div id="leaderboard-mode-select" class="button-group">
+                    <button class="button" id="leaderboard-normal-tab">Normal</button>
+                    <button class="button" id="leaderboard-hard-tab">Hard</button>
+                    <button class="button" id="leaderboard-superhard-tab">Super Hard</button>
+                    <button class="button" id="leaderboard-classic-tab">Classic</button>
+                </div>
+                <ul id="leaderboard-list">
+                </ul>
+                <p id="loading-indicator">Loading leaderboard...</p>
+                <button class="button" id="leaderboard-back-button">Back</button>
+            </div>
+
+            <div id="game-over-screen" class="hidden">
+                <h1>Game Over</h1>
+                <p id="new-high-score-text" class="hidden">NEW HIGH SCORE!</p>
+                <p>Score: <span id="final-score">0</span></p>
+                <p>High Score (<span id="game-over-mode"></span>): <span id="high-score-end">0</span></p>
+                <div id="medal-display"></div>
+                <div id="skin-unlocked-text" class="hidden"></div>
+                <div class="button-group">
+                    <button class="button" id="restart-button">Play Again</button>
+                    <button class="button" id="menu-button">Menu</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Firebase imports remain the same to avoid syntax errors in current environment
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, collection, query, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // setLogLevel('debug'); // Disable Firebase logs when publishing
+
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const gameContainer = document.getElementById('game-container');
+
+        // UI Elements
+        const scoreDisplay = document.getElementById('score');
+        const livesDisplay = document.getElementById('lives-display');
+        const startScreen = document.getElementById('start-screen');
+        const gameOverScreen = document.getElementById('game-over-screen');
+        const instructionsScreen = document.getElementById('instructions-screen');
+        const achievementsScreen = document.getElementById('achievements-screen');
+        const skinsScreen = document.getElementById('skins-screen');
+        const leaderboardScreen = document.getElementById('leaderboard-screen');
+        const startNormalButton = document.getElementById('start-normal-button');
+        const startHardButton = document.getElementById('start-hard-button');
+        const startSuperHardButton = document.getElementById('start-super-hard-button');
+        const startClassicButton = document.getElementById('start-classic-button');
+        const restartButton = document.getElementById('restart-button');
+        const menuButton = document.getElementById('menu-button');
+        const finalScoreDisplay = document.getElementById('final-score');
+        const highScoreStartNormal = document.getElementById('high-score-start-normal');
+        const highScoreStartHard = document.getElementById('high-score-start-hard');
+        const highScoreStartSuperHard = document.getElementById('high-score-start-superhard');
+        const highScoreStartClassic = document.getElementById('high-score-start-classic');
+        const highScoreEndDisplay = document.getElementById('high-score-end');
+        const gameOverMode = document.getElementById('game-over-mode');
+        const pauseIndicator = document.getElementById('pause-indicator');
+        const medalDisplay = document.getElementById('medal-display');
+        const newHighScoreText = document.getElementById('new-high-score-text');
+        const skinUnlockedText = document.getElementById('skin-unlocked-text');
+        const instructionsButton = document.getElementById('instructions-button');
+        const achievementsButton = document.getElementById('achievements-button');
+        const skinsButton = document.getElementById('skins-button');
+        const leaderboardButton = document.getElementById('leaderboard-button');
+        const instructionsBackButton = document.getElementById('instructions-back-button');
+        const achievementsBackButton = document.getElementById('achievements-back-button');
+        const skinsBackButton = document.getElementById('skins-back-button');
+        const leaderboardBackButton = document.getElementById('leaderboard-back-button');
+        const achievementsNormalTab = document.getElementById('achievements-normal-tab');
+        const achievementsHardTab = document.getElementById('achievements-hard-tab');
+        const achievementsSuperHardTab = document.getElementById('achievements-superhard-tab');
+        const achievementsClassicTab = document.getElementById('achievements-classic-tab');
+        const leaderboardNormalTab = document.getElementById('leaderboard-normal-tab');
+        const leaderboardHardTab = document.getElementById('leaderboard-hard-tab');
+        const leaderboardSuperHardTab = document.getElementById('leaderboard-superhard-tab');
+        const leaderboardClassicTab = document.getElementById('leaderboard-classic-tab');
+        const medalList = document.getElementById('medal-list');
+        const skinSelectionContainer = document.getElementById('skin-selection');
+        const skinUnlockInfo = document.getElementById('skin-unlock-info');
+        const leaderboardList = document.getElementById('leaderboard-list');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const userIdDisplay = document.getElementById('user-id-display');
+        const abilityButton = document.getElementById('ability-button');
+        const abilityIcon = document.getElementById('ability-icon');
+        const abilityCooldownDisplay = document.getElementById('ability-button-cooldown');
+
+        // Firebase variables
+        let app, db, auth, userId;
+        let isAuthReady = false;
+        let isFirebaseActive = false; // New flag variable
+
+        // Game variables
+        let bird, score, highScores, gameSpeed, gravity, frameCount, groundOffset, gameMode, sunX = 0, sunY = 0, achievements, unlockedSkins, selectedSkinId;
+        let pipes = [], clouds = [], buildings = [], particles = [], stars = [], mountains = [], nightStars = [], birdTrail = [], powerups = [], gems = [], weatherParticles = [];
+        let bats = []; // Add bats array
+        let gameState = 'start'; // 'start', 'playing', 'paused', 'gameOver'
+
+        // Constants
+        const groundHeight = 30;
+        const defaultScores = { normal: 0, hard: 0, superhard: 0, classic: 0 };
+        const defaultAchievements = {
+            normal: { bronze: false, silver: false, gold: false, platinum: false, diamond: false },
+            hard: { bronze: false, silver: false, gold: false, platinum: false, diamond: false },
+            superhard: { bronze: false, silver: false, gold: false, platinum: false, diamond: false },
+            classic: { bronze: false, silver: false, gold: false, platinum: false, diamond: false }
+        };
+
+        const skins = [
+            { id: 'classic', name: 'Classic', body1: '#FFEB3B', body2: '#FBC02D', beak: '#F57C00', wing: 'white', tail: '#F57C00', unlock: { type: 'default' }, ability: null, icon: '' },
+            { id: 'red', name: 'Fire', body1: '#E53935', body2: '#B71C1C', beak: '#FF9800', wing: '#FFEB3B', tail: '#FFEB3B', unlock: { type: 'medal', mode: 'normal', rank: 'gold' }, ability: 'fireball', abilityCooldown: 1800, icon: '🔥' },
+            { id: 'blue', name: 'Ice', body1: '#1E88E5', body2: '#0D47A1', beak: '#90A4AE', wing: 'white', tail: 'white', unlock: { type: 'medal', mode: 'hard', rank: 'gold' }, ability: 'iceblast', abilityCooldown: 1800, icon: '❄️' },
+            { id: 'ninja', name: 'Ninja', body1: '#424242', body2: '#212121', beak: '#757575', wing: '#9E9E9E', tail: '#E53935', unlock: { type: 'medal', mode: 'normal', rank: 'platinum' }, ability: 'teleport', abilityCooldown: 1800, icon: '🥷' },
+            { id: 'ghost', name: 'Ghost', body1: 'rgba(224, 247, 250, 0.7)', body2: 'rgba(179, 229, 252, 0.6)', beak: '#B0BEC5', wing: 'rgba(255, 255, 255, 0.8)', tail: 'rgba(255, 255, 255, 0.7)', unlock: { type: 'medal', mode: 'hard', rank: 'platinum' }, ability: 'phasing', abilityCooldown: 1800, icon: '👻' },
+            { id: 'robot', name: 'Robot', body1: '#B0BEC5', body2: '#78909C', beak: '#FFAB00', wing: '#CFD8DC', tail: '#FF6F00', eyeGlow: true, unlock: { type: 'medal', mode: 'hard', rank: 'diamond' }, ability: 'shield', abilityCooldown: 1800, icon: '🛡️' },
+            { id: 'king', name: 'King', body1: '#FFD700', body2: '#FFA000', beak: '#F57C00', wing: 'white', tail: '#E65100', crown: true, unlock: { type: 'medal', mode: 'superhard', rank: 'diamond' }, ability: 'lives', abilityCooldown: 2700, icon: '👑' },
+        ];
+
+        // --- THEMES ---
+        const themes = [
+            { sky1: "#87CEEB", sky2: "#B0E0E6", sun: "rgba(255, 255, 0, 0.9)", ground1: "#6B8E23", ground2: "#556B2F", pipe1: '#73C700', pipe2: '#539300', weather: 'none' },
+            { sky1: "#ff7e5f", sky2: "#feb47b", sun: "rgba(255, 100, 0, 0.9)", ground1: "#5C4033", ground2: "#4A332A", pipe1: '#BF5700', pipe2: '#A04A00', weather: 'rain' },
+            { sky1: "#0f2027", sky2: "#2c5364", sun: "rgba(240, 240, 255, 0.9)", ground1: "#2F4F4F", ground2: "#1D3232", pipe1: '#4B6A6B', pipe2: '#3A5353', weather: 'none' },
+            { sky1: "#E0E0E0", sky2: "#BDBDBD", sun: "rgba(245, 245, 245, 0.9)", ground1: "#F5F5F5", ground2: "#E0E0E0", pipe1: '#90A4AE', pipe2: '#607D8B', weather: 'snow' }
+        ];
+        let currentThemeIndex = 0;
+
+        let audioCtx;
+
+        const birdProps = {
+            x: 60, y: 200, width: 34, height: 24, velocity: 0, lift: -1.9, wingFrame: 0,
+            hasShield: false, invincibleTimer: 0, shrinkTimer: 0, slowdownTimer: 0, magnetTimer: 0, multiplierTimer: 0,
+            teleportCharges: 3, shieldCharges: 0, lives: 0,
+            abilityCooldown: 0, abilityTimer: 0, activeAbility: null // Add ability properties
+        };
+
+        let pipeProps = {
+            width: 55, gap: 140, spawnInterval: 130, frameCount: 0,
+        };
+        let projectiles = []; // Array for skill-created objects
+
+        // --- ĐÃ THAY THẾ BẰNG SDK CỦA GAMEMONETIZE --- //
+
+        // 1. Khởi tạo SDK
+        window.sdkAsyncInit = function () {
+            if (typeof sdk === 'undefined') {
+                console.warn('GameMonetize SDK not found.');
+                return;
+            }
+            sdk.init({
+                id: "061ywu0eu49of0pyl2r83jd8pgy44cmj", // ID game của bạn
+                onInit: () => {
+                    console.log("GameMonetize SDK Initialized!");
+                }
+            });
+        };
+
+        // 2. Hàm để gọi quảng cáo
+        function showInterstitialAd() {
+            if (typeof sdk === 'undefined' || typeof sdk.showBanner === 'undefined') {
+                console.log("SDK not available, skipping ad.");
+                return;
+            }
+
+            // GameMonetize sử dụng hàm showBanner() để hiển thị quảng cáo toàn màn hình
+            sdk.showBanner();
+        }
+        // --- KẾT THÚC TÍCH HỢP SDK --- //
+
+
+        function initAudio() {
+            if (!audioCtx) { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+        }
+
+        function playSound(type) {
+            if (!audioCtx) return;
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            if (type === 'click') {
+                gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                oscillator.frequency.setValueAtTime(600, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.1);
+            } else if (type === 'unlock') {
+                gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                oscillator.frequency.setValueAtTime(900, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.3);
+            } else {
+                gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                if (type === 'flap') { oscillator.frequency.setValueAtTime(200, audioCtx.currentTime); gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.2); }
+                else if (type === 'score') { oscillator.frequency.setValueAtTime(500, audioCtx.currentTime); gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.1); }
+                else if (type === 'hit') { oscillator.type = 'square'; oscillator.frequency.setValueAtTime(150, audioCtx.currentTime); gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.3); }
+                else if (type === 'collect') { oscillator.frequency.setValueAtTime(800, audioCtx.currentTime); gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.1); }
+                else if (type === 'powerup') { oscillator.frequency.setValueAtTime(600, audioCtx.currentTime); gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.3); }
+                else if (type === 'gem') { oscillator.frequency.setValueAtTime(1000, audioCtx.currentTime); gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.2); }
+                else if (type === 'multiplier') { oscillator.frequency.setValueAtTime(1200, audioCtx.currentTime); gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.3); }
+            }
+
+            oscillator.start(audioCtx.currentTime);
+            oscillator.stop(audioCtx.currentTime + 0.4);
+        }
+
+        async function loadHighScores() {
+            highScores = defaultScores; // Always have default values
+
+            if (isFirebaseActive) {
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                const docRef = doc(db, 'artifacts', appId, 'users', userId, 'user_data', 'high_scores');
+                try {
+                    const docSnap = await getDoc(docRef);
+                    if (docSnap.exists()) {
+                        highScores = { ...defaultScores, ...docSnap.data() };
+                    }
+                } catch (e) {
+                    console.error("Error loading high scores from Firestore (Switching to LocalStorage): ", e);
+                    const saved = localStorage.getItem('argyBirdHighScores');
+                    highScores = saved ? { ...defaultScores, ...JSON.parse(saved) } : defaultScores;
+                }
+            } else {
+                const saved = localStorage.getItem('argyBirdHighScores');
+                highScores = saved ? { ...defaultScores, ...JSON.parse(saved) } : defaultScores;
+            }
+
+            highScoreStartNormal.textContent = highScores.normal;
+            highScoreStartHard.textContent = highScores.hard;
+            highScoreStartSuperHard.textContent = highScores.superhard;
+            highScoreStartClassic.textContent = highScores.classic;
+        }
+
+        async function saveHighScore() {
+            if (score > highScores[gameMode]) {
+                highScores[gameMode] = score;
+
+                if (isFirebaseActive) {
+                    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                    const docRef = doc(db, 'artifacts', appId, 'users', userId, 'user_data', 'high_scores');
+                    const leaderboardRef = doc(db, 'artifacts', appId, 'public', 'data', `leaderboard_${gameMode}`, userId);
+                    try {
+                        await setDoc(docRef, highScores);
+                        // Only send to Leaderboard if it's a new high score
+                        await setDoc(leaderboardRef, { score, name: userId, timestamp: Date.now() });
+                        console.log("High score saved to Firestore.");
+                    } catch (e) {
+                        console.error("Error saving high score to Firestore (Saving to LocalStorage): ", e);
+                        localStorage.setItem('argyBirdHighScores', JSON.stringify(highScores));
+                    }
+                } else {
+                    localStorage.setItem('argyBirdHighScores', JSON.stringify(highScores));
+                    console.log("High score saved to LocalStorage.");
+                }
+                return true;
+            }
+            return false;
+        }
+
+        function loadSkins() {
+            selectedSkinId = localStorage.getItem('argyBirdSelectedSkin') || 'classic';
+            // Ensure selected skin exists and is unlocked. If not, revert to "classic" skin.
+            const currentSkinExists = skins.some(skin => skin.id === selectedSkinId);
+            if (!currentSkinExists || !unlockedSkins.includes(selectedSkinId)) {
+                selectedSkinId = 'classic';
+                saveSkins();
+            }
+        }
+        function saveSkins() { localStorage.setItem('argyBirdSelectedSkin', selectedSkinId); }
+
+        async function checkSkinUnlocks() {
+            let unlockedNewSkin = false;
+            skins.forEach(skin => {
+                // Safe check achievements[skin.unlock.mode]
+                if (skin.unlock.type === 'medal' && achievements[skin.unlock.mode] && achievements[skin.unlock.mode][skin.unlock.rank]) {
+                    if (!unlockedSkins.includes(skin.id)) {
+                        unlockedSkins.push(skin.id);
+                        unlockedNewSkin = true;
+                    }
+                }
+            });
+            localStorage.setItem('argyBirdUnlockedSkins', JSON.stringify(unlockedSkins));
+            return unlockedNewSkin;
+        }
+
+        function loadUnlockedSkins() {
+            const saved = localStorage.getItem('argyBirdUnlockedSkins');
+            unlockedSkins = saved ? JSON.parse(saved) : ['classic'];
+        }
+
+        function updateSkinsDisplay() {
+            skinSelectionContainer.innerHTML = '';
+            skins.forEach(skin => {
+                const isUnlocked = unlockedSkins.includes(skin.id);
+                const isSelected = skin.id === selectedSkinId;
+
+                const option = document.createElement('div');
+                option.className = 'skin-option';
+                if (isSelected) option.classList.add('selected');
+                if (!isUnlocked) option.classList.add('locked');
+
+                const previewCanvas = document.createElement('canvas');
+                previewCanvas.width = 50;
+                previewCanvas.height = 50;
+                previewCanvas.className = 'skin-preview';
+                drawBird(previewCanvas.getContext('2d'), { x: 25, y: 25, velocity: 0, shrinkTimer: 0, magnetTimer: 0, abilityCooldown: 0 }, skin, 0);
+
+                option.appendChild(previewCanvas);
+
+                option.addEventListener('click', () => {
+                    playSound('click');
+                    if (isUnlocked) {
+                        selectedSkinId = skin.id;
+                        saveSkins();
+                        updateSkinsDisplay();
+                    } else {
+                        skinUnlockInfo.textContent = `To unlock "${skin.name}", you need to achieve ${skin.unlock.rank} medal in ${skin.unlock.mode} mode.`;
+                    }
+                });
+
+                skinSelectionContainer.appendChild(option);
+            });
+            const currentSkin = skins.find(s => s.id === selectedSkinId);
+            if (currentSkin.unlock.type !== 'default') {
+                skinUnlockInfo.textContent = `Selected: ${currentSkin.name}`;
+            } else {
+                skinUnlockInfo.textContent = 'Choose your favorite skin!';
+            }
+        }
+
+
+        async function loadAchievements() {
+            achievements = defaultAchievements; // Always have default values
+
+            if (isFirebaseActive) {
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                const docRef = doc(db, 'artifacts', appId, 'users', userId, 'user_data', 'achievements');
+                try {
+                    const docSnap = await getDoc(docRef);
+                    if (docSnap.exists()) {
+                        achievements = { ...defaultAchievements, ...docSnap.data() };
+                    }
+                } catch (e) {
+                    console.error("Error loading achievements from Firestore (Switching to LocalStorage): ", e);
+                    const saved = localStorage.getItem('argyBirdAchievements');
+                    achievements = saved ? { ...defaultAchievements, ...JSON.parse(saved) } : defaultAchievements;
+                }
+            } else {
+                const saved = localStorage.getItem('argyBirdAchievements');
+                achievements = saved ? { ...defaultAchievements, ...JSON.parse(saved) } : defaultAchievements;
+            }
+            // Ensure structure is always complete
+            ['normal', 'hard', 'superhard', 'classic'].forEach(mode => {
+                achievements[mode] = { ...defaultAchievements[mode], ...achievements[mode] };
+            });
+        }
+
+        async function saveAchievements() {
+            if (isFirebaseActive) {
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                const docRef = doc(db, 'artifacts', appId, 'users', userId, 'user_data', 'achievements');
+                try {
+                    await setDoc(docRef, achievements);
+                    console.log("Achievements saved to Firestore.");
+                } catch (e) {
+                    console.error("Error saving achievements to Firestore (Saving to LocalStorage): ", e);
+                    localStorage.setItem('argyBirdAchievements', JSON.stringify(achievements));
+                }
+            } else {
+                localStorage.setItem('argyBirdAchievements', JSON.stringify(achievements));
+            }
+        }
+
+        function updateAchievementsDisplay(mode) {
+            achievementsNormalTab.classList.toggle('active-mode', mode === 'normal');
+            achievementsHardTab.classList.toggle('active-mode', mode === 'hard');
+            achievementsSuperHardTab.classList.toggle('active-mode', mode === 'superhard');
+            achievementsClassicTab.classList.toggle('active-mode', mode === 'classic');
+
+            const medalData = [
+                { key: 'bronze', icon: '🥉', title: 'Bronze Medal', desc: 'Score 10 points' },
+                { key: 'silver', icon: '🥈', title: 'Silver Medal', desc: 'Score 20 points' },
+                { key: 'gold', icon: '🥇', title: 'Gold Medal', desc: 'Score 30 points' },
+                { key: 'platinum', icon: '💎', title: 'Platinum Medal', desc: 'Score 40 points' },
+                { key: 'diamond', icon: '💠', title: 'Diamond Medal', desc: 'Score 50 points' }
+            ];
+
+            medalList.innerHTML = '';
+            medalData.forEach(medal => {
+                const isUnlocked = achievements[mode][medal.key];
+                const medalItem = document.createElement('div');
+                medalItem.className = `medal-item ${isUnlocked ? '' : 'locked'}`;
+                medalItem.innerHTML = `<div class="medal-icon">${isUnlocked ? medal.icon : '?'}</div> <div class="medal-text"> <p class="medal-title">${medal.title}</p> <p class="medal-description">${medal.desc}</p> </div>`;
+                medalList.appendChild(medalItem);
+            });
+        }
+
+        function fetchLeaderboard(mode) {
+            if (!isFirebaseActive) {
+                loadingIndicator.textContent = "Cannot load leaderboard (Firebase connection required).";
+                return;
+            }
+
+            leaderboardNormalTab.classList.toggle('active-mode', mode === 'normal');
+            leaderboardHardTab.classList.toggle('active-mode', mode === 'hard');
+            leaderboardSuperHardTab.classList.toggle('active-mode', mode === 'superhard');
+            leaderboardClassicTab.classList.toggle('active-mode', mode === 'classic');
+
+            leaderboardList.innerHTML = '';
+            loadingIndicator.classList.remove('hidden');
+            loadingIndicator.textContent = "Loading leaderboard...";
+
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+            const leaderboardRef = collection(db, 'artifacts', appId, 'public', 'data', `leaderboard_${mode}`);
+
+            const unsubscribe = onSnapshot(leaderboardRef, (querySnapshot) => {
+                const scores = [];
+                querySnapshot.forEach((doc) => {
+                    scores.push({ ...doc.data(), id: doc.id });
+                });
+
+                // Sort data in JavaScript
+                scores.sort((a, b) => b.score - a.score);
+
+                leaderboardList.innerHTML = '';
+                loadingIndicator.classList.add('hidden');
+
+                const top10Scores = scores.slice(0, 10);
+                let currentUserRank = -1;
+                let currentUserScore = -1;
+                const currentUserEntry = scores.find((s, index) => {
+                    if (s.id === userId) {
+                        currentUserRank = index + 1;
+                        currentUserScore = s.score;
+                        return true;
+                    }
+                    return false;
+                });
+
+                top10Scores.forEach((s, index) => {
+                    const li = document.createElement('li');
+                    li.classList.add(s.id === userId ? 'current-user' : '');
+                    li.innerHTML = `<span>#${index + 1}</span> <span>${s.score}</span>`;
+                    leaderboardList.appendChild(li);
+                });
+
+                if (currentUserEntry && currentUserRank > 10) {
+                    const li = document.createElement('li');
+                    li.classList.add('current-user');
+                    li.innerHTML = `<span>...</span> <span>...</span>`;
+                    leaderboardList.appendChild(li);
+
+                    const userLi = document.createElement('li');
+                    userLi.classList.add('current-user');
+                    userLi.innerHTML = `<span>#${currentUserRank}</span> <span>${currentUserScore}</span>`;
+                    leaderboardList.appendChild(userLi);
+                }
+            }, (error) => {
+                console.error("Error loading leaderboard: ", error);
+                loadingIndicator.textContent = "Cannot load leaderboard.";
+            });
+
+            // Return unsubscribe function to clean up listener later if needed
+            return unsubscribe;
+        }
+
+
+        function initializeGame(mode) {
+            gameMode = mode;
+            bird = { ...birdProps };
+            pipes = [], clouds = [], buildings = [], particles = [], stars = [], mountains = [], nightStars = [], birdTrail = [], powerups = [], gems = [], weatherParticles = [];
+            bats = [];
+            score = 0; gravity = 0.035; pipeProps.frameCount = 0; frameCount = 0; groundOffset = 0; currentThemeIndex = Math.floor(Math.random() * themes.length);
+            sunX = canvas.width - 60; sunY = 60;
+            newHighScoreText.classList.add('hidden');
+            skinUnlockedText.classList.add('hidden');
+            projectiles = []; // Reset projectiles array
+
+            if (gameMode === 'normal') { gameSpeed = 1.8; pipeProps.gap = 140; }
+            else if (gameMode === 'hard') { gameSpeed = 1.9; pipeProps.gap = 130; }
+            else if (gameMode === 'superhard') { gameSpeed = 2.0; pipeProps.gap = 120; gravity = 0.038; }
+            else if (gameMode === 'classic') { gameSpeed = 1.8; pipeProps.gap = 140; }
+
+            for (let i = 0; i < 5; i++) addCloud(canvas.width * Math.random());
+            for (let i = 0; i < 3; i++) addBuilding(canvas.width * Math.random());
+            for (let i = 0; i < 2; i++) addMountain(canvas.width * Math.random());
+            for (let i = 0; i < 50; i++) particles.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, size: Math.random() * 1.5 + 0.5, speed: Math.random() * 0.2 + 0.1, alpha: Math.random() * 0.5, isFirefly: true });
+            for (let i = 0; i < 100; i++) nightStars.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height * 0.8, size: Math.random() * 1.5, alpha: Math.random() });
+
+            // Reset ability stats when starting new game
+            bird.teleportCharges = 3;
+            bird.shieldCharges = 0;
+            bird.lives = selectedSkinId === 'king' ? 1 : 0; // King bird starts with 1 life
+
+            scoreDisplay.textContent = score;
+            scoreDisplay.classList.remove('hidden');
+            startScreen.classList.add('hidden');
+            gameOverScreen.classList.add('hidden');
+
+            // Set up ability button
+            const selectedSkin = skins.find(s => s.id === selectedSkinId);
+            if (selectedSkin.ability && gameMode !== 'classic') {
+                abilityButton.classList.remove('hidden');
+                abilityIcon.textContent = selectedSkin.icon;
+                bird.abilityCooldown = 0;
+                bird.abilityTimer = 0;
+            } else {
+                abilityButton.classList.add('hidden');
+            }
+
+            if (selectedSkinId === 'king') {
+                livesDisplay.classList.remove('hidden');
+                livesDisplay.textContent = `❤️ x ${bird.lives}`; // Display initial lives
+            } else {
+                livesDisplay.classList.add('hidden');
+            }
+
+            gameState = 'playing';
+            gameLoop();
+        }
+
+        function gameLoop() { if (gameState === 'playing') { update(); } draw(); if (gameState !== 'paused' && gameState !== 'gameOver') { requestAnimationFrame(gameLoop); } }
+
+        function update() {
+            frameCount++;
+
+            const selectedSkin = skins.find(s => s.id === selectedSkinId);
+            // Update cooldown timer
+            if (selectedSkin.ability && gameMode !== 'classic') {
+                if (bird.abilityCooldown > 0) {
+                    bird.abilityCooldown--;
+                    const remaining = Math.ceil(bird.abilityCooldown / 60);
+                    abilityCooldownDisplay.textContent = remaining;
+                    abilityCooldownDisplay.classList.remove('hidden');
+                    abilityButton.classList.add('disabled');
+                } else {
+                    if (selectedSkinId === 'ninja' && bird.teleportCharges < 3) {
+                        bird.teleportCharges = 3;
+                    }
+                    abilityCooldownDisplay.classList.add('hidden');
+                    abilityButton.classList.remove('disabled');
+                }
+            }
+
+            // Update ability status
+            if (bird.activeAbility) {
+                bird.abilityTimer--;
+                if (bird.abilityTimer <= 0) {
+                    bird.activeAbility = null;
+                    // End effect
+                    bird.hasShield = false;
+                    bird.invincibleTimer = 0;
+                }
+            }
+
+            if (bird.invincibleTimer > 0) bird.invincibleTimer--;
+            if (bird.shrinkTimer > 0) bird.shrinkTimer--;
+            if (bird.slowdownTimer > 0) bird.slowdownTimer--;
+            if (bird.magnetTimer > 0) bird.magnetTimer--;
+            if (bird.multiplierTimer > 0) bird.multiplierTimer--;
+
+            // Determine current game speed based on power-up and ability
+            let currentSpeed = gameSpeed;
+            if (bird.slowdownTimer > 0) currentSpeed = gameSpeed * 0.5;
+
+            // Add NaN check to ensure valid values
+            if (isNaN(currentSpeed) || isNaN(gameSpeed) || gameSpeed === 0) {
+                currentSpeed = gameSpeed;
+            }
+
+            bird.velocity += gravity;
+            bird.y += bird.velocity;
+
+            // Update sun position. Check NaN to ensure valid values.
+            if (!isNaN(sunX)) {
+                sunX -= 0.1 * (currentSpeed / gameSpeed);
+            } else {
+                sunX = canvas.width - 60; // Reset if it becomes NaN
+            }
+
+            birdTrail.push({ x: bird.x, y: bird.y, rotation: Math.min(Math.max(-0.5, bird.velocity * 0.1), 0.5) });
+            if (birdTrail.length > 5) birdTrail.shift();
+
+            const isInvincible = bird.invincibleTimer > 0;
+            const isGhost = selectedSkinId === 'ghost' && isInvincible;
+
+            // Update boundary collision logic
+            if (bird.y + bird.height / 2 > canvas.height - groundHeight || bird.y - bird.height / 2 < 0) {
+                if (isInvincible || isGhost) {
+                    // Keep bird in screen but don't end game
+                    bird.y = Math.min(Math.max(bird.y, bird.height / 2), canvas.height - groundHeight - bird.height / 2);
+                    bird.velocity = 0;
+                } else {
+                    endGame();
+                }
+            }
+
+            groundOffset = (groundOffset - currentSpeed) % 40;
+
+            [...mountains, ...clouds, ...buildings].forEach(el => {
+                el.x -= el.speed * (currentSpeed / gameSpeed);
+                if (el.x + (el.width || 150) < 0) { el.x = canvas.width; if (el.isMountain) { el.waterfalls = [{ start: Math.random() * 0.6 + 0.2, length: Math.random() * 20 + 20 }]; } }
+            });
+
+            updateWeatherParticles(currentSpeed);
+
+            particles.forEach(p => { p.x -= p.speed * (currentSpeed / gameSpeed); if (p.isFirefly && currentThemeIndex === 2) { p.alpha = 0.5 + Math.sin(frameCount * 0.1 + p.x) * 0.5; } if (p.x < 0) p.x = canvas.width; });
+
+            if (Math.random() < 0.005 && clouds.length < 7) addCloud();
+
+            pipeProps.frameCount++;
+            if (pipeProps.frameCount % Math.round(130 * (gameSpeed / currentSpeed)) === 0) addPipe();
+
+            // Bats only appear in Super Hard mode with extremely low frequency
+            if (gameMode === 'superhard' && Math.random() < 0.0002) {
+                addBat();
+            }
+
+            const birdSize = bird.shrinkTimer > 0 ? 0.6 : 1;
+            for (let i = pipes.length - 1; i >= 0; i--) {
+                // Add safety check for pipes that might have been deleted by projectiles
+                const pipe = pipes[i];
+                if (!pipe) continue;
+
+                pipe.x -= currentSpeed;
+                if (pipe.moving) { pipe.topHeight += pipe.moveSpeed * pipe.moveDirection * (currentSpeed / gameSpeed); if (pipe.topHeight < 80 || pipe.topHeight > canvas.height - pipeProps.gap - 80 - groundHeight) { pipe.moveDirection *= -1; } }
+
+                // Collision with pipes
+                const isCollidingWithPipe = bird.x + (bird.width / 2 * birdSize) > pipe.x && bird.x - (bird.width / 2 * birdSize) < pipe.x + pipeProps.width && (bird.y - (bird.height / 2 * birdSize) < pipe.topHeight || bird.y + (bird.height / 2 * birdSize) > pipe.topHeight + pipeProps.gap);
+
+                if (isCollidingWithPipe) {
+                    if (!isInvincible && !isGhost) {
+                        endGame();
+                    }
+                }
+
+                // Scoring
+                if (pipe.x + pipeProps.width < bird.x && !pipe.passed) {
+                    const points = bird.multiplierTimer > 0 ? 2 : 1;
+                    score += points;
+                    playSound('score');
+                    scoreDisplay.textContent = score;
+                    scoreDisplay.classList.add('score-pop');
+                    createScoreParticles(pipe.x + pipeProps.width / 2, pipe.topHeight + pipeProps.gap / 2); // Add particle effect
+                    setTimeout(() => scoreDisplay.classList.remove('score-pop'), 100);
+                    pipe.passed = true;
+                    if (score > 0 && score % 10 === 0) { currentThemeIndex = (currentThemeIndex + 1) % themes.length; sunX = canvas.width + 60; }
+                }
+                if (pipe.x + pipeProps.width < 0) pipes.splice(i, 1);
+            }
+
+            // Update bat positions and check collision
+            for (let i = bats.length - 1; i >= 0; i--) {
+                const bat = bats[i];
+                bat.x -= currentSpeed;
+                // Move bats in sine wave pattern
+                bat.y = bat.initialY + Math.sin(frameCount * bat.speed + bat.sinOffset) * bat.amplitude;
+
+                const batRect = { x: bat.x, y: bat.y, width: bat.width, height: bat.height };
+                const birdRect = { x: bird.x - bird.width / 2 * birdSize, y: bird.y - bird.height / 2 * birdSize, width: bird.width * birdSize, height: bird.height * birdSize };
+
+                if (checkCollision(birdRect, batRect)) {
+                    if (!isInvincible) {
+                        endGame();
+                    }
+                }
+
+                if (bat.x + bat.width < 0) {
+                    bats.splice(i, 1);
+                }
+            }
+
+            // Handle projectiles
+            for (let i = projectiles.length - 1; i >= 0; i--) {
+                const projectile = projectiles[i];
+                projectile.x += projectile.speed;
+
+                if (projectile.type === 'fireball') {
+                    for (let j = pipes.length - 1; j >= 0; j--) {
+                        const pipe = pipes[j];
+                        if (checkCollision({ x: projectile.x, y: projectile.y, width: projectile.size, height: projectile.size },
+                            { x: pipe.x, y: 0, width: pipeProps.width, height: canvas.height })) {
+                            createStarParticles(pipe.x + pipeProps.width / 2, pipe.topHeight + pipeProps.gap / 2, false, '255, 165, 0');
+                            pipes.splice(j, 1);
+                            projectiles.splice(i, 1);
+                            break;
+                        }
+                    }
+                } else if (projectile.type === 'iceblast') {
+                    for (let j = pipes.length - 1; j >= 0; j--) {
+                        const pipe = pipes[j];
+                        if (checkCollision({ x: projectile.x, y: projectile.y, width: projectile.size, height: projectile.size },
+                            { x: pipe.x, y: 0, width: pipeProps.width, height: canvas.height })) {
+                            createStarParticles(pipe.x + pipeProps.width / 2, pipe.topHeight + pipeProps.gap / 2, false, '0, 191, 255');
+                            pipe.moving = false;
+                            projectiles.splice(i, 1);
+                            break;
+                        }
+                    }
+                }
+                if (projectile && projectile.x > canvas.width) {
+                    projectiles.splice(i, 1);
+                }
+            }
+
+
+            const magnetRadius = 80;
+            [...stars, ...gems].forEach(item => {
+                if (bird.magnetTimer > 0 && Math.hypot(bird.x - item.x, bird.y - item.y) < magnetRadius) {
+                    item.x += (bird.x - item.x) * 0.1;
+                    item.y += (bird.y - item.y) * 0.1;
+                }
+            });
+
+            for (let i = stars.length - 1; i >= 0; i--) {
+                const star = stars[i];
+                star.x -= currentSpeed; star.angle += 0.05;
+                if (Math.hypot(bird.x - star.x, bird.y - star.y) < 22) { playSound('collect'); score += 2; scoreDisplay.textContent = score; createStarParticles(star.x, star.y, true); stars.splice(i, 1); }
+                else if (star.x < -10) { stars.splice(i, 1); }
+            }
+
+            for (let i = gems.length - 1; i >= 0; i--) {
+                const gem = gems[i];
+                gem.x -= currentSpeed; gem.angle += 0.02;
+                if (Math.hypot(bird.x - gem.x, bird.y - gem.y) < 25) { playSound('gem'); score += 5; scoreDisplay.textContent = score; createStarParticles(gem.x, gem.y, false, '#FF4081'); gems.splice(i, 1); }
+                else if (gem.x < -20) { gems.splice(i, 1); }
+            }
+
+            for (let i = powerups.length - 1; i >= 0; i--) {
+                const powerup = powerups[i];
+                powerup.x -= currentSpeed;
+                if (Math.hypot(bird.x - powerup.x, bird.y - powerup.y) < 25) {
+                    playSound('powerup');
+                    if (powerup.type === 'shield') { bird.hasShield = true; createStarParticles(powerup.x, powerup.y, false, '#00BFFF'); }
+                    if (powerup.type === 'shrink') { bird.shrinkTimer = 300; createStarParticles(powerup.x, powerup.y, false, '#9C27B0'); }
+                    if (powerup.type === 'slow') { bird.slowdownTimer = 300; createStarParticles(powerup.x, powerup.y, false, '#80DEEA'); }
+                    if (powerup.type === 'magnet') { bird.magnetTimer = 300; createStarParticles(powerup.x, powerup.y, false, '#757575'); }
+                    if (powerup.type === 'multiplier') { bird.multiplierTimer = 300; playSound('multiplier'); }
+                    powerups.splice(i, 1);
+                } else if (powerup.x < -20) { powerups.splice(i, 1); }
+            }
+
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                if (p.vx) p.x += p.vx;
+                if (p.vy) p.y += p.vy;
+                if (p.vy !== undefined) p.vy += 0.05;
+                if (!p.isFirefly) p.alpha -= 0.02;
+                if (p.alpha <= 0 && !p.isFirefly) particles.splice(i, 1);
+            }
+
+            nightStars.forEach(s => { if (Math.random() < 0.01) s.alpha = Math.random(); });
+        }
+
+        function draw() {
+            const theme = themes[currentThemeIndex]; const skyGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            skyGradient.addColorStop(0, theme.sky1); skyGradient.addColorStop(1, theme.sky2);
+            ctx.fillStyle = skyGradient; ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            drawAtmosphericEffects(); if (currentThemeIndex === 2) drawNightStars();
+            drawMountains(); drawParticles(particles.filter(p => !p.isFeather && !p.isStar && !p.isFirefly && !p.isShield));
+            drawClouds(); drawBuildings(); drawPipes();
+
+            if (gameMode !== 'classic') {
+                drawStars();
+                drawGems();
+                drawPowerups();
+            }
+
+            drawGround();
+            drawWeather();
+            drawProjectiles(); // Draw projectiles
+            if (bird && gameState !== 'gameOver') {
+                drawBats();
+                drawBirdTrail();
+                drawBird(ctx, bird, skins.find(s => s.id === selectedSkinId), frameCount);
+            }
+            drawParticles(particles.filter(p => p.isStar || p.isFeather || p.isFirefly || p.isShield));
+
+            if (bird && bird.slowdownTimer > 0) {
+                ctx.fillStyle = `rgba(0, 150, 255, ${0.2 * (bird.slowdownTimer / 600)})`; // Increase slow duration
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+
+            // Ability effects and indicators
+            const selectedSkin = skins.find(s => s.id === selectedSkinId);
+            if (selectedSkin.ability && gameMode !== 'classic') {
+                switch (selectedSkin.ability) {
+                    case 'teleport':
+                        abilityCooldownDisplay.textContent = bird.abilityCooldown > 0 ? Math.ceil(bird.abilityCooldown / 60) : `${bird.teleportCharges}/3`;
+                        break;
+                    case 'shield':
+                        abilityCooldownDisplay.textContent = bird.abilityCooldown > 0 ? Math.ceil(bird.abilityCooldown / 60) : `${bird.shieldCharges}`;
+                        break;
+                    case 'lives':
+                        livesDisplay.textContent = `❤️ x ${bird.lives}`;
+                        abilityCooldownDisplay.textContent = bird.abilityCooldown > 0 ? Math.ceil(bird.abilityCooldown / 60) : '';
+                        break;
+                    default:
+                        abilityCooldownDisplay.textContent = bird.abilityCooldown > 0 ? Math.ceil(bird.abilityCooldown / 60) : '';
+                }
+            }
+
+            if (selectedSkin.ability === 'goldrush' && bird.multiplierTimer > 0) {
+                ctx.fillStyle = `rgba(255, 215, 0, ${0.4 + Math.sin(frameCount * 0.2) * 0.2})`;
+                ctx.font = '24px "Press Start 2P"';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('x2', canvas.width / 2, 80);
+            }
+
+
+            if (gameState === 'paused') { ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'; ctx.fillRect(0, 0, canvas.width, canvas.height); }
+        }
+
+        function drawAtmosphericEffects() {
+            if (currentThemeIndex < 2) {
+                // Improve atmospheric effect by linking opacity to sun position.
+                // Opacity will decrease as sun moves across screen, creating sunset effect.
+                // Check NaN and limit sunOpacity
+                let sunOpacity = Math.max(0, sunX / canvas.width);
+                if (isNaN(sunOpacity)) {
+                    sunOpacity = 0;
+                }
+
+                for (let i = 0; i < 15; i++) {
+                    const angle = (i / 15) * Math.PI * 2;
+                    const length = canvas.width * 1.5;
+                    const endX = sunX + Math.cos(angle) * length;
+                    const endY = sunY + Math.sin(angle) * length;
+                    const grad = ctx.createLinearGradient(sunX, sunY, endX, endY);
+                    // Use sunOpacity to control sunray brightness
+                    grad.addColorStop(0, `rgba(255, 255, 224, ${0.05 * sunOpacity})`);
+                    grad.addColorStop(0.2, 'rgba(255, 255, 224, 0)');
+                    ctx.strokeStyle = grad;
+                    ctx.lineWidth = Math.random() * 20 + 10;
+                    ctx.beginPath();
+                    ctx.moveTo(sunX, sunY);
+                    ctx.lineTo(endX, endY);
+                    ctx.stroke();
+                }
+            }
+            drawSunOrMoon();
+        }
+
+        function drawSunOrMoon() {
+            const theme = themes[currentThemeIndex]; ctx.fillStyle = theme.sun; ctx.beginPath(); ctx.arc(sunX, sunY, 30, 0, Math.PI * 2); ctx.fill();
+            if (currentThemeIndex === 2) { ctx.fillStyle = theme.sky1; ctx.beginPath(); ctx.arc(sunX - 15, sunY - 10, 28, 0, Math.PI * 2); ctx.fill(); }
+            else { ctx.fillStyle = 'rgba(255, 255, 255, 0.2)'; ctx.beginPath(); ctx.arc(sunX, sunY, 45, 0, Math.PI * 2); ctx.fill(); }
+        }
+
+        function drawNightStars() { for (const star of nightStars) { ctx.fillStyle = `rgba(255, 255, 255, ${star.alpha})`; ctx.fillRect(star.x, star.y, star.size, star.size); } }
+        function addMountain(xPos = canvas.width) { mountains.push({ x: xPos, width: Math.random() * 100 + 150, height: Math.random() * 80 + 70, speed: 0.1, isMountain: true, waterfalls: [{ start: Math.random() * 0.6 + 0.2, length: Math.random() * 20 + 20 }] }); }
+        function drawMountains() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            for (const m of mountains) {
+                ctx.beginPath(); ctx.moveTo(m.x, canvas.height - groundHeight); ctx.lineTo(m.x + m.width / 2, canvas.height - m.height - groundHeight); ctx.lineTo(m.x + m.width, canvas.height - groundHeight); ctx.closePath(); ctx.fill();
+                m.waterfalls.forEach(fall => {
+                    const startX = m.x + (m.width / 2) * (fall.start + 0.5); const startY = canvas.height - m.height - groundHeight + (m.height * fall.start * 0.5); const grad = ctx.createLinearGradient(startX, startY, startX, startY + fall.length);
+                    grad.addColorStop(0, `rgba(255, 255, 255, ${0.4 + Math.sin(frameCount * 0.2) * 0.3})`); grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                    ctx.strokeStyle = grad; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(startX, startY); ctx.lineTo(startX, startY + fall.length); ctx.stroke();
+                });
+            }
+        }
+
+        function updateWeatherParticles(currentSpeed) {
+            const theme = themes[currentThemeIndex];
+            if (theme.weather === 'none' && weatherParticles.length > 0) {
+                weatherParticles.forEach(p => p.alpha -= 0.05);
+            }
+            if (theme.weather === 'rain') {
+                if (weatherParticles.length < 100) weatherParticles.push({ x: Math.random() * canvas.width, y: -10, length: Math.random() * 10 + 10, speed: Math.random() * 2 + 3, alpha: 1, type: 'rain' });
+            } else if (theme.weather === 'snow') {
+                if (weatherParticles.length < 100) weatherParticles.push({ x: Math.random() * canvas.width, y: -10, size: Math.random() * 2 + 1, speed: Math.random() * 0.5 + 0.5, drift: Math.random() - 0.5, alpha: 1, type: 'snow' });
+            }
+
+            for (let i = weatherParticles.length - 1; i >= 0; i--) {
+                const p = weatherParticles[i];
+                if (p.type === 'rain') {
+                    p.y += p.speed * (currentSpeed / gameSpeed);
+                    if (p.y > canvas.height) weatherParticles.splice(i, 1);
+                } else if (p.type === 'snow') {
+                    p.y += p.speed * (currentSpeed / gameSpeed);
+                    p.x += p.drift * (currentSpeed / gameSpeed);
+                    if (p.y > canvas.height) weatherParticles.splice(i, 1);
+                }
+                if (p.alpha <= 0) weatherParticles.splice(i, 1);
+            }
+        }
+
+        function drawWeather() {
+            weatherParticles.forEach(p => {
+                if (p.type === 'rain') {
+                    ctx.strokeStyle = `rgba(176, 190, 197, ${0.5 * p.alpha})`;
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    ctx.moveTo(p.x, p.y);
+                    ctx.lineTo(p.x - 2, p.y + p.length);
+                    ctx.stroke();
+                } else if (p.type === 'snow') {
+                    ctx.fillStyle = `rgba(255, 255, 255, ${0.8 * p.alpha})`;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            });
+        }
+
+        function addBuilding(xPos = canvas.width) { buildings.push({ x: xPos, width: Math.random() * 40 + 30, height: Math.random() * 100 + 80, speed: 0.3 }); }
+        function drawBuildings() { ctx.fillStyle = 'rgba(0, 0, 0, 0.2)'; for (const b of buildings) { ctx.fillRect(b.x, canvas.height - b.height - groundHeight, b.width, b.height); } }
+        function addCloud(xPos = canvas.width) {
+            const puffs = []; const numPuffs = Math.floor(Math.random() * 3) + 3;
+            for (let i = 0; i < numPuffs; i++) { puffs.push({ offsetX: (Math.random() - 0.5) * 40, offsetY: (Math.random() - 0.5) * 10, size: Math.random() * 15 + 10 }); }
+            clouds.push({ x: xPos, y: Math.random() * (canvas.height / 2.5) + 20, speed: Math.random() * 0.4 + 0.2, puffs: puffs });
+        }
+        function drawClouds() { ctx.fillStyle = 'rgba(255, 255, 255, 0.8)'; for (const c of clouds) { c.puffs.forEach(p => { ctx.beginPath(); ctx.arc(c.x + p.offsetX, c.y + p.offsetY, p.size, 0, 2 * Math.PI); ctx.fill(); }); } }
+        function drawGround() {
+            const t = themes[currentThemeIndex]; const groundGradient = ctx.createLinearGradient(0, canvas.height - groundHeight, 0, canvas.height);
+            groundGradient.addColorStop(0, t.ground1); groundGradient.addColorStop(1, t.ground2);
+            ctx.fillStyle = groundGradient; ctx.fillRect(0, canvas.height - groundHeight, canvas.width, groundHeight);
+            ctx.fillStyle = t.ground2; ctx.fillRect(0, canvas.height - groundHeight, canvas.width, 3);
+            ctx.save(); ctx.strokeStyle = 'rgba(0,0,0,0.1)'; ctx.lineWidth = 2;
+            for (let i = 0; i < canvas.width / 2; i++) { const x = (i * 10 + groundOffset) % (canvas.width + 40) - 20; const y = canvas.height - groundHeight + 3; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + Math.random() * 2 - 1, y + Math.random() * 5 + 3); ctx.stroke(); }
+            ctx.restore();
+        }
+
+        function drawBirdTrail() { for (let i = 0; i < birdTrail.length; i++) { const alpha = (i + 1) / birdTrail.length * 0.3; ctx.save(); ctx.translate(birdTrail[i].x, birdTrail[i].y); ctx.rotate(birdTrail[i].rotation); ctx.fillStyle = `rgba(255, 255, 0, ${alpha})`; ctx.beginPath(); ctx.arc(0, 0, 12, 0, 2 * Math.PI); ctx.fill(); ctx.restore(); } }
+
+
+        function drawBird(c, b, skin, fCount) {
+            c.save();
+
+            const isGhostActive = selectedSkinId === 'ghost' && b.invincibleTimer > 0;
+            if ((b.invincibleTimer > 0 && fCount % 10 < 5) || isGhostActive) { c.globalAlpha = isGhostActive ? 0.4 : 0.5; }
+            const scale = b.shrinkTimer > 0 ? 0.6 : 1;
+            if (b.shrinkTimer > 0 && b.shrinkTimer < 120 && fCount % 10 < 5) { c.globalAlpha = 0.5; }
+
+            c.translate(b.x, b.y); c.rotate(Math.min(Math.max(-0.5, b.velocity * 0.1), 0.5)); c.scale(scale, scale);
+
+            if (b.hasShield || b.shieldCharges > 0) {
+                c.beginPath(); const shieldGradient = c.createRadialGradient(0, 0, 15, 0, 0, 22);
+                shieldGradient.addColorStop(0, 'rgba(0, 191, 255, 0)'); shieldGradient.addColorStop(0.8, 'rgba(0, 191, 255, 0.5)'); shieldGradient.addColorStop(1, 'rgba(255, 255, 255, 0.8)');
+                c.fillStyle = shieldGradient; c.arc(0, 0, 22, 0, Math.PI * 2); c.fill();
+                if (b.shieldCharges > 0) {
+                    c.fillStyle = 'white'; c.font = '10px "Press Start 2P"'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(b.shieldCharges, 0, 0);
+                }
+            }
+
+            if (b.magnetTimer > 0) {
+                c.beginPath();
+                const magnetGradient = c.createRadialGradient(0, 0, 20, 0, 0, 40);
+                const alpha = 0.3 * (b.magnetTimer / 300);
+                magnetGradient.addColorStop(0, `rgba(200, 200, 255, ${alpha})`);
+                magnetGradient.addColorStop(1, 'rgba(200, 200, 255, 0)');
+                c.fillStyle = magnetGradient;
+                c.arc(0, 0, 40, 0, Math.PI * 2);
+                c.fill();
+            }
+
+
+            c.shadowColor = 'rgba(0,0,0,0.3)'; c.shadowBlur = 5; c.shadowOffsetX = 2; c.shadowOffsetY = 2;
+
+            c.fillStyle = skin.tail; c.beginPath(); c.moveTo(-10, 0); c.quadraticCurveTo(-18, 8, -22, 5); c.quadraticCurveTo(-18, 0, -10, -2); c.closePath(); c.fill(); c.stroke();
+
+            const bodyGradient = c.createRadialGradient(0, 0, 1, 0, 0, 14); bodyGradient.addColorStop(0, skin.body1); bodyGradient.addColorStop(1, skin.body2);
+            c.fillStyle = bodyGradient; c.beginPath(); c.arc(0, 0, 12, 0, 2 * Math.PI); c.fill();
+            c.strokeStyle = skin.id === 'ghost' ? 'rgba(255,255,255,0.8)' : '#333'; c.lineWidth = 2; c.stroke();
+
+            const wingY = Math.sin(fCount * 0.5) * 4;
+            c.save(); c.rotate(-0.2); c.fillStyle = skin.wing; c.beginPath(); c.moveTo(-5, wingY); c.quadraticCurveTo(0, wingY - 10, 8, wingY - 2); c.quadraticCurveTo(5, wingY + 8, -5, wingY); c.closePath(); c.fill(); c.stroke(); c.restore();
+
+            if (skin.eyeGlow) {
+                c.fillStyle = '#FF5252'; c.beginPath(); c.arc(5, -4, 3, 0, 2 * Math.PI); c.fill();
+                c.fillStyle = `rgba(255, 82, 82, ${0.5 + Math.sin(fCount * 0.2) * 0.3})`; c.beginPath(); c.arc(5, -4, 6, 0, Math.PI * 2); c.fill();
+            } else if (fCount % 200 > 5) {
+                c.fillStyle = 'black'; c.beginPath(); c.arc(5, -4, 2.5, 0, 2 * Math.PI); c.fill();
+                c.fillStyle = 'white'; c.beginPath(); c.arc(6, -5, 0.8, 0, Math.PI * 2); c.fill();
+            } else { c.strokeStyle = 'black'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(3, -4); c.lineTo(7, -4); c.stroke(); }
+
+            c.fillStyle = skin.beak; c.beginPath(); c.moveTo(10, -2); c.lineTo(18, 0); c.lineTo(10, 2); c.closePath(); c.fill(); c.stroke();
+            c.fillStyle = 'rgba(255,255,255,0.3)'; c.beginPath(); c.moveTo(12, -1); c.lineTo(16, 0); c.lineTo(12, 0); c.closePath(); c.fill();
+
+            if (skin.crown) {
+                c.fillStyle = '#FFD700'; c.strokeStyle = '#FFA000';
+                c.beginPath(); c.moveTo(-6, -11); c.lineTo(-8, -18); c.lineTo(0, -14); c.lineTo(8, -18); c.lineTo(6, -11); c.closePath(); c.fill(); c.stroke();
+            }
+            c.restore();
+        }
+
+        function createScoreParticles(x, y) {
+            for (let i = 0; i < 20; i++) {
+                particles.push({
+                    x, y,
+                    vx: (Math.random() - 0.5) * 4,
+                    vy: (Math.random() - 0.5) * 4,
+                    size: Math.random() * 2 + 1,
+                    alpha: 1,
+                    isStar: true
+                });
+            }
+        }
+
+        function drawParticles(particleArray) {
+            particleArray.forEach(p => {
+                let color;
+                if (p.isStar) color = `rgba(255, 215, 0, ${p.alpha})`;
+                else if (p.isFeather) color = `rgba(255, 255, 255, ${p.alpha})`;
+                else if (p.isFirefly) color = `rgba(220, 255, 180, ${p.alpha})`;
+                else if (p.isShield) color = `rgba(${p.color}, ${p.alpha})`;
+                else color = `rgba(255, 255, 255, ${p.alpha})`;
+                if (p.isFirefly) { const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 2); grad.addColorStop(0, color); grad.addColorStop(1, 'rgba(220, 255, 180, 0)'); ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(p.x, p.y, p.size * 2, 0, Math.PI * 2); ctx.fill(); }
+                else { ctx.fillStyle = color; ctx.fillRect(p.x, p.y, p.size, p.size); }
+            });
+        }
+
+        function drawStars() { for (const star of stars) { ctx.save(); ctx.translate(star.x, star.y); ctx.rotate(star.angle); ctx.fillStyle = '#FFD700'; ctx.strokeStyle = '#FFA500'; ctx.lineWidth = 2; ctx.beginPath(); for (let i = 0; i < 5; i++) { ctx.lineTo(Math.cos((18 + i * 72) / 180 * Math.PI) * 10, -Math.sin((18 + i * 72) / 180 * Math.PI) * 10); ctx.lineTo(Math.cos((54 + i * 72) / 180 * Math.PI) * 4, -Math.sin((54 + i * 72) / 180 * Math.PI) * 4); } ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore(); } }
+
+        function drawGems() {
+            for (const gem of gems) {
+                ctx.save();
+                ctx.translate(gem.x, gem.y);
+                ctx.rotate(gem.angle);
+                ctx.fillStyle = '#FF4081';
+                ctx.strokeStyle = '#F8BBD0';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(0, -12); ctx.lineTo(10, 0); ctx.lineTo(0, 12); ctx.lineTo(-10, 0);
+                ctx.closePath();
+                ctx.fill(); ctx.stroke();
+                ctx.fillStyle = 'rgba(255,255,255,0.5)';
+                ctx.beginPath(); ctx.moveTo(12, -1); ctx.lineTo(16, 0); ctx.lineTo(12, 0); ctx.closePath(); ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        function drawPowerups() {
+            for (const p of powerups) {
+                ctx.save(); ctx.translate(p.x, p.y);
+                if (p.type === 'shield') {
+                    ctx.fillStyle = `rgba(0, 191, 255, ${0.7 + Math.sin(frameCount * 0.1) * 0.3})`; ctx.strokeStyle = 'white'; ctx.lineWidth = 2;
+                    ctx.beginPath(); ctx.moveTo(0, -15); ctx.lineTo(12, -5); ctx.lineTo(8, 12); ctx.lineTo(-8, 12); ctx.lineTo(-12, -5); ctx.closePath(); ctx.fill(); ctx.stroke();
+                } else if (p.type === 'shrink') {
+                    ctx.fillStyle = `rgba(156, 39, 176, ${0.8 + Math.sin(frameCount * 0.1) * 0.2})`; ctx.strokeStyle = 'white'; ctx.lineWidth = 2;
+                    ctx.beginPath(); ctx.arc(0, 0, 10, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+                    ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.beginPath(); ctx.arc(-3, -2, 2, 0, Math.PI * 2); ctx.fill();
+                } else if (p.type === 'slow') {
+                    ctx.fillStyle = `rgba(128, 222, 234, ${0.8 + Math.sin(frameCount * 0.1) * 0.2})`; ctx.strokeStyle = 'white'; ctx.lineWidth = 2;
+                    ctx.beginPath(); ctx.arc(0, 0, 12, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+                    ctx.strokeStyle = '#333'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -6); ctx.moveTo(0, 0); ctx.lineTo(4, 0); ctx.stroke();
+                } else if (p.type === 'magnet') {
+                    ctx.fillStyle = `rgba(158, 158, 158, ${0.8 + Math.sin(frameCount * 0.1) * 0.2})`; ctx.strokeStyle = 'white'; ctx.lineWidth = 2;
+                    ctx.beginPath(); ctx.arc(0, 0, 12, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+                    ctx.fillStyle = '#E53935'; ctx.fillRect(-6, -3, 5, 6);
+                    ctx.fillStyle = '#9E9E9E'; ctx.fillRect(1, -3, 5, 6);
+                } else if (p.type === 'multiplier') {
+                    ctx.fillStyle = `rgba(255, 215, 0, ${0.8 + Math.sin(frameCount * 0.1) * 0.2})`; ctx.strokeStyle = 'white'; ctx.lineWidth = 2;
+                    ctx.font = '16px "Press Start 2P"'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('x2', 0, 0);
+                    ctx.restore();
+                    return;
+                }
+                ctx.restore();
+            }
+        }
+
+        function drawProjectiles() {
+            projectiles.forEach(p => {
+                if (p.type === 'fireball') {
+                    const grad = ctx.createRadialGradient(p.x, p.y, 1, p.x, p.y, p.size);
+                    grad.addColorStop(0, 'rgba(255, 215, 0, 1)');
+                    grad.addColorStop(0.5, 'rgba(255, 100, 0, 0.8)');
+                    grad.addColorStop(1, 'rgba(255, 0, 0, 0)');
+                    ctx.fillStyle = grad;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (p.type === 'iceblast') {
+                    const grad = ctx.createRadialGradient(p.x, p.y, 1, p.x, p.y, p.size);
+                    grad.addColorStop(0, 'rgba(173, 216, 230, 1)');
+                    grad.addColorStop(0.5, 'rgba(0, 191, 255, 0.8)');
+                    grad.addColorStop(1, 'rgba(0, 0, 255, 0)');
+                    ctx.fillStyle = grad;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            });
+        }
+
+        function addPipe() {
+            const topHeight = Math.floor(Math.random() * (canvas.height - pipeProps.gap - 200 - groundHeight)) + 100;
+            const movingThreshold = gameMode === 'hard' ? 20 : (gameMode === 'superhard' ? 10 : Infinity);
+            const isMoving = score >= movingThreshold && Math.random() > 0.5;
+            const textures = []; for (let i = 0; i < 5; i++) { textures.push({ x: Math.random(), y: Math.random(), size: Math.random() * 4 + 3, color: Math.random() > 0.5 ? 'rgba(139, 69, 19, 0.2)' : 'rgba(34, 139, 34, 0.2)' }); }
+            pipes.push({ x: canvas.width, topHeight, passed: false, moving: isMoving, moveSpeed: 0.5, moveDirection: Math.random() > 0.5 ? 1 : -1, textures });
+
+            if (gameMode !== 'classic') {
+                const spawnPoint = { x: canvas.width + pipeProps.width / 2, y: topHeight + pipeProps.gap / 2 };
+                const random = Math.random();
+                if (random > 0.9) { gems.push({ ...spawnPoint, angle: 0 }); }
+                else if (random > 0.5) { stars.push({ ...spawnPoint, angle: 0 }); }
+
+                const powerupChance = gameMode === 'superhard' ? 0.10 : 0.18;
+                if (score > 5 && Math.random() < powerupChance) {
+                    const types = ['shield', 'shrink', 'slow', 'magnet', 'multiplier'];
+                    const type = types[Math.floor(Math.random() * types.length)];
+                    powerups.push({ ...spawnPoint, type });
+                }
+            }
+        }
+
+        function drawPipes() {
+            const theme = themes[currentThemeIndex];
+            for (const p of pipes) {
+                const topHeight = p.topHeight;
+                const bottomY = p.topHeight + pipeProps.gap;
+                const pipeX = p.x;
+                const pipeWidth = pipeProps.width;
+
+                // Vertical gradient for entire pipe body
+                const pipeGradient = ctx.createLinearGradient(0, topHeight, 0, topHeight + pipeProps.gap);
+                pipeGradient.addColorStop(0, theme.pipe1);
+                pipeGradient.addColorStop(1, theme.pipe2);
+
+                // Top pipe body
+                ctx.fillStyle = pipeGradient;
+                ctx.fillRect(pipeX, 0, pipeWidth, topHeight);
+
+                // Top pipe cap
+                ctx.fillStyle = theme.pipe1;
+                ctx.fillRect(pipeX - 5, topHeight - 10, pipeWidth + 10, 10);
+
+                // Bottom pipe body
+                ctx.fillStyle = pipeGradient;
+                ctx.fillRect(pipeX, bottomY, pipeWidth, canvas.height - bottomY - groundHeight);
+
+                // Bottom pipe cap
+                ctx.fillStyle = theme.pipe1;
+                ctx.fillRect(pipeX - 5, bottomY, pipeWidth + 10, 10);
+
+                // Shadow effect
+                ctx.fillStyle = 'rgba(0,0,0,0.2)';
+                ctx.fillRect(pipeX, 0, 5, topHeight);
+                ctx.fillRect(pipeX, bottomY, 5, canvas.height - bottomY - groundHeight);
+
+                // Surface effect
+                p.textures.forEach(t => {
+                    ctx.fillStyle = t.color;
+                    ctx.fillRect(pipeX + t.x * pipeWidth, t.y * topHeight, t.size, t.size);
+                    ctx.fillRect(pipeX + t.x * pipeWidth, bottomY + t.y * (canvas.height - bottomY - groundHeight), t.size, t.size);
+                });
+            }
+        }
+
+        // New: Bats
+        function addBat() {
+            const startY = Math.random() * (canvas.height - 100 - groundHeight) + 50;
+            bats.push({
+                x: canvas.width,
+                y: startY,
+                initialY: startY,
+                width: 8, // Very small bat size
+                height: 6, // Very small bat size
+                speed: 0.005, // Very slow movement speed
+                amplitude: Math.random() * 80 + 40,
+                sinOffset: Math.random() * Math.PI * 2
+            });
+        }
+
+        // New: Draw bats
+        function drawBats() {
+            for (const bat of bats) {
+                ctx.fillStyle = '#424242';
+                ctx.strokeStyle = '#212121';
+                ctx.lineWidth = 1.5;
+
+                // Bat body
+                ctx.beginPath();
+                ctx.arc(bat.x, bat.y, 4, 0, Math.PI * 2); // Smaller radius
+                ctx.fill();
+                ctx.stroke();
+
+                // Bat wings (using bezier curves for shape)
+                const wingOffset = Math.sin(frameCount * 0.2) * 3; // Lighter wing flap animation
+                ctx.beginPath();
+                ctx.moveTo(bat.x, bat.y);
+                ctx.quadraticCurveTo(bat.x - 8, bat.y - 10 + wingOffset, bat.x - 15, bat.y - 4);
+                ctx.quadraticCurveTo(bat.x - 10, bat.y, bat.x, bat.y);
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(bat.x, bat.y);
+                ctx.quadraticCurveTo(bat.x + 8, bat.y - 10 + wingOffset, bat.x + 15, bat.y - 4);
+                ctx.quadraticCurveTo(bat.x + 10, bat.y, bat.x, bat.y);
+                ctx.fill();
+                ctx.stroke();
+            }
+        }
+
+        // New: Rectangle collision check
+        function checkCollision(rect1, rect2) {
+            return rect1.x < rect2.x + rect2.width &&
+                rect1.x + rect1.width > rect2.x &&
+                rect1.y < rect2.y + rect2.height &&
+                rect1.y + rect1.height > rect2.y;
+        }
+
+        function birdFlap() { if (gameState === 'playing') { playSound('flap'); bird.velocity = birdProps.lift; createFeatherParticles(bird.x, bird.y); } }
+        function createFeatherParticles(x, y) { for (let i = 0; i < 3; i++) { particles.push({ x, y, vx: (Math.random() - 0.5) * 1, vy: (Math.random() - 0.5) * 1, size: Math.random() * 2 + 1, alpha: 1, isFeather: true }); } }
+        function createStarParticles(x, y, isStar, color) {
+            for (let i = 0; i < (isStar ? 15 : 20); i++) {
+                const p = { x, y, vx: (Math.random() - 0.5) * 3, vy: (Math.random() - 0.5) * 3, size: Math.random() * 2 + 1, alpha: 1 };
+                if (color) {
+                    p.isShield = true;
+                    p.color = color === '#00BFFF' ? '0, 191, 255' : (color === '#9C27B0' ? '156, 39, 176' : (color === '#FF4081' ? '255, 64, 129' : (color === '#80DEEA' ? '128, 222, 234' : (color === '#757575' ? '117, 117, 117' : (color === '255, 69, 0' ? '255, 69, 0' : '255, 215, 0')))));
+                }
+                else { p.isStar = true; }
+                particles.push(p);
+            }
+        }
+
+        async function endGame() {
+            if (gameState === 'gameOver') return;
+
+            const isInvincible = bird.invincibleTimer > 0;
+            const isGhost = selectedSkinId === 'ghost' && isInvincible;
+
+            // Handle shield or life loss logic here
+            const hasAnyShield = bird.hasShield || bird.shieldCharges > 0;
+            if (hasAnyShield && !isGhost) {
+                playSound('hit');
+                gameContainer.classList.add('shake'); setTimeout(() => gameContainer.classList.remove('shake'), 200);
+                if (bird.hasShield) {
+                    createStarParticles(bird.x, bird.y, false, '#00BFFF');
+                    bird.hasShield = false;
+                } else if (bird.shieldCharges > 0) {
+                    createStarParticles(bird.x, bird.y, false, '255, 69, 0');
+                    bird.shieldCharges--;
+                }
+                bird.invincibleTimer = 60; // Temporary invincibility
+                return;
+            } else if (bird.lives > 0 && !isGhost) {
+                playSound('hit');
+                gameContainer.classList.add('shake'); setTimeout(() => gameContainer.classList.remove('shake'), 200);
+                createStarParticles(bird.x, bird.y, false, '255, 69, 0');
+                bird.lives--;
+                bird.y = canvas.height / 2; // Reset bird position
+                bird.velocity = 0;
+                bird.invincibleTimer = 180; // Temporary invincibility
+                return;
+            }
+
+            playSound('hit'); gameState = 'gameOver';
+            gameContainer.classList.add('shake'); setTimeout(() => gameContainer.classList.remove('shake'), 500);
+
+            // Gọi hàm hiển thị quảng cáo khi game over
+            showInterstitialAd();
+
+            createStarParticles(bird.x, bird.y, false, '#FFD700');
+            if (isAuthReady && await saveHighScore()) { newHighScoreText.classList.remove('hidden'); }
+            await loadHighScores();
+            finalScoreDisplay.textContent = score;
+            highScoreEndDisplay.textContent = highScores[gameMode];
+            const modeText = gameMode === 'normal' ? 'Normal' : (gameMode === 'hard' ? 'Hard' : (gameMode === 'superhard' ? 'Super Hard' : 'Classic'));
+            gameOverMode.textContent = modeText;
+
+            const skinsBefore = [...unlockedSkins];
+            let medal = 'None'; let medalUnlocked = false;
+            const currentModeAchievements = achievements[gameMode];
+            if (score >= 50) { medal = 'Diamond 💠'; if (!currentModeAchievements.diamond) { currentModeAchievements.diamond = true; medalUnlocked = true; } }
+            else if (score >= 40) { medal = 'Platinum 💎'; if (!currentModeAchievements.platinum) { currentModeAchievements.platinum = true; medalUnlocked = true; } }
+            else if (score >= 30) { medal = 'Gold 🥇'; if (!currentModeAchievements.gold) { currentModeAchievements.gold = true; medalUnlocked = true; } }
+            else if (score >= 20) { medal = 'Silver 🥈'; if (!currentModeAchievements.silver) { currentModeAchievements.silver = true; medalUnlocked = true; } }
+            else if (score >= 10) { medal = 'Bronze 🥉'; if (!currentModeAchievements.bronze) { currentModeAchievements.bronze = true; medalUnlocked = true; } }
+
+            // Always unlock lower medals if a higher one is achieved
+            if (currentModeAchievements.diamond) currentModeAchievements.platinum = true;
+            if (currentModeAchievements.platinum) currentModeAchievements.gold = true;
+            if (currentModeAchievements.gold) currentModeAchievements.silver = true;
+            if (currentModeAchievements.silver) currentModeAchievements.bronze = true;
+
+            if (medalUnlocked) { saveAchievements(); }
+
+            if (await checkSkinUnlocks()) {
+                playSound('unlock');
+                const newSkins = unlockedSkins.filter(s => !skinsBefore.includes(s));
+                if (newSkins.length > 0) {
+                    const unlockedSkinInfo = skins.find(s => s.id === newSkins[0]);
+                    skinUnlockedText.textContent = `Unlocked: ${unlockedSkinInfo.name}!`;
+                    skinUnlockedText.classList.remove('hidden');
+                }
+            }
+
+            medalDisplay.textContent = `Medal: ${medal}`;
+            setTimeout(() => { scoreDisplay.classList.add('hidden'); gameOverScreen.classList.remove('hidden'); }, 500);
+        }
+
+        function togglePause() { if (gameState === 'playing') { gameState = 'paused'; pauseIndicator.classList.remove('hidden'); } else if (gameState === 'paused') { gameState = 'playing'; pauseIndicator.classList.add('hidden'); gameLoop(); } }
+
+        // --- SPECIAL ABILITY DECLARATIONS ---
+        function useAbility() {
+            const selectedSkin = skins.find(s => s.id === selectedSkinId);
+            if (!selectedSkin || !selectedSkin.ability || gameMode === 'classic') return;
+
+            // Handle logic for abilities with usage charges
+            if (selectedSkin.ability === 'teleport') {
+                if (bird.teleportCharges <= 0) return;
+                bird.teleportCharges--;
+            } else if (selectedSkin.ability === 'shield' && bird.shieldCharges >= 2) { // Limit Robot's shields
+                return;
+            } else if (bird.abilityCooldown > 0) {
+                return;
+            }
+
+            playSound('powerup');
+
+            switch (selectedSkin.ability) {
+                case 'fireball':
+                    bird.abilityCooldown = selectedSkin.abilityCooldown;
+                    projectiles.push({
+                        type: 'fireball',
+                        x: bird.x,
+                        y: bird.y,
+                        size: 15,
+                        speed: 5
+                    });
+                    break;
+                case 'iceblast':
+                    bird.abilityCooldown = selectedSkin.abilityCooldown;
+                    bird.slowdownTimer = 600; // 10 seconds
+                    break;
+                case 'teleport':
+                    bird.abilityCooldown = selectedSkin.abilityCooldown;
+                    const nextPipe = pipes.find(p => p.x > bird.x);
+                    if (nextPipe) {
+                        bird.y = nextPipe.topHeight + pipeProps.gap / 2;
+                        bird.velocity = 0;
+                        // Create teleport effect
+                        createStarParticles(bird.x, bird.y, false, '100, 149, 237');
+                    }
+                    break;
+                case 'phasing':
+                    bird.abilityCooldown = selectedSkin.abilityCooldown;
+                    bird.invincibleTimer = 360; // 6 seconds
+                    break;
+                case 'shield':
+                    bird.abilityCooldown = selectedSkin.abilityCooldown;
+                    bird.shieldCharges++;
+                    break;
+                case 'lives':
+                    // Only add life when button is pressed
+                    bird.abilityCooldown = selectedSkin.abilityCooldown;
+                    if (bird.lives < 3) {
+                        bird.lives++;
+                    }
+                    break;
+            }
+            if (selectedSkinId === 'king') {
+                livesDisplay.textContent = `❤️ x ${bird.lives}`;
+            }
+        }
+
+        // Event listener helper
+        function addButtonClickListener(button, callback) {
+            if (button) {
+                button.addEventListener('click', () => {
+                    playSound('click');
+                    callback();
+                });
+            }
+        }
+
+        // Event listeners
+        addButtonClickListener(startNormalButton, () => { initAudio(); initializeGame('normal'); });
+        addButtonClickListener(startHardButton, () => { initAudio(); initializeGame('hard'); });
+        addButtonClickListener(startSuperHardButton, () => { initAudio(); initializeGame('superhard'); });
+        addButtonClickListener(startClassicButton, () => { initAudio(); initializeGame('classic'); });
+        addButtonClickListener(restartButton, () => initializeGame(gameMode));
+        addButtonClickListener(menuButton, async () => { gameOverScreen.classList.add('hidden'); startScreen.classList.remove('hidden'); gameState = 'start'; await loadHighScores(); draw(); });
+        addButtonClickListener(instructionsButton, () => { startScreen.classList.add('hidden'); instructionsScreen.classList.remove('hidden'); });
+        addButtonClickListener(achievementsButton, () => { checkSkinUnlocks(); updateAchievementsDisplay('normal'); startScreen.classList.add('hidden'); achievementsScreen.classList.remove('hidden'); });
+        addButtonClickListener(skinsButton, () => { checkSkinUnlocks(); updateSkinsDisplay(); startScreen.classList.add('hidden'); skinsScreen.classList.remove('hidden'); });
+        addButtonClickListener(leaderboardButton, () => { fetchLeaderboard('normal'); startScreen.classList.add('hidden'); leaderboardScreen.classList.remove('hidden'); });
+        addButtonClickListener(instructionsBackButton, () => { instructionsScreen.classList.add('hidden'); startScreen.classList.remove('hidden'); });
+        addButtonClickListener(achievementsBackButton, () => { achievementsScreen.classList.add('hidden'); startScreen.classList.remove('hidden'); });
+        addButtonClickListener(skinsBackButton, () => { skinsScreen.classList.add('hidden'); startScreen.classList.remove('hidden'); });
+        addButtonClickListener(leaderboardBackButton, () => { leaderboardScreen.classList.add('hidden'); startScreen.classList.remove('hidden'); });
+        addButtonClickListener(achievementsNormalTab, () => updateAchievementsDisplay('normal'));
+        addButtonClickListener(achievementsHardTab, () => updateAchievementsDisplay('hard'));
+        addButtonClickListener(achievementsSuperHardTab, () => updateAchievementsDisplay('superhard'));
+        addButtonClickListener(achievementsClassicTab, () => updateAchievementsDisplay('classic'));
+        addButtonClickListener(leaderboardNormalTab, () => fetchLeaderboard('normal'));
+        addButtonClickListener(leaderboardHardTab, () => fetchLeaderboard('hard'));
+        addButtonClickListener(leaderboardSuperHardTab, () => fetchLeaderboard('superhard'));
+        addButtonClickListener(leaderboardClassicTab, () => fetchLeaderboard('classic'));
+        addButtonClickListener(abilityButton, useAbility);
+
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') { if (gameState === 'playing') birdFlap(); }
+            if (e.key.toLowerCase() === 'p') { togglePause(); }
+            if (e.key.toLowerCase() === 'a') { useAbility(); }
+        });
+        canvas.addEventListener('mousedown', () => { if (gameState === 'playing') birdFlap(); });
+        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); if (gameState === 'playing') birdFlap(); });
+
+        // Initial Load
+        window.onload = async () => {
+            // Provide default values for LocalStorage
+            userId = crypto.randomUUID();
+            isAuthReady = true;
+            userIdDisplay.textContent = userId + " (LOCAL)";
+            isFirebaseActive = false;
+            console.log("Game running in LocalStorage mode (No Firebase).");
+
+            try {
+                // Load local data
+                await loadHighScores();
+                await loadAchievements();
+                loadUnlockedSkins();
+                loadSkins();
+                draw();
+            } catch (e) {
+                console.error("LOCAL DATA LOAD ERROR: ", e);
+                draw();
+            }
+        };
+    </script>
+</body>
+</html>

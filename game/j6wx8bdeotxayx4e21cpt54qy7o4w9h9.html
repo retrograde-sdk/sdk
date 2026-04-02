@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Running Man 2026</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Исправление для слоя загрузки */
+        #loading {
+            z-index: 9999;
+            pointer-events: none; /* Пропускает клики по рекламе под ним */
+            color: #FFD700;
+            font-size: 40px;
+            font-weight: 900;
+            text-shadow: 2px 2px 5px #000;
+            display: none;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0,0,0,0.8);
+        }
+    </style>
+    <script type="text/javascript">
+        window.SDK_OPTIONS = {
+            gameId: "j6wx8bdeotxayx4e21cpt54qy7o4w9h9",
+            onEvent: function (a) {
+                switch (a.name) {
+                    case "SDK_GAME_PAUSE":
+                        // Принудительная остановка от SDK (даже если реклама пошла с задержкой)
+                        if (window.gameInstance) {
+                            window.gameInstance.pauseGame();
+                            if (window.gameInstance.res) window.gameInstance.res.muteAll();
+                        }
+                        break;
+                    case "SDK_GAME_START":
+                        // Реклама закончена
+                        console.log("SDK: Ad finished");
+                        if (window.gameInstance && window.gameInstance.res) {
+                            window.gameInstance.res.unmuteAll();
+                        }
+                        document.dispatchEvent(new Event("SDK_AD_FINISHED"));
+                        window.focus();
+                        break;
+                    case "SDK_READY":
+                        console.log("GameMonetize SDK Ready");
+                        break;
+                }
+            }
+        };
+        (function (a, b, c) {
+            var d = a.getElementsByTagName(b)[0];
+            if (a.getElementById(c)) return;
+            a = a.createElement(b);
+            a.id = c;
+            a.src = "https://api.gamemonetize.com/sdk.js";
+            d.parentNode.insertBefore(a, d);
+        })(document, "script", "gamemonetize-sdk");
+    </script>
+</head>
+<body oncontextmenu="return false;">
+
+<div id="game-container">
+    <div id="loading">LOADING...</div>
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="ui-layer">
+        
+        <div id="screen-start" class="ui-screen active">
+            <div class="game-title">RUNNING MAN<br>2026</div>
+            <button class="btn-main" id="btn-play">PLAY</button>
+            <button class="btn-inventory" id="btn-shop-menu">📦 INVENTORY</button>
+        </div>
+
+        <div id="screen-hud" class="ui-screen">
+            <div class="hud-bar">
+                <div class="hud-left">
+                    <div class="hud-stats-total">Total: <span id="ui-total-dist">0</span> km</div>
+                    <div class="hud-stats-current">Run: <span id="ui-score">0</span> m</div>
+                </div>
+                <div class="hud-coins">💰 <span id="ui-coins">0</span></div>
+            </div>
+            <div id="ui-buffs" style="position:absolute; top:130px; right:40px; display:flex; gap:10px; flex-direction:row-reverse;"></div>
+        </div>
+
+        <div id="screen-pause" class="ui-screen">
+            <div class="overlay-box" style="border-color: #4FC3F7;">
+                <div class="game-title" style="font-size: 60px; color: #4FC3F7; margin-bottom: 20px;">PAUSE</div>
+                <button class="btn-main" id="btn-resume">RESUME</button>
+            </div>
+        </div>
+
+        <div id="screen-over" class="ui-screen">
+            <div class="overlay-box" style="border-color: #FF5252;">
+                <div style="font-size:50px; color:#FF5252; font-weight:900; margin-bottom:10px;">GAME OVER!</div>
+                <div style="font-size:22px; color:#fff; text-align: left; display: flex; justify-content: space-between; width: 100%;">
+                    <div>🏃 Run: <span id="go-dist" style="color:#4FC3F7">0</span> m<br>🌍 Total: <span id="go-total-dist" style="color:#FFD700">0</span> m</div>
+                    <div style="text-align: right;">Coins: <span id="go-coins" style="color:#FFD700">0</span></div>
+                </div>
+                <div style="margin-top: 20px;">
+                    <button class="btn-main" id="btn-restart" style="padding: 15px 40px; font-size: 24px;">RETRY</button>
+                    <button class="btn-inventory" id="btn-shop-over" style="margin-top:0; display: inline-flex;">📦 INVENTORY</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="shop-modal">
+            <div class="shop-header">
+                <h3 style="margin:0; color:#FFB74D; font-size:32px;">INVENTORY</h3>
+                <div style="color:#FFD700; font-size:20px;">Wallet: <span id="shop-coins">0</span> </div>
+            </div>
+            <div class="shop-list" id="shop-container"></div>
+            <button class="btn-close-shop" id="btn-close-shop">CLOSE</button>
+        </div>
+
+    </div>
+</div>
+
+<script src="game.js"></script>
+</body>
+</html>

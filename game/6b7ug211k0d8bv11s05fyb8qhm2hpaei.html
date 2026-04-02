@@ -1,0 +1,1310 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alien Clicker Defender</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #000428 0%, #004e92 100%);
+            color: white;
+            overflow: hidden;
+            user-select: none;
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        /* Intro Styles */
+        .intro-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #0a0a0a;
+            font-family: 'Orbitron', monospace;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 3000;
+            background-image: 
+                radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(120, 219, 255, 0.1) 0%, transparent 50%);
+        }
+        
+        .intro-screen.hidden {
+            display: none;
+        }
+        
+        .grid-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(0, 255, 255, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 255, 0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: gridMove 20s linear infinite;
+            z-index: 0;
+        }
+        
+        .grid-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(0, 153, 204, 0.05) 2px, transparent 2px),
+                linear-gradient(90deg, rgba(0, 153, 204, 0.05) 2px, transparent 2px);
+            background-size: 100px 100px;
+            animation: gridMove 15s linear infinite reverse;
+            z-index: 0;
+        }
+        
+        .intro-container {
+            text-align: center;
+            position: relative;
+        }
+        
+        .logo {
+            margin-bottom: 3rem;
+            position: relative;
+        }
+        
+        .logo-image {
+            max-width: 400px;
+            height: auto;
+            filter: drop-shadow(0 0 1px rgba(0, 255, 255, 0.2)) 
+                    drop-shadow(0 0 2px rgba(0, 255, 255, 0.2)) 
+                    drop-shadow(0 0 4px rgba(0, 153, 204, 0.2));
+            position: relative;
+            z-index: 2;
+            transition: all 0.1s ease;
+        }
+        
+        .logo::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('fzlogo.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            filter: drop-shadow(0 0 1px rgba(0, 255, 255, 0.2)) 
+                    drop-shadow(0 0 2px rgba(0, 255, 255, 0.2)) 
+                    drop-shadow(0 0 4px rgba(0, 153, 204, 0.2));
+            z-index: 1;
+            opacity: 0.6;
+            transition: all 0.1s ease;
+        }
+        
+        .logo.neon-flicker .logo-image,
+        .logo.neon-flicker::before {
+            opacity: 0.3;
+            filter: none;
+        }
+        
+        .logo.neon-flicker-strong .logo-image,
+        .logo.neon-flicker-strong::before {
+            opacity: 0.1;
+            filter: none;
+        }
+        
+        .loading-container {
+            margin-top: 2rem;
+            width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .loading-bar {
+            width: 100%;
+            height: 8px;
+            background: #1a1a1a;
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid #333;
+        }
+        
+        .loading-fill {
+            height: 100%;
+            background: #00ffff;
+            width: 0%;
+            border-radius: 3px;
+            animation: loading 8s ease-in-out forwards;
+            position: relative;
+        }
+        
+        .loading-text {
+            color: #00ffff;
+            font-size: 0.8rem;
+            margin-top: 0.8rem;
+            letter-spacing: 0.1em;
+            font-weight: 400;
+        }
+        
+        .website-text {
+            color: #ffffff;
+            font-size: 1.2rem;
+            margin-top: 1.5rem;
+            letter-spacing: 0.1em;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+            opacity: 0;
+            animation: fadeIn 1s ease-in forwards 2s;
+        }
+        
+        .scanlines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                transparent 50%,
+                rgba(0, 255, 0, 0.03) 50%
+            );
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 1000;
+        }
+        
+        @keyframes gridMove {
+            0% {
+                transform: translate(0, 0);
+            }
+            100% {
+                transform: translate(50px, 50px);
+            }
+        }
+        
+        @keyframes loading {
+            0% { width: 0%; }
+            10% { width: 10%; }
+            25% { width: 25%; }
+            40% { width: 40%; }
+            55% { width: 55%; }
+            70% { width: 70%; }
+            85% { width: 85%; }
+            95% { width: 95%; }
+            100% { width: 100%; }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            margin: 0;
+            background: radial-gradient(circle at center, #001122 0%, #000000 100%);
+            border: none;
+            overflow: hidden;
+        }
+
+        #gameCanvas {
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+        }
+
+        .ui-element {
+            display: none;
+            position: absolute;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+
+        #score {
+            display: none;
+            top: 10px;
+            left: 10px;
+            color: #ffff00;
+            font-size: 20px;
+        }
+
+        #wave {
+            display: none;
+            bottom: 10px;
+            right: 10px;
+            color: #00ffff;
+            font-size: 18px;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        #mainMenu {
+            z-index: 0;
+        }
+
+        #mainMenu.hidden {
+            z-index: -1 !important;
+            pointer-events: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+        }
+
+        iframe[src*="gamemonetize"], 
+        iframe[src*="ads"], 
+        div[id*="gamemonetize"], 
+        div[id*="ads"],
+        div[class*="gamemonetize"],
+        div[class*="ads"],
+        div[data*="gamemonetize"],
+        div[data*="ads"],
+        [id^="ad"], [id*="_ad"], [id*="-ad"],
+        [class^="ad"], [class*="_ad"], [class*="-ad"],
+        iframe[id*="ad"], iframe[class*="ad"] {
+            z-index: 2147483647 !important;
+            position: fixed !important;
+            pointer-events: auto !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        .modal-content {
+            background: #001122;
+            padding: 30px;
+            border-radius: 15px;
+            border: 3px solid #00ffff;
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #00ffff #001122;
+        }
+
+        .modal-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .modal-content::-webkit-scrollbar-track {
+            background: #001122;
+            border-radius: 4px;
+        }
+
+        .modal-content::-webkit-scrollbar-thumb {
+            background: #00ffff;
+            border-radius: 4px;
+        }
+
+        .modal-content::-webkit-scrollbar-thumb:hover {
+            background: #00cccc;
+        }
+
+        .modal-content h2 {
+            color: #00ffff;
+            margin-bottom: 20px;
+        }
+
+        .modal-content button {
+            background: #00ffff;
+            color: #000;
+            border: none;
+            padding: 12px 24px;
+            margin: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .modal-content button:hover {
+            background: #00cccc;
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0, 255, 255, 0.3);
+        }
+
+        /* Main Menu Specific Styles */
+        .main-menu-content {
+            background: linear-gradient(135deg, #001122 0%, #002244 100%);
+            border: 3px solid #00ffff;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .main-menu-content::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(0, 153, 204, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .main-menu-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: #00ffff;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+            margin-bottom: 1rem;
+            letter-spacing: 0.1em;
+            position: relative;
+            z-index: 2;
+        }
+
+        .main-menu-subtitle {
+            font-size: 1.1rem;
+            color: #cccccc;
+            margin-bottom: 2rem;
+            font-weight: 400;
+            position: relative;
+            z-index: 2;
+        }
+
+        .main-menu-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .main-menu-btn {
+            background: linear-gradient(135deg, #00ffff 0%, #00cccc 100%);
+            color: #000;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 18px;
+            font-family: 'Orbitron', monospace;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 255, 255, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .main-menu-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .main-menu-btn:hover::before {
+            left: 100%;
+        }
+
+        .main-menu-btn:hover {
+            background: linear-gradient(135deg, #00cccc 0%, #009999 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 255, 255, 0.4);
+        }
+
+        .main-menu-footer {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(0, 255, 255, 0.3);
+            position: relative;
+            z-index: 2;
+        }
+
+        .main-menu-credits {
+            font-size: 12px;
+            color: #888;
+            font-style: italic;
+        }
+
+        .fliperzone-logo {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            color: #00ffff;
+            font-weight: bold;
+            font-size: 14px;
+            text-decoration: none;
+        }
+
+        .fliperzone-logo img {
+            height: 30px;
+            width: auto;
+            filter: drop-shadow(0 0 5px rgba(0, 255, 255, 0.5));
+            animation: logoGlow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes logoGlow {
+            0% {
+                filter: drop-shadow(0 0 5px rgba(0, 255, 255, 0.5));
+            }
+            100% {
+                filter: drop-shadow(0 0 10px rgba(0, 255, 255, 0.8)) drop-shadow(0 0 20px rgba(0, 255, 255, 0.3));
+            }
+        }
+
+        /* Animação de entrada do menu */
+        .main-menu-content {
+            animation: menuSlideIn 0.5s ease-out;
+        }
+
+        @keyframes menuSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* Efeito de partículas flutuantes no fundo */
+        .main-menu-content::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(0, 255, 255, 0.1) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(0, 153, 204, 0.1) 0%, transparent 20%),
+                radial-gradient(circle at 50% 50%, rgba(0, 255, 255, 0.05) 0%, transparent 30%);
+            animation: particleFloat 8s ease-in-out infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @keyframes particleFloat {
+            0%, 100% {
+                transform: translateY(0) rotate(0deg);
+            }
+            50% {
+                transform: translateY(-10px) rotate(180deg);
+            }
+        }
+
+        .boss-modal {
+            background: #220000;
+            border-color: #ff0000;
+        }
+
+        .boss-modal h2 {
+            color: #ff0000;
+        }
+
+        .boss-game {
+            margin: 20px 0;
+            padding: 20px;
+            background: #330000;
+            border-radius: 10px;
+            min-height: 200px;
+        }
+
+        .memory-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            max-width: 200px;
+            margin: 0 auto;
+        }
+
+        .memory-button {
+            width: 60px;
+            height: 60px;
+            border: none;
+            border-radius: 8px;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .click-target {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #ffff00;
+            border: 3px solid #ff0000;
+            cursor: pointer;
+            margin: 10px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            animation: pulse 0.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .precision-target {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background: #ffff00;
+            border: 2px solid #ff0000;
+            border-radius: 50%;
+            cursor: pointer;
+            animation: targetPulse 0.3s infinite;
+        }
+
+        @keyframes targetPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        .instructions {
+            text-align: left;
+            line-height: 1.6;
+        }
+
+        .instructions h3 {
+            color: #ffff00;
+            margin: 15px 0 10px 0;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .game-over-modal {
+            background: #220000;
+            border-color: #ff0000;
+        }
+
+        .game-over-modal h2 {
+            color: #ff0000;
+        }
+
+        /* Tutorial Styles */
+        .tutorial-content {
+            margin: 20px 0;
+            min-height: 200px;
+        }
+
+        .tutorial-step {
+            text-align: center;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        .tutorial-step h3 {
+            color: #00ffff;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .tutorial-step p {
+            font-size: 16px;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+
+        .tutorial-demo {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(0, 255, 255, 0.1);
+            border-radius: 10px;
+            border: 1px solid #00ffff;
+        }
+
+        .demo-enemy, .demo-earth, .demo-upgrade, .demo-boss {
+            font-size: 40px;
+            animation: pulse 1s infinite;
+        }
+
+        .demo-arrow {
+            font-size: 30px;
+            color: #00ffff;
+            animation: bounce 1s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+
+        .demo-click, .demo-shield, .demo-effect, .demo-victory {
+            font-size: 40px;
+            animation: glow 1.5s infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(1.5) drop-shadow(0 0 10px #00ffff); }
+        }
+
+        .tutorial-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(0, 255, 255, 0.1);
+            border-radius: 8px;
+        }
+
+        .tutorial-controls button {
+            background: #00ffff;
+            color: #000;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .tutorial-controls button:hover:not(:disabled) {
+            background: #00cccc;
+            transform: scale(1.05);
+        }
+
+        .tutorial-controls button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        #stepIndicator {
+            color: #00ffff;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        #skipTutorialBtn, #startTutorialGameBtn {
+            background: #ff6600;
+            color: #fff;
+            border: none;
+            padding: 12px 24px;
+            margin: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        #skipTutorialBtn:hover, #startTutorialGameBtn:hover {
+            background: #ff4400;
+            transform: scale(1.05);
+        }
+
+        #backToMenuFromTutorialBtn {
+            background: #666;
+            color: #fff;
+            border: none;
+            padding: 12px 24px;
+            margin: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        #backToMenuFromTutorialBtn:hover {
+            background: #555;
+            transform: scale(1.05);
+        }
+
+        /* Vampire Survivors Style Upgrades */
+        .vampire-upgrade-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .vampire-upgrade-item {
+            background: linear-gradient(135deg, #002244 0%, #003366 100%);
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid #00ffff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .vampire-upgrade-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 255, 255, 0.4);
+            border-color: #00cccc;
+        }
+
+        .vampire-upgrade-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .vampire-upgrade-item:hover::before {
+            left: 100%;
+        }
+
+        .upgrade-icon {
+            font-size: 40px;
+            margin-bottom: 15px;
+            animation: pulse 2s infinite;
+        }
+
+        .vampire-upgrade-item h3 {
+            color: #00ffff;
+            margin-bottom: 10px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .vampire-upgrade-item p {
+            color: #cccccc;
+            font-size: 14px;
+            line-height: 1.4;
+            margin-bottom: 15px;
+        }
+
+        .upgrade-effect {
+            color: #ffff00;
+            font-weight: bold;
+            font-size: 12px;
+            background: rgba(255, 255, 0, 0.1);
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid #ffff00;
+        }
+
+        /* ===== MOBILE LANDSCAPE MENU ===== */
+        @media (max-width: 900px) and (orientation: landscape) {
+            .main-menu-content {
+                max-width: 95vw;
+                width: 98vw;
+                min-width: unset;
+                padding: 10px 2vw 10px 2vw;
+                border-radius: 10px;
+                font-size: 0.95rem;
+            }
+            .main-menu-title {
+                font-size: 1.3rem;
+                margin-bottom: 0.5rem;
+            }
+            .main-menu-subtitle {
+                font-size: 0.95rem;
+                margin-bottom: 1rem;
+            }
+            .main-menu-btn {
+                padding: 10px 10px;
+                font-size: 1rem;
+                border-radius: 7px;
+            }
+            .main-menu-footer {
+                margin-top: 1rem;
+                padding-top: 0.5rem;
+            }
+            .fliperzone-logo img {
+                height: 20px;
+            }
+            .modal-content {
+                padding: 10px;
+            }
+        }
+        /* Remover palavra vampire do CSS */
+        .upgrade-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .upgrade-item {
+            background: linear-gradient(135deg, #002244 0%, #003366 100%);
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid #00ffff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .upgrade-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 255, 255, 0.4);
+            border-color: #00cccc;
+        }
+        .upgrade-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+        .upgrade-item:hover::before {
+            left: 100%;
+        }
+        .upgrade-icon {
+            font-size: 40px;
+            margin-bottom: 15px;
+            animation: pulse 2s infinite;
+        }
+        .upgrade-item h3 {
+            color: #00ffff;
+            margin-bottom: 10px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .upgrade-item p {
+            color: #cccccc;
+            font-size: 14px;
+            line-height: 1.4;
+            margin-bottom: 15px;
+        }
+        .upgrade-effect {
+            color: #ffff00;
+            font-weight: bold;
+            font-size: 12px;
+            background: rgba(255, 255, 0, 0.1);
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid #ffff00;
+        }
+
+        @media (max-width: 600px) {
+            .upgrade-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .vampire-upgrade-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .modal-content {
+                padding: 20px;
+            }
+            
+            .main-menu-title {
+                font-size: 1.8rem;
+            }
+            
+            .main-menu-subtitle {
+                font-size: 1rem;
+            }
+            
+            .main-menu-btn {
+                padding: 12px 20px;
+                font-size: 16px;
+            }
+            
+            .main-menu-footer {
+                justify-content: center;
+                text-align: center;
+            }
+            
+            .fliperzone-logo {
+                font-size: 12px;
+                gap: 3px;
+            }
+            
+            .fliperzone-logo img {
+                height: 25px;
+            }
+            
+            .fliperzone-logo span {
+                font-size: 10px;
+            }
+            
+            #score, #wave {
+                font-size: 16px;
+            }
+            
+            .logo-image {
+                max-width: 250px;
+            }
+            
+            .loading-container {
+                width: 300px;
+            }
+            
+            .website-text {
+                font-size: 1rem;
+            }
+        }
+        /* Garantir que o tutorial não sobreponha o banner de anúncios */
+        body.has-banner #tutorialModal {
+            z-index: 2147483646 !important;
+        }
+
+        /* Estilos para anúncios - devem aparecer acima de tudo */
+        .ad-container {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            z-index: 2147483647 !important;
+            pointer-events: auto !important;
+        }
+
+        /* Garantir que todos os elementos do jogo tenham z-index menor que os anúncios */
+        #gameContainer, .modal, .ui-element {
+            z-index: 1000 !important;
+        }
+
+        #mainMenu {
+            z-index: 1001 !important;
+        }
+
+        #introScreen {
+            z-index: 3000 !important;
+        }
+    </style>
+    <script type="text/javascript">
+       window.SDK_OPTIONS = {
+          gameId: "6b7ug211k0d8bv11s05fyb8qhm2hpaei",
+          onEvent: function (a) {
+             switch (a.name) {
+                case "SDK_GAME_PAUSE":
+                   if (window.gameState) gameState.isPaused = true;
+                   if (typeof window.pauseGameAndMute === 'function') window.pauseGameAndMute();
+                   break;
+                case "SDK_GAME_START":
+                   if (window.gameState) gameState.isPaused = false;
+                   if (typeof window.resumeGameAndUnmute === 'function') window.resumeGameAndUnmute();
+                   break;
+                case "SDK_READY":
+                   window.sdkReady = true;
+                   console.log("GameMonetize SDK está pronto!");
+                   break;
+             }
+          }
+       };
+    </script>
+    
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+    });
+    </script>
+</head>
+<body>
+    <!-- Intro Screen -->
+    <div id="introScreen" class="intro-screen">
+        <div class="grid-background"></div>
+        <div class="grid-overlay"></div>
+        <div class="scanlines"></div>
+        
+        <div class="intro-container">
+            <div class="logo">
+                <img src="fzlogo.png" alt="FliperZone" class="logo-image">
+            </div>
+            
+            <div class="loading-container">
+                <div class="loading-bar">
+                    <div class="loading-fill"></div>
+                </div>
+                <div class="loading-text">LOADING...</div>
+            </div>
+            
+            <div class="website-text">FliperZone.com</div>
+        </div>
+    </div>
+
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+
+        
+
+        
+        <div id="score" class="ui-element"></div>
+        <div id="wave" class="ui-element"></div>
+        <div id="difficulty" class="ui-element" style="top: 50px; left: 10px; color: #ff6600; font-size: 16px;"></div>
+        <div id="bossTimer" class="ui-element" style="top: 80px; left: 10px; color: #ff0000; font-size: 14px;"></div>
+    </div>
+
+    <!-- Main Menu Modal -->
+    <div id="mainMenu" class="modal hidden">
+        <div class="modal-content main-menu-content">
+            <h2 class="main-menu-title">ALIEN CLICKER INVADERS</h2>
+            <p style="font-size: 14px; color: #888; font-weight: normal; margin-top: -10px; margin-bottom: 10px;">beta v0.1</p>
+            <p class="main-menu-subtitle">🌍 Protect Earth from alien invasion! 👽</p>
+            
+            <div class="main-menu-buttons">
+                <button id="startGameBtn" class="main-menu-btn">🚀 START GAME</button>
+                <button id="instructionsBtn" class="main-menu-btn">📖 INSTRUCTIONS</button>
+            </div>
+            
+            <div class="main-menu-footer">
+                <div class="fliperzone-logo">
+                    <img src="fzlogo.png" alt="FliperZone">
+                    <span>FliperZone.com</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Instructions Modal -->
+    <div id="instructionsModal" class="modal hidden">
+        <div class="modal-content">
+            <h2>INSTRUCTIONS</h2>
+            <div class="instructions">
+                <h3>🎯 Objective</h3>
+                <p>Protect Earth by clicking on enemies to destroy them!</p>
+                
+                <h3>🌍 Earth</h3>
+                <p>Click on Earth to restore shield!</p>
+                
+                <h3>🛡️ Shield System</h3>
+                <p>Blue shield absorbs all damage until depleted</p>
+                
+                <h3>👽 Enemies</h3>
+                <p>different alien types with unique behaviors</p>
+                
+                <h3>🎮 Boss Fights</h3>
+                <p>Destroy Bosses to be able to perform upgrades in defense</p>
+                
+                <h3>⚡ Upgrades</h3>
+                <p>Spend points to improve your defenses</p>
+            </div>
+            <button id="backToMenuBtn">BACK TO MENU</button>
+        </div>
+    </div>
+
+    <!-- Boss Modal -->
+    <div id="bossModal" class="modal hidden boss-modal">
+        <div class="modal-content">
+            <h2>BOSS FIGHT!</h2>
+            <div id="bossGame" class="boss-game">
+                <!-- Boss game content will be inserted here -->
+            </div>
+            <div id="bossResult"></div>
+        </div>
+    </div>
+
+    <!-- Game Over Modal -->
+    <div id="gameOverModal" class="modal hidden game-over-modal">
+        <div class="modal-content">
+            <h2>GAME OVER</h2>
+            <p>Final Score: <span id="finalScore">0</span></p>
+            <p>Waves Completed: <span id="finalWave">0</span></p>
+            <button id="playAgainBtn">PLAY AGAIN</button>
+            <button id="mainMenuBtn">MAIN MENU</button>
+        </div>
+    </div>
+
+    <!-- Tutorial Modal -->
+    <div id="tutorialModal" class="modal hidden">
+        <div class="modal-content">
+            <h2>🎮 TUTORIAL</h2>
+            <div class="tutorial-content">
+                <div class="tutorial-step" id="step1">
+                    <h3>1. Click the Enemies</h3>
+                    <p>👽 Click the aliens to destroy them and earn points!</p>
+                    <div class="tutorial-demo">
+                        <div class="demo-enemy">👽</div>
+                        <div class="demo-arrow">→</div>
+                        <div class="demo-click">💥</div>
+                    </div>
+                </div>
+                
+                <div class="tutorial-step hidden" id="step2">
+                    <h3>2. Protect the Earth</h3>
+                    <p>🌍 Click on Earth to restore the shield and earn extra points!</p>
+                    <div class="tutorial-demo">
+                        <div class="demo-earth">🌍</div>
+                        <div class="demo-arrow">→</div>
+                        <div class="demo-shield">🛡️</div>
+                    </div>
+                </div>
+                
+                <div class="tutorial-step hidden" id="step3">
+                    <h3>3. Enemy Difficulty</h3>
+                    <p>⚡More powerful enemies will emerge with the game time! Be prepared!</p>
+                    <div class="tutorial-demo">
+                        <div class="demo-upgrade">⚔️</div>
+                        <div class="demo-arrow">→</div>
+                        <div class="demo-effect">💪</div>
+                    </div>
+                </div>
+                
+                <div class="tutorial-step hidden" id="step4">
+                    <h3>4. Defeat Bosses and earn powerups</h3>
+                    <p>👹 Each defeated boss gives you a new powerup!</p>
+                    <div class="tutorial-demo">
+                        <div class="demo-boss">👹</div>
+                        <div class="demo-arrow">→</div>
+                        <div class="demo-victory">🏆</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tutorial-controls">
+                <button id="prevStepBtn" disabled>← PREV</button>
+                <span id="stepIndicator">1/4</span>
+                <button id="nextStepBtn">NEXT →</button>
+                <button id="startTutorialGameBtn" class="hidden">START GAME!</button>
+            </div>
+            
+            <button id="skipTutorialBtn">SKIP TUTORIAL</button>
+            <button id="backToMenuFromTutorialBtn">BACK TO MENU</button>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+    <script src="debug.js"></script>
+
+    <script>
+        // Intro functionality
+        let audioContext;
+        
+        // Simular sons de arcade (usando Web Audio API)
+        function createArcadeSound() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(400, audioContext.currentTime + 0.1);
+            
+            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.1);
+        }
+        
+        // Efeito sonoro no início (com interação do usuário)
+        document.addEventListener('click', function() {
+            try {
+                createArcadeSound();
+            } catch(e) {
+                // Ignorar erros de áudio
+            }
+        }, { once: true });
+        
+        // Efeito de falha do neon em momentos aleatórios
+        const logo = document.querySelector('.logo');
+        const introDuration = 7000; // 7 segundos total
+        const flickerCount = 4;
+        const flickerTimes = [];
+        
+        // Gerar 4 momentos aleatórios para as falhas
+        for (let i = 0; i < flickerCount; i++) {
+            const randomTime = Math.random() * (introDuration - 2000) + 1000; // Entre 1s e 5s
+            flickerTimes.push(randomTime);
+        }
+        
+        // Ordenar os tempos
+        flickerTimes.sort((a, b) => a - b);
+        
+        // Agendar as falhas
+        flickerTimes.forEach((time, index) => {
+            setTimeout(() => {
+                // Falha leve
+                logo.classList.add('neon-flicker');
+                
+                setTimeout(() => {
+                    // Falha forte
+                    logo.classList.remove('neon-flicker');
+                    logo.classList.add('neon-flicker-strong');
+                    
+                    setTimeout(() => {
+                        // Recuperação
+                        logo.classList.remove('neon-flicker-strong');
+                    }, 200 + Math.random() * 300); // 200-500ms de falha forte
+                    
+                }, 100 + Math.random() * 200); // 100-300ms de falha leve
+                
+            }, time);
+        });
+        
+        // Adicionar mais efeitos visuais dinâmicos
+        setInterval(() => {
+            const logoImage = document.querySelector('.logo-image');
+            if (Math.random() > 0.95) {
+                logoImage.style.transform = `translateX(${Math.random() * 4 - 2}px)`;
+                setTimeout(() => {
+                    logoImage.style.transform = 'translateX(0)';
+                }, 50);
+            }
+        }, 100);
+        
+        // Simular conclusão do carregamento e mostrar menu principal
+        setTimeout(() => {
+            document.getElementById('introScreen').style.transition = 'opacity 0.5s';
+            document.getElementById('introScreen').style.opacity = '0';
+            
+            setTimeout(() => {
+                document.getElementById('introScreen').classList.add('hidden');
+                document.getElementById('mainMenu').classList.remove('hidden');
+            }, 500);
+        }, 7000);
+    </script>
+
+</body>
+</html>

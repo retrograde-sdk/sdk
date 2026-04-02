@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>neon paccoman32</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
+        body {
+            background-color: #050505;
+            color: white;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: 'Orbitron', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            touch-action: none; /* Mobilde kaydırmayı engelle */
+        }
+
+        #game-container {
+            position: relative;
+            box-shadow: 0 0 50px rgba(0, 255, 255, 0.1);
+        }
+
+        canvas {
+            background: #000;
+            border: 2px solid #333;
+            border-radius: 4px;
+            display: block;
+        }
+
+        /* UI Katmanları */
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 3rem;
+            color: #FFFF00;
+            text-shadow: 0 0 20px #FFFF00;
+            margin-bottom: 10px;
+        }
+
+        p { color: #00FFFF; text-shadow: 0 0 10px #00FFFF; margin: 5px; }
+
+        .btn {
+            background: transparent;
+            border: 2px solid #FF00FF;
+            color: #FF00FF;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            font-family: 'Orbitron', sans-serif;
+            cursor: pointer;
+            margin-top: 20px;
+            text-transform: uppercase;
+            box-shadow: 0 0 15px #FF00FF;
+            transition: 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            background: #FF00FF;
+            color: white;
+            box-shadow: 0 0 30px #FF00FF;
+        }
+
+        /* Mobil Kontroller */
+        #mobile-controls {
+            display: none; /* JS ile mobilde açılacak */
+            width: 100%;
+            height: 180px;
+            justify-content: center;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .d-pad {
+            display: grid;
+            grid-template-columns: 60px 60px 60px;
+            grid-template-rows: 60px 60px;
+            gap: 5px;
+        }
+
+        .d-btn {
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            user-select: none;
+            color: white;
+        }
+
+        .d-btn:active { background: rgba(255, 255, 255, 0.3); }
+        .up { grid-column: 2; grid-row: 1; }
+        .left { grid-column: 1; grid-row: 2; }
+        .down { grid-column: 2; grid-row: 2; }
+        .right { grid-column: 3; grid-row: 2; }
+
+/* More Games Linki - Yenilenmiş ve Belirgin */
+.more-games {
+    margin-top: 25px; /* Biraz daha aşağı çektik */
+    font-size: 1rem;
+    font-weight: bold;
+}
+
+.more-games a {
+    color: #FFFFFF; /* Yazı rengini beyaz yaparak netleştirdik */
+    text-decoration: none;
+    background: rgba(0, 255, 0, 0.2); /* Hafif şeffaf yeşil arka plan */
+    padding: 8px 15px;
+    border: 1px solid #00FF00; /* Belirgin yeşil çerçeve */
+    border-radius: 5px;
+    text-shadow: none; /* Okunurluğu bozan parlamayı kaldırdık */
+    transition: 0.3s;
+}
+
+.more-games a:hover {
+    background: #00FF00;
+    color: #000000; /* Üzerine gelince renkleri ters çevir */
+    box-shadow: 0 0 15px #00FF00;
+}
+
+        #score-board {
+            position: absolute;
+            top: -20px;
+            left: 10px;
+            color: white;
+            font-size: 1.2rem;
+            z-index: 5;
+            text-shadow: 0 0 5px white;
+        }
+    </style>
+
+    <script type="text/javascript">
+        window.SDK_OPTIONS = {
+            gameId: "im7kkcvkzdz56road4n29ueh3kno1jql", // Buraya kendi ID'nizi yazın
+            onEvent: function (a) {
+                switch (a.name) {
+                    case "SDK_GAME_PAUSE":
+                        // Oyunu durdurma kodu
+                        if(window.gameInstance) window.gameInstance.pause();
+                        break;
+                    case "SDK_GAME_START":
+                        // Oyunu devam ettirme kodu
+                        if(window.gameInstance) window.gameInstance.resume();
+                        break;
+                    case "SDK_READY":
+                        // SDK hazır
+                        break;
+                }
+            }
+        };
+        (function (a, b, c) {
+            var d = a.getElementsByTagName(b)[0];
+            a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+        })(document, "script", "gamemonetize-sdk");
+    </script>
+</head>
+<body>
+
+    <div id="game-container">
+        <div id="score-board">SCORE: 0 | LEVEL: 1</div>
+        <canvas id="gameCanvas" width="400" height="400"></canvas>
+
+        <div id="start-screen" class="overlay">
+            <h1>hard neon paccoman</h1>
+            <p></p>
+            <button class="btn" onclick="startGame()">PLAY NOW</button>
+            <div class="more-games">
+                <a href="https://ans32.com" target="_blank">More Games @ ans32.com</a>
+            </div>
+        </div>
+
+        <div id="game-over-screen" class="overlay" style="display: none;">
+            <h1 style="color: #FF0000; text-shadow: 0 0 20px #FF0000;">GAME OVER</h1>
+            <p id="final-score">Score: 0</p>
+            <button class="btn" onclick="restartGame()">PLAY AGAIN</button>
+            <div class="more-games">
+                <a href="https://ans32.com" target="_blank">More Games ans32.com</a>
+            </div>
+        </div>
+    </div>
+
+    <div id="mobile-controls">
+        <div class="d-pad">
+            <div class="d-btn up" ontouchstart="handleMobileInput('up')">▲</div>
+            <div class="d-btn left" ontouchstart="handleMobileInput('left')">◀</div>
+            <div class="d-btn down" ontouchstart="handleMobileInput('down')">▼</div>
+            <div class="d-btn right" ontouchstart="handleMobileInput('right')">▶</div>
+        </div>
+    </div>
+
+<script>
+    // --- SES MOTORU (AudioContext) ---
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    const audioCtx = new AudioContext();
+
+    function playSound(type) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        if (type === 'eat') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.1);
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.1);
+        } else if (type === 'die') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+            osc.frequency.linearRampToValueAtTime(50, audioCtx.currentTime + 0.5);
+            gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.5);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.5);
+        } else if (type === 'win') {
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+            osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.1);
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.3);
+        }
+    }
+
+    // --- OYUN AYARLARI ---
+	let isAdShowing = false;
+let animationFrameId = null;
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const TILE_SIZE = 20;
+    const COLS = 20;
+    const ROWS = 20;
+    
+    // Yönler
+    const DIR = { UP: {x:0, y:-1}, DOWN: {x:0, y:1}, LEFT: {x:-1, y:0}, RIGHT: {x:1, y:0}, NONE: {x:0, y:0} };
+
+    let gameState = {
+        running: false,
+        score: 0,
+        level: 1,
+        map: [],
+        player: null,
+        ghosts: [],
+        pellets: 0
+    };
+
+window.gameInstance = {
+    pause: () => {
+        isAdShowing = true;
+        gameState.running = false;
+    },
+    resume: () => { 
+        isAdShowing = false;
+        if (gameState.player && gameState.player.alive && !gameState.running) { 
+            gameState.running = true; 
+            update(); 
+        } 
+    }
+};
+
+    // --- HARİTA ÜRETİMİ (Prosedürel Basit) ---
+function generateMap() {
+    let map = [];
+    // 1: Duvar, 0: Yem, 2: Boş
+    for(let y=0; y<ROWS; y++) {
+        let row = [];
+        for(let x=0; x<COLS; x++) {
+            // Kenar duvarları
+            if (x === 0 || x === COLS - 1 || y === 0 || y === ROWS - 1) {
+                row.push(1);
+            } 
+            // İç duvarları bloklar halinde yap (Hapsolmayı önler)
+            else if (x % 2 === 0 && y % 2 === 0) {
+                // Sadece çift koordinatlarda duvar olma şansı ver
+                row.push(Math.random() < 0.4 ? 1 : 0);
+            }
+            else {
+                row.push(0);
+            }
+        }
+        map.push(row);
+    }
+
+    // --- GARANTİ SİSTEMİ ---
+    // Oyuncunun çevresini mutlaka temizle (Spawn alanı)
+    map[1][1] = 2; map[1][2] = 2; map[2][1] = 2;
+    
+    // Orta alanı (Ghost house) temizle
+    for(let y=8; y<=11; y++) {
+        for(let x=8; x<=11; x++) {
+            map[y][x] = 2;
+        }
+    }
+
+    // Hapsolmuş yem kontrolü: Eğer bir yem 4 tarafı duvarla çevriliyse o duvarlardan birini aç
+    for(let y=1; y<ROWS-1; y++) {
+        for(let x=1; x<COLS-1; x++) {
+            if(map[y][x] === 0) {
+                let walls = 0;
+                if(map[y-1][x] === 1) walls++;
+                if(map[y+1][x] === 1) walls++;
+                if(map[y][x-1] === 1) walls++;
+                if(map[y][x+1] === 1) walls++;
+                
+                if(walls === 4) { // Eğer tamamen kapalıysa
+                    map[y-1][x] = 0; // Üstteki duvarı yola çevir
+                }
+            }
+        }
+    }
+    
+    return map;
+}
+
+    // --- SINIFLAR ---
+    class Entity {
+        constructor(x, y, color) {
+            this.x = x;
+            this.y = y;
+            this.color = color;
+            this.dir = DIR.NONE;
+            this.nextDir = DIR.NONE;
+            this.speed = 0.15; // Hücre başı hız
+            this.movingProgress = 0; // 0 ile 1 arası
+            this.gridX = x;
+            this.gridY = y;
+        }
+
+        draw() {
+            let drawX = (this.gridX * TILE_SIZE) + (this.dir.x * this.movingProgress * TILE_SIZE) + TILE_SIZE/2;
+            let drawY = (this.gridY * TILE_SIZE) + (this.dir.y * this.movingProgress * TILE_SIZE) + TILE_SIZE/2;
+            
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = this.color;
+            ctx.fillStyle = this.color;
+            ctx.beginPath();
+            ctx.arc(drawX, drawY, TILE_SIZE/2 - 2, 0, Math.PI*2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        }
+
+        canMove(direction) {
+            let nextX = this.gridX + direction.x;
+            let nextY = this.gridY + direction.y;
+            return gameState.map[nextY][nextX] !== 1;
+        }
+
+        update() {
+            // Hareket mantığı
+            if (this.movingProgress === 0) {
+                // Yeni karedeyiz, yön değiştirebilir miyiz?
+                if (this.nextDir !== DIR.NONE && this.canMove(this.nextDir)) {
+                    this.dir = this.nextDir;
+                    this.nextDir = DIR.NONE;
+                }
+                
+                if (this.canMove(this.dir)) {
+                    this.movingProgress += this.speed;
+                } else {
+                    // Durduk
+                }
+            } else {
+                this.movingProgress += this.speed;
+                if (this.movingProgress >= 1) {
+                    this.gridX += this.dir.x;
+                    this.gridY += this.dir.y;
+                    this.movingProgress = 0;
+                    this.onGridCenter(); // Tam kareye oturduğunda tetikle
+                }
+            }
+        }
+
+        onGridCenter() {} // Override edilecek
+    }
+
+    class Pacman extends Entity {
+        constructor(x, y) {
+            super(x, y, '#FFFF00');
+            this.alive = true;
+            this.speed = 0.1;
+        }
+
+// Pacman class içindeki onGridCenter metodu
+onGridCenter() {
+    if (gameState.map[this.gridY][this.gridX] === 0) {
+        gameState.map[this.gridY][this.gridX] = 2; // Yendi olarak işaretle
+        gameState.score += 10;
+        gameState.pellets--; // Yem sayısını düşür
+        playSound('eat');
+        updateScore();
+        
+        // Pellets kontrolünü burada yapıyoruz
+        if (gameState.pellets <= 0) {
+            nextLevel();
+        }
+    }
+}
+    }
+
+    class Ghost extends Entity {
+        constructor(x, y, color) {
+            super(x, y, color);
+            this.speed = 0.05 + (gameState.level * 0.002); // Seviye arttıkça hızlanır
+            if(this.speed > 0.25) this.speed = 0.25;
+            this.dir = DIR.UP; // Başlangıç hareketi
+        }
+
+        onGridCenter() {
+            // Basit Yapay Zeka: Rastgele geçerli bir yön seç
+            let possibleMoves = [];
+            if (this.canMove(DIR.UP)) possibleMoves.push(DIR.UP);
+            if (this.canMove(DIR.DOWN)) possibleMoves.push(DIR.DOWN);
+            if (this.canMove(DIR.LEFT)) possibleMoves.push(DIR.LEFT);
+            if (this.canMove(DIR.RIGHT)) possibleMoves.push(DIR.RIGHT);
+
+            // Geri dönmeyi engellemeye çalış (Basitlik için tam engellemiyoruz)
+            if (possibleMoves.length > 0) {
+                this.dir = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
+            }
+        }
+    }
+
+    // --- OYUN DÖNGÜSÜ VE MANTIK ---
+
+    function initGame() {
+        gameState.map = generateMap();
+        gameState.player = new Pacman(1, 1);
+        gameState.ghosts = [
+            new Ghost(9, 9, '#FF0000'), // Blinky (Red)
+            new Ghost(10, 9, '#FFB8FF'), // Pinky
+            //new Ghost(9, 10, '#00FFFF')  // Inky
+        ];
+        
+        // Yem sayısını hesapla
+        gameState.pellets = 0;
+        for(let y=0; y<ROWS; y++) {
+            for(let x=0; x<COLS; x++) {
+                if(gameState.map[y][x] === 0) gameState.pellets++;
+            }
+        }
+        
+        // Mobildeyse kontrolleri göster
+        if(isMobileDevice()) {
+            document.getElementById('mobile-controls').style.display = 'flex';
+        }
+    }
+
+    function isMobileDevice() {
+        return (typeof window.orientation !== "undefined") || (navigator.userAgent.indexOf('IEMobile') !== -1);
+    }
+
+function update() {
+    if (!gameState.running || isAdShowing) return; 
+
+    gameState.player.update();
+    gameState.ghosts.forEach(g => g.update());
+
+    gameState.ghosts.forEach(g => {
+        let dx = gameState.player.gridX - g.gridX;
+        let dy = gameState.player.gridY - g.gridY;
+        let dist = Math.sqrt(dx*dx + dy*dy);
+        
+        if (dist < 1) { 
+            gameOver();
+        }
+    });
+
+    draw();
+    animationFrameId = requestAnimationFrame(update);
+}
+
+    function draw() {
+        // Arkaplanı temizle
+        ctx.fillStyle = '#050505';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Haritayı çiz
+        for(let y=0; y<ROWS; y++) {
+            for(let x=0; x<COLS; x++) {
+                let cell = gameState.map[y][x];
+                let px = x * TILE_SIZE;
+                let py = y * TILE_SIZE;
+
+                if (cell === 1) { // Duvar
+                    ctx.shadowBlur = 10;
+                    ctx.shadowColor = '#a57aff';
+                    ctx.strokeStyle = '#a57aff';
+                    ctx.strokeRect(px + 4, py + 4, TILE_SIZE - 8, TILE_SIZE - 8);
+                    ctx.shadowBlur = 0;
+                } else if (cell === 0) { // Yem
+                    ctx.fillStyle = '#FFB8AE';
+                    ctx.beginPath();
+                    ctx.arc(px + TILE_SIZE/2, py + TILE_SIZE/2, 2, 0, Math.PI*2);
+                    ctx.fill();
+                }
+            }
+        }
+
+        // Oyuncuyu ve Hayaletleri çiz
+        gameState.player.draw();
+        gameState.ghosts.forEach(g => g.draw());
+    }
+
+function startGame() {
+    document.getElementById('start-screen').style.display = 'none';
+    document.getElementById('game-over-screen').style.display = 'none';
+
+    gameState.score = 0;
+    gameState.level = 1;
+    initGame();
+    updateScore();
+    draw(); // Sadece ilk kareyi çiz, döngüyü başlatma
+
+    if (typeof sdk !== 'undefined' && typeof sdk.showBanner !== 'undefined') {
+        isAdShowing = true;
+        gameState.running = false;
+        sdk.showBanner(); // Reklam bitince resume() otomatik çalışacak
+    } else {
+        gameState.running = true;
+        update();
+    }
+}
+
+function nextLevel() {
+    if (!gameState.running) return;
+    
+    gameState.running = false; 
+    playSound('win');
+
+    setTimeout(() => {
+        gameState.level++;
+        
+        gameState.map = generateMap();
+        gameState.player.gridX = 1; 
+        gameState.player.gridY = 1;
+        gameState.player.movingProgress = 0;
+        gameState.player.dir = DIR.NONE;
+        gameState.player.nextDir = DIR.NONE;
+
+        gameState.ghosts.forEach(g => {
+            g.gridX = 9;
+            g.gridY = 9;
+            g.movingProgress = 0;
+            g.speed = 0.05 + (gameState.level * 0.002);
+        });
+
+        let count = 0;
+        for(let y=0; y<ROWS; y++) {
+            for(let x=0; x<COLS; x++) {
+                if(gameState.map[y][x] === 0) count++;
+            }
+        }
+        gameState.pellets = count;
+
+        updateScore();
+        draw(); 
+        
+        if (typeof sdk !== 'undefined' && typeof sdk.showBanner !== 'undefined') {
+            isAdShowing = true;
+            gameState.running = false;
+            sdk.showBanner();
+        } else {
+            gameState.running = true; 
+            update(); 
+        }
+    }, 1000);
+}
+
+function gameOver() {
+        gameState.running = false;
+        gameState.player.alive = false;
+        playSound('die');
+        
+        document.getElementById('game-over-screen').style.display = 'flex';
+        document.getElementById('final-score').innerText = "Score: " + gameState.score;
+        
+        // GameMonetize: Oyun bittiğinde
+        if (typeof sdk !== 'undefined' && typeof sdk.showBanner !== 'undefined') {
+            sdk.showBanner();
+        }
+    }
+
+function restartGame() {
+        document.getElementById('game-over-screen').style.display = 'none';
+        startGame(); // startGame içinde zaten showBanner çağrıldığı için burada ekstra koda gerek yok
+    }
+
+    function updateScore() {
+        const scoreBoard = document.getElementById('score-board');
+        if (scoreBoard) {
+            scoreBoard.innerText = `SCORE: ${gameState.score} | LEVEL: ${gameState.level}`;
+        }
+    }
+    // --- KONTROLLER ---
+// Eski keydown kısmını tamamen silip bunu yapıştır:
+document.addEventListener('keydown', (e) => {
+    if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight", " "].includes(e.key)) {
+        e.preventDefault();
+    }
+
+    if (!gameState.running || isAdShowing) return;
+
+    switch(e.key) {
+        case 'ArrowUp':    gameState.player.nextDir = DIR.UP;    break;
+        case 'ArrowDown':  gameState.player.nextDir = DIR.DOWN;  break;
+        case 'ArrowLeft':  gameState.player.nextDir = DIR.LEFT;  break;
+        case 'ArrowRight': gameState.player.nextDir = DIR.RIGHT; break;
+    }
+});
+
+function handleMobileInput(direction) {
+    if (!gameState.running || isAdShowing) return;
+    switch(direction) {
+        case 'up': gameState.player.nextDir = DIR.UP; break;
+        case 'down': gameState.player.nextDir = DIR.DOWN; break;
+        case 'left': gameState.player.nextDir = DIR.LEFT; break;
+        case 'right': gameState.player.nextDir = DIR.RIGHT; break;
+    }
+}
+
+</script>
+</body>
+</html>

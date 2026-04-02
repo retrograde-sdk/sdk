@@ -1,0 +1,77 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <title>Doroppuboru 13</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1" />
+  <link rel="shortcut icon" href="icon-256.png" />
+  <style>
+    html,body{margin:0;background:#000;overflow:hidden;height:100%}
+    canvas{touch-action:none;-ms-touch-action:none;display:block;margin:0 auto}
+    #status{position:fixed;bottom:12px;left:12px;color:#bbb;font:14px/1.3 system-ui,Arial}
+  </style>
+
+  <script>
+    // --- GameMonetize SDK Setup ---
+    window.SDK_OPTIONS = {
+      gameId: "ay9z13yl6k30gfe0w3butmorqn2eeyov",
+      onEvent: function(e){
+        switch(e.name){
+          case "SDK_READY": 
+            window.dispatchEvent(new Event("gm_ready"));
+            break;
+          case "SDK_GAME_PAUSE":
+            window.dispatchEvent(new Event("gm_pause"));
+            break;
+          case "SDK_GAME_START":
+            window.dispatchEvent(new Event("gm_start"));
+            break;
+        }
+      }
+    };
+    (function(d,t,id){
+      const s=d.getElementsByTagName(t)[0];
+      if(!d.getElementById(id)){
+        const js=d.createElement(t); js.id=id; js.src="https://api.gamemonetize.com/sdk.js";
+        s.parentNode.insertBefore(js,s);
+      }
+    })(document,"script","gamemonetize-sdk");
+
+    // --- Call this from your game's Play button (inside Construct) ---
+    window.GM_showVideo = function(){
+      if (window.sdk && typeof window.sdk.showVideoAd === "function") {
+        window.sdk.showVideoAd(function(ok){
+          window.dispatchEvent(new CustomEvent("gm_ad_done", { detail:{ ok } }));
+        });
+      } else {
+        // fallback (localhost or sdk not ready)
+        window.dispatchEvent(new CustomEvent("gm_ad_done", { detail:{ ok:false } }));
+      }
+    };
+  </script>
+</head>
+<body>
+  <div id="c2canvasdiv">
+    <canvas id="c2canvas" width="720" height="1280">
+      <p>Your browser does not appear to support HTML5.</p>
+    </canvas>
+  </div>
+  <div id="status"></div>
+
+  <!-- Load Construct game runtime -->
+  <script src="jquery-3.4.1.min.js"></script>
+  <script src="c2runtime.js"></script>
+  <script>
+    try { 
+      cr_createRuntime("c2canvas"); 
+    } catch(e){ 
+      document.getElementById('status').textContent = e; 
+    }
+
+    // Pause/Resume hooks
+    window.addEventListener("gm_pause", ()=>{ try{ cr_setSuspended(true);}catch(e){} });
+    window.addEventListener("gm_start", ()=>{ try{ cr_setSuspended(false);}catch(e){} });
+  </script>
+</body>
+</html>

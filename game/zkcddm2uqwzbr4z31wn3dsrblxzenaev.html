@@ -1,0 +1,143 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Lovely Cat: Pet Life</title>
+  <meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1, minimum-scale=1,maximum-scale=1"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="full-screen" content="yes"/>
+  <meta name="x5-fullscreen" content="true"/>
+  <meta name="360-fullscreen" content="true"/>
+  <meta name="renderer" content="webkit"/>
+  <meta name="force-rendering" content="webkit"/>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
+  <link rel="preload" as="font" href="./CookieRun-Black.ttf" type="font/woff2" crossorigin="anonymous">
+  <script type="text/javascript" src="https://api.gamemonetize.com/YYGGamesForGamemonetize.js"></script>
+  <script>
+YYGGames.setConfig({
+    gm:"zkcddm2uqwzbr4z31wn3dsrblxzenaev"
+})
+     </script>
+  <script src="cc-resolution.js" charset="utf-8"></script>
+  <link rel="icon" href="https://www.h5games4u.com/favicon.ico"/>
+  <style type="text/css">
+    * {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+    }
+    @font-face {
+        font-family: "Arial";
+        src: url("CookieRun-Black.ttf");
+    }
+    html {
+        touch-action: none
+    }
+    canvas,
+    div {
+      outline: none;
+      -webkit-tap-highlight-color: rgba(250, 250, 250, 0);
+    }
+    body {
+        overflow: hidden;
+        /* 页面背景颜色 */
+        background: #99e0f3;
+    }
+    #Game {
+        position: absolute;
+        margin: 0;
+        overflow: hidden;
+        width:1920px; 
+        height: 1080px;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+    }
+</style>
+</head>
+<body>
+<div id="Game">
+  <canvas id="GameCanvas" width="1920" height="1080"></canvas>
+  <div id="splash" style="display: none;">
+    <div class="progress-bar stripes">
+      <span style="width: 0%"></span>
+    </div>
+  </div>
+</div>
+						<script>var totalGameSize=101000000;</script>
+<script src="src/settings.js" charset="utf-8"></script>
+<script src="main.js" charset="utf-8"></script>
+<script type="text/javascript">
+    resolution.init(1920, 1080);
+  //  YYGGames.setAppName("Mini-Survival-Zombie-Fight");
+    //显示
+    YYGGames.showLoadingSourceScene()
+    .setAppName("Lovely-Cat-Pet-Life")//需要设置appName
+    .setBackgroundColor("#5b85da") //设置背景颜色 非必填参数
+    .setGameLogoUrl("./@base/logo.png") //设置游戏logo
+    .setGameBannerUrl("./@base/banner.jpg");//设置游戏banner
+     console.timeEnd = console.time = console.error = console.log = console.info = console.warn = function () { };
+    //h5splash.init({appName: "Baby-Hospital-Dentist-Caring", channel: "babygames"});
+    // h5splash.init("h5games4u");
+    //h5splash.setGameLogoScale(0.8);
+    //设置背景颜色
+    //h5splash.setBackgroundColor("#99e0f3");
+    //设置进度条背景颜色
+    //h5splash.setProgressBackgroundColor("#fffff")
+    //这是进度条颜色
+    //h5splash.setProgressValueColor("#fffff")
+    //这是进度条颜色 渐变色
+    //h5splash.setProgressValueColor("#fffff","#ddd")
+    //隐藏页面
+    //h5splash.hideLoading();YYGGames.onLoadingFinished();
+    //进度条描边颜色
+    //h5splash.setProgressBorderColor()
+    (function () {
+        // open web debugger console
+        if (typeof VConsole !== 'undefined') {
+            window.vConsole = new VConsole();
+        }
+        var debug = window._CCSettings.debug;
+        var splash = document.getElementById('splash');
+        splash.style.display = 'block';
+
+        function loadScript (moduleName, cb) {
+        function scriptLoaded () {
+            document.body.removeChild(domScript);
+            domScript.removeEventListener('load', scriptLoaded, false);
+            cb && cb();
+        };
+        var domScript = document.createElement('script');
+        domScript.async = true;
+        domScript.src = moduleName;
+        domScript.addEventListener('load', scriptLoaded, false);
+        document.body.appendChild(domScript);
+        }
+        loadScript(debug ? 'cocos2d-js.js' : 'cocos2d-js-min.js', function () {
+            // bundle.init().then(()=>{
+                window.focusFlag = false;
+                window.addEventListener("focus", () => {
+                    cc.audioEngine.setMusicVolume(window.musicVolume1);
+                    cc.audioEngine.setEffectsVolume(window.effectVolume1);
+                });
+                window.addEventListener("blur", () => {
+                    window.musicVolume1 = window.musicVolume == null ? cc.audioEngine._music.volume : 0;
+                    window.effectVolume1 = window.effectVolume == null ? cc.audioEngine._effect.volume : 0;
+                    cc.audioEngine.setMusicVolume(0);
+                    cc.audioEngine.setEffectsVolume(0);
+                });
+                YYGGames.assetManager.enableVersionControl().then(() => {
+                    YYGGames.assetManager.loadDir("preloads").then(()=>{
+                        window.boot();  
+                    })        
+            
+                })
+             //   window.boot();
+            // });
+        
+        });
+    })();
+</script>
+</body>
+</html>

@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Zippy Bird</title>
+  <link rel="preload" href="images/bg.jpeg" as="image">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div id="game">
+    <!-- HUD -->
+    <div id="score">Score: 0</div>
+    <div id="level-display">Level: 1</div>
+    <div id="countdown">3</div>
+
+    <!-- Bird -->
+    <img id="bird" src="images/png.png" alt="bird" />
+
+    <!-- START SCREEN -->
+    <div id="start-screen">
+      <div class="title">
+        <img src="images/main.png" alt="Zippy Bird" />
+      </div>
+
+      <div class="mid-bar">
+        <div class="input-container">
+          <input id="player-name" type="text" maxlength="20" placeholder="Enter your name (optional)" autocomplete="off" />
+        </div>
+      </div>
+
+      <div class="toggles s-btn">
+        <span id="vibration-btn" class="toggle-btn" data-state="on" title="Vibration">📳</span>
+        <span id="music-btn" class="toggle-btn" data-state="on" title="Music">🎵</span>
+        <span id="sound-btn" class="toggle-btn" data-state="on" title="Sound">🔊</span>
+      </div>
+
+      <button id="start-btn" aria-label="Play">
+          P L A Y
+          <div id="clip">
+              <div id="leftTop" class="corner"></div>
+              <div id="rightBottom" class="corner"></div>
+              <div id="rightTop" class="corner"></div>
+              <div id="leftBottom" class="corner"></div>
+          </div>
+          <span id="rightArrow" class="arrow"></span>
+          <span id="leftArrow" class="arrow"></span>
+      </button>
+
+      <div style="height:14px"></div>
+
+      <button id="show-leaderboard-btn" aria-label="Leaderboard">
+          LEADERBOARD
+          <div id="clip">
+              <div id="leftTop" class="corner"></div>
+              <div id="rightBottom" class="corner"></div>
+              <div id="rightTop" class="corner"></div>
+              <div id="leftBottom" class="corner"></div>
+          </div>
+          <span id="rightArrow" class="arrow"></span>
+          <span id="leftArrow" class="arrow"></span>
+      </button>
+    </div>
+
+    <!-- GAME OVER SCREEN -->
+    <div id="game-over-screen">
+      <div id="final-score">Score: 0</div>
+      <div id="best-score">High Score: 0</div>
+
+      <div style="height:14px"></div>
+
+      <button id="restart-btn" aria-label="Restart">
+        <span>RESTART</span>
+      </button>
+
+      <div style="height:10px"></div>
+
+      <button id="new-game-btn" aria-label="Main Menu">
+        <span>MAIN MENU</span>
+      </button>
+    </div>
+
+    <!-- CONTINUE SCREEN -->
+    <div id="continue-screen" style="display:none;">
+      <div id="continue-score">Score: 0</div>
+      <div id="continue-level">Level: 1</div>
+
+      <div style="height:14px"></div>
+
+      <button id="continue-btn">CONTINUE (5)</button>
+
+      <div style="height:10px"></div>
+
+      <button id="no-thanks-btn" style="display:none;">NO THANKS</button>
+    </div>
+
+    <!-- COUNTDOWN WITH READY BUTTON -->
+    <div id="countdown-container" style="display:none; text-align:center;">
+      <div id="timer-display" style="font-size:5em;">3</div>
+      <button id="ready-btn" style="margin-top:10px; font-size:1em;">Ready</button>
+    </div>
+
+    <!-- LEADERBOARD -->
+    <div id="leaderboard-screen">
+      <div id="leaderboard-container">
+        <h2>Leaderboard</h2>
+        <ul id="leaderboard-list"></ul>
+      </div>
+      <button id="back-btn" aria-label="Back to menu">
+        <span class="button-box">
+          <svg class="button-elem" viewBox="0 0 46 40" xmlns="http://www.w3.org/2000/svg">
+            <path d="M46 20 23 33V25H0V15H23V7l23 13Z"></path>
+          </svg>
+        </span>
+      </button>
+    </div>
+
+    <!-- Audio -->
+    <audio id="bg-music" src="sounds/bg-music.mp3" loop preload="auto"></audio>
+    <audio id="flap-sound" src="sounds/flap.mp3" preload="auto"></audio>
+    <audio id="hit-sound" src="sounds/hit.mp3" preload="auto"></audio>
+    <audio id="point-sound" src="sounds/point.mp3" preload="auto"></audio>
+  </div>
+
+  <!-- GameMonetize SDK -->
+  <script type="text/javascript">
+    window.SDK_OPTIONS = {
+      gameId: "3hh5z81ik1xz5o5epk7mpy6dtjtvwvma",
+      onEvent: function (a) {
+        switch (a.name) {
+          case "SDK_GAME_PAUSE":
+            // Pause your game & mute audio
+            if (window.pauseGame) pauseGame();
+            if (window.bgMusic) window.bgMusic.pause();
+            break;
+          case "SDK_GAME_START":
+            // Resume your game & unmute audio
+            if (window.resumeGame) resumeGame();
+            if (window.bgMusic && musicBtn.dataset.state === "on") window.bgMusic.play();
+            break;
+          case "SDK_READY":
+            console.log("GameMonetize SDK is ready.");
+            break;
+        }
+      }
+    };
+    (function(a,b,c){
+      var d=a.getElementsByTagName(b)[0];
+      if(!a.getElementById(c)){
+        var s=a.createElement(b);
+        s.id=c;
+        s.src="https://api.gamemonetize.com/sdk.js";
+        d.parentNode.insertBefore(s,d);
+      }
+    })(document,"script","gamemonetize-sdk");
+  </script>
+
+  <!-- Your game script -->
+  <script src="script.js"></script>
+</body>
+</html>

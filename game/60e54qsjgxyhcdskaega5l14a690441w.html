@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Logic Pro - Neon Edition | WinyoGames</title>
+    <meta name="description" content="Challenge your brain with Logic Pro. Solve the puzzle by turning off all the lights.">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎮</text></svg>">
+    <style>
+        /* --- 1. FONTS & VARIABLES --- */
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap');
+
+        :root {
+            /* Theme 1: Cyber Neon (Default) */
+            --bg-dark: #050510;
+            --primary: #00f2ff;
+            --secondary: #ff0055;
+            --text-main: #ffffff;
+            --tile-off: #1a1a2e;
+            --tile-on: #00f2ff;
+            --tile-glow: 0 0 15px rgba(0, 242, 255, 0.6);
+            --glow: 0 0 15px rgba(0, 242, 255, 0.3);
+            --font-display: 'Orbitron', sans-serif;
+            --font-body: 'Rajdhani', sans-serif;
+        }
+
+        /* Theme 2: Matrix Code */
+        [data-theme="matrix"] {
+            --bg-dark: #001100;
+            --primary: #00ff00;
+            --secondary: #008f11;
+            --text-main: #ccffcc;
+            --tile-off: #002200;
+            --tile-on: #00ff00;
+            --tile-glow: 0 0 15px rgba(0, 255, 0, 0.6);
+            --glow: 0 0 15px rgba(0, 255, 0, 0.2);
+        }
+
+        /* Theme 3: Sunset Vibes */
+        [data-theme="sunset"] {
+            --bg-dark: #1a0b2e;
+            --primary: #ff9900;
+            --secondary: #ff0055;
+            --text-main: #fff0e6;
+            --tile-off: #4a0e4e;
+            --tile-on: #ff9900;
+            --tile-glow: 0 0 15px rgba(255, 153, 0, 0.6);
+            --glow: 0 0 15px rgba(255, 153, 0, 0.3);
+        }
+
+        /* Theme 4: Arctic Frost */
+        [data-theme="arctic"] {
+            --bg-dark: #0b1026;
+            --primary: #ffffff;
+            --secondary: #a5d8ff;
+            --text-main: #e0e0e0;
+            --tile-off: #1c2e4a;
+            --tile-on: #ffffff;
+            --tile-glow: 0 0 15px rgba(255, 255, 255, 0.6);
+            --glow: 0 0 15px rgba(255, 255, 255, 0.2);
+        }
+
+        /* Theme 5: Royal Gold */
+        [data-theme="royal"] {
+            --bg-dark: #0a0501;
+            --primary: #ffd700;
+            --secondary: #b8860b;
+            --text-main: #fffacd;
+            --tile-off: #332a00;
+            --tile-on: #ffd700;
+            --tile-glow: 0 0 15px rgba(255, 215, 0, 0.6);
+            --glow: 0 0 15px rgba(255, 215, 0, 0.3);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: var(--font-body);
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* --- 2. LOADER --- */
+        #loader {
+            position: fixed; inset: 0; background: var(--bg-dark); z-index: 9999;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            transition: opacity 0.5s;
+        }
+        .loader-ring {
+            width: 80px; height: 80px; border: 4px solid transparent; border-top: 4px solid var(--primary);
+            border-radius: 50%; animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* --- 3. HEADER --- */
+        header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 15px; background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--card-border);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .logo { font-family: var(--font-display); font-size: 1.2rem; color: #fff; letter-spacing: 1px; }
+        .logo span { color: var(--primary); }
+        
+        .header-actions { display: flex; gap: 10px; align-items: center; }
+        .theme-btn {
+            background: none; border: 1px solid var(--tile-off); color: var(--primary);
+            padding: 5px 10px; border-radius: 15px; font-family: var(--font-display); font-size: 0.7rem; cursor: pointer;
+        }
+        .btn-icon {
+            background: none; border: 1px solid var(--tile-off); color: #fff;
+            width: 32px; height: 32px; border-radius: 50%; cursor: pointer;
+            display: flex; justify-content: center; align-items: center; font-size: 1rem;
+        }
+
+        /* --- 4. ADSENSE BANNERS --- */
+        .ad-banner {
+            width: 100%; max-width: 900px; height: auto; min-height: 50px;
+            margin: 10px auto; background: rgba(255,255,255,0.05);
+            border: 1px dashed var(--tile-off); display: flex;
+            justify-content: center; align-items: center; color: var(--primary);
+            font-size: 0.8rem; text-transform: uppercase; letter-spacing: 2px;
+        }
+
+        /* --- 5. MAIN GAME BOARD --- */
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 5px 10px 20px 10px;
+            width: 100%;
+        }
+
+        .game-board {
+            width: 100%;
+            max-width: 400px;
+            aspect-ratio: 1/1;
+            position: relative;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--tile-off);
+            border-radius: 15px;
+            padding: 10px;
+            box-shadow: var(--glow);
+        }
+
+        .grid {
+            display: grid;
+            width: 100%;
+            height: 100%;
+            gap: 5px;
+        }
+
+        /* --- 6. TILES --- */
+        .tile {
+            background-color: var(--tile-off);
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .tile.active {
+            background-color: var(--tile-on);
+            box-shadow: var(--tile-glow);
+            border-color: #fff;
+        }
+
+        .tile:active { transform: scale(0.9); }
+
+        @media (max-width: 400px) {
+            .grid { gap: 3px; }
+        }
+
+        /* --- 7. STATS HUD --- */
+        .hud-bar {
+            position: absolute; top: -40px; left: 0; width: 100%;
+            display: flex; justify-content: space-between; padding: 0 5px;
+            font-family: var(--font-display); font-size: 0.9rem; color: #fff;
+            pointer-events: none;
+        }
+        .hud-item { text-align: center; }
+        .hud-label { font-size: 0.6rem; color: #888; text-transform: uppercase; display: block; }
+        .hud-val { color: var(--primary); font-size: 1.1rem; }
+        .best-highlight { color: var(--secondary) !important; text-shadow: 0 0 5px var(--secondary); }
+
+        /* --- 8. MODALS --- */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.9); backdrop-filter: blur(5px);
+            z-index: 1000; display: flex; justify-content: center; align-items: center;
+            opacity: 0; pointer-events: none; transition: 0.3s;
+        }
+        .modal-overlay.active { opacity: 1; pointer-events: all; }
+
+        .modal-content {
+            background: var(--bg-dark); border: 1px solid var(--primary);
+            padding: 30px; border-radius: 15px; text-align: center;
+            max-width: 90%; width: 350px; box-shadow: var(--glow);
+            transform: scale(0.8); transition: 0.3s;
+        }
+        .modal-overlay.active .modal-content { transform: scale(1); }
+
+        .modal-title { font-family: var(--font-display); font-size: 2rem; color: var(--primary); margin-bottom: 15px; }
+        .modal-text { margin-bottom: 25px; color: #ccc; font-family: var(--font-body); font-size: 1.1rem; }
+        
+        .btn-main {
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border: none; padding: 12px 30px; color: #fff; font-family: var(--font-display);
+            font-weight: bold; border-radius: 25px; cursor: pointer; font-size: 1rem;
+            text-transform: uppercase; box-shadow: 0 0 15px rgba(0,0,0,0.5); transition: transform 0.2s;
+        }
+        .btn-main:active { transform: scale(0.95); }
+
+    </style>
+
+<script>
+window.SDK_OPTIONS = {
+  gameId: "60e54qsjgxyhcdskaega5l14a690441w",
+  onEvent: function (a) {
+    switch (a.name) {
+
+      case "SDK_GAME_PAUSE":
+        // Pause game + mute
+        if(window.state){
+            state.isPlaying = false;
+            state.soundOn = false;
+        }
+        break;
+
+      case "SDK_GAME_START":
+        // Resume game + unmute
+        if(window.state){
+            state.isPlaying = true;
+            state.soundOn = true;
+        }
+        break;
+
+      case "SDK_READY":
+        console.log("GameMonetize SDK Ready");
+        break;
+
+      case "SDK_ERROR":
+        console.log("GameMonetize SDK Error");
+        break;
+    }
+  }
+};
+
+(function (a, b, c) {
+  var d = a.getElementsByTagName(b)[0];
+  a.getElementById(c) || (a = a.createElement(b), a.id = c,
+  a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+})(document, "script", "gamemonetize-sdk");
+</script>
+
+</head>
+<body data-theme="cyber">
+
+    <!-- LOADER -->
+    <div id="loader">
+        <div class="loader-ring"></div>
+        <div style="margin-top:15px; font-family: 'Orbitron'; color: var(--primary);">INITIALIZING...</div>
+    </div>
+
+    <!-- HEADER -->
+    <header>
+        <div class="logo">WINYO<span>GAMES</span></div>
+        <div class="header-actions">
+            <button class="theme-btn" id="themeBtn">THEME</button>
+            <button class="btn-icon" id="btnSound">🔊</button>
+            <button class="btn-icon" id="btnGuide">❓</button>
+        </div>
+    </header>
+
+    <!-- TOP AD BANNER -->
+<!--
+    <div class="ad-banner">
+        Google AdSense Top Banner
+    </div>
+-->
+    <!-- MAIN GAME AREA -->
+    <main>
+        
+        <!-- Game Board with Floating HUD -->
+        <div class="game-board">
+            <div class="hud-bar">
+                <div class="hud-item">
+                    <span class="hud-label">Level</span>
+                    <span class="hud-val" id="levelDisplay">1</span>
+                </div>
+                <div class="hud-item">
+                    <span class="hud-label">Moves</span>
+                    <span class="hud-val" id="movesDisplay">0</span>
+                </div>
+                <div class="hud-item">
+                    <span class="hud-label">Best</span>
+                    <span class="hud-val" id="bestDisplay">--</span>
+                </div>
+            </div>
+            
+            <div class="grid" id="gameGrid">
+                <!-- Tiles injected here -->
+            </div>
+        </div>
+
+    </main>
+
+    <!-- BOTTOM AD BANNER -->
+<!--
+    <div class="ad-banner">
+        
+        Google AdSense Bottom Banner
+    </div>
+-->
+    <!-- MODALS -->
+    <div class="modal-overlay" id="gameModal">
+        <div class="modal-content">
+            <h2 class="modal-title" id="mTitle">READY?</h2>
+            <p class="modal-text" id="mMsg">Turn all the lights OFF!</p>
+            <button class="btn-main" id="mBtn">START</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="guideModal">
+        <div class="modal-content">
+            <h2 class="modal-title">HOW TO PLAY</h2>
+            <p class="modal-text" style="font-size: 0.9rem; text-align: left; line-height: 1.6;">
+                1. Tap a tile to toggle it ON or OFF.<br>
+                2. Tapping a tile also toggles its neighbors.<br>
+                3. The goal is to turn all lights OFF.<br>
+                4. Try to use the fewest moves possible!
+            </p>
+            <button class="btn-main" id="closeGuideBtn">OK</button>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * WINYO GAMES ENGINE - LOGIC PRO (FIXED BEST SCORE)
+         */
+
+        // --- CONFIG ---
+        function showAd() {
+            if (typeof sdk !== "undefined" && sdk.showBanner) {
+                sdk.showBanner();
+            }
+        }
+
+        const CONFIG = {
+            themes: ['cyber', 'matrix', 'sunset', 'arctic', 'royal'],
+            levels: [
+                { size: 3 },
+                { size: 4 },
+                { size: 5 },
+                { size: 5 },
+                { size: 6 }
+            ]
+        };
+
+        // --- STATE ---
+        let state = {
+            level: 1,
+            moves: 0,
+            bestScore: null,
+            grid: [], 
+            gridSize: 3,
+            isPlaying: false,
+            soundOn: true
+        };
+
+        window.state = state;
+        // --- AUDIO ENGINE ---
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const audioCtx = new AudioContext();
+
+        const playTone = (freq, type, dur) => {
+            if(!state.soundOn) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + dur);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + dur);
+        };
+
+        const sfx = {
+            click: () => playTone(400, 'square', 0.1),
+            win: () => {
+                playTone(600, 'sine', 0.1);
+                setTimeout(()=>playTone(800, 'sine', 0.2), 100);
+                setTimeout(()=>playTone(1200, 'triangle', 0.4), 200);
+            },
+            newBest: () => {
+                playTone(800, 'sine', 0.1);
+                setTimeout(()=>playTone(1200, 'sine', 0.2), 100);
+                setTimeout(()=>playTone(1800, 'sine', 0.4), 200);
+            }
+        };
+
+        // --- DOM ELEMENTS ---
+        const els = {
+            loader: document.getElementById('loader'),
+            grid: document.getElementById('gameGrid'),
+            level: document.getElementById('levelDisplay'),
+            moves: document.getElementById('movesDisplay'),
+            best: document.getElementById('bestDisplay'),
+            modal: document.getElementById('gameModal'),
+            mTitle: document.getElementById('mTitle'),
+            mMsg: document.getElementById('mMsg'),
+            mBtn: document.getElementById('mBtn'),
+            guide: document.getElementById('guideModal'),
+            themeBtn: document.getElementById('themeBtn')
+        };
+
+        // --- INITIALIZATION ---
+        window.onload = () => {
+            const savedTheme = localStorage.getItem('winyo_theme') || 'cyber';
+            applyTheme(savedTheme);
+
+            setTimeout(() => {
+                els.loader.style.opacity = '0';
+                setTimeout(() => els.loader.remove(), 500);
+//                showModal('LOGIC PRO', 'Turn all lights OFF to win!', 'START', () => startGame());
+                    showModal('LOGIC PRO', 'Turn all lights OFF to win!', 'START', () => {
+                        showAd();
+                        startGame();
+                    });
+            }, 2000);
+        };
+
+        // --- THEME MANAGEMENT ---
+        let themeIdx = CONFIG.themes.indexOf(localStorage.getItem('winyo_theme') || 'cyber');
+        els.themeBtn.onclick = () => {
+            themeIdx = (themeIdx + 1) % CONFIG.themes.length;
+            applyTheme(CONFIG.themes[themeIdx]);
+        };
+
+        function applyTheme(name) {
+            document.body.setAttribute('data-theme', name);
+            localStorage.setItem('winyo_theme', name);
+        }
+
+        // --- GAME LOGIC ---
+        function startGame() {
+            // Load Current Level Progress
+            const savedLvl = localStorage.getItem('winyo_logic_lvl');
+            if(savedLvl) state.level = parseInt(savedLvl);
+            startLevel();
+        }
+
+        function startLevel() {
+            state.isPlaying = true;
+            state.moves = 0;
+            state.bestScore = null; // Reset local state variable
+            
+            // Get Grid Size
+            const lvlIdx = Math.min(state.level - 1, CONFIG.levels.length - 1);
+            state.gridSize = CONFIG.levels[lvlIdx].size;
+
+            // Load Best Score for this specific level from LocalStorage
+            const storageKey = `winyo_logic_l${state.level}`;
+            const savedBest = localStorage.getItem(storageKey);
+            
+            if (savedBest) {
+                state.bestScore = parseInt(savedBest);
+                els.best.innerText = state.bestScore;
+            } else {
+                els.best.innerText = '--';
+            }
+
+            // Update UI
+            els.level.innerText = state.level;
+            els.moves.innerText = 0;
+
+            // Setup Grid CSS
+            els.grid.style.gridTemplateColumns = `repeat(${state.gridSize}, 1fr)`;
+            els.grid.innerHTML = '';
+            state.grid = [];
+
+            // Create Tiles
+            const totalTiles = state.gridSize * state.gridSize;
+            for(let i=0; i<totalTiles; i++) {
+                state.grid.push(false); 
+                const tile = document.createElement('div');
+                tile.className = 'tile';
+                tile.dataset.index = i;
+                tile.addEventListener('click', () => handleTileClick(i));
+                els.grid.appendChild(tile);
+            }
+
+            // Generate Puzzle
+            scrambleGrid();
+        }
+
+        function scrambleGrid() {
+            // Start with all OFF
+            // Simulate random clicks to scramble
+            const scrambleMoves = state.level * 5 + 5;
+            const totalTiles = state.gridSize * state.gridSize;
+
+            for(let i=0; i<scrambleMoves; i++) {
+                const randIdx = Math.floor(Math.random() * totalTiles);
+                toggleLogic(randIdx, false);
+            }
+        }
+
+        function handleTileClick(index) {
+            if(!state.isPlaying) return;
+        
+            // Show ad on first move of level
+            if(state.moves === 0){
+                showAd();
+            }
+        
+            sfx.click();
+            toggleLogic(index, true);
+        }
+
+        function toggleLogic(index, isPlayerMove) {
+            const x = index % state.gridSize;
+            const y = Math.floor(index / state.gridSize);
+
+            // Toggle clicked tile
+            toggleSingle(index);
+
+            // Toggle neighbors
+            if(x > 0) toggleSingle(index - 1); // Left
+            if(x < state.gridSize - 1) toggleSingle(index + 1); // Right
+            if(y > 0) toggleSingle(index - state.gridSize); // Up
+            if(y < state.gridSize - 1) toggleSingle(index + state.gridSize); // Down
+
+            if(isPlayerMove) {
+                state.moves++;
+                els.moves.innerText = state.moves;
+                checkWin();
+            }
+        }
+
+        function toggleSingle(index) {
+            state.grid[index] = !state.grid[index];
+            const tile = els.grid.children[index];
+            
+            if(state.grid[index]) {
+                tile.classList.add('active');
+            } else {
+                tile.classList.remove('active');
+            }
+        }
+
+        function checkWin() {
+            // Win if all are OFF (false)
+            const allOff = state.grid.every(val => val === false);
+            
+            if(allOff) {
+                levelComplete();
+            }
+        }
+
+        function levelComplete() {
+            state.isPlaying = false;
+            sfx.win();
+
+            // Check and Update Best Score
+            const storageKey = `winyo_logic_l${state.level}`;
+            const previousBest = localStorage.getItem(storageKey);
+            let isNewRecord = false;
+
+            if(!previousBest || state.moves < parseInt(previousBest)) {
+                localStorage.setItem(storageKey, state.moves);
+                isNewRecord = true;
+                state.bestScore = state.moves; // Update UI state
+                els.best.innerText = state.moves;
+                els.best.classList.add('best-highlight');
+                sfx.newBest();
+            } else {
+                els.best.classList.remove('best-highlight');
+            }
+
+            // Level Up Logic
+            state.level++;
+            localStorage.setItem('winyo_logic_lvl', state.level);
+
+            // Show Message
+            let msg = `Lights cleared in ${state.moves} moves.`;
+            if(isNewRecord) msg += " NEW RECORD!";
+
+//            showModal('SOLVED!', msg, 'NEXT LEVEL', () => startLevel());
+            showModal('SOLVED!', msg, 'NEXT LEVEL', () => {
+                showAd();
+                startLevel();
+            });
+        }
+
+        // --- MODAL & UTILS ---
+        function showModal(title, msg, btnTxt, callback) {
+            els.mTitle.innerText = title;
+            els.mMsg.innerText = msg;
+            els.mBtn.innerText = btnTxt;
+            els.modal.classList.add('active');
+            
+            els.mBtn.onclick = () => {
+                els.modal.classList.remove('active');
+                callback();
+            };
+        }
+
+        document.getElementById('btnSound').onclick = function() {
+            state.soundOn = !state.soundOn;
+            this.innerText = state.soundOn ? '🔊' : '🔇';
+        };
+
+//        document.getElementById('btnGuide').onclick = () => els.guide.classList.add('active');
+        document.getElementById('btnGuide').onclick = () => {
+            showAd();
+            els.guide.classList.add('active');
+        };
+        document.getElementById('closeGuideBtn').onclick = () => els.guide.classList.remove('active');
+
+    </script>
+</body>
+</html>

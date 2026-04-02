@@ -1,0 +1,1707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Space Stairwell</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+  
+  
+  <style type="text/css">@font-face {font-family:Orbitron;font-style:normal;font-weight:400;src:url(/cf-fonts/v/orbitron/5.0.18/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Orbitron;font-style:normal;font-weight:700;src:url(/cf-fonts/v/orbitron/5.0.18/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Orbitron;font-style:normal;font-weight:900;src:url(/cf-fonts/v/orbitron/5.0.18/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}</style>
+  <style>
+    :root {
+      --neon-cyan: #4cd1ff;
+      --neon-pink: #ff4da6;
+      --ui-glow: 0 0 20px rgba(76, 209, 255, 0.6), 0 0 40px rgba(76, 209, 255, 0.35);
+      --ui-glow-pink: 0 0 20px rgba(255, 77, 166, 0.6), 0 0 40px rgba(255, 77, 166, 0.35);
+    }
+
+    html, body {
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      margin: 0;
+      background: radial-gradient(1200px 800px at 50% 100%, #1b2735 0%, #0c0a18 50%, #090a0f 100%);
+      font-family: 'Orbitron', sans-serif;
+      color: #fff;
+    }
+
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 0;
+      display: block;
+      cursor: pointer;
+    }
+
+    /* Overlay & Panels */
+    .ui-overlay {
+      position: relative; 
+      z-index: 1;
+      width: 100vw;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column; 
+      justify-content: center;
+      align-items: center;
+      pointer-events: none;
+      padding: 1rem;
+    }
+    .ui-overlay.game-over-active {
+        justify-content: flex-start;
+    }
+    .panel {
+      background: rgba(0,0,0,0.75);
+      border: 1px solid rgba(76,209,255,0.35);
+      border-radius: 16px;
+      box-shadow: var(--ui-glow);
+      pointer-events: auto;
+      transition: transform .4s ease, opacity .35s ease, margin .4s ease;
+      z-index: 30; /* Ensure panels are on top of other UI */
+    }
+    #gameOverScreen {
+        margin-top: 15vh;
+    }
+    #howToPlayScreen {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 35; /* Ensures it's on top of other panels */
+        background: #121a23; /* Solid, dark background */
+    }
+    #howToPlayScreen.hidden-soft {
+      transform: translate(-50%, -50%) translateY(10px) scale(.98);
+    }
+    .panel.hidden-soft { 
+        opacity: 0; 
+        transform: translateY(10px) scale(.98); 
+        pointer-events: none;
+        position: absolute; /* FIX: Takes the hidden panel out of the flexbox flow */
+    }
+
+    /* HUD */
+    #game-info {
+      position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
+      display: flex; flex-direction: column; gap: 8px; align-items: center; z-index: 10;
+      text-shadow: 0 0 6px rgba(0,255,255,.6);
+    }
+    #game-info .badge { font-weight: 700; font-size: 0.8rem; letter-spacing: .5px; }
+    #game-info .badge span { font-size: 1.08rem; color: var(--neon-cyan); text-shadow: 0 0 10px var(--neon-cyan), 0 0 18px var(--neon-cyan); }
+
+    /* Energy Bar */
+    .energy-wrap {
+      width: min(40vw, 400px); height: 28px; border-radius: 999px; padding: 2px; position: relative;
+      background: linear-gradient(90deg, rgba(76,209,255,.15), rgba(255,77,166,.15));
+      border: 1px solid rgba(255,255,255,.1);
+      box-shadow: var(--ui-glow);
+    }
+    .energy-fill {
+      height: 100%; border-radius: 999px; width: 100%;
+      background: linear-gradient(90deg, #27e1ff, #7a5cff, #ff4da6);
+      filter: drop-shadow(0 0 6px rgba(124, 205, 255,.9));
+      transition: width .25s ease; /* Smooth width change */
+    }
+    .energy-gloss { position: absolute; inset: 0; border-radius: 999px; pointer-events: none;
+      background: linear-gradient(180deg, rgba(255,255,255,.25), rgba(255,255,255,0)); opacity: .6; }
+
+    /* Buttons */
+    .btn-neon {
+      --bg: var(--neon-pink);
+      background: var(--bg);
+      color: white; font-weight: 800; letter-spacing: 1px;
+      padding: .9rem 2.2rem; border-radius: 9999px; box-shadow: var(--ui-glow-pink);
+      transition: transform .2s ease, box-shadow .2s ease, filter .2s ease; will-change: transform;
+      position: relative;
+      overflow: visible; /* Allow sphere to be seen outside */
+    }
+    .btn-neon:hover { transform: translateY(-1px) scale(1.05); filter: brightness(1.05); }
+    .btn-secondary {
+        --bg: transparent;
+        border: 2px solid var(--neon-cyan);
+        color: var(--neon-cyan);
+        box-shadow: var(--ui-glow);
+        padding: .7rem 2rem;
+    }
+
+    /* Titles */
+    .title-neon { text-shadow: 0 0 18px var(--neon-pink), 0 0 36px rgba(255,77,166,.55); }
+    .subtitle { opacity: .9 }
+
+    /* Key hint */
+    .key-hint { opacity: .7; font-size: .9rem; letter-spacing: .8px; }
+
+    /* NEW MENU STYLES */
+    @keyframes text-flicker {
+      0%, 100% { opacity: 1; text-shadow: 0 0 8px #ff4da6, 0 0 20px #ff4da6, 0 0 40px #ff4da6; }
+      50% { opacity: 0.8; text-shadow: 0 0 8px #ff4da6, 0 0 20px #ff4da6; }
+    }
+    .title-flicker {
+        animation: text-flicker 2.5s infinite;
+    }
+    .text-glow-pink { text-shadow: 0 0 8px #ff4da6, 0 0 20px #ff4da6, 0 0 40px #ff4da6; }
+
+    /* Sphere animation on button */
+    .sphere-anim {
+        position: absolute;
+        top: -12px;
+        left: 0;
+        width: 24px;
+        height: 24px;
+        background: radial-gradient(circle at 30% 30%, #ffe0f2, hsl(330, 100%, 70%) 60%, #a90052);
+        border-radius: 50%;
+        box-shadow: 0 0 8px #fff, 0 0 16px #ff4da6;
+        transform: translateY(-50%) translateX(-50%);
+        animation: pop-sphere 3s ease-in-out infinite 1s;
+    }
+
+    @keyframes pop-sphere {
+        0%, 100% {
+            left: 0%;
+            transform: translateY(-50%) translateX(-50%);
+            opacity: 0;
+        }
+        10%, 90% {
+            opacity: 1;
+        }
+        50% {
+            left: 100%;
+            transform: translateY(-50%) translateX(-50%);
+        }
+    }
+    
+    /* In-Game Controls */
+    #in-game-controls {
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 20;
+        pointer-events: auto;
+        opacity: 0;
+        transition: opacity 0.5s ease;
+        display: flex;
+        gap: 1rem;
+    }
+    #in-game-controls.visible {
+        opacity: 1;
+    }
+    .control-btn {
+        width: 60px;
+        height: 60px;
+        background: rgba(0, 0, 0, 0.3);
+        border: 2px solid rgba(76, 209, 255, 0.5);
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: rgba(76, 209, 255, 0.7);
+        box-shadow: 0 0 15px rgba(76, 209, 255, 0.3);
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+        transition: all 0.2s ease;
+    }
+    .control-btn:hover {
+        color: white;
+        border-color: var(--neon-cyan);
+    }
+    .control-btn.active {
+        background: rgba(76, 209, 255, 0.3);
+        color: white;
+        box-shadow: var(--ui-glow);
+    }
+    .control-btn svg {
+        width: 30px;
+        height: 30px;
+    }
+
+    #levelUpScreen {
+        transition: transform 0.4s ease-out, opacity 0.4s ease-out;
+    }
+
+    /* NEW Gravity Warning */
+    #gravityWarning h2 {
+        text-shadow: 0 0 20px #ff0000, 0 0 40px #ff0000;
+        animation: pulse-warning 1s infinite;
+        color: #ffc2c2;
+    }
+
+    #jumpWarning h2 {
+        color: #ff8080;
+        text-shadow: 0 0 20px #ff0000, 0 0 40px #ff0000;
+        animation: pulse-warning 1s;
+    }
+
+    @keyframes pulse-warning {
+        0%, 100% {
+            transform: scale(1);
+            opacity: 1;
+        }
+        50% {
+            transform: scale(1.05);
+            opacity: 0.7;
+        }
+    }
+
+    /* Levels Screen */
+    #levels-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+        width: 100%;
+        max-width: 300px;
+    }
+    .level-btn {
+        aspect-ratio: 1 / 1;
+        background: rgba(0,0,0,0.5);
+        border: 2px solid var(--neon-cyan);
+        border-radius: 12px;
+        font-size: 2rem;
+        font-weight: 900;
+        color: var(--neon-cyan);
+        text-shadow: 0 0 10px var(--neon-cyan);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        transition: all 0.2s ease;
+    }
+    .level-btn:hover {
+        background: rgba(76, 209, 255, 0.2);
+        box-shadow: var(--ui-glow);
+        transform: scale(1.05);
+    }
+    .level-btn.locked {
+        opacity: 0.5;
+        cursor: not-allowed;
+        background: rgba(0,0,0,0.3);
+        border-color: rgba(255,255,255,0.2);
+        color: rgba(255,255,255,0.3);
+    }
+    .level-btn.locked:hover {
+        background: rgba(0,0,0,0.3);
+        transform: none;
+        box-shadow: none;
+    }
+    .level-btn.locked svg {
+        width: 2.5rem;
+        height: 2.5rem;
+    }
+
+  </style>
+  
+  <!-- GameMonetize.com SDK Integration -->
+  <script type="text/javascript">
+    let onAdCompleteCallback = null;
+
+    window.SDK_OPTIONS = {
+      gameId: "c8d6ujnjwx4npxq1kx1vwoly2lw16j45",
+      onEvent: function (a) {
+        switch (a.name) {
+          case "SDK_GAME_PAUSE":
+            if (window.pauseGame) window.pauseGame();
+            break;
+          case "SDK_GAME_START":
+            // Force the audio context to resume, as ads can suspend it.
+            if (typeof Tone !== 'undefined' && Tone.context.state !== 'running') {
+                Tone.start();
+            }
+            if (onAdCompleteCallback) {
+                onAdCompleteCallback();
+                onAdCompleteCallback = null;
+            } else if (window.resumeGame) {
+                window.resumeGame();
+            }
+            break;
+          case "SDK_READY":
+            console.log("GameMonetize SDK is ready.");
+            break;
+          case "SDK_ERROR":
+            console.error("GameMonetize SDK error.");
+            // If an ad was supposed to play, just run the callback to not block the game.
+            if (onAdCompleteCallback) {
+                onAdCompleteCallback();
+                onAdCompleteCallback = null;
+            } else if (window.isPaused && window.resumeGame) {
+                window.resumeGame();
+            }
+            break;
+        }
+      }
+    };
+    (function(d, s, id) {
+      var js, fjs = d.getElementsByTagName(s)[0];
+      if (d.getElementById(id)) return;
+      js = d.createElement(s);
+      js.id = id;
+      js.src = 'https://api.gamemonetize.com/sdk.js';
+      fjs.parentNode.insertBefore(js, fjs);
+    }(document, 'script', 'gamemonetize-sdk'));
+  </script>
+</head>
+<body>
+  <canvas id="gameCanvas"></canvas>
+
+  <div id="uiContainer" class="ui-overlay">
+    <div id="game-info" class="hidden">
+      <div class="flex flex-wrap justify-center gap-x-3 sm:gap-x-4 gap-y-1">
+          <div class="badge">Time: <span id="timeScore">0</span>s</div>
+          <div class="badge">Score: <span id="scoreDisplay">0</span></div>
+          <div class="badge">Level: <span id="levelDisplay">1</span></div>
+      </div>
+      <div class="energy-wrap">
+        <div id="energyFill" class="energy-fill" style="width:100%"></div>
+        <div class="energy-gloss"></div>
+      </div>
+       <div id="gravity-timer-badge" class="badge hidden" style="color: #4dff88; text-shadow: 0 0 8px #4dff88;">Zero-G: <span id="gravityTime">0</span>s</div>
+    </div>
+
+    <!-- NEW CLEAN START MENU -->
+    <div id="startScreen" class="panel w-full max-w-md rounded-2xl p-10 flex flex-col justify-center items-center text-white overflow-hidden relative space-y-8">
+        
+        <!-- Header -->
+        <div class="text-center z-10">
+            <h1 class="text-4xl md:text-5xl font-black text-glow-pink tracking-widest uppercase title-flicker">Space Stairwell</h1>
+        </div>
+
+        <!-- CTA Buttons -->
+        <div class="z-10 w-full flex flex-col items-center gap-4 pt-4">
+            <button id="startButton" class="btn-neon w-full max-w-xs">
+                <span class="sphere-anim"></span>
+                <span class="relative z-10">Start</span>
+            </button>
+            <button id="levelsButton" class="btn-neon btn-secondary w-full max-w-xs">
+                Levels
+            </button>
+            <button id="howToPlayButton" class="btn-neon btn-secondary w-full max-w-xs">
+                How to Play
+            </button>
+        </div>
+    </div>
+    
+    <!-- NEW LEVELS SCREEN -->
+    <div id="levelsScreen" class="panel hidden-soft w-full max-w-md rounded-2xl p-8 md:p-10 flex flex-col justify-center items-center text-white overflow-hidden relative space-y-8 text-center">
+        <h2 class="text-3xl md:text-4xl font-black text-glow-pink tracking-widest uppercase">Select Level</h2>
+        <div id="levels-grid">
+            <!-- Level buttons will be generated here -->
+        </div>
+        <div class="flex flex-col sm:flex-row gap-4 w-full max-w-xs mt-4">
+            <button id="returnToGameButton" class="btn-neon w-full hidden" style="--bg: var(--neon-cyan); box-shadow: var(--ui-glow);">Return</button>
+            <button id="exitToMenuButton" class="btn-neon btn-secondary w-full">Exit to Menu</button>
+        </div>
+    </div>
+
+    <div id="howToPlayScreen" class="panel hidden-soft w-full max-w-sm rounded-2xl p-6 flex flex-col text-white overflow-hidden relative space-y-4 text-left">
+        <h2 class="text-2xl md:text-3xl font-black text-glow-pink tracking-widest uppercase text-center mb-2">How to Play</h2>
+        
+        <div class="w-full text-sm">
+            <h3 class="text-lg font-bold text-cyan-300 mb-1">Objective & Strategy</h3>
+            <ul class="list-disc list-inside space-y-1 opacity-90 leading-normal">
+                <li>Jump between platforms to survive and collect items for points.</li>
+                <li>Every jump costs energy—longer jumps cost more. Plan the shortest path to conserve your power!</li>
+                <li>You must collect items to recharge. Prioritize them in this order for maximum energy: <strong>Stars > Energy Pills > Energy Rings</strong>.</li>
+            </ul>
+        </div>
+
+        <div class="w-full text-sm">
+            <h3 class="text-lg font-bold text-pink-400 mb-1">Watch Out for Traps!</h3>
+            <ul class="list-disc list-inside space-y-1 opacity-90 leading-normal">
+                <li><strong>Unstable Platforms:</strong> Some platforms will collapse after you land on them. Be ready to jump away quickly, as they disappear much faster in higher levels!</li>
+            </ul>
+        </div>
+
+        <div class="w-full text-sm">
+            <h3 class="text-lg font-bold text-cyan-300 mb-1">Mobile</h3>
+            <p class="opacity-90 leading-normal"><strong>Tap</strong> on a platform to jump to it.</p>
+        </div>
+
+        <div class="w-full text-sm">
+            <h3 class="text-lg font-bold text-cyan-300 mb-1">PC Controls</h3>
+            <ul class="list-disc list-inside space-y-1 opacity-90 leading-normal">
+                <li><strong>Click</strong> a platform to jump.</li>
+                <li>Use <strong>A/D</strong> or <strong>Arrow Keys</strong> to slide on a platform.</li>
+                <li>Press <strong>Space Bar</strong> for a smart-jump to the nearest platform (prefers rewards).</li>
+                <li>Press <strong>R</strong> to restart after Game Over.</li>
+            </ul>
+        </div>
+
+        <button id="closeHowToPlayButton" class="btn-neon btn-secondary w-full max-w-xs mt-2 text-sm">
+            Close
+        </button>
+    </div>
+
+
+    <div id="gameOverScreen" class="panel p-8 md:p-10 text-center hidden-soft">
+      <h2 class="text-3xl md:text-5xl font-black mb-4 title-neon">GAME OVER</h2>
+      <p class="text-base md:text-lg mb-1 opacity-90">You Survived:</p>
+      <p id="finalTimeScore" class="text-3xl md:text-4xl font-black mb-3" style="text-shadow: 0 0 15px #4cd1ff;">0 seconds</p>
+       <p class="text-base md:text-lg mb-1 opacity-90">Reached Level:</p>
+      <p id="finalLevelDisplay" class="text-3xl md:text-4xl font-black mb-3" style="text-shadow: 0 0 15px #ff4da6;">1</p>
+      <p class="text-base md:text-lg mb-1 opacity-90">Final Score:</p>
+      <p id="finalScoreDisplay" class="text-3xl md:text-4xl font-black mb-3" style="text-shadow: 0 0 15px #4cd1ff;">0</p>
+      <p class="text-base md:text-lg mb-1 opacity-90">Final Energy:</p>
+      <p id="finalEnergyScore" class="text-3xl md:text-4xl font-black mb-6" style="text-shadow: 0 0 15px #ff4da6;">0 energy</p>
+      <div class="flex justify-center items-center gap-4 mt-6">
+          <button id="restartButton" class="btn-neon" style="--bg: var(--neon-cyan); box-shadow: var(--ui-glow);">RESTART</button>
+          <button id="backToLevelsButton" class="btn-neon btn-secondary">LEVELS</button>
+      </div>
+      <div class="key-hint mt-4">Press <strong>R</strong> to restart</div>
+    </div>
+    
+    <div id="nextLevelScreen" class="panel p-8 md:p-10 text-center hidden-soft">
+      <h2 class="text-3xl md:text-5xl font-black mb-6 title-neon">LEVEL COMPLETE!</h2>
+      <p id="nextLevelInfo" class="text-lg mb-6 opacity-90"></p>
+      <button id="nextLevelButton" class="btn-neon">NEXT LEVEL</button>
+    </div>
+
+    <div id="levelUpScreen" class="absolute inset-0 flex justify-center items-center pointer-events-none z-50 hidden">
+        <h2 id="levelUpText" class="text-7xl font-black text-white" style="text-shadow: 0 0 30px var(--neon-cyan), 0 0 60px var(--neon-cyan);"></h2>
+    </div>
+
+    <div id="gravityWarning" class="absolute inset-0 flex justify-center items-center pointer-events-none z-50 hidden">
+        <h2 class="text-5xl md:text-6xl font-black uppercase">Gravity Returning</h2>
+    </div>
+
+    <div id="jumpWarning" class="absolute inset-0 flex justify-center items-center pointer-events-none z-50 hidden">
+        <h2 id="jumpWarningText" class="text-4xl md:text-5xl font-black uppercase"></h2>
+    </div>
+
+  </div>
+
+  <div id="in-game-controls">
+        <button id="exitToLevelsBtn" class="control-btn" title="Exit to Levels">
+           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+             <path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
+           </svg>
+        </button>
+        <button id="pauseBtn" class="control-btn" title="Pause/Resume">
+            <svg id="pauseIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25v13.5m-7.5-13.5v13.5" />
+            </svg>
+            <svg id="playIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="hidden">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" />
+            </svg>
+        </button>
+  </div>
+
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // UI Elements
+    const uiContainer = document.getElementById('uiContainer');
+    const gameInfoElement = document.getElementById('game-info');
+    const timeScoreElement = document.getElementById('timeScore');
+    const scoreDisplayElement = document.getElementById('scoreDisplay');
+    const levelDisplayElement = document.getElementById('levelDisplay');
+    const energyFillEl = document.getElementById('energyFill');
+    const startScreen = document.getElementById('startScreen');
+    const gameOverScreen = document.getElementById('gameOverScreen');
+    const startButton = document.getElementById('startButton');
+    const restartButton = document.getElementById('restartButton');
+    const finalTimeScore = document.getElementById('finalTimeScore');
+    const finalScoreDisplay = document.getElementById('finalScoreDisplay');
+    const finalLevelDisplay = document.getElementById('finalLevelDisplay');
+    const finalEnergyScore = document.getElementById('finalEnergyScore');
+    const gravityTimerBadge = document.getElementById('gravity-timer-badge');
+    const gravityTimeElement = document.getElementById('gravityTime');
+    const inGameControls = document.getElementById('in-game-controls');
+    const levelUpScreen = document.getElementById('levelUpScreen');
+    const levelUpText = document.getElementById('levelUpText');
+    const gravityWarning = document.getElementById('gravityWarning');
+    const levelsButton = document.getElementById('levelsButton');
+    const levelsScreen = document.getElementById('levelsScreen');
+    const exitToMenuButton = document.getElementById('exitToMenuButton');
+    const levelsGrid = document.getElementById('levels-grid');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const playIcon = document.getElementById('playIcon');
+    const pauseIcon = document.getElementById('pauseIcon');
+    const exitToLevelsBtn = document.getElementById('exitToLevelsBtn');
+    const nextLevelScreen = document.getElementById('nextLevelScreen');
+    const nextLevelButton = document.getElementById('nextLevelButton');
+    const nextLevelInfo = document.getElementById('nextLevelInfo');
+    const jumpWarning = document.getElementById('jumpWarning');
+    const jumpWarningText = document.getElementById('jumpWarningText');
+    const howToPlayButton = document.getElementById('howToPlayButton');
+    const howToPlayScreen = document.getElementById('howToPlayScreen');
+    const closeHowToPlayButton = document.getElementById('closeHowToPlayButton');
+    const backToLevelsButton = document.getElementById('backToLevelsButton');
+    const returnToGameButton = document.getElementById('returnToGameButton');
+
+    let sphere, blocks, particles, gravity, gameActive, startTime, levelStartTimestamp;
+    let highestLevelUnlocked = 1;
+    let blockSpawnTimer = 0;
+    let starsFar = [], starsNear = [], nebulas = [];
+    let timeSurvived = 0;
+    let jumpCount = 0;
+    let score = 0;
+    let rewards = [];
+    let energyPills = [];
+    let energyRings = [];
+    let gravityOrbs = [];
+    let lastUpdateTime = 0;
+    let animationFrameId = null;
+    let gravityActive = false;
+    let gravityEndTime = 0;
+    let currentLevel;
+    let jumpWarningTimeout = null;
+    window.isPaused = false; // Exposed to window for SDK access
+
+    // Screen shake
+    let shakeTime = 0, shakeMag = 0;
+
+    // Landing squash
+    let squashTimer = 0;
+    
+    // Keyboard state
+    const keys = {
+        left: false,
+        right: false
+    };
+
+    // --- Sound ---
+    const coinSynth = new Tone.Synth({
+        oscillator: { type: 'sine' },
+        envelope: { attack: 0.001, decay: 0.15, sustain: 0.05, release: 0.2 },
+        volume: -10
+    }).toDestination();
+
+    const starSynth = new Tone.Synth({
+        oscillator: { type: 'triangle8' },
+        envelope: { attack: 0.01, decay: 0.2, sustain: 0.2, release: 0.2 },
+        volume: -8
+    }).toDestination();
+
+    const collapseSynth = new Tone.NoiseSynth({
+        noise: { type: 'white' },
+        envelope: { attack: 0.005, decay: 0.15, sustain: 0 },
+        volume: -5
+    }).toDestination();
+
+    const jumpSynth = new Tone.Synth({
+        oscillator: { type: 'sine' },
+        envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.4 },
+        volume: -16
+    }).toDestination();
+
+    function playCoinSound() {
+        if (Tone.context.state !== 'running') Tone.context.resume();
+        const now = Tone.now();
+        coinSynth.triggerAttackRelease("A5", "16n", now);
+        coinSynth.triggerAttackRelease("E6", "16n", now + 0.07);
+    }
+
+    function playStarSound() {
+        if (Tone.context.state !== 'running') Tone.context.resume();
+        const now = Tone.now();
+        starSynth.triggerAttackRelease("C5", "16n", now);
+        starSynth.triggerAttackRelease("E5", "16n", now + 0.1);
+        starSynth.triggerAttackRelease("G5", "16n", now + 0.2);
+    }
+
+    function playCollapseSound() {
+        if (Tone.context.state !== 'running') Tone.context.resume();
+        collapseSynth.triggerAttackRelease("0.15");
+    }
+
+    function playJumpSound() {
+        if (Tone.context.state !== 'running') Tone.context.resume();
+        jumpSynth.triggerAttack("C4");
+        jumpSynth.frequency.rampTo("A4", 0.2);
+        jumpSynth.triggerRelease("+0.2");
+    }
+    
+    // --- Progress Saving ---
+    function saveProgress() {
+        localStorage.setItem('spaceStairwellHighestLevel', highestLevelUnlocked);
+    }
+
+    function loadProgress() {
+        const savedLevel = localStorage.getItem('spaceStairwellHighestLevel');
+        if (savedLevel) {
+            highestLevelUnlocked = parseInt(savedLevel, 10);
+        } else {
+            highestLevelUnlocked = 1;
+        }
+    }
+
+    // --- SDK Integration: Pause/Resume Functions ---
+    window.pauseGame = function() {
+        if (!window.isPaused) {
+            window.isPaused = true;
+            playIcon.classList.remove('hidden');
+            pauseIcon.classList.add('hidden');
+            pauseBtn.classList.add('active');
+            if (typeof Tone !== 'undefined' && Tone.Destination) {
+                Tone.Destination.mute = true;
+            }
+        }
+    };
+
+    window.resumeGame = function() {
+        if (window.isPaused) {
+            window.isPaused = false;
+            playIcon.classList.add('hidden');
+            pauseIcon.classList.remove('hidden');
+            pauseBtn.classList.remove('active');
+            if (typeof Tone !== 'undefined' && Tone.Destination) {
+                Tone.Destination.mute = false;
+            }
+            lastUpdateTime = Date.now(); // Prevent time jump after unpausing
+        }
+    };
+
+
+    // --- Vibration ---
+    function triggerVibration(pattern) {
+        if (navigator.vibrate) {
+            navigator.vibrate(pattern);
+        }
+    }
+
+    // --- Game Constants ---
+    const GRAVITY = 0.15;
+    const PLATFORM_MIN_WIDTH = 60;
+    const PLATFORM_MAX_WIDTH = 180;
+    const PLATFORM_HEIGHT = 20;
+    const CLICK_BUFFER = 60; // Increased for more relaxed gameplay
+    const REWARD_RADIUS = 30; 
+    const REWARD_POINTS_PER_STAR = 40;
+    const MAX_VERTICAL_JUMP_DISTANCE = 450;
+
+    // Energy Constants
+    const MAX_ENERGY = 100;
+    const ENERGY_PILL_RECHARGE = 35;
+    const ENERGY_RING_RADIUS = 12;
+    const GRAVITY_ORB_RADIUS = 15;
+    const GRAVITY_ORB_DURATION = 10000;
+
+    const MIN_JUMP_ARC_HEIGHT = 30;
+    const MAX_JUMP_ARC_HEIGHT = 150;
+
+    const ENERGY_COST_BASE_PER_JUMP = 2;
+    const ENERGY_COST_PER_ARC_UNIT = 0.1;
+
+    // Movement
+    const SLIDE_SPEED = 7.5;
+    const JUMP_DURATION = 20;
+    const HORIZONTAL_MOVE_SPEED = 4;
+
+    // --- Item Spawn Weights & Types ---
+    const ITEM_ON_BLOCK_CHANCE = 0.4;
+    const STAR_WEIGHT = 30;
+    const PILL_WEIGHT = 20;
+    const GRAVITY_ORB_WEIGHT = 15;
+    
+    const RING_TYPES = [
+        { value: 20, color: '#a0c4ff', weight: 40 },
+        { value: 25, color: '#b388ff', weight: 20 },
+        { value: 30, color: '#ffde7a', weight: 10 }
+    ];
+    const RING_WEIGHT = RING_TYPES.reduce((sum, type) => sum + type.weight, 0);
+    const TOTAL_ITEM_TYPE_WEIGHT = STAR_WEIGHT + RING_WEIGHT + PILL_WEIGHT + GRAVITY_ORB_WEIGHT;
+    
+    // --- Level Settings ---
+    const levelSettings = [
+        {}, // Level 0 is unused
+        { duration: 60, scrollSpeed: 1.0, fakePairChance: 0.3, collapseChance: 0.2, spawnRate: 60, collapseTime: 1.5 },
+        { duration: 120, scrollSpeed: 1.06, fakePairChance: 0.3, collapseChance: 0.3, spawnRate: 57, collapseTime: 1.39 }, // 60 + 60
+        { duration: 180, scrollSpeed: 1.11, fakePairChance: 0.3, collapseChance: 0.35, spawnRate: 54, collapseTime: 1.28 }, // 120 + 60
+        { duration: 240, scrollSpeed: 1.17, fakePairChance: 0.3, collapseChance: 0.4, spawnRate: 52, collapseTime: 1.17 }, // 180 + 60
+        { duration: 300, scrollSpeed: 1.22, fakePairChance: 0.3, collapseChance: 0.45, spawnRate: 49, collapseTime: 1.06 }, // 240 + 60
+        { duration: 360, scrollSpeed: 1.28, fakePairChance: 0.3, collapseChance: 0.5, spawnRate: 47, collapseTime: 0.94 }, // 300 + 60
+        { duration: 420, scrollSpeed: 1.34, fakePairChance: 0.3, collapseChance: 0.55, spawnRate: 45, collapseTime: 0.83 }, // 360 + 60
+        { duration: 480, scrollSpeed: 1.39, fakePairChance: 0.3, collapseChance: 0.6, spawnRate: 43, collapseTime: 0.72 }, // 420 + 60
+        { duration: 540, scrollSpeed: 1.45, fakePairChance: 0.3, collapseChance: 0.65, spawnRate: 42, collapseTime: 0.61 }, // 480 + 60
+        { duration: Infinity, scrollSpeed: 1.5, fakePairChance: 0.3, collapseChance: 0.7, spawnRate: 40, collapseTime: 0.5 } // Final endless level
+    ];
+
+    function resetForNextLevel() {
+      // Clear all dynamic game objects
+      blocks = [];
+      particles = [];
+      rewards = [];
+      energyPills = [];
+      energyRings = [];
+      gravityOrbs = [];
+
+      // Reset physics and special states
+      gravity = GRAVITY;
+      gravityActive = false;
+      gravityEndTime = 0;
+      gravityTimerBadge.classList.add('hidden');
+      gravityWarning.classList.add('hidden');
+      
+      // Create a new starting platform for the new level
+      const startBlockWidth = canvas.width * 0.3;
+      const startBlockHeight = 30;
+      const startBlock = {
+        x: canvas.width / 2 - startBlockWidth / 2,
+        y: 150,
+        width: startBlockWidth,
+        height: startBlockHeight,
+        speed: levelSettings[currentLevel].scrollSpeed,
+        color: `hsl(180, 80%, 60%)`,
+        isFake: false,
+      };
+      blocks.push(startBlock);
+
+      // Create a few initial blocks to populate the screen
+      for (let i = 0; i < 5; i++) {
+        const width = rand(canvas.width * 0.1, canvas.width * 0.4);
+        const height = rand(15, 40);
+        const x = rand(0, canvas.width - width);
+        const y = startBlock.y + 100 + i * 150 + Math.random() * 50;
+        const newBlock = { x, y, width, height, speed: levelSettings[currentLevel].scrollSpeed, color: `hsl(${Math.random() * 360}, 80%, 60%)`, isFake: false };
+        blocks.push(newBlock);
+        maybeAddItemToBlock(newBlock);
+      }
+      
+      // Reset the sphere's state and position it on the new starting block
+      sphere.x = startBlock.x + startBlock.width / 2;
+      sphere.y = startBlock.y - sphere.radius;
+      sphere.dx = 0;
+      sphere.dy = 0;
+      sphere.onBlock = startBlock;
+      sphere.isSliding = false;
+      sphere.isJumping = false;
+      sphere.jumpTargetBlock = null;
+      sphere.jumpProgress = 0;
+    }
+
+    // --- Setup ---
+    function setup(startLevel = 1) {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      blocks = []; particles = []; rewards = []; energyPills = []; energyRings = []; gravityOrbs = [];
+      gravity = GRAVITY; gameActive = false; startTime = null;
+      timeSurvived = 0; jumpCount = 0; score = 0; lastUpdateTime = Date.now();
+      gravityActive = false; gravityEndTime = 0;
+      currentLevel = startLevel;
+      window.isPaused = false;
+      playIcon.classList.add('hidden');
+      pauseIcon.classList.remove('hidden');
+      pauseBtn.classList.remove('active');
+
+      starsFar = createStars(100, 0.2, canvas.width, canvas.height);
+      starsNear = createStars(50, 0.8, canvas.width, canvas.height);
+      nebulas = createNebulas(3, canvas.width, canvas.height);
+
+      const startBlockWidth = canvas.width * 0.3;
+      const startBlockHeight = 30;
+      const startBlock = {
+        x: canvas.width / 2 - startBlockWidth / 2,
+        y: 150,
+        width: startBlockWidth,
+        height: startBlockHeight,
+        speed: levelSettings[currentLevel].scrollSpeed,
+        color: `hsl(180, 80%, 60%)`,
+        isFake: false,
+      };
+      blocks.push(startBlock);
+
+      for (let i = 0; i < 5; i++) {
+        const width = rand(canvas.width * 0.1, canvas.width * 0.4);
+        const height = rand(15, 40);
+        const x = rand(0, canvas.width - width);
+        const y = startBlock.y + 100 + i * 150 + Math.random() * 50;
+        const newBlock = { x, y, width, height, speed: levelSettings[currentLevel].scrollSpeed, color: `hsl(${Math.random() * 360}, 80%, 60%)`, isFake: false };
+        blocks.push(newBlock);
+        maybeAddItemToBlock(newBlock);
+      }
+
+      const sphereRadius = Math.min(canvas.width, canvas.height) * 0.03;
+      sphere = {
+        x: startBlock.x + startBlock.width / 2,
+        y: startBlock.y - sphereRadius,
+        radius: sphereRadius,
+        dx: 0, dy: 0,
+        color: 'hsl(330, 100%, 70%)',
+        onBlock: startBlock,
+        isSliding: false,
+        slideTargetX: 0,
+        isJumping: false,
+        jumpTargetBlock: null,
+        jumpStartX: 0,
+        jumpStartY: 0,
+        jumpProgress: 0,
+        jumpDuration: JUMP_DURATION,
+        energy: MAX_ENERGY,
+      };
+
+      timeScoreElement.textContent = '0';
+      scoreDisplayElement.textContent = '0';
+      levelDisplayElement.textContent = currentLevel;
+      energyFillEl.style.width = '100%';
+
+      gameInfoElement.style.display = 'none'; 
+      startScreen.classList.remove('hidden-soft');
+      levelsScreen.classList.add('hidden-soft');
+      gameOverScreen.classList.add('hidden-soft');
+      uiContainer.classList.remove('game-over-active');
+      gravityTimerBadge.classList.add('hidden');
+      inGameControls.classList.remove('visible');
+      gravityWarning.classList.add('hidden');
+    }
+
+    // --- Utilities ---
+    function rand(min, max) { return Math.random() * (max - min) + min; }
+    function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+
+    function createStars(count, speed, w, h) {
+      const arr = [];
+      for (let i = 0; i < count; i++) {
+        arr.push({ x: Math.random() * w, y: Math.random() * h, r: Math.random() * 1.6 + 0.2, a: Math.random() * 0.6 + 0.2, speed });
+      }
+      return arr;
+    }
+
+    function createNebulas(count, w, h) {
+      const n = [];
+      for (let i = 0; i < count; i++) {
+        n.push({ x: Math.random() * w, y: Math.random() * h * 0.7, r: Math.random() * (w * 0.25) + w * 0.15, hue: Math.random() * 360, alpha: Math.random() * 0.15 + 0.05 });
+      }
+      return n;
+    }
+
+    function maybeAddItemToBlock(block) {
+      if (Math.random() >= ITEM_ON_BLOCK_CHANCE) return;
+      const roll = Math.random() * TOTAL_ITEM_TYPE_WEIGHT;
+      let cum = STAR_WEIGHT;
+      if (roll < cum) {
+        rewards.push({ x: block.x + block.width / 2, y: block.y - REWARD_RADIUS - 5, radius: REWARD_RADIUS, color: '#ffd700', points: REWARD_POINTS_PER_STAR, onBlock: block });
+      } else {
+        cum += RING_WEIGHT;
+        if (roll < cum) {
+            const ringRoll = Math.random() * RING_WEIGHT;
+            let ringCum = 0;
+            for (const type of RING_TYPES) {
+                ringCum += type.weight;
+                if (ringRoll < ringCum) {
+                    energyRings.push({ x: block.x + block.width / 2, y: block.y - ENERGY_RING_RADIUS - 5, radius: ENERGY_RING_RADIUS, color: type.color, energyValue: type.value, onBlock: block });
+                    break;
+                }
+            }
+        } else {
+            cum += PILL_WEIGHT;
+            if (roll < cum) {
+                energyPills.push({ x: block.x + block.width / 2, y: block.y - (30 / 2), width: 60, height: 30, color: 'deepskyblue', onBlock: block });
+            } else {
+                gravityOrbs.push({ x: block.x + block.width / 2, y: block.y - GRAVITY_ORB_RADIUS - 5, radius: GRAVITY_ORB_RADIUS, onBlock: block });
+            }
+        }
+      }
+    }
+
+    // --- Drawing ---
+    function drawParallaxBackground(dt) {
+      nebulas.forEach(n => {
+        const g = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.r);
+        g.addColorStop(0, `hsla(${n.hue}, 75%, 60%, ${n.alpha})`);
+        g.addColorStop(0.6, `hsla(${(n.hue + 40) % 360}, 75%, 50%, ${n.alpha * 0.5})`);
+        g.addColorStop(1, 'hsla(0,0%,0%,0)');
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2); ctx.fill();
+      });
+
+      ctx.save();
+      starsFar.forEach(s => { s.y += s.speed * 0.15; if (s.y > canvas.height) { s.y = -5; s.x = Math.random() * canvas.width; } ctx.globalAlpha = s.a; ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill(); });
+      ctx.restore();
+
+      ctx.save();
+      starsNear.forEach(s => { s.y += s.speed * 0.35; if (s.y > canvas.height) { s.y = -5; s.x = Math.random() * canvas.width; } ctx.globalAlpha = Math.min(1, s.a + 0.2); ctx.beginPath(); ctx.arc(s.x, s.y, s.r + 0.3, 0, Math.PI * 2); ctx.fillStyle = '#e6f7ff'; ctx.fill(); });
+      ctx.restore();
+    }
+
+    function drawSphere() {
+      ctx.save();
+      applyShake();
+      const squash = squashTimer > 0 ? 1 + Math.sin((1 - squashTimer) * Math.PI) * 0.12 : 1;
+      let scaleX = 1, scaleY = 1;
+      if (sphere.isJumping) {
+        const p = sphere.jumpProgress / sphere.jumpDuration;
+        scaleY = 1 + Math.sin(p * Math.PI) * 0.12;
+        scaleX = 1 - Math.sin(p * Math.PI) * 0.08;
+      } else if (squashTimer > 0) {
+        scaleY = 1 / squash; scaleX = squash;
+      }
+      ctx.translate(sphere.x, sphere.y);
+      ctx.scale(scaleX, scaleY);
+
+      // --- NEW: Per-sphere energy indicator ---
+      if (sphere.energy < MAX_ENERGY) {
+        const energyPercent = sphere.energy / MAX_ENERGY;
+        const indicatorRadius = sphere.radius + 8;
+        const startAngle = -Math.PI * 0.9;
+        const endAngle = startAngle + (Math.PI * 1.8 * energyPercent); // Changed from 0.8 to 1.8 for a bigger arc
+        
+        // Hue goes from red (0) to green (120)
+        const hue = 120 * energyPercent;
+        
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(0, 0, indicatorRadius, startAngle, endAngle);
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = `hsl(${hue}, 100%, 60%)`;
+        ctx.shadowColor = `hsl(${hue}, 100%, 60%)`;
+        ctx.shadowBlur = 10;
+        ctx.stroke();
+        ctx.restore();
+      }
+      // --- END: Per-sphere energy indicator ---
+
+
+      if (gravityActive) {
+          const glowRadius = sphere.radius * (1.5 + Math.sin(Date.now() / 200) * 0.2);
+          const g = ctx.createRadialGradient(0, 0, 0, 0, 0, glowRadius);
+          g.addColorStop(0, 'rgba(77, 255, 136, 0.7)');
+          g.addColorStop(1, 'rgba(77, 255, 136, 0)');
+          ctx.fillStyle = g;
+          ctx.beginPath(); ctx.arc(0, 0, glowRadius, 0, Math.PI * 2); ctx.fill();
+      }
+
+      ctx.beginPath();
+      const glow = ctx.createRadialGradient(0,0,0, 0,0, sphere.radius * 1.6);
+      glow.addColorStop(0, 'rgba(255, 120, 200, .9)');
+      glow.addColorStop(1, 'rgba(255, 120, 200, 0)');
+      ctx.fillStyle = glow;
+      ctx.arc(0, 0, sphere.radius * 1.6, 0, Math.PI * 2);
+      ctx.fill();
+
+      const g = ctx.createRadialGradient(-sphere.radius*0.3, -sphere.radius*0.4, sphere.radius*0.2, 0, 0, sphere.radius);
+      g.addColorStop(0, '#ffe0f2');
+      g.addColorStop(0.6, sphere.color);
+      g.addColorStop(1, '#a90052');
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(0, 0, sphere.radius, 0, Math.PI * 2); ctx.fill();
+
+      ctx.beginPath(); ctx.ellipse(-sphere.radius*0.35, -sphere.radius*0.45, sphere.radius*0.35, sphere.radius*0.22, -0.3, 0, Math.PI*2);
+      ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.fill();
+      ctx.restore();
+    }
+
+    function blockGradient(block) {
+        const g = ctx.createLinearGradient(block.x, block.y, block.x, block.y + block.height);
+        if (block.isCollapsing) {
+            const redTint = Math.floor(Math.sin(Date.now() / 50) * 50 + 20);
+            g.addColorStop(0, `rgba(255, ${255-redTint}, ${255-redTint}, 0.3)`);
+            g.addColorStop(0.15, `rgb(255, ${redTint}, ${redTint})`);
+        } else {
+            g.addColorStop(0, 'rgba(255,255,255,0.25)');
+            g.addColorStop(0.15, block.color);
+        }
+        g.addColorStop(1, 'rgba(0,0,0,0.35)');
+        return g;
+    }
+
+    function drawBlocks(t) {
+      blocks.forEach(block => {
+        ctx.save();
+        if (block.isCollapsing) ctx.translate((Math.random() - 0.5) * 2, (Math.random() - 0.5) * 2);
+        ctx.shadowColor = block.color; ctx.shadowBlur = 18; ctx.shadowOffsetY = 2;
+        ctx.fillStyle = blockGradient(block);
+        ctx.beginPath(); ctx.rect(block.x, block.y, block.width, block.height); ctx.fill();
+        ctx.shadowBlur = 0; ctx.globalAlpha = 0.6;
+        ctx.fillStyle = 'rgba(255,255,255,0.25)';
+        ctx.fillRect(block.x, block.y, block.width, 2);
+        ctx.restore();
+      });
+    }
+
+    function drawParticles() {
+      particles.forEach(p => {
+        ctx.save();
+        ctx.globalAlpha = p.alpha;
+        const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius);
+        grad.addColorStop(0, p.color);
+        grad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = grad;
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+      });
+    }
+
+    function drawRewards() {
+      rewards.forEach(reward => {
+        const currentY = reward.onBlock.y - reward.radius - 5;
+        drawStarShape(ctx, reward.x, currentY, 5, reward.radius, reward.radius/2, reward.color);
+      });
+    }
+
+    function drawEnergyPills() {
+      energyPills.forEach(pill => {
+        ctx.save();
+        const r = pill.height / 2;
+        const x = pill.x - pill.width / 2;
+        const y = pill.onBlock.y - pill.height - 3;
+        const grad = ctx.createLinearGradient(x, y, x, y + pill.height);
+        grad.addColorStop(0, '#bdf'); grad.addColorStop(1, '#08f');
+        ctx.fillStyle = grad; ctx.shadowColor = '#6cf'; ctx.shadowBlur = 12;
+        ctx.beginPath(); ctx.moveTo(x + r, y); ctx.lineTo(x + pill.width - r, y);
+        ctx.arc(x + pill.width - r, y + r, r, Math.PI * 1.5, Math.PI * 0.5);
+        ctx.lineTo(x + r, y + pill.height);
+        ctx.arc(x + r, y + r, r, Math.PI * 0.5, Math.PI * 1.5);
+        ctx.closePath(); ctx.fill();
+        ctx.restore();
+      });
+    }
+
+    function drawEnergyRings() {
+      energyRings.forEach(ring => {
+        ctx.save();
+        const currentRingY = ring.onBlock.y - ENERGY_RING_RADIUS - 5;
+        ctx.beginPath(); ctx.arc(ring.x, currentRingY, ring.radius, 0, Math.PI * 2);
+        ctx.lineWidth = 5; ctx.strokeStyle = ring.color; 
+        ctx.shadowColor = ring.color; ctx.shadowBlur = 20;
+        ctx.stroke();
+        ctx.restore();
+      });
+    }
+    
+    function drawGravityOrbs() {
+        gravityOrbs.forEach(orb => {
+            ctx.save();
+            const currentY = orb.onBlock.y - orb.radius - 5;
+            const g = ctx.createRadialGradient(orb.x, currentY, 0, orb.x, currentY, orb.radius);
+            g.addColorStop(0, '#aaffc3');
+            g.addColorStop(1, '#00ff41');
+            ctx.fillStyle = g;
+            ctx.shadowColor = '#4dff88';
+            ctx.shadowBlur = 20;
+            ctx.beginPath(); ctx.arc(orb.x, currentY, orb.radius, 0, Math.PI * 2); ctx.fill();
+            ctx.restore();
+        });
+    }
+
+    function drawStarShape(ctx, cx, cy, spikes, outerRadius, innerRadius, color) {
+      let rot = Math.PI / 2 * 3, x = cx, y = cy, step = Math.PI / spikes;
+      ctx.save();
+      ctx.shadowColor = color || '#ffd54d'; ctx.shadowBlur = 25;
+      ctx.beginPath(); ctx.moveTo(cx, cy - outerRadius);
+      for (let i = 0; i < spikes; i++) {
+        x = cx + Math.cos(rot) * outerRadius; y = cy + Math.sin(rot) * outerRadius; ctx.lineTo(x, y); rot += step;
+        x = cx + Math.cos(rot) * innerRadius; y = cy + Math.sin(rot) * innerRadius; ctx.lineTo(x, y); rot += step;
+      }
+      ctx.closePath();
+      const grad = ctx.createLinearGradient(cx, cy - outerRadius, cx, cy + outerRadius);
+      grad.addColorStop(0, '#fff6a0'); grad.addColorStop(1, color || '#ffd54d');
+      ctx.fillStyle = grad; 
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // --- Effects helpers ---
+    function triggerShake(magnitude = 6, duration = 180) { shakeMag = magnitude; shakeTime = duration; }
+    function applyShake() { if (shakeTime > 0) { const dx = (Math.random() - 0.5) * shakeMag; const dy = (Math.random() - 0.5) * shakeMag; ctx.translate(dx, dy); } }
+
+    function startJump(targetBlock) {
+        if (!targetBlock) return;
+        sphere.isSliding = true; 
+        sphere.jumpTargetBlock = targetBlock;
+        if (sphere.onBlock) {
+            sphere.slideTargetX = (targetBlock.x + targetBlock.width / 2 < sphere.x)
+                ? sphere.onBlock.x + sphere.radius
+                : sphere.onBlock.x + sphere.onBlock.width - sphere.radius;
+        } else {
+            sphere.slideTargetX = sphere.x;
+            sphere.isSliding = false;
+            sphere.isJumping = true;
+            sphere.jumpStartX = sphere.x;
+            sphere.jumpStartY = sphere.y;
+            sphere.jumpProgress = 0;
+            createParticles(sphere.x, sphere.y, '#ff7ac8');
+            playJumpSound();
+        }
+    }
+
+    // --- Update ---
+    function updateSphere() {
+      if (sphere.onBlock && !sphere.isJumping && !sphere.isSliding) {
+          if (keys.left) sphere.x -= HORIZONTAL_MOVE_SPEED;
+          if (keys.right) sphere.x += HORIZONTAL_MOVE_SPEED;
+          const block = sphere.onBlock;
+          sphere.x = clamp(sphere.x, block.x + sphere.radius, block.x + block.width - sphere.radius);
+      }
+    
+      if (sphere.isSliding) {
+        if (Math.abs(sphere.x - sphere.slideTargetX) < SLIDE_SPEED) {
+            sphere.x = sphere.slideTargetX;
+            sphere.isSliding = false; sphere.isJumping = true;
+            sphere.jumpStartX = sphere.x; sphere.jumpStartY = sphere.y; sphere.jumpProgress = 0;
+            createParticles(sphere.x, sphere.y, '#ff7ac8');
+            playJumpSound();
+        } else if (sphere.x < sphere.slideTargetX) {
+            sphere.x += SLIDE_SPEED;
+        } else {
+            sphere.x -= SLIDE_SPEED;
+        }
+        if (sphere.onBlock) sphere.y += sphere.onBlock.speed;
+      } else if (sphere.isJumping) {
+        sphere.jumpProgress++;
+        const p = sphere.jumpProgress / sphere.jumpDuration;
+        const targetX = sphere.jumpTargetBlock.x + sphere.jumpTargetBlock.width / 2;
+        const targetY = sphere.jumpTargetBlock.y - sphere.radius;
+        sphere.x = sphere.jumpStartX + (targetX - sphere.jumpStartX) * p;
+        const currentY = sphere.jumpStartY + (targetY - sphere.jumpStartY) * p;
+        const scaledArcHeight = MIN_JUMP_ARC_HEIGHT + (MAX_JUMP_ARC_HEIGHT - MIN_JUMP_ARC_HEIGHT) * (sphere.energy / MAX_ENERGY);
+        sphere.y = currentY - Math.sin(p * Math.PI) * scaledArcHeight;
+
+        if (sphere.jumpProgress >= sphere.jumpDuration) {
+          sphere.isJumping = false; sphere.x = targetX; sphere.y = targetY; sphere.dy = sphere.jumpTargetBlock.speed; sphere.dx = 0; sphere.onBlock = sphere.jumpTargetBlock;
+          jumpCount++;
+          const energyDeduction = ENERGY_COST_BASE_PER_JUMP + (scaledArcHeight * ENERGY_COST_PER_ARC_UNIT);
+          sphere.energy = Math.max(0, sphere.energy - energyDeduction);
+          updateHud();
+          squashTimer = 1; triggerShake(3, 120); triggerVibration(50);
+        }
+      } else if (!gravityActive) {
+        sphere.dy += gravity;
+        sphere.y += sphere.dy;
+        sphere.x += sphere.dx;
+      } else {
+        if (sphere.onBlock) { sphere.onBlock = null; sphere.dy = 0; }
+      }
+
+      if (squashTimer > 0) squashTimer = Math.max(0, squashTimer - 0.08);
+      if (sphere.y - sphere.radius > canvas.height) endGame();
+    }
+
+    function spawnNextBlocks() {
+        const settings = levelSettings[currentLevel];
+        if (Math.random() < settings.fakePairChance) {
+            const width = rand(canvas.width * 0.1, canvas.width * 0.2);
+            const height = rand(20, 40);
+            const y = -height;
+            const x1 = rand(0, canvas.width / 2 - width - 20);
+            const x2 = rand(canvas.width / 2 + 20, canvas.width - width);
+            const commonColor = `hsl(${Math.random() * 360}, 80%, 60%)`;
+            const block1 = { x: x1, y, width, height, speed: settings.scrollSpeed, color: commonColor };
+            const block2 = { x: x2, y, width, height, speed: settings.scrollSpeed, color: commonColor };
+            if (Math.random() < 0.5) { block1.isFake = true; block2.isFake = false; } else { block1.isFake = false; block2.isFake = true; }
+            maybeAddItemToBlock(block1);
+            maybeAddItemToBlock(block2);
+            blocks.push(block1, block2);
+        } else {
+            const width = rand(canvas.width * 0.08, canvas.width * 0.25);
+            const height = rand(15, 40);
+            const x = rand(0, canvas.width - width);
+            const newBlock = { x, y: -height, width, height, speed: settings.scrollSpeed, color: `hsl(${Math.random() * 360}, 80%, 60%)`, isFake: false };
+            if (Math.random() < settings.collapseChance) newBlock.hasCollapseTrigger = true;
+            blocks.push(newBlock);
+            maybeAddItemToBlock(newBlock);
+        }
+    }
+
+    function updateBlocks(delta) {
+      blockSpawnTimer++;
+      const settings = levelSettings[currentLevel];
+      const spawnRate = settings.spawnRate;
+      if (blockSpawnTimer > spawnRate) { spawnNextBlocks(); blockSpawnTimer = 0; }
+      
+      for (let i = blocks.length - 1; i >= 0; i--) {
+          const block = blocks[i];
+          block.y += block.speed;
+          if (block.isCollapsing) {
+              block.collapseTimer -= delta;
+              if (block.collapseTimer <= 0) {
+                  createParticles(block.x + block.width / 2, block.y + block.height / 2, 'rgba(255, 100, 100, 1)', 2.5); // Bigger particles
+                  playCollapseSound();
+                  if (sphere.onBlock === block) sphere.onBlock = null;
+                  blocks.splice(i, 1);
+                  continue;
+              }
+          }
+          if (block.y > canvas.height) blocks.splice(i, 1);
+      }
+    }
+
+    function updateItemsPosition() {
+      rewards.forEach(r => { if (r.onBlock) r.y = r.onBlock.y - r.radius - 5; });
+      energyPills.forEach(p => { if (p.onBlock) p.y = p.onBlock.y - (p.height/2); });
+      energyRings.forEach(rg => { if (rg.onBlock) rg.y = rg.onBlock.y - ENERGY_RING_RADIUS - 5; });
+      gravityOrbs.forEach(orb => { if(orb.onBlock) orb.y = orb.onBlock.y - orb.radius - 5; });
+    }
+
+    function updateParticles() {
+      particles.forEach((p, i) => { p.x += p.dx; p.y += p.dy; p.alpha -= 0.02; if (p.alpha <= 0) particles.splice(i, 1); });
+    }
+
+    function handleCollisions() {
+      if (sphere.isJumping || sphere.isSliding || gravityActive) return;
+      let landedOnBlock = null;
+      for (const block of blocks) {
+        if (sphere.dy >= 0 && sphere.y + sphere.radius > block.y && sphere.y + sphere.radius < block.y + block.height + 5 && sphere.x > block.x && sphere.x < block.x + block.width) {
+          landedOnBlock = block; break;
+        }
+      }
+      if (landedOnBlock) {
+        if (sphere.onBlock === null) {
+            triggerVibration((landedOnBlock.isFake || landedOnBlock.hasCollapseTrigger) ? [100, 50, 100] : 50);
+        }
+        sphere.y = landedOnBlock.y - sphere.radius; sphere.dy = landedOnBlock.speed; sphere.dx = 0; sphere.onBlock = landedOnBlock;
+        if (landedOnBlock.isFake && !landedOnBlock.isCollapsing) {
+            landedOnBlock.isCollapsing = true; landedOnBlock.collapseTimer = levelSettings[currentLevel].collapseTime; triggerShake(6, 180);
+        } else if (landedOnBlock.hasCollapseTrigger && !landedOnBlock.isCollapsing) {
+            landedOnBlock.isCollapsing = true; landedOnBlock.collapseTimer = levelSettings[currentLevel].collapseTime;
+        }
+      } else {
+        sphere.onBlock = null;
+      }
+    }
+
+    function checkAndCollectItemsOnCurrentBlock() {
+      if (!sphere.onBlock) return;
+      const itemX = sphere.onBlock.x + sphere.onBlock.width / 2;
+      if (Math.abs(sphere.x - itemX) > sphere.radius + 40) return;
+
+      for (let i = rewards.length - 1; i >= 0; i--) {
+        const reward = rewards[i];
+        if (reward.onBlock === sphere.onBlock) {
+          score += reward.points; sphere.energy = Math.min(MAX_ENERGY, sphere.energy + reward.points);
+          updateHud(); createParticles(reward.x, reward.y, '#ffe875'); rewards.splice(i, 1);
+          triggerVibration(20); playStarSound();
+        }
+      }
+      for (let i = energyPills.length - 1; i >= 0; i--) {
+        const pill = energyPills[i];
+        if (pill.onBlock === sphere.onBlock) {
+          sphere.energy = Math.min(MAX_ENERGY, sphere.energy + ENERGY_PILL_RECHARGE); 
+          updateHud(); createParticles(pill.x, pill.y, '#8bd5ff'); energyPills.splice(i, 1);
+          triggerVibration(20);
+        }
+      }
+      for (let i = energyRings.length - 1; i >= 0; i--) {
+        const ring = energyRings[i];
+        if (ring.onBlock === sphere.onBlock) {
+          sphere.energy = Math.min(MAX_ENERGY, sphere.energy + ring.energyValue); 
+          updateHud(); playCoinSound(); createParticles(ring.x, ring.y, ring.color); energyRings.splice(i, 1);
+          triggerVibration(20);
+        }
+      }
+      for (let i = gravityOrbs.length - 1; i >= 0; i--) {
+        const orb = gravityOrbs[i];
+        if (orb.onBlock === sphere.onBlock) {
+            gravityActive = true; gravityEndTime = Date.now() + GRAVITY_ORB_DURATION;
+            gravityTimerBadge.classList.remove('hidden');
+            createParticles(orb.x, orb.y, '#4dff88'); gravityOrbs.splice(i, 1);
+            triggerVibration(30);
+        }
+      }
+    }
+
+    function removeOffscreenItems() {
+      rewards = rewards.filter(r => !r.onBlock || r.onBlock.y < canvas.height);
+      energyPills = energyPills.filter(p => !p.onBlock || p.onBlock.y < canvas.height);
+      energyRings = energyRings.filter(r => !r.onBlock || r.onBlock.y < canvas.height);
+      gravityOrbs = gravityOrbs.filter(o => !o.onBlock || o.onBlock.y < canvas.height);
+    }
+
+    function createParticles(x, y, color, sizeMultiplier = 1) {
+      for (let i = 0; i < 22; i++) {
+        const baseRadius = Math.random() * 3 + 1;
+        particles.push({ x, y, radius: baseRadius * sizeMultiplier, color, dx: (Math.random() - 0.5) * 8, dy: (Math.random() - 0.5) * 8, alpha: 1 });
+      }
+    }
+
+    function updateHud() {
+        scoreDisplayElement.textContent = score;
+        const pct = (sphere.energy / MAX_ENERGY) * 100;
+        energyFillEl.style.width = pct + '%';
+    }
+
+    // --- Autopilot Logic ---
+    function runAutopilot(delta) {
+        if (autopilotHesitationTimer > 0) {
+            autopilotHesitationTimer -= delta;
+            return;
+        }
+
+        if (!autopilotActive || sphere.isJumping || sphere.isSliding || (!sphere.onBlock && !gravityActive)) return;
+        
+        const currentY = sphere.onBlock ? sphere.onBlock.y : sphere.y;
+        const validTargets = blocks.filter(b => !b.isFake && !b.isCollapsing && b !== sphere.onBlock && (gravityActive || b.y < currentY) && Math.abs(b.y - currentY) <= MAX_VERTICAL_JUMP_DISTANCE);
+
+        if (validTargets.length > 0) {
+            const getBlockScore = (block) => {
+                let score = 0;
+                const scaledArcHeight = MIN_JUMP_ARC_HEIGHT + (MAX_JUMP_ARC_HEIGHT - MIN_JUMP_ARC_HEIGHT) * (sphere.energy / MAX_ENERGY);
+                const energyCost = ENERGY_COST_BASE_PER_JUMP + (scaledArcHeight * ENERGY_COST_PER_ARC_UNIT);
+                if (sphere.energy - energyCost < 25) return Number.NEGATIVE_INFINITY;
+                score += (currentY - block.y) * 2;
+                if (gravityActive) return score;
+                const hasItem = rewards.some(r => r.onBlock === block) || energyRings.some(r => r.onBlock === block) || energyPills.some(p => p.onBlock === block);
+                const hasGravityOrb = gravityOrbs.some(o => o.onBlock === block);
+                if (hasItem) score += 400;
+                if (hasGravityOrb) score += 1200;
+                score -= energyCost * 3;
+                return score;
+            };
+            validTargets.sort((a, b) => getBlockScore(b) - getBlockScore(a));
+            startJump(validTargets[0]);
+        }
+    }
+
+    function showLevelUpAnimation(text) {
+        levelUpText.textContent = text;
+        levelUpScreen.classList.remove('hidden');
+        levelUpScreen.style.opacity = '0'; levelUpScreen.style.transform = 'scale(0.5)';
+        setTimeout(() => { levelUpScreen.style.opacity = '1'; levelUpScreen.style.transform = 'scale(1)'; }, 10);
+        setTimeout(() => { levelUpScreen.style.opacity = '0'; levelUpScreen.style.transform = 'scale(1.5)'; }, 1500);
+        setTimeout(() => { levelUpScreen.classList.add('hidden'); }, 2000);
+    }
+    
+    function completeLevel() {
+        gameActive = false;
+        if (animationFrameId) {
+            cancelAnimationFrame(animationFrameId);
+            animationFrameId = null;
+        }
+        triggerVibration([100, 50, 200]);
+        nextLevelInfo.textContent = `Get ready for Level ${currentLevel + 1}`;
+        nextLevelScreen.classList.remove('hidden-soft');
+    }
+
+    // --- Game Loop ---
+    function gameLoop() {
+      if (!gameActive) return;
+      if (window.isPaused) { animationFrameId = requestAnimationFrame(gameLoop); return; }
+
+      const now = Date.now();
+      const delta = (now - lastUpdateTime) / 1000;
+      lastUpdateTime = now;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawParallaxBackground(delta);
+
+      if (shakeTime > 0) shakeTime -= (delta * 1000); else { shakeTime = 0; shakeMag = 0; }
+      
+      if (gravityActive) {
+          const timeLeft = Math.max(0, Math.ceil((gravityEndTime - Date.now()) / 1000));
+          gravityTimeElement.textContent = timeLeft;
+          gravityWarning.classList.toggle('hidden', timeLeft > 3 || timeLeft <= 0);
+          if (timeLeft <= 0) gravityActive = false;
+      } else {
+        gravityWarning.classList.add('hidden');
+      }
+
+      updateBlocks(delta); updateItemsPosition(); drawBlocks(now / 1000);
+      drawRewards(); drawEnergyPills(); drawEnergyRings(); drawGravityOrbs();
+      updateSphere(); drawSphere();
+      updateParticles(); drawParticles();
+      handleCollisions(); checkAndCollectItemsOnCurrentBlock(); removeOffscreenItems();
+
+      // HUD time
+      const elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+      timeSurvived = elapsedTime;
+
+      const currentLevelSettings = levelSettings[currentLevel];
+      if (currentLevelSettings.duration !== Infinity) {
+          const levelDuration = currentLevel > 1 ? currentLevelSettings.duration - levelSettings[currentLevel - 1].duration : currentLevelSettings.duration;
+          const timeInLevel = Math.floor((Date.now() - levelStartTimestamp) / 1000);
+          const timeLeft = Math.max(0, levelDuration - timeInLevel);
+          timeScoreElement.textContent = `${timeLeft}s`;
+      } else {
+          // For the final level, count up total time survived
+          timeScoreElement.textContent = `${timeSurvived}s`;
+      }
+
+
+      // Level Progression
+      const timeInLevelForProgression = Math.floor((Date.now() - levelStartTimestamp) / 1000);
+      const levelDurationForProgression = currentLevel > 1 ? currentLevelSettings.duration - levelSettings[currentLevel - 1].duration : currentLevelSettings.duration;
+      if (currentLevel < levelSettings.length - 1 && timeInLevelForProgression >= levelDurationForProgression) {
+          completeLevel();
+          return;
+      }
+
+      if (sphere.energy <= 0) { endGame(); return; }
+
+      animationFrameId = requestAnimationFrame(gameLoop);
+    }
+
+    function startGame(startLevel = 1) {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+      }
+      setup(startLevel);
+      gameActive = true; 
+      
+      // Set the main game start time, offsetting it if starting on a later level
+      // This ensures the cumulative `timeSurvived` is correct for level progression logic
+      const levelStartTimeOffset = startLevel > 1 ? levelSettings[startLevel - 1].duration * 1000 : 0;
+      startTime = Date.now() - levelStartTimeOffset;
+      
+      // Set the timestamp for the current level's countdown timer
+      levelStartTimestamp = Date.now(); 
+
+      startScreen.classList.add('hidden-soft');
+      levelsScreen.classList.add('hidden-soft');
+      gameInfoElement.style.display = 'flex';
+      inGameControls.classList.add('visible');
+      gameOverScreen.classList.add('hidden-soft');
+      gameLoop();
+    }
+
+    function endGame() {
+      gameActive = false; 
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+      triggerVibration([200, 100, 200]);
+      uiContainer.classList.add('game-over-active');
+      const finalElapsedTime = Math.floor((Date.now() - startTime) / 1000); 
+      finalTimeScore.textContent = `${finalElapsedTime} seconds`;
+      finalScoreDisplay.textContent = `${score}`;
+      finalLevelDisplay.textContent = currentLevel;
+      finalEnergyScore.textContent = `${Math.floor(sphere.energy)} energy`;
+      gameOverScreen.classList.remove('hidden-soft');
+      gameInfoElement.style.display = 'none';
+      inGameControls.classList.remove('visible');
+      gravityWarning.classList.add('hidden');
+    }
+    
+    // --- Ad & Game Start Logic ---
+    function showAd(callback) {
+        onAdCompleteCallback = callback;
+        if (typeof sdk !== 'undefined' && sdk.showBanner) {
+            try {
+                sdk.showBanner();
+            } catch (e) {
+                console.error("Error calling sdk.showBanner(), running callback directly.", e);
+                if (onAdCompleteCallback) {
+                    onAdCompleteCallback();
+                    onAdCompleteCallback = null;
+                }
+            }
+        } else {
+            console.log("SDK not available, running callback directly.");
+            if (onAdCompleteCallback) {
+                onAdCompleteCallback();
+                onAdCompleteCallback = null;
+            }
+        }
+    }
+
+
+    // --- Input ---
+    function showJumpWarning(message) {
+        jumpWarningText.textContent = message;
+        jumpWarning.classList.remove('hidden');
+        if (jumpWarningTimeout) clearTimeout(jumpWarningTimeout);
+        jumpWarningTimeout = setTimeout(() => {
+            jumpWarning.classList.add('hidden');
+        }, 1200);
+    }
+
+    function handleJump(event) {
+      if (!gameActive || sphere.isJumping || sphere.isSliding || (!sphere.onBlock && !gravityActive) || sphere.energy <= 0) return;
+      event.preventDefault();
+      
+      const rect = canvas.getBoundingClientRect();
+      const clientX = event.clientX || (event.touches && event.touches[0].clientX);
+      const clientY = event.clientY || (event.touches && event.touches[0].clientY); 
+      const clickX = clientX - rect.left; const clickY = clientY - rect.top;
+      let blockClicked = null;
+      for (const block of blocks) {
+        if (clickX > block.x - CLICK_BUFFER && clickX < block.x + block.width + CLICK_BUFFER && clickY > block.y - CLICK_BUFFER && clickY < block.y + block.height + CLICK_BUFFER) { blockClicked = block; break; }
+      }
+      
+      if (blockClicked && blockClicked !== sphere.onBlock) {
+        const currentY = sphere.onBlock ? sphere.onBlock.y : sphere.y;
+        if (Math.abs(currentY - blockClicked.y) <= MAX_VERTICAL_JUMP_DISTANCE) {
+            startJump(blockClicked);
+        } else {
+            showJumpWarning("Too high");
+        }
+      }
+    }
+
+    function populateLevelsScreen() {
+        levelsGrid.innerHTML = '';
+        loadProgress(); // Ensure we have the latest progress
+        for (let i = 1; i < levelSettings.length; i++) {
+            const levelBtn = document.createElement('button');
+            levelBtn.className = 'level-btn';
+            
+            if (i > highestLevelUnlocked) {
+                levelBtn.disabled = true;
+                levelBtn.classList.add('locked');
+                const lockIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16"><path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/></svg>`;
+                levelBtn.innerHTML = lockIcon;
+            } else {
+                levelBtn.textContent = `${i}`;
+                levelBtn.addEventListener('click', () => {
+                    showAd(() => startGame(i));
+                });
+            }
+            levelsGrid.appendChild(levelBtn);
+        }
+    }
+    
+    canvas.addEventListener('click', handleJump);
+    canvas.addEventListener('touchstart', handleJump, { passive: false });
+    
+    startButton.addEventListener('click', () => {
+        showAd(() => startGame(1));
+    });
+
+    restartButton.addEventListener('click', () => {
+        showAd(() => startGame(1));
+    });
+    
+    nextLevelButton.addEventListener('click', () => {
+        nextLevelScreen.classList.add('hidden-soft');
+
+        showAd(() => {
+            const nextLevelNum = currentLevel + 1;
+            if (nextLevelNum > highestLevelUnlocked) {
+                highestLevelUnlocked = nextLevelNum;
+                saveProgress();
+            }
+            currentLevel = nextLevelNum;
+            levelStartTimestamp = Date.now(); // Reset timer for the new level
+            levelDisplayElement.textContent = currentLevel;
+            
+            resetForNextLevel();
+            
+            // Resume game
+            gameActive = true;
+            lastUpdateTime = Date.now(); // Prevent time jump
+            gameLoop();
+        });
+    });
+
+    levelsButton.addEventListener('click', () => {
+        startScreen.classList.add('hidden-soft');
+        populateLevelsScreen(); // Re-draw the levels
+        levelsScreen.classList.remove('hidden-soft');
+        returnToGameButton.classList.add('hidden'); // Ensure return button is hidden
+    });
+
+    exitToMenuButton.addEventListener('click', () => {
+        levelsScreen.classList.add('hidden-soft');
+        startScreen.classList.remove('hidden-soft');
+    });
+
+    howToPlayButton.addEventListener('click', () => {
+        startScreen.classList.add('hidden-soft');
+        howToPlayScreen.classList.remove('hidden-soft');
+    });
+
+    closeHowToPlayButton.addEventListener('click', () => {
+        howToPlayScreen.classList.add('hidden-soft');
+        startScreen.classList.remove('hidden-soft');
+    });
+
+    backToLevelsButton.addEventListener('click', () => {
+        gameOverScreen.classList.add('hidden-soft');
+        populateLevelsScreen(); // Re-draw the levels
+        levelsScreen.classList.remove('hidden-soft');
+        uiContainer.classList.remove('game-over-active');
+    });
+
+    returnToGameButton.addEventListener('click', () => {
+        levelsScreen.classList.add('hidden-soft');
+        gameInfoElement.style.display = 'flex';
+        inGameControls.classList.add('visible');
+        window.resumeGame(); // Resume the game
+    });
+
+    pauseBtn.addEventListener('click', () => {
+        if (window.isPaused) {
+            window.resumeGame();
+        } else {
+            window.pauseGame();
+        }
+    });
+
+    exitToLevelsBtn.addEventListener('click', () => {
+        window.pauseGame(); // Pause the game
+        gameInfoElement.style.display = 'none';
+        inGameControls.classList.remove('visible');
+        populateLevelsScreen(); // Re-draw the levels
+        levelsScreen.classList.remove('hidden-soft');
+        returnToGameButton.classList.remove('hidden'); // Show the return button
+    });
+
+    function handleKeyDown(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault(); // Prevent the browser's default action (clicking a focused button)
+            return;
+        }
+        if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 'a') keys.left = true;
+        if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'd') keys.right = true;
+        if (e.key.toLowerCase() === 'r') {
+             showAd(() => startGame(1));
+        }
+        if (e.key === ' ') {
+            e.preventDefault(); // Prevent page from scrolling
+            if (!gameActive || sphere.isJumping || sphere.isSliding || (!sphere.onBlock && !gravityActive) || sphere.energy <= 0) return;
+
+            const currentY = sphere.onBlock ? sphere.onBlock.y : sphere.y;
+            const validTargets = blocks.filter(b => !b.isFake && !b.isCollapsing && b !== sphere.onBlock && (gravityActive || b.y < currentY) && Math.abs(b.y - currentY) <= MAX_VERTICAL_JUMP_DISTANCE);
+
+            if (validTargets.length > 0) {
+                const targetsWithRewards = validTargets.filter(block => 
+                    rewards.some(r => r.onBlock === block) ||
+                    energyPills.some(p => p.onBlock === block) ||
+                    energyRings.some(rg => rg.onBlock === block) ||
+                    gravityOrbs.some(o => o.onBlock === block)
+                );
+
+                let targetToJump = null;
+
+                if (targetsWithRewards.length > 0) {
+                    // Prioritize rewards
+                    targetsWithRewards.forEach(target => {
+                        const targetCenterX = target.x + target.width / 2;
+                        const dist = Math.sqrt(Math.pow(targetCenterX - sphere.x, 2) + Math.pow(target.y - sphere.y, 2));
+                        target.distance = dist;
+                    });
+                    targetsWithRewards.sort((a, b) => a.distance - b.distance);
+                    targetToJump = targetsWithRewards[0];
+                } else {
+                    // Fallback to nearest if no rewards
+                    validTargets.forEach(target => {
+                        const targetCenterX = target.x + target.width / 2;
+                        const dist = Math.sqrt(Math.pow(targetCenterX - sphere.x, 2) + Math.pow(target.y - sphere.y, 2));
+                        target.distance = dist;
+                    });
+                    validTargets.sort((a, b) => a.distance - b.distance);
+                    targetToJump = validTargets[0];
+                }
+                
+                startJump(targetToJump);
+            }
+        }
+    }
+    function handleKeyUp(e) {
+        if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 'a') keys.left = false;
+        if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'd') keys.right = false;
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+
+    window.addEventListener('resize', () => {
+      setTimeout(() => {
+        if (!gameActive) setup(); 
+        else { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+      }, 100);
+    });
+
+    window.onload = () => {
+        loadProgress();
+        setup();
+        populateLevelsScreen();
+    };
+  </script>
+</body>
+</html>
+
+
+

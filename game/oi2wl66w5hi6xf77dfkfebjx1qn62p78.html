@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Balloon Buddies - Flat Edition</title>
+
+  <script type="text/javascript">
+     function setGameMute(isMuted) {
+        const audios = document.querySelectorAll('audio, video');
+        audios.forEach(audio => {
+           audio.muted = isMuted;
+           if (isMuted) {
+              audio.pause(); 
+           } else {
+              audio.play().catch(() => {}); 
+           }
+        });
+     }
+
+     window.SDK_OPTIONS = {
+        gameId: "oi2wl66w5hi6xf77dfkfebjx1qn62p78",
+        onEvent: function (a) {
+           switch (a.name) {
+              case "SDK_GAME_PAUSE":
+                 setGameMute(true); 
+                 console.log("Game Muted");
+                 break;
+              case "SDK_GAME_START":
+                 setGameMute(false); 
+                 console.log("Game Unmuted");
+                 break;
+              case "SDK_READY":
+                 console.log("SDK is ready");
+                 break;
+           }
+        }
+     };
+
+     (function (a, b, c) {
+        var d = a.getElementsByTagName(b)[0];
+        if (!a.getElementById(c)) {
+           var s = a.createElement(b);
+           s.id = c;
+           s.src = "https://api.gamemonetize.com/sdk.js";
+           d.parentNode.insertBefore(s, d);
+        }
+     })(document, "script", "gamemonetize-sdk");
+
+     function showAd() {
+        if (typeof sdk !== 'undefined' && sdk.showBanner !== undefined) {
+           sdk.showBanner();
+        }
+     }
+  </script>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root { --game-bg: #e0f2fe; }
+    html, body, #root { 
+      margin: 0; padding: 0; width: 100%; height: 100%; 
+      overflow: hidden; background-color: var(--game-bg); 
+    }
+  </style>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "react": "https://esm.sh/react@^19.2.3",
+      "react-dom": "https://esm.sh/react-dom@^19.2.3"
+    }
+  }
+  </script>
+  <script type="module" crossorigin src="./assets/index-BV_eXQ70.js"></script>
+</head>
+
+<body onclick="showAd()">
+  <div id="root"></div>
+</body>
+</html>

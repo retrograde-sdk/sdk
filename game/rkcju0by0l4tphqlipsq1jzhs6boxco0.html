@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <title>Project-FireDash</title>
+  <link rel="stylesheet" href="TemplateData/style.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@200;500&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=MuseoModerno:wght@600&display=swap');
+    html,body{background:#000;width:100%;height:100%;margin:0;padding:0;overflow:hidden}
+    #gameContainer{position:absolute;background:transparent!important}
+    canvas[data-pixel-art="true"]{image-rendering:pixelated}
+  </style>
+</head>
+
+<body>
+  <div id="gameContainer">
+    <canvas id="unity-canvas" data-pixel-art=""></canvas>
+    <table width="100%" height="70%">
+      <tr>
+        <td style="text-align:center;vertical-align:middle">
+          <img src="logo.png" width="250" height="50" />
+          <p id="loading-txt" style="font-family:'MuseoModerno',cursive;color:white;font-size:40px">Loading...</p>
+        </td>
+      </tr>
+    </table>
+
+    <script src="Build/FireDash-WebGL BUILD.loader.js"></script>
+    <script>
+      const canvas=document.querySelector("#unity-canvas");
+      const config={
+        dataUrl:"Build/FireDash-WebGL BUILD.data.unityweb",
+        frameworkUrl:"Build/FireDash-WebGL BUILD.framework.js.unityweb",
+        codeUrl:"Build/FireDash-WebGL BUILD.wasm.unityweb",
+        streamingAssetsUrl:"StreamingAssets",
+        companyName:"CrazyArcade",
+        productName:"Project-FireDash",
+        productVersion:"1.0"
+      };
+
+      let unityInstance=null;
+      function onResize(){
+        const c=canvas.parentElement;
+        let w=window.innerWidth,h=window.innerHeight,r=600/960;
+        if(w*r>h)w=Math.min(w,Math.ceil(h/r));
+        h=Math.floor(w*r);
+        c.style.width=canvas.style.width=w+"px";
+        c.style.height=canvas.style.height=h+"px";
+        c.style.top=Math.floor((window.innerHeight-h)/2)+"px";
+        c.style.left=Math.floor((window.innerWidth-w)/2)+"px";
+      }
+
+      createUnityInstance(canvas,config,p=>{
+        document.getElementById("loading-txt").innerText=`Loading... ${(p*100).toFixed(0)}%`;
+      }).then(instance=>{
+        unityInstance=instance;
+        console.log("[FireDash] ✅ Unity ready");
+        onResize();
+        setTimeout(()=>safePause("InitialStart"),1500);
+      });
+
+      window.addEventListener("resize",onResize);
+      onResize();
+    </script>
+  </div>
+
+  <!-- === FIRE DASH AUTO-PAUSE + ANTI-RESUME FIX === -->
+  <script>
+  (function(){
+    function safePause(tag){
+      try{
+        if(typeof SendMessage==="function"){
+          SendMessage("GameplayController","PauseTheGame");
+          setTimeout(()=>SendMessage("GameplayController","PauseTheGame"),200);
+          console.log(`[FireDash] 🛑 Paused via ${tag}`);
+        }else{
+          console.warn("[FireDash] ⚠️ SendMessage not ready", tag);
+        }
+      }catch(e){
+        console.warn("[FireDash] ❌ Pause error:", e);
+      }
+    }
+
+    // Retry protection (auto-reapply pause every few seconds)
+    setInterval(()=>safePause("AutoGuard"),7000);
+
+    // Hook into GameMonetize events once available
+    const detectGM=setInterval(()=>{
+      if(window.GameMonetize){
+        clearInterval(detectGM);
+        console.log("[FireDash] 🎮 GameMonetize SDK detected");
+
+        if(GameMonetize.OnPauseGame){
+          GameMonetize.OnPauseGame(()=>{
+            console.log("[FireDash] 💤 Ad started -> Pausing...");
+            safePause("AdStart");
+          });
+        }
+
+        if(GameMonetize.OnResumeGame){
+          GameMonetize.OnResumeGame(()=>{
+            console.log("[FireDash] ▶️ Ad ended -> Re-Pausing (safety)");
+            setTimeout(()=>safePause("AdResume"),800);
+          });
+        }
+      }
+    },1000);
+
+    // Extra safety after full page load
+    window.addEventListener("load",()=>setTimeout(()=>safePause("PageLoad"),3000));
+  })();
+  </script>
+  <!-- === END FIX === -->
+</body>
+</html>

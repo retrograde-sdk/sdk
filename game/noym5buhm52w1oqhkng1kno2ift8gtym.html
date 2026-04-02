@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Road Fighter - Endless Running Game</title>
+  <meta name="viewport" content="width=device-width,initial-scale=0.8" />
+  <!--<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no" />-->
+
+  <style>
+    html,body {
+      margin:0; padding:0; overflow:hidden;
+    }
+    
+    body { font-family: Arial, sans-serif; background:#6b5858; color:#eee; margin:0; display:flex; gap:20px; padding:18px; align-items:flex-start; }
+    #game-wrap { background:#111; padding:10px; border-radius:8px; box-shadow:0 6px 18px rgba(0,0,0,.6); }
+    canvas { display:block; background:#676666; border-radius:4px; }
+    #ui { margin-left:12px; /*width:260px;*/ }
+    button { margin-top:8px; width:100%; padding:8px; }
+    .touch-controls { display:flex; gap:8px; margin-top:8px; }
+    .touch-controls button { flex:1; padding:14px; font-size:18px; }
+    #leaders { margin-top:10px; font-size:14px; }
+    input[type="text"]{ width:100%; padding:6px; margin-top:6px; }
+      #game {
+      width: 400px;  /* visible width */
+      height: 600px; /* visible height */
+    }
+    #zoom-wrap {
+  transform: scale(0.71);
+  transform-origin: top left;
+  width: 150%; /* adjust to match 1/scale so layout doesn’t collapse */
+}
+  </style>
+  
+</head>
+<body>
+<div id="zoom-wrap" style="display:flex"> 
+  <div id="game-wrap">
+    <!-- internal resolution 360×640 -->
+    <canvas id="game" width="360" height="640"></canvas>
+    <div style="display:flex; gap:8px; margin-top:8px;width:100%">
+      <button id="startBtn">Start</button>
+      <button id="pauseBtn">Pause</button>
+    </div>
+    
+    <div class="touch-controls" id="touchControls" style="display:none;width:360px">
+        <center><button id="accelerateTouch" style="width:33%;padding:0px;"><span style="font-size: 200%; font-weight: bold; display: inline-block; width: 2em;">&#8607;</span></button></center>
+        <div style="display:flex;">
+      <button id="leftTouch">◀</button>
+      <button id="brakeTouch">⏸</button>
+      <button id="rightTouch">▶</button>
+    </div>
+  </div>
+  <br>
+  <button id="shareBtn">🚀 Share 📤</button>
+  </div>
+
+  <div id="ui">
+    <h3>Road Fighter</h3>
+    <div>Score: <span id="score">0</span></div>
+    <div>Level: <span id="level">1</span></div>
+    <div style="margin-top:10px;">
+      <label>Name</label>
+      <input id="playerName" type="text" maxlength="20" placeholder="Player">
+      <button id="saveBtn">Save Score</button>
+    </div>
+
+    <div id="leaders">
+      <h4>Top Scores</h4>
+      <ol id="leaderList"><li>Loading...</li></ol>
+    </div>
+
+    <div style="margin-top:10px;">
+      <strong>Controls And Rules</strong>
+      <ul>
+        <li>Arrow keys / A D to move left/right</li>
+        <li>Up to speed up, Down to slow</li>
+        <li>Touch controls appear on small screens</li>
+        <li>Initial Minimum speed is 20Km/hr and Maximum is 120Km/hr, it will increase gradually as you level up.</li>
+        <li>At every 400 score level changes, then minimum speed and maximum speed limits will be increased by 20km/hr</li>
+        <li>Developed by Vibhore Jain - rohan.manishadaycare.in - vibhore.mit@gmail.com</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // create script element and add timestamp to force fresh fetch
+  const s = document.createElement('script');
+  s.src = 'script.js?v=' + Date.now();
+  s.defer = true;    // matches your previous usage
+  document.body.appendChild(s);
+</script>
+
+</body>
+</html>

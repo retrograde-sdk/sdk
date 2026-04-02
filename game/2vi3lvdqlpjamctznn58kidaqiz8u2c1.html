@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Math Speedrunner</title>
+  
+  <!-- GameMonetize SDK -->
+  <script type="text/javascript">
+    window.SDK_OPTIONS = {
+      gameId: "2vi3lvdqlpjamctznn58kidaqiz8u2c1",
+      onEvent: function (a) {
+        switch (a.name) {
+          case "SDK_GAME_PAUSE":
+            // pause game logic / mute audio
+            if (window.gameMonetizePause) {
+              window.gameMonetizePause();
+            }
+            break;
+          case "SDK_GAME_START":
+            // advertisement done, resume game logic and unmute audio
+            if (window.gameMonetizeResume) {
+              window.gameMonetizeResume();
+            }
+            break;
+          case "SDK_READY":
+            // when sdk is ready
+            console.log('✅ GameMonetize SDK Ready');
+            if (window.gameMonetizeReady) {
+              window.gameMonetizeReady();
+            }
+            break;
+        }
+      }
+    };
+    (function (a, b, c) {
+      var d = a.getElementsByTagName(b)[0];
+      a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = 
+      "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+    })(document, "script", "gamemonetize-sdk");
+  </script>
+  
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="game-container">
+    <!-- Menu Iniziale -->
+    <div id="start-screen" class="screen active">
+      <h1>Math Speedrunner 🧮⚡</h1>
+      <p>Solve math problems as fast as you can!</p>
+      <div class="best-score">Best: <span id="best-score">0</span></div>
+      <button id="start-btn" class="btn primary">🚀 START GAME</button>
+    </div>
+
+    <!-- Schermata Pre-Game Booster -->
+    <div id="booster-screen" class="screen overlay">
+      <div class="menu compact-booster">
+        <h2>⚡ Power-Ups</h2>
+        
+        <div class="booster-options">
+          <div class="booster-card" id="multiplier-card">
+            <div class="booster-icon">🌟</div>
+            <h3>1.5x Score</h3>
+            <button id="multiplier-btn" class="btn primary booster-btn">
+              📺 Ad
+            </button>
+            <div class="booster-status" id="multiplier-status">Ready</div>
+          </div>
+
+          <div class="booster-card" id="freezer-card">
+            <div class="booster-icon">❄️</div>
+            <h3>Streak Shield</h3>
+            <button id="freezer-btn" class="btn primary booster-btn">
+              📺 Ad
+            </button>
+            <div class="booster-status" id="freezer-status">Ready</div>
+          </div>
+        </div>
+
+        <div class="booster-summary" id="booster-summary">
+          <span id="boosters-count">0</span> active
+        </div>
+
+        <p class="booster-info" id="booster-info">Optional boosters</p>
+
+        <button id="skip-boosters-btn" class="btn primary start-btn">
+          ▶️ Start Game
+        </button>
+      </div>
+    </div>
+
+    <!-- Schermata di Gioco -->
+    <div id="game-screen" class="screen">
+      <div class="header">
+        <div class="stats">
+          <div class="stat">⏱️ <span id="timer">60</span>s</div>
+          <div class="stat">⭐ <span id="score">0</span></div>
+          <div class="stat" id="streak-container">
+            <span id="streak-icon">🔥</span> <span id="streak">0</span>
+          </div>
+        </div>
+        <button id="pause-btn" class="btn small">⏸️</button>
+      </div>
+
+      <!-- Active Boosters Indicator -->
+      <div id="active-boosters" class="active-boosters"></div>
+      
+      <div class="question-area">
+        <div id="question" class="question">Ready?</div>
+        <div id="options" class="options"></div>
+      </div>
+    </div>
+
+    <!-- Menu Pausa -->
+    <div id="pause-screen" class="screen overlay">
+      <div class="menu">
+        <h2>⏸️ Paused</h2>
+        <div id="pause-boosters" class="pause-boosters-info"></div>
+        <div class="buttons">
+          <button id="resume-btn" class="btn primary">▶️ Resume</button>
+          <button id="restart-btn" class="btn secondary">🔄 Restart</button>
+          <button id="menu-btn" class="btn secondary">🏠 Menu</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Continue Screen (Extra Time Booster) -->
+    <div id="continue-screen" class="screen overlay">
+      <div class="menu compact-continue">
+        <h2>⏰ Time's Up!</h2>
+        <div class="continue-score-display">
+          <span id="continue-score" class="big-score">0</span>
+        </div>
+        
+        <div class="continue-offer">
+          <div class="continue-icon">⏱️</div>
+          <h3>+15 Seconds?</h3>
+          <p class="continue-highlight">Boosters stay active!</p>
+        </div>
+
+        <div class="buttons">
+          <button id="continue-btn" class="btn primary">📺 +15s</button>
+          <button id="end-game-btn" class="btn secondary">End</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Game Over -->
+    <div id="gameover-screen" class="screen overlay">
+      <div class="menu compact-gameover">
+        <h2>🎮 Game Over!</h2>
+        <div class="final-score-display">
+          <div id="final-score" class="big-score">0</div>
+          <div id="new-record" class="new-record hidden">🎉 NEW RECORD!</div>
+        </div>
+        <div class="stats-summary compact">
+          <div><span>Q:</span> <strong id="total-questions">0</strong></div>
+          <div><span>✓:</span> <strong id="correct-count">0</strong></div>
+          <div><span>🔥:</span> <strong id="best-streak">0</strong></div>
+        </div>
+        <div id="boosters-used" class="boosters-used"></div>
+        <div class="buttons">
+          <button id="play-again-btn" class="btn primary">🔄 Play Again</button>
+          <button id="back-menu-btn" class="btn secondary">🏠 Menu</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

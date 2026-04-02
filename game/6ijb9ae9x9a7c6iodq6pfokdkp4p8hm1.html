@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glow Blocks</title>
+    
+    <!-- GameMonetize SDK - MANDATORY FIRST SCRIPT -->
+    <script type="text/javascript">
+        window.SDK_OPTIONS = {
+            gameId: "6ijb9ae9x9a7c6iodq6pfokdkp4p8hm1",
+            onEvent: function (a) {
+                switch (a.name) {
+                    case "SDK_GAME_PAUSE":
+                        // Pause game logic and mute audio
+                        if (window.gameInstance) {
+                            window.gameInstance.pauseForAd();
+                        }
+                        break;
+                    case "SDK_GAME_START":
+                        // Advertisement done, resume game logic and unmute audio
+                        if (window.gameInstance) {
+                            window.gameInstance.resumeFromAd();
+                        }
+                        break;
+                    case "SDK_READY":
+                        // SDK is ready
+                        console.log('GameMonetize SDK ready');
+                        break;
+                }
+            }
+        };
+        (function (a, b, c) {
+            var d = a.getElementsByTagName(b)[0];
+            a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+        })(document, "script", "gamemonetize-sdk");
+    </script>
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Menu Background Music -->
+    <audio id="menuMusic" loop preload="auto">
+        <source src="sounds/theme_2.mp3" type="audio/mpeg">
+    </audio>
+    
+    <!-- Game Background Music -->
+    <audio id="bgMusic" loop preload="auto">
+        <source src="sounds/theme_1.mp3" type="audio/mpeg">
+    </audio>
+
+    <!-- Intro Scene (Splash Screen) -->
+    <div id="introScene" class="scene active" onclick="skipIntro()">
+        <!-- Animated Background Shapes -->
+        <div class="bg-shapes"></div>
+        <div class="scene-wrapper">
+            <div class="scene-content">
+                <h1 class="neon-title">GLOW<br>BLOCKS</h1>
+                <div class="mapi-games">MAPI GAMES</div>
+                <div class="click-to-start">CLICK TO START</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Home Scene -->
+    <div id="homeScene" class="scene">
+        <!-- Animated Background Shapes -->
+        <div class="bg-shapes"></div>
+        <div class="scene-wrapper">
+            <div class="scene-content">
+                <h1 class="neon-title">GLOW<br>BLOCKS</h1>
+                <button class="neon-button" onclick="startGame()">PLAY</button>
+                <button class="neon-button" onclick="showScene('howToPlayScene')">HOW TO PLAY</button>
+                <button class="neon-button" onclick="showScene('controlsScene')">CONTROLS</button>
+            </div>
+            <!-- MAPI GAMES Credit -->
+            <div class="mapi-games">MAPI GAMES</div>
+        </div>
+    </div>
+
+    <!-- Game Scene -->
+    <div id="gameScene" class="scene">
+        <!-- Animated Background Shapes -->
+        <div class="bg-shapes"></div>
+        
+        <div class="game-content-wrapper">
+            <div class="game-wrapper">
+                <div class="game-container">
+                    <div class="hud">
+                        <div class="hud-item next-box">
+                            <div class="hud-label">NEXT</div>
+                            <canvas id="nextCanvas" width="120" height="120"></canvas>
+                        </div>
+                        <div class="hud-item">
+                            <div class="hud-label">BEST</div>
+                            <div class="hud-value" id="bestScore">0</div>
+                        </div>
+                        <div class="hud-item">
+                            <div class="hud-label">SCORE</div>
+                            <div class="hud-value" id="score">0</div>
+                        </div>
+                        <div class="hud-item">
+                            <div class="hud-label">LEVEL</div>
+                            <div class="hud-value" id="level">1</div>
+                        </div>
+                        <div class="hud-item">
+                            <div class="hud-label">LINES</div>
+                            <div class="hud-value" id="lines">0</div>
+                        </div>
+                    </div>
+                    
+                    <div class="game-board">
+                        <canvas id="gameCanvas" width="300" height="600"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Over Scene -->
+    <div id="gameOverScene" class="scene">
+        <!-- Animated Background Shapes -->
+        <div class="bg-shapes"></div>
+        <div class="scene-wrapper">
+            <div class="scene-content">
+                <h1 class="neon-title">GAME OVER</h1>
+                <div class="game-over-score" id="finalScore">Score: 0</div>
+                <div class="game-over-score" id="highScore">High Score: 0</div>
+                <button class="neon-button" onclick="startGame()">PLAY AGAIN</button>
+                <button class="neon-button" onclick="goHome()">HOME</button>
+            </div>
+            <!-- MAPI GAMES Credit -->
+            <div class="mapi-games">MAPI GAMES</div>
+        </div>
+    </div>
+
+    <!-- Controls Scene -->
+    <div id="controlsScene" class="scene">
+        <!-- Animated Background Shapes -->
+        <div class="bg-shapes"></div>
+        <div class="scene-wrapper">
+            <div class="scene-content">
+                <h1 class="neon-title">CONTROLS</h1>
+                <div class="controls-info">
+                    <h3>Desktop</h3>
+                    <p>← → Move pieces</p>
+                    <p>↓ Soft drop</p>
+                    <p>↑ Rotate piece</p>
+                    <p>Space Hard drop</p>
+                    <br>
+                    <h3>Mobile / Touch</h3>
+                    <p>Tap screen Rotate piece</p>
+                    <p>Swipe ← → Move pieces</p>
+                    <p>Swipe ↓ slow Soft drop</p>
+                    <p>Swipe ↓ fast Hard drop</p>
+                </div>
+                <button class="neon-button" onclick="goHome()">BACK</button>
+            </div>
+            <!-- MAPI GAMES Credit -->
+            <div class="mapi-games">MAPI GAMES</div>
+        </div>
+    </div>
+
+    <!-- How to Play Scene -->
+    <div id="howToPlayScene" class="scene">
+        <!-- Animated Background Shapes -->
+        <div class="bg-shapes"></div>
+        <div class="scene-wrapper">
+            <div class="scene-content">
+                <h1 class="neon-title">HOW TO PLAY</h1>
+                <div class="controls-info how-to-play-content">
+                    <h3>🎯 OBJECTIVE</h3>
+                    <p>Stack falling pieces to complete horizontal lines</p>
+                    <p>Completed lines disappear and give you points</p>
+                    <p>Game ends when pieces reach the top</p>
+                    <br>
+                    <h3>💎 SCORING SYSTEM</h3>
+                    <p>1 Line = 40 × Level</p>
+                    <p>2 Lines = 100 × Level</p>
+                    <p>3 Lines = 300 × Level</p>
+                    <p>4 Lines (TETRIS) = 1200 × Level</p>
+                    <br>
+                    <h3>🔥 BONUS SYSTEM</h3>
+                    <p><strong>COMBO:</strong> Clear lines consecutively without placing pieces that don't clear lines. Each combo level gives +50% bonus!</p>
+                    <p><strong>BACK-TO-BACK TETRIS:</strong> Clear 4 lines twice in a row for an extra +50% bonus!</p>
+                    <br>
+                    <h3>📈 LEVELING UP</h3>
+                    <p>Clear 10 lines to advance to the next level</p>
+                    <p>Higher levels = faster falling pieces</p>
+                    <p>Higher levels = more points per line</p>
+                    <br>
+                    <h3>💡 TIPS</h3>
+                    <p>• Use ghost piece (gray outline) to see where pieces will land</p>
+                    <p>• Save the I-piece for TETRIS (4 lines at once)</p>
+                    <p>• Keep your stack low and flat</p>
+                    <p>• Plan ahead using the NEXT piece preview</p>
+                </div>
+                <button class="neon-button" onclick="goHome()">BACK</button>
+            </div>
+            <!-- MAPI GAMES Credit -->
+            <div class="mapi-games">MAPI GAMES</div>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>

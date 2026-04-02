@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Ark Shooter</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0d1117; /* Dark space background */
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* Animated Stars Background */
+        .stars-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            opacity: 0;
+            animation: twinkle linear infinite;
+        }
+
+        @keyframes twinkle {
+            0% { opacity: 0; }
+            50% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        #gameCanvas {
+            box-shadow: 0 0 40px rgba(76, 175, 80, 0.4);
+            border-radius: 12px;
+            background-color: transparent; /* Canvas background is handled by JS drawing */
+        }
+        
+        /* Custom Button Styling */
+        .game-button {
+            font-weight: bold;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
+            transform: translateZ(0); /* Hardware acceleration */
+        }
+        .game-button:active {
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+            transform: translateY(1px);
+        }
+    </style>
+    <!-- Tone.js for sound -->
+    <script src="https://unpkg.com/tone@14.8.49/build/Tone.js"></script>
+</head>
+<body class="bg-gray-900 text-white">
+
+    <div class="stars-container" id="starsContainer"></div>
+
+    <div id="gameContainer" class="p-4 bg-gray-800 rounded-xl shadow-2xl">
+        <div id="gameStats" class="flex justify-between items-center mb-4 text-sm md:text-base font-mono p-3 bg-gray-900 rounded-lg">
+            <div id="scoreDisplay">Score: 0</div>
+            <div id="levelDisplay">Level: 1</div>
+            <div id="livesDisplay">Lives: 3</div>
+        </div>
+
+        <canvas id="gameCanvas" width="800" height="500" class="bg-black border-4 border-green-500"></canvas>
+
+        <div id="controls" class="mt-4 flex flex-col md:flex-row justify-between gap-2">
+            <button id="startButton" class="game-button bg-green-600 hover:bg-green-700 text-white shadow-md">
+                Start Game
+            </button>
+            <button id="shootButton" class="game-button bg-blue-600 hover:bg-blue-700 text-white shadow-md">
+                Shoot (Space/Touch)
+            </button>
+            <button id="saveButton" class="game-button bg-yellow-600 hover:bg-yellow-700 text-white shadow-md">
+                Save Progress
+            </button>
+            <button id="loadButton" class="game-button bg-indigo-600 hover:bg-indigo-700 text-white shadow-md">
+                Load Progress
+            </button>
+        </div>
+        
+        <!-- Custom Modal for Game Messages -->
+        <div id="messageModal" class="fixed inset-0 bg-black bg-opacity-75 z-50 hidden justify-center items-center">
+            <div class="bg-gray-700 p-8 rounded-xl shadow-xl max-w-sm w-full text-center">
+                <h2 id="modalTitle" class="text-2xl font-bold mb-4 text-green-400"></h2>
+                <p id="modalMessage" class="mb-6 text-gray-300"></p>
+                <!-- Container for dynamic buttons like Load/Start New -->
+                <div id="modalButtonContainer" class="flex justify-center gap-4">
+                    <button id="modalCloseButton" class="game-button bg-green-600 hover:bg-green-700 text-white">
+                        Continue
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+(function() { // Start IIFE for scope isolation
+    // Constants
+    const CANVAS = document.getElementById('gameCanvas');
+    const CTX = CANVAS.getContext('2d');
+    const W = CANVAS.width;
+    const H = CANVAS.height;
+    const LOCAL_SAVE_KEY = 'SpaceArkShooterSave';
+    
+    // Game State
+    let gameInterval;
+    let gameState = {
+        running: false,
+        lives: 3,
+        score: 0,
+        level: 1,
+        paddle: {},
+        ball: {},
+        blocks: [],
+        bullets: [],
+        enemies: [],
+        enemyBullets: [], 
+        boss: null,       
+        input: { left: false, right: false, shoot: false },
+        enemySpawnTimer: 0,
+        enemySpawnInterval: 0, 
+    };
+    
+    // Game Sounds (Tone.js)
+    const synth = new Tone.PolySynth(Tone.Synth, { oscillator: { type: "sine" } }).toDestination();
+    const noiseSynth = new Tone.NoiseSynth({
+        noise: { type: 'pink' },
+        envelope: { attack: 0.005, decay: 0.1, sustain: 0, release: 0.05 },
+    }).toDestination();
+
+    const bgSynth = new Tone.MembraneSynth({
+        pitchDecay: 0.05,
+        octaves: 10,
+        envelope: { attack: 0.001, decay: 0.4, sustain: 0.01, release: 1.4 },
+    }).toDestination();
+    
+    const ambientSynth = new Tone.PolySynth(Tone.Synth, {
+        oscillator: { type: "triangle" },
+        envelope: { attack: 2, release: 4 }
+    }).toDestination();
+    
+    // Simple bassline loop
+    const bgLoop = new Tone.Loop(time => {
+        bgSynth.triggerAttackRelease("C1", "8n", time, 0.5);
+    }, "4n").start(0);
+
+    // Slow ambient chord progression
+    const ambientChordLoop = new Tone.Loop(time => {
+        const chords = [["C3", "G3", "C4"], ["G2", "D3", "G3"]];
+        const chordIndex = Math.floor(Tone.Transport.position.split(':')[0]) % chords.length;
+        ambientSynth.triggerAttackRelease(chords[chordIndex], "2n", time, 0.2);
+    }, "2n").start(0);
+
+    Tone.Transport.bpm.value = 80;
+    Tone.Transport.stop(); 
+
+    const sounds = {
+        shoot: () => synth.triggerAttackRelease("C4", "8n", Tone.now(), 0.5),
+        enemyShoot: () => synth.triggerAttackRelease("A3", "16n", Tone.now(), 0.3), 
+        destroy: () => noiseSynth.triggerAttackRelease("16n", Tone.now(), 0.7),
+        lose: () => synth.triggerAttackRelease(["C3", "F#3", "C4"], "0.5", Tone.now(), 0.8),
+        levelUp: () => synth.triggerAttackRelease(["G4", "C5"], "4n", Tone.now(), 0.6),
+    };
+
+    // --- Utility Functions ---
+
+    function showModal(title, message, callback, buttons = [{ text: "Continue", action: callback, isPrimary: true }]) {
+        document.getElementById('modalTitle').textContent = title;
+        // CHANGED to innerHTML to allow formatted control message
+        document.getElementById('modalMessage').innerHTML = message;
+        const modal = document.getElementById('messageModal');
+        const buttonContainer = document.getElementById('modalButtonContainer');
+        
+        buttonContainer.innerHTML = ''; // Clear existing buttons
+        
+        buttons.forEach(btn => {
+            const button = document.createElement('button');
+            button.textContent = btn.text;
+            button.className = `game-button ${btn.isPrimary ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-500 hover:bg-gray-600'} text-white`;
+            
+            button.onclick = () => {
+                modal.style.display = 'none';
+                if (btn.action) btn.action();
+            };
+            buttonContainer.appendChild(button);
+        });
+
+        modal.style.display = 'flex';
+    }
+
+    function initStars() {
+        const container = document.getElementById('starsContainer');
+        const starCount = 100;
+
+        for (let i = 0; i < starCount; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            star.style.width = `${Math.random() * 3 + 1}px`;
+            star.style.height = star.style.width;
+            star.style.left = `${Math.random() * 100}vw`;
+            star.style.top = `${Math.random() * 100}vh`;
+            star.style.animationDuration = `${Math.random() * 3 + 2}s`;
+            star.style.animationDelay = `${Math.random() * 3}s`;
+            container.appendChild(star);
+        }
+    }
+
+    // --- Local Storage Persistence Functions ---
+
+    function saveGame() {
+        try {
+            // Stop game temporarily while saving
+            const wasRunning = gameState.running;
+            if (wasRunning) stopGame(); 
+
+            const saveData = {
+                score: gameState.score,
+                level: gameState.level,
+                lives: gameState.lives,
+                paddleX: gameState.paddle.x,
+                ballX: gameState.ball.x,
+                ballY: gameState.ball.y,
+                ballDx: gameState.ball.dx,
+                ballDy: gameState.ball.dy,
+                // Only save essential block properties
+                blocks: gameState.blocks.map(b => ({ x: b.x, y: b.y, w: b.w, h: b.h, health: b.health })),
+                timestamp: Date.now()
+            };
+
+            localStorage.setItem(LOCAL_SAVE_KEY, JSON.stringify(saveData));
+            showModal("Success", "Game progress saved locally!");
+            
+            if (wasRunning) startGame(); // Resume game
+        } catch (e) {
+            console.error("Error saving to local storage: ", e);
+            showModal("Error", "Failed to save game. Browser storage limit reached or disabled.");
+        }
+    }
+
+    function loadGame(isAutoLoad = false) {
+        try {
+            const savedData = localStorage.getItem(LOCAL_SAVE_KEY);
+            if (!savedData) {
+                if (!isAutoLoad) {
+                    showModal("Info", "No saved game found in local storage. Starting a new game.");
+                }
+                resetGame();
+                return false;
+            }
+
+            const data = JSON.parse(savedData);
+            
+            // Stop the current game if running
+            stopGame();
+
+            // Restore state
+            gameState.score = data.score;
+            gameState.level = data.level;
+            gameState.lives = data.lives;
+
+            gameState.paddle.x = data.paddleX;
+            gameState.ball.x = data.ballX;
+            gameState.ball.y = data.ball.y;
+            gameState.ball.dx = data.ballDx;
+            gameState.ball.dy = data.ballDy;
+
+            // Restore blocks
+            gameState.blocks = data.blocks.map(b => ({
+                ...b,
+                x: b.x, y: b.y, w: b.w, h: b.h, health: b.health,
+                // Recalculate color based on health
+                color: getBlockColor(b.health),
+                h: getBlockHeight(b.health) // Ensure correct height is restored
+            }));
+            
+            // Clear dynamic elements like enemies/bullets/boss
+            gameState.bullets = [];
+            gameState.enemies = [];
+            gameState.enemyBullets = [];
+            gameState.boss = null;
+
+            updateStats();
+            startGame();
+            
+            if (!isAutoLoad) {
+                showModal("Success", `Game loaded! Level ${gameState.level} restored.`);
+            }
+            return true;
+        } catch (e) {
+            console.error("Error loading from local storage: ", e);
+            localStorage.removeItem(LOCAL_SAVE_KEY); // Clear corrupt save
+            if (!isAutoLoad) {
+                showModal("Error", "Failed to load game. Saved data was corrupt. Starting new game.");
+            }
+            resetGame();
+            startGame();
+            return false;
+        }
+    }
+
+    // --- Game Entities and Mechanics ---
+
+    const LEVELS = [
+        // Level 1: Standard sizes, mixed health
+        [
+            [1, 1, 1, 1, 1, 1, 1, 1], // Green (H=1)
+            [2, 2, 2, 2, 2, 2, 2, 2], // Blue (H=2)
+            [3, 3, 3, 3, 3, 3, 3, 3]  // Orange (H=3 - Taller)
+        ],
+        // Level 2: Gaps and high health focus
+        [
+            [3, 0, 3, 0, 3, 0, 3, 0], // Taller, spaced blocks
+            [2, 2, 2, 2, 2, 2, 2, 2],
+            [1, 1, 1, 1, 1, 1, 1, 1],
+            [3, 3, 3, 3, 3, 3, 3, 3]  // Taller blocks
+        ],
+        // Level 3: Checker pattern
+        [
+            [1, 3, 1, 3, 1, 3, 1, 3], 
+            [3, 1, 3, 1, 3, 1, 3, 1],
+            [1, 3, 1, 3, 1, 3, 1, 3], 
+            [3, 1, 3, 1, 3, 1, 3, 1]
+        ]
+        // Levels wrap around after this
+    ];
+
+    function getBlockColor(health) {
+        switch (health) {
+            case 3: return 'rgb(249, 115, 22)'; // Orange (High Health)
+            case 2: return 'rgb(59, 130, 246)'; // Blue (Medium Health)
+            case 1: return 'rgb(76, 175, 80)';  // Green (Low Health)
+            default: return 'gray';
+        }
+    }
+    
+    function getBlockHeight(health) {
+        if (health >= 3) return 30; 
+        return 20; 
+    }
+
+    function generateLevel(levelIndex) {
+        // Use modulus to loop through defined levels
+        const levelData = LEVELS[(levelIndex - 1) % LEVELS.length];
+        const blockRowCount = levelData.length;
+        const blockColCount = levelData[0].length;
+        const padding = 10;
+        const blockW = (W - (blockColCount + 1) * padding) / blockColCount;
+        const blocks = [];
+
+        let currentY = padding + 50;
+
+        for (let r = 0; r < blockRowCount; r++) {
+            for (let c = 0; c < blockColCount; c++) {
+                const health = levelData[r][c];
+                const blockH = getBlockHeight(health); 
+
+                if (health > 0) {
+                    blocks.push({
+                        x: padding + c * (blockW + padding),
+                        y: currentY,
+                        w: blockW,
+                        h: blockH, 
+                        health: health,
+                        color: getBlockColor(health)
+                    });
+                }
+            }
+            // Advance Y position by the tallest block in the row + padding
+            const rowMaxHeight = levelData[r].some(h => h >= 3) ? getBlockHeight(3) : getBlockHeight(1);
+            currentY += rowMaxHeight + padding;
+        }
+        return blocks;
+    }
+
+    function initGameObjects() {
+        const paddleWidth = 100;
+        const paddleHeight = 15;
+        gameState.paddle = {
+            w: paddleWidth,
+            h: paddleHeight,
+            x: W / 2 - paddleWidth / 2,
+            y: H - 30,
+            speed: 8
+        };
+        
+        const ballRadius = 8;
+        gameState.ball = {
+            r: ballRadius,
+            x: W / 2,
+            y: H - 30 - ballRadius,
+            dx: 4 * (Math.random() > 0.5 ? 1 : -1), 
+            dy: -4
+        };
+
+        gameState.blocks = generateLevel(gameState.level);
+        gameState.bullets = [];
+        gameState.enemies = [];
+        gameState.enemyBullets = [];
+        gameState.boss = null;
+        gameState.enemySpawnTimer = 0;
+        
+        // DIFFICULTY ADJUSTMENT for enemy spawn rate
+        if (gameState.level === 1) {
+            gameState.enemySpawnInterval = 240; 
+        } else if (gameState.level === 2) {
+            gameState.enemySpawnInterval = 120;
+        } else {
+            gameState.enemySpawnInterval = 90;
+        }
+    }
+
+    function drawPaddle() {
+        CTX.fillStyle = 'rgb(129, 140, 248)'; 
+        CTX.fillRect(gameState.paddle.x, gameState.paddle.y, gameState.paddle.w, gameState.paddle.h);
+
+        // Draw Guns 
+        const gunSize = 10;
+        CTX.fillStyle = 'rgb(252, 211, 77)'; 
+        // Left Gun
+        CTX.fillRect(gameState.paddle.x - gunSize, gameState.paddle.y, gunSize, gunSize);
+        // Right Gun
+        CTX.fillRect(gameState.paddle.x + gameState.paddle.w, gameState.paddle.y, gunSize, gunSize);
+    }
+
+    function drawBall() {
+        CTX.beginPath();
+        CTX.arc(gameState.ball.x, gameState.ball.y, gameState.ball.r, 0, Math.PI * 2);
+        CTX.fillStyle = 'rgb(255, 255, 255)';
+        CTX.fill();
+        CTX.closePath();
+    }
+
+    function drawBlocks() {
+        gameState.blocks.forEach(b => {
+            CTX.fillStyle = b.color;
+            CTX.fillRect(b.x, b.y, b.w, b.h);
+            CTX.strokeStyle = '#0d1117';
+            CTX.strokeRect(b.x, b.y, b.w, b.h);
+        });
+    }
+
+    function drawBullets() {
+        CTX.fillStyle = 'rgb(239, 68, 68)'; 
+        gameState.bullets.forEach(b => {
+            CTX.beginPath();
+            CTX.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+            CTX.fill();
+            CTX.closePath();
+        });
+    }
+
+    // Unified Ship Drawing Logic
+    function drawShip(ship, isBoss = false) {
+        CTX.save();
+        CTX.translate(ship.x, ship.y); 
+        const w = ship.w;
+        const h = ship.h;
+
+        if (ship.modelType === 'fighter' || isBoss) {
+            CTX.fillStyle = isBoss ? 'rgb(185, 28, 28)' : 'rgb(107, 114, 128)'; 
+            CTX.beginPath();
+            CTX.moveTo(0, 0); 
+            CTX.lineTo(w * 0.5, h * 0.4);
+            CTX.lineTo(w * 0.4, h);
+            CTX.lineTo(-w * 0.4, h);
+            CTX.lineTo(-w * 0.5, h * 0.4);
+            CTX.closePath();
+            CTX.fill();
+
+            CTX.fillStyle = isBoss ? 'rgb(252, 211, 77)' : 'rgb(59, 130, 246)'; 
+            CTX.fillRect(-w * 0.2, h - 5, w * 0.4, 5);
+            
+            CTX.fillStyle = 'rgb(16, 185, 129)'; 
+            CTX.beginPath();
+            CTX.arc(0, h / 3, isBoss ? 6 : 4, 0, Math.PI * 2); 
+            CTX.fill();
+            CTX.closePath();
+            
+            if (isBoss) {
+                // Health Bar
+                const maxHealth = 100 * gameState.level; 
+                const currentHealth = ship.health;
+                const healthRatio = Math.max(0, currentHealth / maxHealth); 
+                
+                CTX.fillStyle = 'black';
+                CTX.fillRect(-w * 0.5, h + 10, w, 10);
+                
+                CTX.fillStyle = healthRatio > 0.5 ? 'rgb(34, 197, 94)' : (healthRatio > 0.2 ? 'rgb(234, 179, 8)' : 'rgb(239, 68, 68)');
+                CTX.fillRect(-w * 0.5, h + 10, w * healthRatio, 10);
+
+                CTX.strokeStyle = 'white';
+                CTX.strokeRect(-w * 0.5, h + 10, w, 10);
+            }
+            
+        } else if (ship.modelType === 'scout') {
+            CTX.fillStyle = 'rgb(245, 158, 11)'; 
+            CTX.beginPath();
+            CTX.moveTo(0, 0);
+            CTX.lineTo(w * 0.3, h);
+            CTX.lineTo(-w * 0.3, h);
+            CTX.closePath();
+            CTX.fill();
+
+            CTX.fillStyle = 'rgb(239, 68, 68)'; 
+            CTX.fillRect(-w * 0.5, h * 0.5, w * 0.1, 5);
+            CTX.fillRect(w * 0.4, h * 0.5, w * 0.1, 5);
+
+            CTX.fillStyle = 'rgb(255, 255, 255)'; 
+            CTX.fillRect(-2, h * 0.8, 4, 4);
+        }
+
+        CTX.restore(); 
+    }
+
+    function drawEnemies() {
+        gameState.enemies.forEach(e => drawShip(e));
+        if (gameState.boss) {
+            drawShip(gameState.boss, true);
+        }
+    }
+
+    function drawEnemyBullets() {
+        CTX.fillStyle = 'rgb(255, 255, 0)'; 
+        gameState.enemyBullets.forEach(b => {
+            CTX.fillRect(b.x - b.w / 2, b.y, b.w, b.h); 
+        });
+    }
+    
+    // --- Update Logic ---
+
+    function updatePaddle() {
+        if (gameState.input.left && gameState.paddle.x > 0) {
+            gameState.paddle.x -= gameState.paddle.speed;
+        }
+        if (gameState.input.right && gameState.paddle.x + gameState.paddle.w < W) {
+            gameState.paddle.x += gameState.paddle.speed;
+        }
+    }
+
+    function updateBall() {
+        gameState.ball.x += gameState.ball.dx;
+        gameState.ball.y += gameState.ball.dy;
+
+        // Wall collision (Left/Right)
+        if (gameState.ball.x + gameState.ball.r > W || gameState.ball.x - gameState.ball.r < 0) {
+            gameState.ball.dx *= -1;
+        }
+        // Wall collision (Top)
+        if (gameState.ball.y - gameState.ball.r < 0) {
+            gameState.ball.dy *= -1;
+        }
+        
+        // Bottom (Lose a life)
+        if (gameState.ball.y + gameState.ball.r > H) {
+            sounds.lose();
+            gameState.lives--;
+            updateStats();
+            if (gameState.lives <= 0) {
+                gameOver();
+            } else {
+                resetBall();
+            }
+        }
+
+        // Paddle collision detection 
+        if (
+            gameState.ball.y + gameState.ball.r > gameState.paddle.y &&
+            gameState.ball.y - gameState.ball.r < gameState.paddle.y + gameState.paddle.h &&
+            gameState.ball.x + gameState.ball.r > gameState.paddle.x &&
+            gameState.ball.x - gameState.ball.r < gameState.paddle.x + gameState.paddle.w &&
+            gameState.ball.dy > 0 
+        ) {
+            gameState.ball.dy *= -1;
+            const relativeIntersectX = (gameState.paddle.x + (gameState.paddle.w / 2)) - gameState.ball.x;
+            const normalizedRelativeIntersectionX = relativeIntersectX / (gameState.paddle.w / 2);
+            gameState.ball.dx = normalizedRelativeIntersectionX * -4; 
+        }
+
+        // Block collision
+        for (let i = gameState.blocks.length - 1; i >= 0; i--) {
+            const b = gameState.blocks[i];
+            if (b.health > 0 && detectCollision(gameState.ball, b)) {
+                sounds.destroy();
+                b.health--;
+                if (b.health <= 0) {
+                    gameState.score += 100;
+                    gameState.blocks.splice(i, 1);
+                } else {
+                    b.color = getBlockColor(b.health);
+                }
+                gameState.ball.dy *= -1; 
+                updateStats();
+                
+                if (gameState.blocks.length === 0 && !gameState.boss) {
+                    spawnBoss();
+                }
+                break; // Only one collision per loop
+            }
+        }
+        
+        // Enemy collision (Ball destroys enemy)
+        for (let i = gameState.enemies.length - 1; i >= 0; i--) {
+            const e = gameState.enemies[i];
+            if (detectCollision(gameState.ball, e, 'ballEnemy')) {
+                sounds.destroy();
+                gameState.score += 200;
+                gameState.enemies.splice(i, 1);
+                gameState.ball.dy *= -1; 
+                updateStats();
+                break;
+            }
+        }
+    }
+
+    function updateBullets() {
+        for (let i = gameState.bullets.length - 1; i >= 0; i--) {
+            const b = gameState.bullets[i];
+            b.y -= b.speed;
+            
+            if (b.y < 0) {
+                gameState.bullets.splice(i, 1);
+                continue;
+            }
+
+            let hit = false;
+
+            // Check for regular enemy collision
+            for (let eIndex = gameState.enemies.length - 1; eIndex >= 0; eIndex--) {
+                const e = gameState.enemies[eIndex];
+                if (detectCollision(b, e, 'bulletEnemy')) {
+                    sounds.destroy();
+                    gameState.score += 200;
+                    gameState.enemies.splice(eIndex, 1); 
+                    hit = true;
+                    break;
+                }
+            }
+            if (hit) {
+                gameState.bullets.splice(i, 1);
+                continue;
+            }
+            
+            // Check for BOSS collision
+            if (gameState.boss) {
+                if (detectCollision(b, gameState.boss, 'bulletEnemy')) {
+                    sounds.destroy();
+                    gameState.boss.health -= 5; 
+                    gameState.bullets.splice(i, 1);
+                    if (gameState.boss.health <= 0) {
+                        gameState.score += 5000;
+                        gameState.boss = null;
+                        levelUp(); 
+                    }
+                }
+            }
+        }
+    }
+
+    function updateEnemyBullets() {
+        for (let i = gameState.enemyBullets.length - 1; i >= 0; i--) {
+            const b = gameState.enemyBullets[i];
+            b.x += b.dx; 
+            b.y += b.speed;
+            
+            if (b.y > H) {
+                gameState.enemyBullets.splice(i, 1);
+                continue;
+            }
+
+            // Check for paddle collision
+            const p = gameState.paddle;
+            if (
+                b.y + b.h > p.y &&
+                b.y < p.y + p.h &&
+                b.x + b.w / 2 > p.x && 
+                b.x - b.w / 2 < p.x + p.w
+            ) {
+                sounds.lose();
+                gameState.lives--;
+                gameState.enemyBullets.splice(i, 1); 
+                updateStats();
+                if (gameState.lives <= 0) {
+                    gameOver();
+                }
+            }
+        }
+    }
+
+    function updateEnemies() {
+        for (let i = gameState.enemies.length - 1; i >= 0; i--) {
+            const e = gameState.enemies[i];
+            
+            e.x += e.dx;
+            e.y += e.speed;
+            
+            const halfW = e.w / 2;
+            if (e.x + halfW > W || e.x - halfW < 0) {
+                e.dx *= -1;
+            }
+            
+            if (e.y + e.h > H) {
+                sounds.lose();
+                gameState.lives--;
+                gameState.enemies.splice(i, 1);
+                updateStats();
+                if (gameState.lives <= 0) {
+                    gameOver();
+                }
+            }
+            
+            const shootChance = gameState.level === 1 ? 0.002 : 0.005; 
+            if (Math.random() < shootChance) { 
+                enemyShoot(e, gameState.level);
+            }
+        }
+        
+        if (gameState.boss) {
+            gameState.boss.x += gameState.boss.dx;
+            const halfW = gameState.boss.w / 2;
+            if (gameState.boss.x + halfW > W || gameState.boss.x - halfW < 0) {
+                gameState.boss.dx *= -1;
+            }
+            
+            if (Math.random() < 0.02) { 
+                enemyShoot(gameState.boss, gameState.level);
+            }
+        }
+        
+        if (!gameState.boss) {
+            gameState.enemySpawnTimer++;
+            if (gameState.enemySpawnTimer >= gameState.enemySpawnInterval) {
+                spawnEnemy();
+                gameState.enemySpawnTimer = 0;
+                if (gameState.level > 1) {
+                    gameState.enemySpawnInterval = Math.max(60, gameState.enemySpawnInterval - 5);
+                }
+            }
+        }
+    }
+    
+    function spawnEnemy() {
+        const enemyW = 60; 
+        const enemyH = 30;
+        const modelTypes = ['fighter', 'scout'];
+        gameState.enemies.push({
+            x: Math.random() * (W - enemyW) + enemyW / 2, 
+            y: -enemyH, 
+            w: enemyW,
+            h: enemyH,
+            speed: 0.5 + gameState.level * 0.3, 
+            dx: (Math.random() * 2 - 1) * 1.5, 
+            modelType: modelTypes[Math.floor(Math.random() * modelTypes.length)]
+        });
+    }
+    
+    function spawnBoss() {
+        const bossW = 150;
+        const bossH = 75;
+        gameState.boss = {
+            x: W / 2,
+            y: 50, 
+            w: bossW,
+            h: bossH,
+            health: 100 * gameState.level, 
+            dx: 1.5, 
+            speed: 0, 
+            modelType: 'fighter', 
+            isBoss: true
+        };
+        gameState.enemies = []; 
+        stopGame();
+        showModal("BOSS WARNING!", "A massive warship has warped into the sector! Destroy it to proceed!", startGame);
+    }
+    
+    function enemyShoot(ship, currentLevel) {
+        sounds.enemyShoot();
+        const bulletSpeed = 5;
+        const bulletW = ship.isBoss ? 8 : 4;
+        const bulletH = ship.isBoss ? 16 : 10;
+        
+        let velX = 0;
+        let velY = bulletSpeed;
+
+        // ENEMY AIMING LOGIC
+        if (!ship.isBoss && currentLevel === 1) {
+            // Level 1: Shoots mostly straight down with slight random deviation
+            velX = (Math.random() * 2 - 1) * 0.5; 
+        } else {
+            // Level 2+ or Boss: Aim towards the paddle
+            const p = gameState.paddle;
+            const targetX = p.x + p.w / 2;
+            const dx = targetX - ship.x;
+            const dy = p.y + p.h / 2 - (ship.y + ship.h); 
+            const magnitude = Math.sqrt(dx * dx + dy * dy);
+            
+            velX = (dx / magnitude) * bulletSpeed * 0.5; 
+            velY = (dy / magnitude) * bulletSpeed;
+        }
+
+        gameState.enemyBullets.push({ 
+            x: ship.x, 
+            y: ship.y + ship.h, 
+            w: bulletW, 
+            h: bulletH,
+            speed: velY, 
+            dx: velX 
+        });
+    }
+
+    function shoot() {
+        if (gameState.bullets.length > 5) return; 
+
+        const p = gameState.paddle;
+        const bulletR = 3;
+        const bulletSpeed = 7;
+        
+        sounds.shoot();
+
+        // Left Gun
+        gameState.bullets.push({ 
+            x: p.x - bulletR, 
+            y: p.y, 
+            r: bulletR, 
+            speed: bulletSpeed 
+        });
+        // Right Gun
+        gameState.bullets.push({ 
+            x: p.x + p.w + bulletR, 
+            y: p.y, 
+            r: bulletR, 
+            speed: bulletSpeed 
+        });
+    }
+
+    function detectCollision(a, b, type) {
+        // 'a' is a circle (ball or player bullet), 'b' is a rectangle (block, enemy ship)
+        
+        const isShip = (type === 'ballEnemy' || type === 'bulletEnemy');
+        const bRect = { 
+            x: isShip ? b.x - b.w / 2 : b.x, 
+            y: b.y, 
+            w: b.w, 
+            h: b.h 
+        };
+        
+        const closestX = Math.max(bRect.x, Math.min(a.x, bRect.x + bRect.w));
+        const closestY = Math.max(bRect.y, Math.min(a.y, bRect.y + bRect.h));
+
+        const dx = a.x - closestX;
+        const dy = a.y - closestY;
+
+        return (dx * dx + dy * dy) < (a.r * a.r);
+    }
+
+
+    // --- Game Flow Control ---
+
+    function resetBall() {
+        const ballRadius = 8;
+        gameState.ball.x = W / 2;
+        gameState.ball.y = H - 30 - ballRadius;
+        gameState.ball.dx = 4 * (Math.random() > 0.5 ? 1 : -1);
+        gameState.ball.dy = -4;
+    }
+
+    function resetGame() {
+        gameState.lives = 3;
+        gameState.score = 0;
+        gameState.level = 1;
+        initGameObjects();
+        updateStats();
+    }
+
+    function levelUp() {
+        if (gameState.blocks.length > 0) return; 
+        if (gameState.boss) return; 
+
+        sounds.levelUp();
+        gameState.level++;
+        
+        // Save automatically after leveling up
+        saveGame();
+
+        stopGame(); // Pause game before showing level up screen
+        showModal("Sector Cleared!", `Proceeding to Level ${gameState.level}.`, () => {
+            initGameObjects(); 
+            resetBall();
+            updateStats();
+            startGame();
+        });
+    }
+
+    function gameOver() {
+        sounds.lose();
+        stopGame();
+        // Clear local storage on game over
+        localStorage.removeItem(LOCAL_SAVE_KEY); 
+        // FIX: Ensure startGame() is called after resetGame() to restart the loop
+        showModal("Game Over!", `You reached Level ${gameState.level} with a score of ${gameState.score}.`, null, [
+            { text: "Start New Game", action: () => { resetGame(); startGame(); }, isPrimary: true }
+        ]);
+    }
+
+    function updateStats() {
+        document.getElementById('scoreDisplay').textContent = `Score: ${gameState.score}`;
+        document.getElementById('levelDisplay').textContent = `Level: ${gameState.level}`;
+        document.getElementById('livesDisplay').textContent = `Lives: ${gameState.lives}`;
+    }
+
+    // --- Main Game Loop ---
+
+    function gameLoop() {
+        if (!gameState.running) return;
+
+        // 1. Clear Canvas
+        CTX.clearRect(0, 0, W, H);
+
+        // 2. Update all objects
+        updatePaddle();
+        updateBall();
+        updateBullets();
+        updateEnemies();
+        updateEnemyBullets(); 
+
+        // 3. Draw all objects
+        drawBlocks();
+        drawPaddle();
+        drawBall();
+        drawBullets();
+        drawEnemies(); 
+        drawEnemyBullets(); 
+
+        // 4. Loop
+        gameInterval = requestAnimationFrame(gameLoop);
+    }
+
+    function startGame() {
+        if (gameState.running) return;
+        
+        Tone.start(); 
+        Tone.Transport.start();
+
+        gameState.running = true;
+        document.getElementById('startButton').textContent = 'Pause Game';
+        gameLoop();
+    }
+
+    function stopGame() {
+        gameState.running = false;
+        
+        Tone.Transport.pause();
+
+        document.getElementById('startButton').textContent = 'Resume Game';
+        cancelAnimationFrame(gameInterval);
+    }
+    
+    // --- Event Handlers ---
+
+    function keyDownHandler(e) {
+        if (e.key === "Right" || e.key === "ArrowRight") {
+            gameState.input.right = true;
+        } else if (e.key === "Left" || e.key === "ArrowLeft") {
+            gameState.input.left = true;
+        } else if (e.key === " " || e.key === "Spacebar") {
+            e.preventDefault(); 
+            if (gameState.running) shoot();
+        }
+    }
+
+    function keyUpHandler(e) {
+        if (e.key === "Right" || e.key === "ArrowRight") {
+            gameState.input.right = false;
+        } else if (e.key === "Left" || e.key === "ArrowLeft") {
+            gameState.input.left = false;
+        }
+    }
+    
+    function handleTouchMove(e) {
+        if (!e.touches.length) return;
+        e.preventDefault();
+        const rect = CANVAS.getBoundingClientRect();
+        const touchX = e.touches[0].clientX - rect.left;
+        
+        let newX = touchX - gameState.paddle.w / 2;
+
+        if (newX < 0) newX = 0;
+        if (newX + gameState.paddle.w > W) newX = W - gameState.paddle.w;
+        
+        gameState.paddle.x = newX;
+    }
+
+    function handleShootClick() {
+        if (gameState.running) shoot();
+    }
+
+
+    // --- Initialization ---
+    
+    function checkLocalStorageAndStart() {
+        initStars();
+        resetGame(); // Initialize objects and state
+        
+        const savedData = localStorage.getItem(LOCAL_SAVE_KEY);
+        
+        const controlsMessage = `
+            <p class="text-left mb-4 text-sm md:text-base">
+                <span class="text-green-400 font-bold">Movement:</span> 
+                <span class="text-yellow-300">Arrow Keys (Left/Right)</span> or 
+                <span class="text-yellow-300">Mouse Movement / Touch Swipe</span>.<br>
+                <span class="text-green-400 font-bold">Shoot:</span> 
+                <span class="text-yellow-300">SPACE Bar</span> or the 
+                <span class="text-yellow-300">Shoot Button</span> / 
+                <span class="text-yellow-300">Screen Tap</span>.
+            </p>
+            <hr class="border-gray-600 mb-4">
+            Destroy all blocks and enemy ships to clear the sector.
+        `;
+
+        if (savedData) {
+            showModal(
+                "Welcome Back, Pilot!", 
+                controlsMessage,
+                null, // No default action
+                [
+                    { text: "Load Last Game", action: () => loadGame(true), isPrimary: true },
+                    { text: "Start New Game", action: () => startGame(), isPrimary: false }
+                ]
+            );
+        } else {
+             showModal(
+                "Welcome to Space Ark Shooter!", 
+                controlsMessage, 
+                null, // No default action
+                [
+                    { text: "Start Game", action: () => startGame(), isPrimary: true }
+                ]
+            );
+        }
+    }
+
+
+    window.onload = function() {
+        checkLocalStorageAndStart();
+        
+        // Event Listeners
+        document.addEventListener('keydown', keyDownHandler, false);
+        document.addEventListener('keyup', keyUpHandler, false);
+        document.addEventListener('mousemove', (e) => {
+            const rect = CANVAS.getBoundingClientRect();
+            const relativeX = e.clientX - rect.left;
+            if (relativeX > 0 && relativeX < W) {
+                gameState.paddle.x = relativeX - gameState.paddle.w / 2;
+            }
+        }, false);
+        
+        CANVAS.addEventListener('click', handleShootClick); 
+        CANVAS.addEventListener('touchmove', handleTouchMove, false);
+        document.getElementById('shootButton').addEventListener('click', handleShootClick);
+        document.getElementById('startButton').addEventListener('click', () => {
+            if (gameState.running) {
+                stopGame();
+            } else {
+                startGame();
+            }
+        });
+        document.getElementById('saveButton').addEventListener('click', saveGame);
+        document.getElementById('loadButton').addEventListener('click', () => loadGame(false));
+    };
+
+})(); // End IIFE
+</script>
+
+
+
+<script type="text/javascript">
+   window.SDK_OPTIONS = {
+      gameId: "52fsj10g947npnukuf2i6tttdom1lhza",
+      onEvent: function (a) {
+         switch (a.name) {
+            case "SDK_GAME_PAUSE":
+               // pause game logic / mute audio
+               break;
+            case "SDK_GAME_START":
+               // advertisement done, resume game logic and unmute audio
+               break;
+            case "SDK_READY":
+               if (typeof sdk !== 'undefined' && sdk.showBanner !== 'undefined') {
+sdk.showBanner();
+}
+               break;
+         }
+      }
+   };
+(function (a, b, c) {
+   var d = a.getElementsByTagName(b)[0];
+   a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+})(document, "script", "gamemonetize-sdk"); 
+</script>
+
+
+</body>
+</html>

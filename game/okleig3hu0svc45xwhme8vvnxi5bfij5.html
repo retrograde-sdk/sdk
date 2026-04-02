@@ -1,0 +1,1360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- GAMEMONETIZE INTEGRATION START-->
+    <script type="text/javascript">
+   window.SDK_OPTIONS = {
+      gameId: "okleig3hu0svc45xwhme8vvnxi5bfij5",
+      onEvent: function (a) {
+         switch (a.name) {
+            case "SDK_GAME_PAUSE":
+               // pause game logic / mute audio
+               break;
+            case "SDK_GAME_START":
+               // advertisement done, resume game logic and unmute audio
+               break;
+            case "SDK_READY":
+               // when sdk is ready
+               break;
+         }
+      }
+   };
+(function (a, b, c) {
+   var d = a.getElementsByTagName(b)[0];
+   a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+})(document, "script", "gamemonetize-sdk"); 
+</script>
+
+    <!-- GAMEPIX MONETIZE END-->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Idle Space Miner Tycoon</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
+        :root {
+            --color-bg-dark: #0a0a1a;
+            --color-primary: #00ffff; /* Cyan neon */
+            --color-secondary: #ff00ff; /* Magenta neon */
+            --color-text: #e0e0ff;
+            --color-accent-bg: #1a1a33;
+            --color-button-hover: #004444;
+            --color-disabled: #444444;
+            --color-error: #ff4444;
+            --font-main: 'Orbitron', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            --border-radius-small: 5px;
+            --border-radius-large: 10px;
+        }
+
+        body {
+            background-color: #000;
+            color: var(--color-text);
+            font-family: var(--font-main);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* --- 16:9 Aspect Ratio Enforcer --- */
+        #game-container {
+            width: 100vw;
+            height: 56.25vw; /* 9 / 16 * 100vw */
+            max-height: 100vh;
+            max-width: 177.77vh; /* 16 / 9 * 100vh */
+            position: relative;
+            background-color: var(--color-bg-dark);
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.4);
+            border: 3px solid var(--color-primary);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Fallback for very tall screens where 16:9 is smaller than full height */
+        @media (orientation: portrait) {
+            #game-container {
+                width: 177.77vh;
+                height: 100vh;
+                max-width: 100vw;
+                max-height: 56.25vw;
+            }
+        }
+        
+        /* General Layout */
+        header {
+            background: var(--color-accent-bg);
+            padding: 10px;
+            border-bottom: 2px solid var(--color-primary);
+            text-align: center;
+            font-size: 1.5em;
+            text-shadow: 0 0 5px var(--color-primary);
+        }
+
+        #main-content {
+            flex-grow: 1;
+            display: flex;
+            padding: 10px;
+            overflow: hidden;
+        }
+        
+        #ui-tabs {
+            flex-shrink: 0;
+            width: 15%;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        #game-area {
+            flex-grow: 1;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--color-accent-bg);
+            border-radius: var(--border-radius-large);
+            padding: 10px;
+            margin-left: 10px;
+            overflow-y: auto; /* Scrollable content inside the main panel */
+        }
+
+        .tab-button {
+            background: var(--color-accent-bg);
+            color: var(--color-text);
+            border: 1px solid var(--color-primary);
+            padding: 15px 5px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            transition: all 0.2s;
+            border-radius: var(--border-radius-small);
+            min-height: 40px; /* Ensures good touch target */
+        }
+
+        .tab-button:hover:not(.active) {
+            background: var(--color-button-hover);
+        }
+
+        .tab-button.active {
+            background: var(--color-primary);
+            color: var(--color-bg-dark);
+            font-weight: bold;
+            box-shadow: 0 0 10px var(--color-primary);
+        }
+
+        .tab-content {
+            display: none;
+            height: 100%;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Status Bar and Currency Display */
+        #status-bar {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 10px;
+            background: rgba(0, 0, 0, 0.5);
+            border-top: 1px solid var(--color-secondary);
+            font-size: 1.2em;
+        }
+
+        .currency-display, #cps-display {
+            padding: 5px;
+            border: 1px dashed var(--color-secondary);
+            border-radius: var(--border-radius-small);
+            width: 22%;
+        }
+
+        .currency-label {
+            color: var(--color-secondary);
+            font-weight: bold;
+            margin-right: 5px;
+        }
+
+        .neon-text {
+            color: var(--color-primary);
+            text-shadow: 0 0 5px var(--color-primary);
+        }
+
+        /* General Button Styles */
+        .buy-btn {
+            flex-grow: 1;
+            padding: 10px 5px;
+            background: var(--color-primary);
+            color: var(--color-bg-dark);
+            border: none;
+            border-radius: var(--border-radius-small);
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 2vw;
+            transition: background-color 0.2s, box-shadow 0.2s;
+            min-height: 40px; /* Good touch target */
+        }
+
+        .buy-btn:hover {
+            background: #44ffff;
+            box-shadow: 0 0 8px var(--color-primary);
+        }
+
+        .buy-btn:disabled {
+            background: var(--color-disabled);
+            color: #888;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        
+        /* --- Asteroid Clicker Styles --- */
+        #asteroid-clicker-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 90%; /* Takes up most of the space */
+            text-align: center;
+        }
+
+        #asteroid-button {
+            width: 18%;
+            height: 32%;
+            background: radial-gradient(circle at center, #663300 0%, #331a00 60%, #1a0d00 100%);
+            border-radius: 50%;
+            border: 5px solid #ffa500;
+            box-shadow: 0 0 20px #ff7700, inset 0 0 10px #000;
+            transition: transform 0.1s;
+            cursor: pointer;
+            margin: 20px;
+            position: relative;
+        }
+
+        #asteroid-button:active {
+            transform: scale(0.95);
+        }
+        
+        #asteroid-button:before {
+            content: 'CLICK TO MINE';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #fff;
+            font-size: 2vw;
+            font-weight: bold;
+            text-shadow: 0 0 5px #000;
+        }
+
+         #ad-reward-panel {
+            padding: 15px;
+            text-align: center;
+            border: 1px solid var(--color-error);
+            background: rgba(100, 0, 0, 0.3);
+            border-radius: var(--border-radius-large);
+            margin-top: 20px;
+        }
+
+        #watch-ad-btn {
+            padding: 15px 30px;
+            font-size: 2vw;
+            background: #ff4500; /* Red/Orange for attention */
+            color: var(--color-text);
+            border: none;
+            border-radius: var(--border-radius-large);
+            cursor: pointer;
+            transition: background-color 0.2s;
+            box-shadow: 0 0 10px #ff4500;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        #watch-ad-btn:hover {
+            background: #ff6347;
+        }
+
+        .floating-credit {
+            position: absolute;
+            color: var(--color-primary);
+            font-size: 1.5em;
+            font-weight: bold;
+            text-shadow: 0 0 10px var(--color-primary);
+            animation: floatup 1s ease-out forwards;
+            pointer-events: none;
+        }
+
+        .floating-credit.crit {
+            color: #ff00ff;
+            font-size: 2em;
+            text-shadow: 0 0 15px #ff00ff;
+        }
+
+        @keyframes floatup {
+            0% { transform: translate(0, 0); opacity: 1; }
+            100% { transform: translate(0, -100px); opacity: 0; }
+        }
+
+        /* --- Rest of the styles (Miners, Upgrades, Prestige) --- */
+        .miner-unit {
+            display: flex;
+            flex-direction: column;
+            border: 1px solid var(--color-primary);
+            border-radius: var(--border-radius-large);
+            margin-bottom: 15px;
+            padding: 15px;
+            background: var(--color-accent-bg);
+            box-shadow: 0 0 5px rgba(0, 255, 255, 0.2);
+        }
+
+        .miner-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .miner-name {
+            font-size: 2vw;
+            color: var(--color-primary);
+        }
+
+        .miner-stats {
+            font-size: 1.5vw;
+        }
+        
+        .miner-level {
+            font-weight: bold;
+            color: var(--color-secondary);
+        }
+
+        .miner-buy-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        /* --- Upgrade and Shop Styles --- */
+        .upgrade-list, .prestige-shop-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .upgrade-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--color-secondary);
+            border-radius: var(--border-radius-small);
+        }
+
+        .upgrade-info {
+            flex-grow: 1;
+        }
+
+        .upgrade-name {
+            font-size: 1.8vw;
+            color: var(--color-secondary);
+        }
+        
+        .upgrade-effect {
+            font-size: 1.5vw;
+        }
+
+        .upgrade-cost {
+            font-weight: bold;
+            margin-left: 20px;
+        }
+
+        .upgrade-buy-btn {
+            padding: 8px 15px;
+            background: var(--color-secondary);
+            color: var(--color-bg-dark);
+            border: none;
+            border-radius: var(--border-radius-small);
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s;
+            margin-left: 10px;
+            min-width: 80px;
+        }
+
+        .upgrade-buy-btn:hover {
+            background: #ff44ff;
+        }
+        
+        .upgrade-buy-btn:disabled {
+            background: var(--color-disabled);
+            color: #888;
+            cursor: not-allowed;
+        }
+
+        /* --- Prestige/Hyperspace Styles --- */
+        #prestige-status {
+            text-align: center;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px solid var(--color-secondary);
+            border-radius: var(--border-radius-large);
+            margin-bottom: 20px;
+        }
+
+        #hyperspace-jump-btn {
+            width: 100%;
+            padding: 20px;
+            font-size: 1.5em;
+            background: #ff7700; /* Orange/Gold accent */
+            color: var(--color-bg-dark);
+            border: 3px solid #ffa500;
+            border-radius: var(--border-radius-large);
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 15px;
+            box-shadow: 0 0 15px #ff7700;
+        }
+
+        #hyperspace-jump-btn:hover:not(:disabled) {
+            background: #ffa500;
+            box-shadow: 0 0 20px #ffa500;
+        }
+
+        #hyperspace-jump-btn:disabled {
+            background: #333333;
+            color: #666;
+            cursor: not-allowed;
+            border-color: #555;
+            box-shadow: none;
+        }
+
+        /* --- Notifications and Boosts --- */
+        #notification-center {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .notification {
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid #00ff00;
+            color: #00ff00;
+            padding: 10px;
+            border-radius: var(--border-radius-small);
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+            width: 250px;
+            text-align: center;
+            opacity: 0;
+            animation: fadeinout 4s forwards;
+        }
+        
+        @keyframes fadeinout {
+            0% { opacity: 0; transform: translateY(-20px); }
+            10% { opacity: 1; transform: translateY(0); }
+            90% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        #boost-timer {
+            position: fixed;
+            top: 60px;
+            right: 10px;
+            background: rgba(255, 165, 0, 0.8);
+            color: var(--color-bg-dark);
+            padding: 5px 10px;
+            border-radius: var(--border-radius-small);
+            font-size: 2vw;
+            font-weight: bold;
+            display: none; /* Controlled by JS */
+            z-index: 99;
+        }
+
+        /* Utility */
+        .separator {
+            border-top: 1px dashed var(--color-primary);
+            margin: 15px 0;
+        }
+        
+        h2 {
+            color: var(--color-secondary);
+            text-shadow: 0 0 5px var(--color-secondary);
+            margin-top: 0;
+            font-size: 2vw;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <header>
+            IDLE SPACE MINER TYCOON
+        </header>
+
+        <div id="status-bar">
+            <div class="currency-display">
+                <span class="currency-label">Credits:</span> 
+                <span id="credits-amount" class="neon-text">0</span>
+            </div>
+            <div id="cps-display">
+                <span class="currency-label">CPS:</span> 
+                <span id="cps-amount" class="neon-text">0</span>
+            </div>
+            <div class="currency-display">
+                <span class="currency-label">Star Dust:</span> 
+                <span id="stardust-amount" class="neon-text">0</span>
+            </div>
+            <div class="currency-display">
+                <span class="currency-label">Shards:</span> 
+                <span id="shards-amount" class="neon-text">0</span>
+            </div>
+        </div>
+
+        <div id="main-content">
+            <nav id="ui-tabs">
+                <button class="tab-button active" data-tab="asteroid">Asteroid</button>
+                <button class="tab-button" data-tab="mining-bay">Mining Bay</button>
+                <button class="tab-button" data-tab="tech-tree">Tech Tree</button>
+                <button class="tab-button" data-tab="hyperspace">Hyperspace</button>
+                <div class="separator"></div>
+                <button id="watch-ad-btn">Watch Ad for Bonus</button>
+            </nav>
+
+            <div id="game-area">
+                <div id="asteroid" class="tab-content active">
+                    <h2 style="margin-top: 5px; margin-bottom: 0px;">Manual Mining Operations</h2>
+                    <div id="asteroid-clicker-area">
+                        <p style="margin-top: 5px; margin-bottom: 0px;">Click the asteroid to mine! Credits per click: <span class="neon-text" id="click-prod">1</span></p>
+                        <p style="margin-top: 2px; margin-bottom: 0px;">Total Clicks: <span id="total-clicks">0</span></p>
+                        <div style="margin-top: 5px; margin-bottom: 0px;" id="asteroid-button"></div>
+                    </div>
+                </div>
+
+                <div id="mining-bay" class="tab-content">
+                    <h2>Automated Mining Operations</h2>
+                    <div id="miner-list">
+                        </div>
+                </div>
+
+                <div id="tech-tree" class="tab-content">
+                    <h2>Advanced Technology Tree (Credit Upgrades)</h2>
+                    <div id="upgrade-list" class="upgrade-list">
+                        </div>
+                </div>
+
+                <div id="hyperspace" class="tab-content">
+                    <h2>Hyperspace Jump Protocol</h2>
+                    <div id="prestige-status">
+                        <p>Accumulated Credits this run: <span id="accumulated-credits" class="neon-text">0</span></p>
+                        <button id="shardToDustBtn" class="upgrade-buy-btn">Convert 25 💎 → 1 ✦</button>
+                        <p>Required for Next Jump: <span id="prestige-requirement" class="neon-text">1.0e+15</span> Credits</p>
+                        <button id="hyperspace-jump-btn" disabled>Initiate Hyperspace Jump (Earn 1 SD)</button>
+                    </div>
+
+                    <div class="separator"></div>
+
+                    <h2>Star Dust Shop (Permanent Bonuses)</h2>
+                    <p>Spend Star Dust (SD) on permanent buffs that persist across all future runs.</p>
+                    <div id="prestige-shop-list" class="prestige-shop-list">
+                        </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="notification-center"></div>
+        <div id="boost-timer"></div>
+    </div>
+
+    <script>
+        // --- 1. GAME STATE (DATA MODEL) ---
+        const GAME = {
+            version: '1.1', // Updated version number
+            lastSaveTime: Date.now(),
+            credits: 0,
+            accumulatedCredits: 0, // For prestige requirement
+            cosmicShards: 0,
+            starDust: 0,
+            miners: {},
+            upgrades: {},
+            prestigeUpgrades: {},
+            productionBoostMultiplier: 1.0,
+            productionBoostEndTime: 0,
+            maxOfflineTimeSeconds: 48 * 3600,
+            
+            // New Clicker State
+            manualClicks: 0,
+        };
+        let firstClickDone = false;
+
+        // --- 2. GAME DEFINITIONS (CONFIGURATION) ---
+
+        const FORMAT_CAP = 1e6; // Start using scientific notation above this
+        const BASE_CLICK_POWER = 1; // Base credits earned per click
+
+        const MINER_DEFS = {
+            'ADU': { name: 'Automated Drilling Unit', tier: 1, baseCost: 100, baseProd: 1, maxLevel: 1000, desc: 'Mines basic Asteroid Ore.' },
+            'HCH': { name: 'Heavy Cruiser Harvester', tier: 2, baseCost: 5000, baseProd: 20, maxLevel: 500, desc: 'Mines rich Planetary Metals.' },
+            'SRH': { name: 'Stellar Refinery Hub', tier: 3, baseCost: 200000, baseProd: 500, maxLevel: 250, desc: 'Processes rare Gas Giants/Nebulae.' },
+        };
+
+        const UPGRADE_DEFS = {
+            // New Clicker Upgrades
+            'clickPower': { name: 'Kinetic Mining Drill', type: 'click', costBase: 20, costScale: 1.5, effectBase: 1, effectType: 'add', maxLevel: 100, desc: 'Increases Credits per click by +1.' },
+            'critChance': { name: 'Critical Hit Capacitor', type: 'click', costBase: 500, costScale: 2.5, effectBase: 0.01, effectType: 'chance', maxLevel: 20, desc: 'Adds +1% chance for a 2x Critical Click.' },
+            
+            // Global Multiplier (Credit-Based)
+            'globalProd': { name: 'Universal Output Amplifier', type: 'global', costBase: 1000, costScale: 3.5, effectBase: 0.1, effectType: 'mult', maxLevel: 50, desc: 'Increases ALL Credits per second by +10%.' },
+            
+            // Efficiency Boosts (Per Miner Tier)
+            'aduProd': { name: 'ADU Efficiency Core', type: 'miner', minerKey: 'ADU', costBase: 500, costScale: 2.0, effectBase: 0.25, effectType: 'mult', maxLevel: 100, desc: 'Increases ADU production rate by +25%.' },
+            'hchProd': { name: 'HCH Quantum Drive', type: 'miner', minerKey: 'HCH', costBase: 10000, costScale: 2.5, effectBase: 0.25, effectType: 'mult', maxLevel: 50, desc: 'Increases HCH production rate by +25%.' },
+            'srhProd': { name: 'SRH Dark Matter Injector', type: 'miner', minerKey: 'SRH', costBase: 500000, costScale: 3.0, effectBase: 0.25, effectType: 'mult', maxLevel: 25, desc: 'Increases SRH production rate by +25%.' },
+            
+            // Cost Reduction (Per Miner Tier)
+            'aduCost': { name: 'ADU Procurement Discount', type: 'miner', minerKey: 'ADU', costBase: 2500, costScale: 5.0, effectBase: 0.01, effectType: 'cost-red', maxLevel: 10, desc: 'Reduces ADU purchase cost by 1% per level (additive).' },
+            'hchCost': { name: 'HCH Bulk Order Protocol', type: 'miner', minerKey: 'HCH', costBase: 50000, costScale: 6.0, effectBase: 0.01, effectType: 'cost-red', maxLevel: 10, desc: 'Reduces HCH purchase cost by 1% per level (additive).' },
+            'srhCost': { name: 'SRH State Subsidy', type: 'miner', minerKey: 'SRH', costBase: 1000000, costScale: 7.0, effectBase: 0.01, effectType: 'cost-red', maxLevel: 10, desc: 'Reduces SRH purchase cost by 1% per level (additive).' },
+        };
+
+        const PRESTIGE_DEFS = {
+            'prodBoost': { name: 'Interstellar Tax Break', costBase: 1, costScale: 1.1, effectBase: 0.05, maxLevel: 50, desc: 'Permanent +5% to all Credit production per level.' },
+            'offlineCap': { name: 'Quantum Sleep Protocol', costBase: 5, costScale: 1.5, effectBase: 0.02, maxLevel: 10, desc: 'Permanent +2% to Offline Earning Cap Time per level.' },
+            'costRed': { name: 'Galactic Supply Chain', costBase: 10, costScale: 1.2, effectBase: 0.01, maxLevel: 25, desc: 'Permanent -1% to all Miner Purchase Costs per level.' },
+        };
+
+        // --- 3. HELPER FUNCTIONS ---
+
+        /** Formats a number for display. Uses scientific notation for large numbers. */
+        function formatNumber(num) {
+            if (num < 1000) return num.toFixed(0);
+
+            const units = ["", " K", " M", " B", " T", " Qa", " Qi"," Sx"," Sc"," Oc"];
+            let unitIndex = 0;
+
+            while (num >= 1000 && unitIndex < units.length - 1) {
+                num /= 1000;
+                unitIndex++;
+            }
+                return num.toFixed(2).replace(/\.00$/, "") + units[unitIndex];
+}
+
+        /** Calculates the cost for the next level of a given item. */
+        function calculateNextCost(baseCost, level, scale) {
+            return baseCost * Math.pow(scale, level);
+        }
+
+        // --- 4. GAME LOGIC ---
+
+        /** Initializes the game state for the first time or after a Prestige. */
+        function initializeGameState(isPrestige) {
+            if (!isPrestige) {
+                // Initialize default game state on first load
+                GAME.miners = Object.fromEntries(Object.keys(MINER_DEFS).map(key => [key, { level: 0 }]));
+                GAME.upgrades = Object.fromEntries(Object.keys(UPGRADE_DEFS).map(key => [key, { level: 0 }]));
+                GAME.prestigeUpgrades = Object.fromEntries(Object.keys(PRESTIGE_DEFS).map(key => [key, { level: 0 }]));
+                GAME.credits = 0;
+                GAME.cosmicShards = 0;
+                GAME.accumulatedCredits = 0;
+                GAME.manualClicks = 0;
+            } else {
+                // Reset for Prestige
+                GAME.miners = Object.fromEntries(Object.keys(MINER_DEFS).map(key => [key, { level: 0 }]));
+                GAME.upgrades = Object.fromEntries(Object.keys(UPGRADE_DEFS).map(key => [key, { level: 0 }]));
+                GAME.credits = 0;
+                GAME.manualClicks = 0;
+            }
+            GAME.lastSaveTime = Date.now();
+        }
+
+        /** Calculates the current Click Production values. */
+        function getClickProduction() {
+            let clickPower = BASE_CLICK_POWER;
+            let critChance = 0;
+
+            const clickPowerUp = GAME.upgrades['clickPower'];
+            if (clickPowerUp) {
+                clickPower += clickPowerUp.level * UPGRADE_DEFS['clickPower'].effectBase;
+            }
+
+            const critChanceUp = GAME.upgrades['critChance'];
+            if (critChanceUp) {
+                critChance += critChanceUp.level * UPGRADE_DEFS['critChance'].effectBase;
+            }
+
+            return { clickPower, critChance: Math.min(1.0, critChance) }; // Cap chance at 100%
+        }
+
+        /** Calculates all global modifiers from Standard and Prestige upgrades. */
+        function getGlobalMultipliers() {
+            let globalProdMult = 1.0;
+            let costReduction = 0;
+
+            // Standard (Credit-Based) Global Multiplier
+            const globalUp = GAME.upgrades['globalProd'];
+            if (globalUp) {
+                globalProdMult += globalUp.level * UPGRADE_DEFS['globalProd'].effectBase;
+            }
+
+            // Prestige Production Multiplier
+            const sdProdUp = GAME.prestigeUpgrades['prodBoost'];
+            if (sdProdUp) {
+                globalProdMult += sdProdUp.level * PRESTIGE_DEFS['prodBoost'].effectBase;
+            }
+            
+            // Prestige Cost Reduction
+            const sdCostRed = GAME.prestigeUpgrades['costRed'];
+            if (sdCostRed) {
+                costReduction += sdCostRed.level * PRESTIGE_DEFS['costRed'].effectBase;
+            }
+
+            return { globalProdMult, costReduction };
+        }
+
+        /** Calculates the effective cost of a miner based on all modifiers. */
+        function getMinerCost(minerKey, amount = 1) {
+            const def = MINER_DEFS[minerKey];
+            const currentLevel = GAME.miners[minerKey].level;
+            const { costReduction } = getGlobalMultipliers();
+            let totalCost = 0;
+            
+            // Apply Credit-based Cost Reduction upgrades
+            const upKey = minerKey.toLowerCase() + 'Cost';
+            const costUp = GAME.upgrades[upKey];
+            let creditCostReduction = 0;
+            if (costUp) {
+                creditCostReduction = costUp.level * UPGRADE_DEFS[upKey].effectBase;
+            }
+            const totalCostReduction = Math.min(1, costReduction + creditCostReduction); // Cap at 100%
+
+            // Calculate cost for 'amount' of units
+            for (let i = 0; i < amount; i++) {
+                const level = currentLevel + i;
+                const costScale = 1.15; // Universal miner cost scale
+                const baseCost = def.baseCost * Math.pow(costScale, level);
+                const finalCost = baseCost * (1 - totalCostReduction);
+                totalCost += Math.max(1, finalCost); // Cost can never be less than 1
+            }
+
+            return totalCost;
+        }
+
+        /** Calculates the total Credits Per Second (CPS). */
+        function calculateCPS() {
+            let totalCPS = 0;
+            const { globalProdMult } = getGlobalMultipliers();
+            let totalBoostMult = globalProdMult * GAME.productionBoostMultiplier;
+
+            for (const key in MINER_DEFS) {
+                const def = MINER_DEFS[key];
+                const miner = GAME.miners[key];
+                if (!miner) continue;
+
+                let minerProd = def.baseProd * miner.level;
+
+                // Apply Credit-based Production Upgrades for this specific miner tier
+                const upKey = key.toLowerCase() + 'Prod';
+                const prodUp = GAME.upgrades[upKey];
+                let minerSpecificMult = 1.0;
+                if (prodUp) {
+                    minerSpecificMult += prodUp.level * UPGRADE_DEFS[upKey].effectBase;
+                }
+
+                totalCPS += minerProd * minerSpecificMult;
+            }
+
+            return totalCPS * totalBoostMult;
+        }
+
+        /** Handles purchasing a miner unit. */
+        function buyMiner(key, amount) {
+            const cost = getMinerCost(key, amount);
+            if (GAME.credits >= cost) {
+                GAME.credits -= cost;
+                GAME.miners[key].level += amount;
+                saveGame();
+                updateUI();
+                displayMessage(`Purchased ${formatNumber(amount)} ${MINER_DEFS[key].name}(s).`);
+            } else {
+                displayMessage("Insufficient Credits!", 'error');
+            }
+        }
+
+        /** Handles purchasing a standard credit-based upgrade. */
+        function buyUpgrade(key) {
+            const def = UPGRADE_DEFS[key];
+            const currentLevel = GAME.upgrades[key].level;
+            if (currentLevel >= def.maxLevel) return;
+
+            const cost = calculateNextCost(def.costBase, currentLevel, def.costScale);
+            
+            if (GAME.credits >= cost) {
+                GAME.credits -= cost;
+                GAME.upgrades[key].level++;
+                saveGame();
+                updateUI();
+                displayMessage(`Upgraded ${def.name} to Lvl ${GAME.upgrades[key].level}.`);
+            } else {
+                displayMessage("Insufficient Credits!", 'error');
+            }
+        }
+        
+        /** Handles purchasing a prestige (Star Dust) upgrade. */
+        function buyPrestigeUpgrade(key) {
+            const def = PRESTIGE_DEFS[key];
+            const currentLevel = GAME.prestigeUpgrades[key].level;
+            if (currentLevel >= def.maxLevel) return;
+
+            const cost = calculateNextCost(def.costBase, currentLevel, def.costScale);
+            
+            if (GAME.starDust >= cost) {
+                GAME.starDust -= cost;
+                GAME.prestigeUpgrades[key].level++;
+                saveGame();
+                updateUI();
+                displayMessage(`Permanent Upgrade: ${def.name} to Lvl ${GAME.prestigeUpgrades[key].level}.`);
+            } else {
+                displayMessage("Insufficient Star Dust!", 'error');
+            }
+        }
+
+        /** Handles the asteroid click and production. */
+        function clickAsteroid(event) {
+            if (!firstClickDone) {
+                firstClickDone = true;
+                if (typeof sdk !== 'undefined' && typeof sdk.showBanner !== 'undefined') {
+                sdk.showBanner();
+                }
+            }
+            GAME.manualClicks++;
+            const { clickPower, critChance } = getClickProduction();
+            
+            let earned = clickPower;
+            let isCrit = false;
+
+            if (Math.random() < critChance) {
+                earned *= 2; // Critical click multiplier
+                isCrit = true;
+            }
+
+            GAME.credits += earned;
+            GAME.accumulatedCredits += earned;
+
+            // Visual feedback
+            showFloatingCredit(earned, event.clientX, event.clientY, isCrit);
+
+            updateUI();
+        }
+
+        /** Shows a floating credit number on click. */
+        function showFloatingCredit(amount, x, y, isCrit) {
+            const container = document.getElementById('asteroid-button');
+            const floating = document.createElement('div');
+            floating.className = 'floating-credit' + (isCrit ? ' crit' : '');
+            floating.textContent = `+${formatNumber(amount)} $$`;
+            
+            // Calculate position relative to the game container
+            const gameRect = document.getElementById('game-container').getBoundingClientRect();
+            const containerRect = container.getBoundingClientRect();
+            
+            floating.style.left = `${containerRect.left - gameRect.left + (containerRect.width / 2) - 50 + (Math.random() * 100) - 50}px`;
+            floating.style.top = `${containerRect.top - gameRect.top + (containerRect.height / 2) - 50 + (Math.random() * 100) - 50}px`;
+            
+            document.getElementById('game-container').appendChild(floating);
+
+            setTimeout(() => {
+                floating.remove();
+            }, 1000); // Matches the floatup animation duration
+        }
+
+        /** The main game loop function. */
+        function gameLoop(timestamp) {
+            const now = Date.now();
+            const timeElapsed = (now - GAME.lastUpdateTime) / 1000; // seconds
+
+            if (timeElapsed > 0) {
+                // Production calculation
+                const cps = calculateCPS();
+                const production = cps * timeElapsed;
+                
+                GAME.credits += production;
+                GAME.accumulatedCredits += production;
+                
+                // Boost timer check
+                if (GAME.productionBoostEndTime > now) {
+                    document.getElementById('boost-timer').style.display = 'block';
+                    const remaining = Math.max(0, GAME.productionBoostEndTime - now);
+                    document.getElementById('boost-timer').textContent = `2x BOOST: ${Math.ceil(remaining / 1000)}s`;
+                } else {
+                    if (GAME.productionBoostMultiplier !== 1.0) {
+                        GAME.productionBoostMultiplier = 1.0;
+                        displayMessage("Production Boost Expired.");
+                    }
+                    document.getElementById('boost-timer').style.display = 'none';
+                }
+
+                // Update UI and save periodically
+                updateUI();
+                if (now - GAME.lastSaveTime > 5000) { // Save every 5 seconds
+                    saveGame();
+                }
+            }
+
+            GAME.lastUpdateTime = now;
+            requestAnimationFrame(gameLoop);
+        }
+
+        // --- 5. DATA PERSISTENCE (SAVE/LOAD) ---
+
+        /** Saves the game state to localStorage. */
+        function saveGame() {
+            try {
+                // Clean up transient data before save
+                const saveState = { ...GAME };
+                delete saveState.lastUpdateTime; 
+
+                localStorage.setItem('idleSpaceMinerSave', JSON.stringify(saveState));
+                GAME.lastSaveTime = Date.now();
+                // console.log("Game Saved.");
+            } catch (e) {
+                console.error("Could not save game to localStorage:", e);
+            }
+        }
+
+        /** Loads the game state from localStorage. */
+        function loadGame() {
+            try {
+                const savedData = localStorage.getItem('idleSpaceMinerSave');
+                if (savedData) {
+                    const loadedState = JSON.parse(savedData);
+                    
+                    // Merge loaded state into GAME, preserving any new keys in GAME
+                    Object.assign(GAME, loadedState);
+                    
+                    // Ensure new content/upgrades are initialized if a save is old
+                    Object.keys(MINER_DEFS).forEach(key => { if (!GAME.miners[key]) GAME.miners[key] = { level: 0 }; });
+                    Object.keys(UPGRADE_DEFS).forEach(key => { if (!GAME.upgrades[key]) GAME.upgrades[key] = { level: 0 }; });
+                    Object.keys(PRESTIGE_DEFS).forEach(key => { if (!GAME.prestigeUpgrades[key]) GAME.prestigeUpgrades[key] = { level: 0 }; });
+                    
+                    // Handle missing/old keys with defaults (especially the new ones)
+                    GAME.accumulatedCredits = GAME.accumulatedCredits || 0;
+                    GAME.starDust = GAME.starDust || 0;
+                    GAME.cosmicShards = GAME.cosmicShards || 0;
+                    GAME.productionBoostMultiplier = GAME.productionBoostMultiplier || 1.0;
+                    GAME.productionBoostEndTime = GAME.productionBoostEndTime || 0;
+                    GAME.manualClicks = GAME.manualClicks || 0;
+                    
+                    console.log("Game Loaded.");
+                    return true;
+                }
+            } catch (e) {
+                console.error("Could not load game from localStorage:", e);
+            }
+            return false;
+        }
+
+        /** Calculates and applies offline earnings. */
+        function calculateOfflineEarnings() {
+            const now = Date.now();
+            const lastSaveTime = GAME.lastSaveTime;
+            
+            if (lastSaveTime === 0) return; // Fresh start
+
+            const offlineDurationSeconds = (now - lastSaveTime) / 1000;
+            
+            // Calculate max offline time based on prestige upgrade
+            const offlineCapUp = GAME.prestigeUpgrades['offlineCap'];
+            let maxOfflineDuration = GAME.maxOfflineTimeSeconds;
+            if (offlineCapUp) {
+                maxOfflineDuration += offlineCapUp.level * PRESTIGE_DEFS['offlineCap'].effectBase * GAME.maxOfflineTimeSeconds; // Additive percentage
+            }
+
+            const effectiveOfflineTime = Math.min(offlineDurationSeconds, maxOfflineDuration);
+
+            if (effectiveOfflineTime > 60) { // Only show popup if > 1 minute offline
+                // Temporarily update lastUpdateTime for correct CPS calculation
+                GAME.lastUpdateTime = lastSaveTime; 
+                
+                const cps = calculateCPS();
+                const earned = cps * effectiveOfflineTime;
+
+                GAME.credits += earned;
+                GAME.accumulatedCredits += earned;
+                
+                let message = `Welcome Back! You were offline for ${Math.floor(offlineDurationSeconds / 3600)}h ${Math.floor((offlineDurationSeconds % 3600) / 60)}m.`;
+                message += `<br>Earned <span class="neon-text">${formatNumber(earned)} Credits</span>.`;
+                displayMessage(message);
+            }
+        }
+
+        // --- 6. UI MANAGEMENT ---
+
+        /** Updates all dynamic UI elements. */
+        function updateUI() {
+            const cps = calculateCPS();
+            document.getElementById('credits-amount').textContent = formatNumber(GAME.credits);
+            document.getElementById('cps-amount').textContent = formatNumber(cps);
+            document.getElementById('stardust-amount').textContent = formatNumber(GAME.starDust);
+            document.getElementById('shards-amount').textContent = formatNumber(GAME.cosmicShards);
+            document.getElementById('accumulated-credits').textContent = formatNumber(GAME.accumulatedCredits);
+
+            updateAsteroidUI();
+            updateMinerUI(cps);
+            updateUpgradeUI();
+            updatePrestigeUI();
+        }
+
+        /** Updates the Asteroid Clicker panel. */
+        function updateAsteroidUI() {
+            const { clickPower, critChance } = getClickProduction();
+            document.getElementById('click-prod').textContent = formatNumber(clickPower);
+            document.getElementById('total-clicks').textContent = formatNumber(GAME.manualClicks);
+        }
+
+        /** Updates the Miner Bay panel. */
+        function updateMinerUI(cps) {
+            for (const key in MINER_DEFS) {
+                const def = MINER_DEFS[key];
+                const miner = GAME.miners[key];
+                const currentProd = (def.baseProd * miner.level) * (calculateCPS() / (cps * GAME.productionBoostMultiplier) || 1); // Production * all multipliers except its own level
+                const baseProdPerUnit = def.baseProd * (calculateCPS() / (cps * GAME.productionBoostMultiplier) || 1); // Prod per unit at level 1 with all buffs
+                
+                const buy1Cost = getMinerCost(key, 1);
+                const buy10Cost = getMinerCost(key, 10);
+                
+                // Calculate MAX amount
+                let buyMaxAmount = 0;
+                let remainingCredits = GAME.credits;
+                let tempLevel = miner.level;
+                while (true) {
+                    const nextCost = getMinerCost(key, 1);
+                    if (remainingCredits >= nextCost && tempLevel < def.maxLevel) {
+                        remainingCredits -= nextCost;
+                        tempLevel++;
+                        buyMaxAmount++;
+                    } else {
+                        break;
+                    }
+                }
+                const buyMaxCost = getMinerCost(key, buyMaxAmount);
+                
+                // Update elements
+                document.getElementById(`${key}-level`).textContent = formatNumber(miner.level);
+                document.getElementById(`${key}-prod`).textContent = formatNumber(currentProd);
+                document.getElementById(`${key}-prod-unit`).textContent = formatNumber(baseProdPerUnit);
+                
+                // Update Buy buttons
+                const buy1Btn = document.getElementById(`${key}-buy-1`);
+                buy1Btn.textContent = `Buy ×1 (${formatNumber(buy1Cost)} $$)`;
+                buy1Btn.disabled = GAME.credits < buy1Cost || miner.level >= def.maxLevel;
+
+                const buy10Btn = document.getElementById(`${key}-buy-10`);
+                buy10Btn.textContent = `Buy ×10 (${formatNumber(buy10Cost)} $$)`;
+                buy10Btn.disabled = GAME.credits < buy10Cost || (miner.level + 10) > def.maxLevel;
+
+                const buyMaxBtn = document.getElementById(`${key}-buy-max`);
+                buyMaxBtn.textContent = `Buy ×MAX (${formatNumber(buyMaxAmount)})`;
+                buyMaxBtn.disabled = buyMaxAmount === 0 || miner.level >= def.maxLevel;
+            }
+        }
+        
+        /** Updates the Credit Upgrade (Tech Tree) panel. */
+        function updateUpgradeUI() {
+            const { critChance } = getClickProduction();
+            for (const key in UPGRADE_DEFS) {
+                const def = UPGRADE_DEFS[key];
+                const upgrade = GAME.upgrades[key];
+                const currentLevel = upgrade.level;
+
+                const cost = calculateNextCost(def.costBase, currentLevel, def.costScale);
+                
+                const upBtn = document.getElementById(`${key}-buy-btn`);
+                const upCost = document.getElementById(`${key}-cost`);
+                const upEffect = document.getElementById(`${key}-effect`);
+
+                upBtn.disabled = GAME.credits < cost || currentLevel >= def.maxLevel;
+                upCost.textContent = `Cost: ${formatNumber(cost)} $$`;
+                upBtn.textContent = (currentLevel >= def.maxLevel) ? 'MAXED' : 'Upgrade';
+
+                let effectText;
+                if (key === 'clickPower') {
+                    effectText = `Current: Lvl ${currentLevel}. Next: +${def.effectBase} Credits/Click`;
+                } else if (key === 'critChance') {
+                    effectText = `Current: ${formatNumber(critChance * 100)}%. Next: +${def.effectBase * 100}% Crit Chance`;
+                } else {
+                    effectText = `Current: Lvl ${currentLevel}. Next: +${def.effectBase * 100}% ${def.type === 'miner' ? (def.effectType === 'cost-red' ? 'Cost Reduction' : 'Production') : 'Global Production'}`;
+                }
+                upEffect.textContent = effectText;
+            }
+        }
+
+        /** Updates the Prestige (Hyperspace) panel. */
+        function updatePrestigeUI() {
+            // Hyperspace Jump button logic
+            const prestigeRequirement = 1e15 * Math.pow(100, GAME.starDust);
+            const prestigeBtn = document.getElementById('hyperspace-jump-btn');
+            const canPrestige = GAME.accumulatedCredits >= prestigeRequirement;
+
+            document.getElementById('prestige-requirement').textContent = formatNumber(prestigeRequirement);
+            document.getElementById('hyperspace-jump-btn').textContent = `Initiate Hyperspace Jump (Earn ${formatNumber(GAME.starDust + 1)} SD)`;
+            prestigeBtn.disabled = !canPrestige;
+
+            // Star Dust Shop logic
+            for (const key in PRESTIGE_DEFS) {
+                const def = PRESTIGE_DEFS[key];
+                const prestigeUp = GAME.prestigeUpgrades[key];
+                const currentLevel = prestigeUp.level;
+
+                const cost = calculateNextCost(def.costBase, currentLevel, def.costScale);
+                
+                const upBtn = document.getElementById(`${key}-sd-buy-btn`);
+                const upCost = document.getElementById(`${key}-sd-cost`);
+                const upEffect = document.getElementById(`${key}-sd-effect`);
+                
+                upBtn.disabled = GAME.starDust < cost || currentLevel >= def.maxLevel;
+                upCost.textContent = `Cost: ${formatNumber(cost)} SD`;
+                upBtn.textContent = (currentLevel >= def.maxLevel) ? 'MAXED' : 'Buy Upgrade';
+                upEffect.textContent = `Current: Lvl ${currentLevel}. Next: ${def.desc}`;
+            }
+        }
+        
+        /** Displays a temporary notification. */
+        function displayMessage(message, type = 'success') {
+            const container = document.getElementById('notification-center');
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.innerHTML = message;
+            
+            if (type === 'error') {
+                notification.style.backgroundColor = 'rgba(100, 0, 0, 0.2)';
+                notification.style.borderColor = '#ff4444';
+                notification.style.color = '#ff4444';
+                notification.style.boxShadow = '0 0 10px rgba(255, 0, 0, 0.5)';
+            }
+
+            container.prepend(notification); // Show newest at the top
+            
+            // Remove after animation finishes
+            setTimeout(() => {
+                notification.remove();
+            }, 4000); 
+        }
+
+        // --- 7. CORE MECHANICS ---
+
+        /** Prestige System: Resets game for Star Dust gain. */
+        function hyperspaceJump() {
+            const prestigeRequirement = 1e10 * Math.pow(100, GAME.starDust);
+            if (GAME.accumulatedCredits < prestigeRequirement) {
+                displayMessage("Not enough accumulated credits for a Hyperspace Jump!", 'error');
+                return;
+            }
+
+            // Simple Star Dust calculation based on how many "levels" of the requirement were met
+            const starDustGained = Math.floor(Math.log(GAME.accumulatedCredits / 1e10) / Math.log(100)) + 1;
+            
+            GAME.starDust += starDustGained;
+            
+            // Full Reset (except Star Dust and Prestige Upgrades)
+            initializeGameState(true); 
+            
+            displayMessage(`HYPERSPACE JUMP SUCCESSFUL! You gained ${starDustGained} Star Dust!`, 'success');
+
+            saveGame();
+            updateUI();
+        }
+
+        // --- 8. MONETIZATION PLACEHOLDER ---
+
+        /** Placeholder function for the actual ad integration. */
+        function rewardedAd() {
+            console.log("Rewarded Ad function called. Simulating success...");
+            // Show request for Reward Ad
+            if (typeof sdk !== 'undefined' && sdk.showBanner !== 'undefined') {
+                sdk.showBanner();
+                }
+
+                // Simulate a 5-minute (300 second) production boost
+                applyProductionBoost(2.0, 300); 
+                // Also give a small shard reward
+                GAME.cosmicShards += 1;
+                
+              
+
+            s
+            displayMessage("2x Production Boost activated for 5 minutes and gained 1 Cosmic Shard!");
+            updateUI();
+            saveGame();
+        }
+        
+        /** Applies a temporary production boost. */
+        function applyProductionBoost(multiplier, durationSeconds) {
+            GAME.productionBoostMultiplier = multiplier;
+            GAME.productionBoostEndTime = Date.now() + (durationSeconds * 1000);
+        }
+
+        // --- 9. DOM GENERATION (Initial Render) ---
+
+        /** Generates the HTML for the Mining Bay tab. */
+        function generateMinerUI() {
+            const container = document.getElementById('miner-list');
+            container.innerHTML = '';
+            for (const key in MINER_DEFS) {
+                const def = MINER_DEFS[key];
+                const html = `
+                    <div class="miner-unit">
+                        <div class="miner-header">
+                            <span class="miner-name">${def.name} (${key})</span>
+                            <span class="miner-level">Level: <span id="${key}-level">0</span> / ${def.maxLevel}</span>
+                        </div>
+                        <div class="miner-stats">
+                            <p>${def.desc}</p>
+                            <p>Current Production: <span class="neon-text"><span id="${key}-prod">0</span></span> Credits/sec</p>
+                            <p>Base Production/Unit: <span id="${key}-prod-unit">0</span> Credits/sec</p>
+                        </div>
+                        <div class="miner-buy-actions">
+                            <button class="buy-btn" id="${key}-buy-1" onclick="buyMiner('${key}', 1)"></button>
+                            <button class="buy-btn" id="${key}-buy-10" onclick="buyMiner('${key}', 10)"></button>
+                            <button class="buy-btn" id="${key}-buy-max" onclick="buyMiner('${key}', buyMaxAmountForMiner('${key}'))"></button>
+                        </div>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', html);
+            }
+        }
+        
+        /** Calculates MAX amount for the buyMax button's onclick. */
+        function buyMaxAmountForMiner(minerKey) {
+             let buyMaxAmount = 0;
+            let remainingCredits = GAME.credits;
+            let tempLevel = GAME.miners[minerKey].level;
+            const def = MINER_DEFS[minerKey];
+
+            while (true) {
+                const nextCost = getMinerCost(minerKey, 1);
+                if (remainingCredits >= nextCost && tempLevel < def.maxLevel) {
+                    remainingCredits -= nextCost;
+                    tempLevel++;
+                    buyMaxAmount++;
+                } else {
+                    break;
+                }
+            }
+            return buyMaxAmount;
+        }
+
+        /** Generates the HTML for the Tech Tree tab. */
+        function generateUpgradeUI() {
+            const container = document.getElementById('upgrade-list');
+            container.innerHTML = '';
+            for (const key in UPGRADE_DEFS) {
+                const def = UPGRADE_DEFS[key];
+                const html = `
+                    <div class="upgrade-item">
+                        <div class="upgrade-info">
+                            <span class="upgrade-name">${def.name} (${def.maxLevel} Max)</span>
+                            <p class="upgrade-effect" id="${key}-effect">${def.desc}</p>
+                        </div>
+                        <div class="upgrade-cost" id="${key}-cost">Cost: 0 $$</div>
+                        <button class="upgrade-buy-btn" id="${key}-buy-btn" onclick="buyUpgrade('${key}')">Upgrade</button>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', html);
+            }
+        }
+
+        /** Generates the HTML for the Star Dust Shop. */
+        function generatePrestigeShopUI() {
+            const container = document.getElementById('prestige-shop-list');
+            container.innerHTML = '';
+            for (const key in PRESTIGE_DEFS) {
+                const def = PRESTIGE_DEFS[key];
+                const html = `
+                    <div class="upgrade-item">
+                        <div class="upgrade-info">
+                            <span class="upgrade-name">${def.name} (${def.maxLevel} Max)</span>
+                            <p class="upgrade-effect" id="${key}-sd-effect">${def.desc}</p>
+                        </div>
+                        <div class="upgrade-cost" id="${key}-sd-cost">Cost: 0 SD</div>
+                        <button class="upgrade-buy-btn" id="${key}-sd-buy-btn" onclick="buyPrestigeUpgrade('${key}')">Buy Upgrade</button>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', html);
+            }
+        }
+
+        // --- 10. INITIALIZATION ---
+
+        /** Sets up the tab switching functionality. */
+        function setupTabs() {
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.addEventListener('click', () => {
+                    const tabId = button.dataset.tab;
+                    
+                    // Deactivate all
+                    document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+                    // Activate selected
+                    button.classList.add('active');
+                    document.getElementById(tabId).classList.add('active');
+                });
+            });
+            
+            // Handle Ad button separately as it's not a tab
+            document.getElementById('watch-ad-btn').addEventListener('click', rewardedAd);
+            
+            // Hyperspace button listener
+            document.getElementById('hyperspace-jump-btn').addEventListener('click', hyperspaceJump);
+
+            // Asteroid button listener
+            document.getElementById('asteroid-button').addEventListener('click', clickAsteroid);
+        }
+
+        /** Main initialization function. */
+        function initGame() {
+            // 1. Generate static UI elements
+            generateMinerUI();
+            generateUpgradeUI();
+            generatePrestigeShopUI();
+            setupTabs();
+
+            // 2. Load or initialize game state
+            const loaded = loadGame();
+            if (!loaded) {
+                initializeGameState(false); // New game
+                GAME.credits = 100; // Small starting bonus
+                displayMessage("Welcome to Idle Space Miner Tycoon!");
+            } else {
+                calculateOfflineEarnings();
+            }
+
+            // 3. Start the game loop
+            GAME.lastUpdateTime = Date.now();
+            requestAnimationFrame(gameLoop);
+            
+            // Initial UI update
+            updateUI();
+        }
+
+        document.getElementById("shardToDustBtn").addEventListener("click", () => {
+  if (GAME.cosmicShards >= 25) {
+    GAME.cosmicShards -= 25;
+    GAME.starDust += 1;
+    updateUI();
+    alert("Converted 25 Shards into 1 Star Dust!");
+  } else {
+    alert("Not enough Shards!");
+  }
+});
+
+
+        window.onload = initGame;
+        window.onbeforeunload = saveGame; // Attempt a save on close/refresh
+    </script>
+</body>
+</html>

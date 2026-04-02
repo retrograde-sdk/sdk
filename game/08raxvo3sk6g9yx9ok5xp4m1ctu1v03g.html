@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Find Pair: Attention & Memory</title>
+    <link rel="stylesheet" href="style.css">
+<script type="text/javascript">
+    // --- НАСТРОЙКИ ---
+    const GAME_ID = "08raxvo3sk6g9yx9ok5xp4m1ctu1v03g"; // ЗАМЕНИТЕ НА ВАШ ID
+    const AD_INTERVAL = 90000; // Интервал между полноэкранной рекламой (90 сек)
+
+    window.AdManager = {
+        lastAdTime: 0,
+        adCallback: null,
+        isAdPlaying: false,
+        isAdLoading: false, // Защита от спама кликами, пока SDK грузит рекламу
+
+        // Инициализация колбэков игры (нужно будет связать в game.js)
+        onPause: function() { console.log("Game Paused"); },
+        onResume: function() { console.log("Game Resumed"); },
+
+        // Функция показа обычной рекламы (Interstitial)
+        showInterstitial: function(callback) {
+            // Если реклама уже грузится, игнорируем повторные нажатия
+            if (this.isAdLoading) return; 
+            
+            this.adCallback = callback;
+            const currentTime = Date.now();
+
+            // Проверка таймера 90 секунд
+            if (currentTime - this.lastAdTime >= AD_INTERVAL) {
+                console.log("Showing Interstitial Ad...");
+                if (typeof sdk !== 'undefined' && sdk.showBanner !== 'undefined') {
+                    this.isAdLoading = true; // Блокируем интерфейс от двойных кликов
+                    this.lastAdTime = currentTime;
+                    sdk.showBanner();
+                } else {
+                    console.log("SDK not loaded yet");
+                    this.completeAd();
+                }
+            } else {
+                console.log("Ad on cooldown. Time left: " + Math.ceil((AD_INTERVAL - (currentTime - this.lastAdTime)) / 1000) + "s");
+                this.completeAd();
+            }
+        },
+
+        // Функция показа рекламы за вознаграждение (Rewarded)
+        showRewarded: function(callback) {
+            // Блокируем повторные нажатия
+            if (this.isAdLoading) return;
+
+            this.adCallback = callback;
+            console.log("Showing Rewarded Ad...");
+            if (typeof sdk !== 'undefined' && sdk.showBanner !== 'undefined') {
+                this.isAdLoading = true; // Блокируем интерфейс от двойных кликов
+                sdk.showBanner(); 
+            } else {
+                console.log("SDK not loaded");
+                this.completeAd();
+            }
+        },
+
+        // Техническая функция завершения рекламы
+        completeAd: function() {
+            this.isAdLoading = false; // Снимаем блокировку, так как реклама закрылась (или не была показана)
+            if (this.adCallback) {
+                this.adCallback();
+                this.adCallback = null;
+            }
+        }
+    };
+
+    window.SDK_OPTIONS = {
+        gameId: GAME_ID,
+        onEvent: function (a) {
+            switch (a.name) {
+                case "SDK_GAME_PAUSE":
+                    window.AdManager.isAdPlaying = true;
+                    window.AdManager.onPause(); // Вызываем паузу в игре
+                    break;
+                case "SDK_GAME_START":
+                    window.AdManager.isAdPlaying = false;
+                    window.AdManager.onResume(); // Вызываем старт в игре
+                    window.AdManager.completeAd(); // Запускаем логику после рекламы
+                    break;
+                case "SDK_READY":
+                    console.log("GameMonetize SDK Ready");
+                    break;
+            }
+        }
+    };
+
+    (function (a, b, c) {
+        var d = a.getElementsByTagName(b)[0];
+        a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+    })(document, "script", "gamemonetize-sdk");
+</script>
+  
+</head>
+<body>
+
+    <div id="game-container">
+        <!-- Стартовый экран -->
+        <div id="start-screen" class="screen active">
+            <h1 id="game-title" data-lang="game-title">Find Pair</h1>
+            <button id="play-button" class="button" data-lang="play">Play</button>
+        </div>
+
+        <!-- Игровой экран -->
+        <div id="game-screen" class="screen">
+            <div id="top-bar">
+                <div><span data-lang="level">Level</span>: <span id="level-display">1</span></div>
+                <div><span data-lang="moves">Moves</span>: <span id="moves-display">0</span></div>
+                <div><span data-lang="score">Score</span>: <span id="score-display">0</span></div>
+            </div>
+            
+            <!-- Кнопка подсказки -->
+            <div id="hint-container">
+                <button id="hint-button" class="button">
+                    <span data-lang="hint">Hint</span>
+                    <div id="hint-counter-box">
+                        <span id="hint-count">3</span>
+                    </div>
+                </button>
+            </div>
+
+            <div id="game-board"></div>
+        </div>
+
+        <!-- Окно проигрыша -->
+        <div id="lose-popup" class="popup">
+            <div class="popup-content">
+                <h2 data-lang="lose-title">You Lost!</h2>
+                <button id="restart-button" class="button" data-lang="restart">Try Again</button>
+                <button id="add-moves-button" class="button">
+                    <span data-lang="add-moves">Add Moves</span>
+                    <div class="video-icon"></div>
+                </button>
+            </div>
+        </div>
+
+        <!-- Окно выигрыша -->
+        <div id="win-popup" class="popup">
+            <div class="popup-content">
+                <h2 data-lang="win-title">Victory!</h2>
+                <p><span data-lang="win-text">Level Complete!</span></p>
+                <button id="next-level-button" class="button" data-lang="continue">Continue</button>
+            </div>
+        </div>
+        
+        <!-- Окно покупки подсказок -->
+        <div id="hint-buy-popup" class="popup">
+            <div class="popup-content">
+                <h2 data-lang="need-hints">Need Hints?</h2>
+                <p data-lang="watch-for-hints">Watch video to get 3 hints!</p>
+                <button id="buy-hint-button" class="button">
+                    <span data-lang="get-hints">Get Hints</span>
+                    <div class="video-icon"></div>
+                </button>
+                <button id="close-hint-popup" class="button" data-lang="cancel">Cancel</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>

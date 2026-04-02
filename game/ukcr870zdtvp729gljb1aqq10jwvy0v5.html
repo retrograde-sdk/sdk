@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Cyber Smash - Kaloo Dinaz Games</title>
+    <style>
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&display=swap');
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:#05000a;border-radius:10px}
+::-webkit-scrollbar-thumb{background-color:#00f7ff;border-radius:10px}
+::-webkit-scrollbar-thumb:hover{background-color:#3ff}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:'Rajdhani',sans-serif;font-weight:600;background:linear-gradient(135deg,#0f001f 0%,#05000a 50%,#0f001f 100%);color:#00f7ff;overflow:hidden;height:100vh;width:100vw;margin:0;padding:0;position:relative}
+body::before{content:'';position:absolute;width:200%;height:200%;background-image:linear-gradient(0deg,transparent 24%,#00f7ff08 25%,#00f7ff08 26%,transparent 27%,transparent 74%,#00f7ff08 75%,#00f7ff08 76%,transparent 77%,transparent),linear-gradient(90deg,transparent 24%,#00f7ff08 25%,#00f7ff08 26%,transparent 27%,transparent 74%,#00f7ff08 75%,#00f7ff08 76%,transparent 77%,transparent);background-size:50px 50px;animation:gridMove 25s linear infinite;z-index:0}
+@keyframes gridMove {
+0%{transform:translate(0,0)}
+100%{transform:translate(50px,50px)}
+}
+.particle-container{position:fixed;width:100%;height:100%;top:0;left:0;pointer-events:none;z-index:1;overflow:hidden}
+.particle{position:absolute;width:3px;height:3px;background:#0f8;border-radius:50%;box-shadow:0 0 8px #0f8;animation:float 15s infinite ease-in-out}
+@keyframes float {
+0%,100%{transform:translateY(100vh) translateX(0) scale(0);opacity:0}
+10%{opacity:1}
+90%{opacity:1}
+100%{transform:translateY(-100px) translateX(100px) scale(1)}
+}
+#game-wrapper{width:100%;height:100%;display:flex;justify-content:center;align-items:center;position:fixed;top:0;left:0;z-index:10;padding:10px}
+#game-container{width:100%;max-width:600px;height:100%;max-height:900px;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.screen{position:absolute;top:0;left:0;width:100%;height:100%;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;overflow-y:auto}
+.screen.active{display:flex;animation:fadeIn .6s ease-out}
+@keyframes fadeIn {
+from{opacity:0;transform:scale(0.95)}
+to{opacity:1;transform:scale(1)}
+}
+#splash-screen{cursor:pointer}
+.title-large{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:clamp(2.5rem,8vw,5rem);letter-spacing:.3rem;margin-bottom:30px;line-height:1.2;text-transform:uppercase}
+.title-cyber{display:block;color:#ff006e;text-shadow:0 0 10px #ff006e,0 0 20px #ff006e,0 0 40px #ff006e,0 0 80px #ff006e;animation:glowPink 2s ease-in-out infinite alternate}
+@keyframes glowPink {
+from{text-shadow:0 0 10px #ff006e,0 0 20px #ff006e,0 0 40px #ff006e}
+to{text-shadow:0 0 20px #ff006e,0 0 40px #ff006e,0 0 60px #ff006e,0 0 100px #ff006e}
+}
+.title-smash{display:block;color:#00f7ff;text-shadow:0 0 10px #00f7ff,0 0 20px #00f7ff,0 0 40px #00f7ff,0 0 80px #00f7ff;animation:glowCyan 2s ease-in-out infinite alternate}
+@keyframes glowCyan {
+from{text-shadow:0 0 10px #00f7ff,0 0 20px #00f7ff,0 0 40px #00f7ff}
+to{text-shadow:0 0 20px #00f7ff,0 0 40px #00f7ff,0 0 60px #00f7ff,0 0 100px #00f7ff}
+}
+.subtitle{font-size:clamp(1rem,3vw,1.5rem);margin-bottom:30px;color:#b388ff;text-shadow:0 0 15px #b388ff;animation:pulse 2s ease-in-out infinite;letter-spacing:.2rem}
+@keyframes pulse {
+0%,100%{opacity:1;transform:scale(1)}
+50%{opacity:.8;transform:scale(1.05)}
+}
+.footer{margin-top:30px;font-size:clamp(0.9rem,2.5vw,1.3rem);letter-spacing:.2rem;color:#0f8;text-shadow:0 0 10px #0f8}
+.ukraine-support-banner{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:20px;padding:15px 25px;background:#005bbb33;border:2px solid #005bbb;border-radius:10px;font-size:clamp(0.9rem,2.5vw,1.2rem);color:#ffd700;text-shadow:0 0 10px #ffd700;animation:supportGlow 2s ease-in-out infinite alternate}
+@keyframes supportGlow {
+from{box-shadow:0 0 10px #005bbb;border-color:#005bbb}
+to{box-shadow:0 0 20px #005bbb,0 0 40px #005bbb;border-color:#ffd700}
+}
+.ukraine-flag{font-size:1.5em}
+.donate-links{display:flex;flex-direction:column;gap:15px;margin-top:30px;width:100%;max-width:400px}
+.donate-btn{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:clamp(0.9rem,2.5vw,1.3rem);padding:12px 20px;text-decoration:none;border-radius:8px;transition:all .3s ease;text-transform:uppercase;letter-spacing:.1rem;text-align:center;cursor:pointer}
+.save-life{background:#005bbb66;border:2px solid #005bbb;color:#ffd700;text-shadow:0 0 10px #ffd700;box-shadow:0 0 15px #005bbb80}
+.save-life:hover{background:#005bbb99;box-shadow:0 0 25px #005bbb,0 0 40px #005bbb;transform:translateY(-2px)}
+.sternenko{background:#ffd70066;border:2px solid #ffd700;color:#0d001a;text-shadow:0 0 5px #ff006e;box-shadow:0 0 15px #ffd70080}
+.sternenko:hover{background:#ffd70099;box-shadow:0 0 25px #ffd700,0 0 40px #ffd700;transform:translateY(-2px)}
+.neon-button{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:clamp(1rem,2.5vw,1.5rem);padding:clamp(15px,3vw,25px) clamp(30px,6vw,50px);margin:10px;background:transparent;cursor:pointer;border-radius:12px;transition:all .3s ease;text-transform:uppercase;letter-spacing:.2rem;width:auto;min-width:200px;max-width:90%;position:relative;overflow:hidden}
+.neon-button::before{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,#ffffff4d,transparent);transition:left .5s}
+.neon-button:hover::before{left:100%}
+.cyan-button{border:3px solid #00f7ff;color:#00f7ff;text-shadow:0 0 5px #00f7ff;box-shadow:0 0 15px #00f7ff,inset 0 0 10px #00f7ff33}
+.cyan-button:hover{background:#00f7ff33;box-shadow:0 0 30px #00f7ff,inset 0 0 20px #00f7ff4d;transform:scale(1.05)}
+.pink-button{border:3px solid #ff006e;color:#ff006e;text-shadow:0 0 5px #ff006e;box-shadow:0 0 15px #ff006e,inset 0 0 10px #ff006e33}
+.pink-button:hover{background:#ff006e33;box-shadow:0 0 30px #ff006e,inset 0 0 20px #ff006e4d;transform:scale(1.05)}
+.purple-button{border:3px solid #b388ff;color:#b388ff;text-shadow:0 0 5px #b388ff;box-shadow:0 0 15px #b388ff,inset 0 0 10px #b388ff33}
+.purple-button:hover{background:#b388ff33;box-shadow:0 0 30px #b388ff,inset 0 0 20px #b388ff4d;transform:scale(1.05)}
+.green-button{border:3px solid #0f8;color:#0f8;text-shadow:0 0 5px #0f8;box-shadow:0 0 15px #00ff88,inset 0 0 10px #0f83}
+.green-button:hover{background:#0f83;box-shadow:0 0 30px #00ff88,inset 0 0 20px #00ff884d;transform:scale(1.05)}
+.neon-button:active{transform:scale(0.95)}
+.small-button{font-size:clamp(0.8rem,2vw,1.2rem);padding:clamp(12px,2.5vw,20px) clamp(25px,5vw,40px);min-width:150px}
+#level-select-screen{padding:5px;overflow-y:auto}
+#levels-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(40px,1fr));gap:7px;max-width:550px;margin:5px auto;width:90%}
+.level-brick{font-family:'Rajdhani',sans-serif;font-weight:700;aspect-ratio:1;display:flex;align-items:center;justify-content:center;border:2px solid;border-radius:8px;font-size:clamp(0.8rem,2vw,1.1rem);cursor:pointer;transition:all .3s ease;background:#00000080;box-shadow:0 0 5px #ffffff1a}
+.level-brick:hover{transform:scale(1.1);z-index:10;background:#000000b3}
+.level-brick:active{transform:scale(0.95)}
+.level-brick.locked{opacity:.3;cursor:not-allowed}
+.level-brick.locked:hover{transform:scale(1)}
+#game-screen{justify-content:flex-start;padding:80px 0 0;overflow:visible}
+#hud{position:absolute;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:clamp(0.8rem,2vw,1.1rem);z-index:100}
+.hud-item{font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.1em;padding:8px 15px;border-radius:8px;background:#000000b3;white-space:nowrap;backdrop-filter:blur(5px)}
+.hud-item.glow-cyan{color:#00f7ff;text-shadow:0 0 10px #00f7ff;border:2px solid #00f7ff;box-shadow:0 0 10px #00f7ff,inset 0 0 10px #00f7ff33}
+.hud-item.glow-yellow{color:#ffd700;text-shadow:0 0 10px #ffd700;border:2px solid #ffd700;box-shadow:0 0 10px #ffd700,inset 0 0 10px #ffd70033}
+.hud-item.glow-red{color:#ff006e;text-shadow:0 0 10px #ff006e;border:2px solid #ff006e;box-shadow:0 0 10px #ff006e,inset 0 0 10px #ff006e33}
+#game-canvas{border:3px solid #00f7ff;box-shadow:0 0 20px #00f7ff,0 0 40px #00f7ff80 inset 0 0 20px #00f7ff1a;border-radius:10px;background:#050a15;max-width:100%;max-height:calc(100vh - 150px)}
+#countdown-display{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:99999;pointer-events:none;opacity:0;display:flex;justify-content:center;align-items:center}
+#countdown-display.show{opacity:1}
+.countdown-text{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:clamp(2rem,8vw,4rem);color:#ffd700;text-shadow:0 0 30px #ffd700,0 0 60px #ffd700;letter-spacing:.4rem;animation:countdownPulse 1s ease-out}
+@keyframes countdownPulse {
+0%{transform:scale(0.5);opacity:0}
+50%{transform:scale(1.2);opacity:1}
+100%{transform:scale(1);opacity:1}
+}
+.level-transition{position:absolute;top:0;left:0;width:100%;height:100%;background:#050a15f2;display:none;flex-direction:column;align-items:center;justify-content:center;z-index:200;backdrop-filter:blur(10px)}
+.level-transition.active{display:flex;animation:fadeIn .5s ease-in}
+.level-transition h2{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:clamp(2.5rem,8vw,4.5rem);margin-bottom:20px;color:#00f7ff;text-shadow:0 0 30px #00f7ff;animation:glowCyan 1s ease-in-out infinite alternate}
+.level-transition p{font-size:clamp(1.2rem,4vw,2rem);color:#0f8;text-shadow:0 0 15px #0f8}
+#pause-overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:#050810f2;backdrop-filter:blur(10px);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99999;animation:fadeIn .3s ease-out}
+#pause-overlay h2{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:clamp(2.5rem,8vw,4.5rem);color:#00f7ff;text-shadow:0 0 30px #00f7ff;animation:glowCyan 1s ease-in-out infinite alternate;margin-bottom:40px}
+.modal{position:absolute!important;top:0!important;left:0!important;width:100%!important;height:100%!important;background:#050810f2!important;backdrop-filter:blur(10px)!important;display:none;z-index:999999!important;margin:0!important;padding:20px!important;overflow-y:auto!important}
+.modal.active{display:flex!important;align-items:center!important;justify-content:center!important;animation:fadeIn .3s ease-out}
+.modal-content{position:relative!important;background:#0a0e27fa!important;border:3px solid #00f7ff!important;border-radius:15px!important;padding:30px!important;max-width:500px!important;width:90%!important;max-height:90%!important;overflow-y:auto!important;box-shadow:0 0 40px #00f7ff!important;text-align:center!important}
+.modal-content h2{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:clamp(1.5rem,4vw,2rem);margin-bottom:20px;color:#00f7ff;text-shadow:0 0 15px #00f7ff}
+.modal-content p{font-size:clamp(0.9rem,2.5vw,1.1rem);margin:10px 0;color:#fff;line-height:1.6}
+.modal-content ul{list-style:none;margin:15px auto;padding:0}
+.modal-content li{font-size:clamp(0.9rem,2.5vw,1.1rem);margin:8px 0;color:#fff;line-height:1.6}
+.slider-container{margin:20px 0}
+.slider-container label{font-size:clamp(0.9rem,2.5vw,1.1rem);color:#00f7ff;text-shadow:0 0 10px #00f7ff;display:block;margin-bottom:10px;letter-spacing:.1rem}
+.audio-slider{width:80%;height:8px;background:#00f7ff33;border-radius:10px;outline:none;-webkit-appearance:none;margin:10px auto;display:block;cursor:pointer}
+.audio-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:20px;height:20px;background:#00f7ff;border-radius:50%;cursor:pointer;box-shadow:0 0 15px #00f7ff;transition:all .3s ease}
+.audio-slider::-webkit-slider-thumb:hover{background:#fff;box-shadow:0 0 25px #00f7ff;transform:scale(1.2)}
+.audio-slider::-moz-range-thumb{width:20px;height:20px;background:#00f7ff;border-radius:50%;cursor:pointer;box-shadow:0 0 15px #00f7ff;border:none;transition:all .3s ease}
+.audio-slider::-moz-range-thumb:hover{background:#fff;box-shadow:0 0 25px #00f7ff;transform:scale(1.2)}
+.slider-container span{font-size:clamp(0.9rem,2.5vw,1.1rem);color:#ffd700;text-shadow:0 0 10px #ffd700;display:block;margin-top:10px}
+.stats-grid{display:grid;grid-template-columns:1fr;gap:12px;margin:20px 0;width:100%}
+.stat-item{display:flex;justify-content:space-between;align-items:center;padding:12px 15px;background:#00000080;border:2px solid #00f7ff;border-radius:8px;box-shadow:0 0 10px #00f7ff4d inset 0 0 10px #00f7ff1a}
+.stat-label{font-size:clamp(0.8rem,2vw,1rem);color:#00f7ff;text-shadow:0 0 5px #00f7ff;text-align:left}
+.stat-value{font-weight:700;font-size:clamp(1rem,2.5vw,1.3rem);color:#ffd700;text-shadow:0 0 15px #ffd700}
+.power-green{color:#0f8;text-shadow:0 0 10px #0f8;font-weight:700}
+.power-red{color:#ff006e;text-shadow:0 0 10px #ff006e;font-weight:700}
+.power-pink{color:#ff006e;text-shadow:0 0 10px #ff006e;font-weight:700}
+.power-yellow{color:#ffd700;text-shadow:0 0 10px #ffd700;font-weight:700}
+.power-blue{color:#00f7ff;text-shadow:0 0 10px #00f7ff;font-weight:700}
+@media (max-width: 768px) {
+#game-wrapper{padding:5px}
+#levels-grid{grid-template-columns:repeat(auto-fit,minmax(45px,1fr));gap:6px}
+.neon-button{min-width:150px;margin:8px}
+}
+@media (max-width: 480px) {
+#hud{font-size:.7rem;gap:5px}
+.hud-item{padding:6px 10px}
+.donate-links{max-width:100%}
+}
+@media (max-height: 600px) {
+#game-screen{padding:60px 0 0}
+.title-large{margin-bottom:5px}
+.subtitle{margin-bottom:15px}
+.footer{margin-top:15px}
+}
+    </style>
+</head>
+<body>
+    <div class="particle-container" id="particle-container"></div>
+    
+    <div id="game-wrapper">
+        <div id="game-container">
+            <div id="countdown-display">
+                <div class="countdown-text"></div>
+            </div>
+            
+            <div id="splash-screen" class="screen active">
+                <h1 class="title-large">
+                    <span class="title-cyber">CYBER</span>
+                    <span class="title-smash">SMASH</span>
+                </h1>
+                <p class="subtitle">TAP TO START</p>
+                <p class="footer">Kaloo Dinaz Games</p>
+            </div>
+
+            <div id="menu-screen" class="screen">
+                <h1 class="title-large">
+                    <span class="title-cyber">CYBER</span>
+                    <span class="title-smash">SMASH</span>
+                </h1>
+                <button id="play-btn" class="neon-button cyan-button">PLAY</button>
+                <button id="stats-btn" class="neon-button green-button">STATS</button>
+                <button id="controls-btn" class="neon-button pink-button">SETTINGS</button>
+                <button id="how-to-play-btn" class="neon-button purple-button">HOW TO PLAY</button>
+                <button id="support-btn" class="neon-button purple-button">SUPPORT UKRAINE 🇺🇦</button>
+                
+                <p class="footer">Kaloo Dinaz Games</p>
+            </div>
+
+            <div id="level-select-screen" class="screen">
+                <h1 class="title-large" style="font-size: clamp(1.8rem, 6vw, 3rem); margin-bottom: 5px;">SELECT LEVEL</h1>
+                <div id="levels-grid"></div>
+                <button id="back-to-menu-btn" class="neon-button purple-button small-button">BACK</button>
+            </div>
+
+            <div id="game-screen" class="screen">
+                <div id="hud">
+                    <div class="hud-item glow-cyan">SCORE <span id="score">0</span></div>
+                    <div class="hud-item glow-yellow">LEVEL <span id="level">1</span></div>
+                    <div class="hud-item glow-red">LIVES ❤ <span id="lives">3</span></div>
+                </div>
+                <canvas id="game-canvas"></canvas>
+                
+                <div id="level-transition" class="level-transition">
+                    <h2>LEVEL <span id="transition-level">1</span> COMPLETE</h2>
+                    <p>GET READY!</p>
+                </div>
+            </div>
+
+            <div id="gameover-screen" class="screen">
+                <h1 class="title-large">
+                    <span class="title-cyber">GAME</span>
+                    <span class="title-smash">OVER</span>
+                </h1>
+                <p class="subtitle">FINAL SCORE: <span id="final-score">0</span></p>
+                <button id="restart-btn" class="neon-button cyan-button">PLAY AGAIN</button>
+                <p class="footer">Kaloo Dinaz Games</p>
+            </div>
+            
+            <div id="how-to-play-modal" class="modal">
+                <div class="modal-content">
+                    <h2>HOW TO PLAY</h2>
+                    <p>🎮 <strong>ARROW KEYS / A & D</strong> or <strong>MOUSE/TOUCH</strong> to move</p>
+                    <p>🧱 Destroy all bricks to advance!</p>
+                    <p>⭐ Power-ups:</p>
+                    <ul>
+                        <li><span class="power-green">E</span> Expand Paddle</li>
+                        <li><span class="power-red">S</span> Shrink Paddle</li>
+                        <li><span class="power-pink">L</span> Extra Life</li>
+                        <li><span class="power-yellow">M</span> Multiball</li>
+                        <li><span class="power-blue">W</span> Slow Ball</li>
+                        <li><span class="power-yellow">F</span> Fire Mode (SPACE / Tap)</li>
+                    </ul>
+                    <p>⚠️ <strong>P or ESC = PAUSE</strong></p>
+                    <button id="close-how-to-play-btn" class="neon-button purple-button">CLOSE</button>
+                </div>
+            </div>
+
+            <div id="support-modal" class="modal">
+                <div class="modal-content">
+                    <div class="ukraine-support-banner">
+                        <span class="ukraine-flag">🇺🇦</span>
+                        <span>STAND WITH UKRAINE</span>
+                        <span class="ukraine-flag">🇺🇦</span>
+                    </div>
+                    <p style="margin-top: 20px;">The war continues. Your support helps those on the frontlines and civilians affected by the aggression.</p>
+                    
+                    <div class="donate-links">
+                        <a href="https://savelife.in.ua/en/donate-en/" target="_blank" rel="noopener noreferrer" class="donate-btn save-life">Donate via Save Life in UA</a>
+                        <a href="https://www.sternenkofund.org/en/donate" target="_blank" rel="noopener noreferrer" class="donate-btn sternenko">Donate via Sternenko Fund</a>
+                    </div>
+                    <button id="close-support-btn" class="neon-button purple-button" style="margin-top: 30px;">CLOSE</button>
+                </div>
+            </div>
+
+            <div id="controls-modal" class="modal">
+                <div class="modal-content">
+                    <h2>SETTINGS</h2>
+                    <div class="slider-container">
+                        <label for="sound-slider">🔊 SOUND VOLUME</label>
+                        <input type="range" id="sound-slider" min="0" max="100" value="50" class="audio-slider">
+                        <span id="sound-value">50%</span>
+                    </div>
+                    <button id="close-controls-btn" class="neon-button cyan-button">SAVE & CLOSE</button>
+                </div>
+            </div>
+
+            <div id="stats-modal" class="modal">
+                <div class="modal-content">
+                    <h2>STATISTICS</h2>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <span class="stat-label">🏆 HIGH SCORE</span>
+                            <span class="stat-value" id="stat-highscore">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">⭐ MAX LEVEL REACHED</span>
+                            <span class="stat-value" id="stat-maxlevel">1</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">🧱 BRICKS DESTROYED</span>
+                            <span class="stat-value" id="stat-bricks">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">💥 COMBO RECORD</span>
+                            <span class="stat-value" id="stat-combo">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">🎁 POWERUPS COLLECTED</span>
+                            <span class="stat-value" id="stat-powerups">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">🎮 GAMES PLAYED</span>
+                            <span class="stat-value" id="stat-games">0</span>
+                        </div>
+                    </div>
+                    <button id="reset-stats-btn" class="neon-button pink-button">RESET STATS</button>
+                    <button id="close-stats-btn" class="neon-button cyan-button">CLOSE</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script type="text/javascript">
+        window.SDK_OPTIONS = {
+            gameId: "ukcr870zdtvp729gljb1aqq10jwvy0v5",
+           onEvent: function (a) {
+                switch (a.name) {
+                    case "SDK_GAME_PAUSE":
+                        // pause game logic / mute audio
+                        if (window.pauseForAd) window.pauseForAd();
+                        break;
+                    case "SDK_GAME_START":
+                        // advertisement done, resume game logic and unmute audio
+                        if (window.resumeAfterAd) window.resumeAfterAd();
+                        break;
+                    case "SDK_READY":
+                        // when sdk is ready
+                        console.log("GameMonetize.com SDK is ready.");
+                        if (window.onSDKReady) window.onSDKReady();
+                        break;
+                }
+            }
+        };
+        (function (a, b, c) {
+            var d = a.getElementsByTagName(b)[0];
+            a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+        })(document, "script", "gamemonetize-sdk");
+    </script>
+ <script src="game.js?v=1.26"></script>
+</body>
+</html>

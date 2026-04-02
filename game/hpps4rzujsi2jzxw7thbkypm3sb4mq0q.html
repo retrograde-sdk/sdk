@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>Cosmic Defender 2.2 ⚙️</title>
+
+<style type="text/css">@font-face {font-family:Rajdhani;font-style:normal;font-weight:400;src:url(/cf-fonts/s/rajdhani/5.0.11/latin-ext/400/normal.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:Rajdhani;font-style:normal;font-weight:400;src:url(/cf-fonts/s/rajdhani/5.0.11/devanagari/400/normal.woff2);unicode-range:U+0900-097F,U+1CD0-1CF9,U+200C-200D,U+20A8,U+20B9,U+25CC,U+A830-A839,U+A8E0-A8FF;font-display:swap;}@font-face {font-family:Rajdhani;font-style:normal;font-weight:400;src:url(/cf-fonts/s/rajdhani/5.0.11/latin/400/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Rajdhani;font-style:normal;font-weight:700;src:url(/cf-fonts/s/rajdhani/5.0.11/latin/700/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Rajdhani;font-style:normal;font-weight:700;src:url(/cf-fonts/s/rajdhani/5.0.11/latin-ext/700/normal.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:Rajdhani;font-style:normal;font-weight:700;src:url(/cf-fonts/s/rajdhani/5.0.11/devanagari/700/normal.woff2);unicode-range:U+0900-097F,U+1CD0-1CF9,U+200C-200D,U+20A8,U+20B9,U+25CC,U+A830-A839,U+A8E0-A8FF;font-display:swap;}</style>
+
+<style>
+  /* --- V2.2 CYBERPUNK THEME --- */
+  :root { 
+    --w:800px; --h:570px; 
+    --bg:#03050d; --text:#f0f8ff; --muted:#8a99b4; 
+    --accent:#b47cff; /* Neon Purple/Pink */
+    --accent2:#51ff7a; /* Neon Green */
+    --ua-blue:#0057b7; --ua-yellow:#ffd700;
+    --danger:#ff4f78; --success:#4fff78;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    min-height:100vh;display:grid;place-items:center;
+    background:radial-gradient(1200px 700px at 50% 0%, #081128 0%, #03050d 60%, #020308 100%);
+    color:var(--text);
+    /* Updated Font */
+    font-family:'Rajdhani', sans-serif; 
+    overflow:hidden;
+  }
+  .wrap{width:var(--w);user-select:none;position:relative}
+  
+  /* Header Styles */
+  .header{
+    display:flex;align-items:center;justify-content:space-between;gap:.5rem;
+    padding:8px 12px;
+    background:linear-gradient(180deg,rgba(180,124,255,.15),rgba(180,124,255,.05));
+    border:1px solid rgba(180,124,255,.2);border-bottom:none;
+    border-radius:16px 16px 0 0;
+    backdrop-filter:blur(8px);
+  }
+  .controls{display:flex;gap:.5rem;align-items:center}
+  .stats{display:flex;gap:1rem;align-items:center;font-size:.95rem}
+  .stats b{color:var(--accent);text-shadow:0 0 10px rgba(180,124,255,.6)}
+  .stats .best b{color:var(--accent2);text-shadow:0 0 10px rgba(81,255,122,.6)}
+  
+  /* Button Styles */
+  button{
+    appearance:none;border:1px solid rgba(255,255,255,.2);
+    background:linear-gradient(180deg,#15102a,#0e0a1f);
+    color:var(--text);padding:.6rem 1rem;border-radius:6px; 
+    font-weight:700;font-size:.9rem;cursor:pointer;
+    box-shadow:0 4px 12px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.1);
+    transition:all .2s ease;
+  }
+  button:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(0,0,0,.6); border-color:var(--accent);}
+  button:active{transform:translateY(0)}
+  button.stop{background:linear-gradient(180deg,#4a1024,#2a0e19);border-color:var(--danger); box-shadow:0 0 10px rgba(255,79,120,.4);}
+  button.resume{background:linear-gradient(180deg,#104a24,#0e2a19);border-color:var(--success); box-shadow:0 0 10px rgba(79,255,120,.4);}
+  button.menu-btn{background:linear-gradient(180deg,#20203a,#10102f);padding:.55rem .9rem; border-color:rgba(255,255,255,.1);}
+  
+  /* Game Frame */
+  .frame{
+    width:var(--w);height:var(--h);background:var(--bg);position:relative;
+    border:1px solid rgba(180,124,255,.2);border-top:none;
+    border-radius:0 0 16px 16px;overflow:hidden;
+    box-shadow:0 30px 80px rgba(0,0,0,.7);
+  }
+  canvas{display:block;outline:none}
+  
+  /* Overlay */
+  .overlay{
+    position:absolute;inset:0;display:grid;place-items:center;
+    pointer-events:none;z-index:10;
+  }
+  .banner{
+    text-align:center;
+    background:rgba(3,5,13,.9);
+    border:1px solid var(--accent);
+    border-radius:10px;padding:1.2rem 1.5rem;
+    backdrop-filter:blur(10px);max-width:85%;
+    box-shadow:0 0 20px rgba(180,124,255,.4),inset 0 0 0 1px rgba(180,124,255,.15);
+    pointer-events:auto;
+  }
+  .banner h2{margin:0 0 .5rem;font-size:1.4rem;letter-spacing:1px; color:var(--accent);}
+  .banner p{margin:0;font-size:.95rem;color:var(--muted);line-height:1.5}
+  .kbd{
+    font-family:ui-monospace,monospace;
+    background:rgba(180,124,255,.15);color:var(--accent);padding:.15rem .4rem;
+    border-radius:4px;font-size:.85rem;
+    border:1px solid rgba(180,124,255,.4);
+  }
+  
+  /* Main Menu */
+  .main-menu{
+    position:absolute;inset:0;
+    background:radial-gradient(ellipse at center, rgba(15,10,30,.98) 0%, rgba(3,5,13,.99) 100%);
+    backdrop-filter:blur(12px);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    z-index:100;padding:2rem;
+  }
+  .main-menu.hidden{display:none}
+  .menu-title{
+    font-size:3rem;font-weight:700; /* Adjusted for Rajdhani */
+    background:linear-gradient(135deg, var(--accent) 0%, #ff4fff 50%, var(--accent2) 100%);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    background-clip:text;margin-bottom:.5rem;
+    text-shadow:0 0 40px rgba(180,124,255,.6);
+    animation:pulse 2s ease-in-out infinite;
+    letter-spacing:3px;
+  }
+  .menu-subtitle{
+    font-size:1.1rem;color:var(--muted);margin-bottom:2rem;
+    letter-spacing:3px;text-transform:uppercase;
+  }
+  .menu-grid{
+    display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;
+    max-width:500px;width:100%;margin-bottom:1.5rem;
+  }
+  .menu-btn-large{
+    padding:1.2rem 1.5rem;font-size:1rem;
+    background:linear-gradient(135deg, #15102a 0%, #0e0a1f 100%);
+    border:2px solid rgba(180,124,255,.3);
+    transition:all .3s ease;position:relative;overflow:hidden;
+  }
+  .menu-btn-large:hover{
+    border-color:var(--accent);
+    box-shadow:0 0 24px rgba(180,124,255,.6);
+  }
+  .menu-btn-large::before{
+    content:'';position:absolute;inset:0;
+    background:linear-gradient(135deg, rgba(180,124,255,.2) 0%, transparent 100%);
+    opacity:0;transition:opacity .3s ease;
+  }
+  .menu-btn-large:hover::before{opacity:1}
+
+  /* Disabled button for Continue */
+  .menu-btn-large:disabled{
+      opacity: 0.5;
+      cursor: not-allowed;
+      border-color: rgba(255,255,255,.1);
+      box-shadow: none;
+      transform: none;
+  }
+  .menu-btn-large:disabled:hover{
+      transform: none;
+      box-shadow: none;
+      border-color: rgba(255,255,255,.1);
+  }
+  
+  /* Panels */
+  .settings-panel, .about-panel, .stats-panel, .ukraine-panel{
+    position:absolute;inset:0;
+    background:rgba(5,7,18,.98);backdrop-filter:blur(12px);
+    padding:2rem;overflow-y:auto;z-index:110;
+    display:none;
+    border-radius:0 0 16px 16px;
+  }
+  .settings-panel.active, .about-panel.active, .stats-panel.active, .ukraine-panel.active{
+    display:block;
+  }
+  .panel-header{
+    display:flex;justify-content:space-between;align-items:center;
+    margin-bottom:1.5rem;padding-bottom:1rem;
+    border-bottom:2px solid var(--accent);
+  }
+  .panel-title{font-size:1.8rem;font-weight:700; color:var(--accent);}
+  .close-btn{
+    background:linear-gradient(180deg,#30081a,#200515);border-color:var(--danger);
+    padding:.5rem 1rem;
+  }
+  
+  .setting-item{
+    background:rgba(180,124,255,.05);
+    padding:1rem;margin-bottom:.8rem;border-radius:6px;
+    border:1px solid rgba(180,124,255,.1);
+  }
+  .setting-label{
+    display:flex;justify-content:space-between;align-items:center;
+    font-weight:600;margin-bottom:.5rem;
+  }
+  .setting-description{font-size:.85rem;color:var(--muted)}
+  
+  /* Toggle Switch */
+  .toggle{
+    position:relative;display:inline-block;width:50px;height:26px;
+  }
+  .toggle input{opacity:0;width:0;height:0}
+  .slider{
+    position:absolute;cursor:pointer;inset:0;
+    background:#4a4a5e;transition:.4s;border-radius:26px;
+  }
+  .slider:before{
+    position:absolute;content:"";height:18px;width:18px;
+    left:4px;bottom:4px;background:white;
+    transition:.4s;border-radius:50%;
+  }
+  input:checked + .slider{background:var(--accent)}
+  input:checked + .slider:before{transform:translateX(24px)}
+  
+  /* Range Slider */
+  .range-slider{
+    width:100%;height:8px;border-radius:4px;
+    background:rgba(180,124,255,.2);
+    outline:none;appearance:none;
+  }
+  .range-slider::-webkit-slider-thumb{
+    appearance:none;width:18px;height:18px;
+    border-radius:50%;background:var(--accent);cursor:pointer;
+    border:2px solid var(--text);
+  }
+  .range-slider::-moz-range-thumb{
+    width:18px;height:18px;border-radius:50%;
+    background:var(--accent);cursor:pointer;border:2px solid var(--text);
+  }
+  
+  /* Ukraine Support (Kept original colors) */
+  .ukraine-section{
+    background:linear-gradient(180deg, var(--ua-blue) 0%, var(--ua-blue) 50%, var(--ua-yellow) 50%, var(--ua-yellow) 100%);
+    padding:2px;border-radius:12px;margin-bottom:1.5rem;
+  }
+  .ukraine-content{
+    background:rgba(5,7,18,.95);padding:1.5rem;border-radius:10px;
+  }
+  .ukraine-title{
+    font-size:1.5rem;font-weight:700;margin-bottom:1rem;
+    text-align:center;
+  }
+  .donation-links{display:flex;flex-direction:column;gap:1rem}
+  .donation-link{text-decoration:none;display:block}
+  .donation-btn{
+    width:100%;padding:1rem;font-size:1rem;
+    background:linear-gradient(135deg, var(--ua-blue) 0%, #003d82 100%);
+    border:2px solid var(--ua-yellow);
+    transition:all .3s ease;
+  }
+  .donation-btn:hover{
+    transform:scale(1.03);
+    box-shadow:0 8px 24px rgba(255,215,0,.4);
+  }
+  
+  /* Stats Display */
+  .stats-grid{
+    display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;
+  }
+  .stat-card{
+    background:rgba(180,124,255,.05);
+    padding:1.2rem;border-radius:8px;
+    border:1px solid rgba(180,124,255,.1);
+    text-align:center;
+  }
+  .stat-value{
+    font-size:2rem;font-weight:700;
+    color:var(--accent2);margin-bottom:.3rem;
+  }
+  .stat-label{font-size:.9rem;color:var(--muted)}
+  
+  /* Animations */
+  @keyframes pulse{
+    0%, 100%{opacity:1;transform:scale(1)}
+    50%{opacity:.8;transform:scale(1.01)}
+  }
+  
+  /* About Section */
+  .about-content{line-height:1.8;color:var(--muted)}
+  .about-content h3{color:var(--text);margin:1.5rem 0 .8rem;font-size:1.2rem}
+  .about-content ul{list-style:none;padding-left:0}
+  .about-content li{
+    padding:.5rem 0;padding-left:1.5rem;
+    position:relative;
+  }
+  .about-content li::before{
+    content:'▸';position:absolute;left:0;
+    color:var(--accent);
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="header">
+      <div class="controls">
+        <button id="btnMenu" class="menu-btn">☰ Menu</button>
+        <button id="btnPlay">▶ New Game</button> 
+        <button id="btnResume" class="resume">▶ Resume</button>
+        <button id="btnStop" class="stop">⏸ Pause</button>
+      </div>
+      <div class="stats">
+        <span>Lives: <b id="lives">3</b></span>
+        <span>Score: <b id="score">0</b></span>
+        <span class="best">Best: <b id="best">0</b></span>
+        <span>Level: <b id="level">1</b></span>
+      </div>
+    </div>
+    
+    <div class="frame">
+      <canvas id="game" width="800" height="570" tabindex="0"></canvas>
+      
+      <div class="overlay" id="overlay">
+        <div class="banner" id="banner">
+          <h2>⚙️ Cosmic Defender 2.2</h2>
+          <p>Move with mouse • <span class="kbd">Hold Click</span> or <span class="kbd">SPACE</span> to fire<br>Press <span class="kbd">☰ Menu</span> for options</p>
+        </div>
+      </div>
+      
+      <div class="main-menu" id="mainMenu">
+        <h1 class="menu-title">C O S M I C _ D E F E N D E R</h1>
+        <p class="menu-subtitle">Version 2.2 | Enhanced Protocol</p>
+        
+        <div class="menu-grid">
+          <button class="menu-btn-large" id="menuPlay">▶ New Game</button>
+          <button class="menu-btn-large" id="menuContinue" disabled>💾 Continue Protocol</button>
+          <button class="menu-btn-large" id="menuSettings">⚙️ Settings</button>
+          <button class="menu-btn-large" id="menuStats">📊 Statistics</button>
+          <button class="menu-btn-large" id="menuUkraine">🇺🇦 Support Ukraine</button>
+          <button class="menu-btn-large" id="menuAbout">ℹ️ About</button>
+        </div>
+      </div>
+      
+      <div class="settings-panel" id="settingsPanel">
+        <div class="panel-header">
+          <h2 class="panel-title">⚙️ Settings</h2>
+          <button class="close-btn" id="closeSettings">✕ Close</button>
+        </div>
+        
+        <div class="setting-item">
+          <div class="setting-label">
+            <span>🔊 Sound Effects</span>
+            <label class="toggle">
+              <input type="checkbox" id="sfxToggle" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+          <p class="setting-description">Enable or disable game sound effects</p>
+        </div>
+        
+        <div class="setting-item">
+          <div class="setting-label">
+            <span>🎵 Sound Volume</span>
+            <span id="volumeValue">80%</span>
+          </div>
+          <input type="range" class="range-slider" id="volumeSlider" min="0" max="100" value="80">
+          <p class="setting-description">Adjust sound effect volume</p>
+        </div>
+        
+        <div class="setting-item">
+          <div class="setting-label">
+            <span>✨ Visual Effects</span>
+            <label class="toggle">
+              <input type="checkbox" id="fxToggle" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+          <p class="setting-description">Toggle particle effects and animations</p>
+        </div>
+        
+        <div class="setting-item">
+          <div class="setting-label">
+            <span>⭐ Star Density</span>
+            <span id="starValue">Medium</span>
+          </div>
+          <input type="range" class="range-slider" id="starSlider" min="50" max="200" value="120" step="25">
+          <p class="setting-description">Adjust background star count</p>
+        </div>
+      </div>
+      
+      <div class="stats-panel" id="statsPanel">
+        <div class="panel-header">
+          <h2 class="panel-title">📊 Statistics</h2>
+          <button class="close-btn" id="closeStats">✕ Close</button>
+        </div>
+        
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-value" id="totalGames">0</div>
+            <div class="stat-label">Games Played</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="totalScore">0</div>
+            <div class="stat-label">Total Score</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="highestLevel">1</div>
+            <div class="stat-label">Highest Level Reached</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="enemiesKilled">0</div>
+            <div class="stat-label">Enemies Defeated</div>
+          </div>
+        </div>
+        
+        <div style="margin-top:2rem;text-align:center">
+          <button id="resetStats" style="background:linear-gradient(180deg,#4a1024,#2a0e19);border-color:var(--danger)">🗑️ Reset Statistics</button>
+        </div>
+      </div>
+      
+      <div class="ukraine-panel" id="ukrainePanel">
+        <div class="panel-header">
+          <h2 class="panel-title">🇺🇦 Support Ukraine</h2>
+          <button class="close-btn" id="closeUkraine">✕ Close</button>
+        </div>
+        
+        <div class="ukraine-section">
+          <div class="ukraine-content">
+            <h3 class="ukraine-title">Stand With Ukraine 💙💛</h3>
+            <p style="text-align:center;margin-bottom:1.5rem;line-height:1.6">
+              Ukraine is fighting for freedom and democracy. Your donation can save lives and help rebuild the country. Every contribution matters.
+            </p>
+            
+            <div class="donation-links">
+              <a href="https://savelife.in.ua/en/" target="_blank" class="donation-link">
+                <button class="donation-btn">🏥 Save Life in Ukraine</button>
+              </a>
+              <a href="https://www.sternenkofund.org/en/donate" target="_blank" class="donation-link">
+                <button class="donation-btn">⭐ Sternenko Fund</button>
+              </a>
+            </div>
+          </div>
+        </div>
+        
+        <p style="text-align:center;color:var(--muted);margin-top:1.5rem;font-size:.9rem">
+          🕊️ Together we stand for peace, freedom, and democracy
+        </p>
+      </div>
+      
+      <div class="about-panel" id="aboutPanel">
+        <div class="panel-header">
+          <h2 class="panel-title">ℹ️ About Cosmic Defender</h2>
+          <button class="close-btn" id="closeAbout">✕ Close</button>
+        </div>
+        
+        <div class="about-content">
+          <h3>🎮 Game Description</h3>
+          <p>Cosmic Defender 2.2 is the Enhanced Protocol space shooter where you defend against relentless alien invaders. Battle through multiple levels, defeat powerful bosses, and prove your skills as the ultimate cosmic defender!</p>
+          
+          <h3>📖 How to Play (Enhanced)</h3>
+          <ul>
+            <li><strong>Move:</strong> Use your mouse cursor, <kbd>A</kbd> / <kbd>D</kbd> keys, or <kbd>←</kbd> / <kbd>→</kbd> arrow keys. **On Mobile**, drag your finger horizontally.</li>
+            <li><strong>Fire:</strong> Hold left mouse button, press and hold <kbd>SPACE</kbd>, or **tap/hold on mobile** to engage continuous fire.</li>
+            <li><strong>Pause:</strong> Press the **☰ Menu** button, the <kbd>P</kbd> key, or the <kbd>Esc</kbd> key.</li>
+            <li><strong>Objective:</strong> Clear all enemy waves and defeat the Boss at the end of each level.</li>
+            <li><strong>Lives:</strong> You start with 3 lives. Gain +1 life for starting a new level (max 6).</li>
+            <li><strong>Leveling:</strong> Progress through 6 core levels, then face the **FINAL BOSS**.</li>
+          </ul>
+          
+          <h3>👾 Enemy Types (V2.2 Specs)</h3>
+          <ul>
+            <li><strong style="color:#7cd4a0">Small (Interceptor):</strong> 1 HP • Fast • 30 points</li>
+            <li><strong style="color:#ffcc66">Medium (Cruiser):</strong> 2 HP • Balanced • 20 points</li>
+            <li><strong style="color:#ff4f78">Heavy (Juggernaut):</strong> 3 HP • Tough • 12 points</li>
+            <li><strong style="color:#b47cff">Elite (Phantom):</strong> 4 HP • Advanced • 40 points</li>
+          </ul>
+          
+          <h3>🎯 Boss Mechanics</h3>
+          <ul>
+             <li>**NEW:** Power-up system (Rapid Fire, Shield)</li>
+            <li>Bosses are **Invulnerable** until all standard enemies are destroyed.</li>
+            <li>Bosses have regenerating shields and increasing HP each level.</li>
+            <li>They use multiple attack patterns (Salvo & Spiral).</li>
+            <li>Bosses **Enrage** when alone, becoming faster and deadlier.</li>
+            <li>Final boss has 6x HP and special radial burst attacks.</li>
+          </ul>
+          
+          <h3>✨ Features</h3>
+          <ul>
+            <li>Progressive difficulty system</li>
+            <li>Dynamic boss battle patterns</li>
+            <li>Enhanced Visual and Sound effects</li>
+            <li>Statistics tracking</li>
+            <li>Customizable settings</li>
+            <li>**FIXED:** Robust Pause/Resume logic</li>
+          </ul>
+          
+          <h3>🏆 Tips</h3>
+          <ul>
+            <li>Prioritize Elite enemies for maximum points.</li>
+            <li>Don't let enemies reach the bottom of the screen (you lose a life!).</li>
+            <li>Stay mobile to avoid dense boss bullet patterns.</li>
+          </ul>
+          
+          <p style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid rgba(255,255,255,.1)">
+            <strong>Version:</strong> 2.2 Pause Protocol Fix<br>
+            <strong>Created:</strong> 2025<br>
+            <strong>Made by:</strong> Ihor Khodakivskyi
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+   window.SDK_OPTIONS = {
+      gameId: "hpps4rzujsi2jzxw7thbkypm3sb4mq0q",
+      onEvent: function (a) {
+         switch (a.name) {
+            case "SDK_GAME_PAUSE":
+               // Pause game logic / mute audio
+               // Calls the game's stop function but prevents it from showing another ad (ad already showing)
+               try{ if (typeof window.stopGameLogic === 'function') { window.stopGameLogic(); } }catch(_){}
+               break;
+            case "SDK_GAME_START":
+               // Resume game logic / unmute audio
+               try{ if (typeof window.resumeGameLogic === 'function') { window.resumeGameLogic(); } }catch(_){}
+               break;
+            case "SDK_READY":
+               console.log("[GM] SDK Ready.");
+               break;
+         }
+      }
+   };
+(function (a, b, c) {
+   var d = a.getElementsByTagName(b)[0];
+   a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+})(document, "script", "gamemonetize-sdk"); 
+</script>
+
+
+<script src="game.js?v=2.4"></script>
+</body>
+</html>

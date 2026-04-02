@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+
+    <!-- SEO Meta Tags -->
+    <meta
+      name="description"
+      content="Sticky Planet - A physics-based hyper-casual game. Tap to launch between planets!"
+    />
+    <meta
+      name="keywords"
+      content="game, physics, casual, planets, space, arcade"
+    />
+    <meta name="author" content="Game Developer" />
+
+    <!-- Open Graph for social sharing -->
+    <meta property="og:title" content="Sticky Planet" />
+    <meta
+      property="og:description"
+      content="Tap to launch between planets with changing gravity!"
+    />
+    <meta property="og:type" content="website" />
+
+    <title>Sticky Planet</title>
+
+    <style>
+      /* Critical CSS - Inlined for fast first paint */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #0a0a1a;
+        touch-action: none;
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        user-select: none;
+      }
+
+      #game-container {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      canvas {
+        display: block;
+        image-rendering: pixelated;
+        image-rendering: crisp-edges;
+      }
+
+      /* Loading screen */
+      #loading-screen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 100%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        transition: opacity 0.3s ease;
+      }
+
+      #loading-screen.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .loading-title {
+        color: #fff;
+        font-family: "Segoe UI", system-ui, sans-serif;
+        font-size: 2rem;
+        font-weight: bold;
+        margin-bottom: 2rem;
+        text-shadow: 0 0 20px rgba(100, 200, 255, 0.5);
+      }
+
+      .loading-bar-container {
+        width: 200px;
+        height: 8px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+        overflow: hidden;
+      }
+
+      .loading-bar {
+        width: 0%;
+        height: 100%;
+        background: linear-gradient(90deg, #00d4ff, #00ff88);
+        border-radius: 4px;
+        transition: width 0.2s ease;
+      }
+
+      .loading-text {
+        color: rgba(255, 255, 255, 0.6);
+        font-family: "Segoe UI", system-ui, sans-serif;
+        font-size: 0.875rem;
+        margin-top: 1rem;
+      }
+
+      /* WebGL not supported fallback */
+      .webgl-error {
+        color: #ff6b6b;
+        text-align: center;
+        padding: 2rem;
+      }
+
+      .webgl-error h2 {
+        margin-bottom: 1rem;
+      }
+    </style>
+    <script type="module" crossorigin src="./js/index-CGfF6Sbw.js"></script>
+    <link rel="modulepreload" crossorigin href="./js/phaser-ByLfXN1v.js">
+  </head>
+  <body>
+    <!-- Loading Screen (shown while game loads) -->
+    <div id="loading-screen">
+      <div class="loading-title">🪐 Sticky Planet</div>
+      <div class="loading-bar-container">
+        <div class="loading-bar" id="loading-bar"></div>
+      </div>
+      <div class="loading-text" id="loading-text">Initializing...</div>
+    </div>
+
+    <!-- Game Container -->
+    <div id="game-container"></div>
+
+    <!-- CrazyGames SDK (loaded conditionally) -->
+    <script>
+      // Check if running on CrazyGames
+      if (window.location.hostname.includes("crazygames")) {
+        const script = document.createElement("script");
+        script.src = "https://sdk.crazygames.com/crazygames-sdk-v2.js";
+        document.head.appendChild(script);
+      }
+    </script>
+
+    <!-- Poki SDK (loaded conditionally) -->
+    <script>
+      // Check if running on Poki
+      if (window.location.hostname.includes("poki")) {
+        const script = document.createElement("script");
+        script.src = "https://game-cdn.poki.com/scripts/v2/poki-sdk.js";
+        document.head.appendChild(script);
+      }
+    </script>
+
+    <!-- GameMonetize SDK -->
+    <script type="text/javascript">
+      window.SDK_OPTIONS = {
+        gameId: "5it2ku5rbtw1gwqdl0woc9wmqo47e4q6",
+        onEvent: function (a) {
+          switch (a.name) {
+            case "SDK_GAME_PAUSE":
+              // pause game logic / mute audio
+              console.log("[GameMonetize] Ad started - pausing game");
+              if (window.gameMonetizePause) window.gameMonetizePause();
+              break;
+            case "SDK_GAME_START":
+              // advertisement done, resume game logic and unmute audio
+              console.log("[GameMonetize] Ad finished - resuming game");
+              if (window.gameMonetizeResume) window.gameMonetizeResume();
+              break;
+            case "SDK_READY":
+              // when sdk is ready
+              console.log("[GameMonetize] SDK Ready");
+              break;
+          }
+        }
+      };
+      (function (a, b, c) {
+        var d = a.getElementsByTagName(b)[0];
+        a.getElementById(c) || ((a = a.createElement(b)), (a.id = c), (a.src = "https://api.gamemonetize.com/sdk.js"), d.parentNode.insertBefore(a, d));
+      })(document, "script", "gamemonetize-sdk");
+    </script>
+
+    <!-- Main Game Entry -->
+
+    <!-- WebGL Detection Fallback -->
+    <script>
+      (function () {
+        try {
+          const canvas = document.createElement("canvas");
+          const hasWebGL = !!(
+            canvas.getContext("webgl") ||
+            canvas.getContext("webgl2") ||
+            canvas.getContext("experimental-webgl")
+          );
+          if (!hasWebGL) {
+            document.getElementById("loading-screen").innerHTML =
+              '<div class="webgl-error">' +
+              "<h2>WebGL Not Supported</h2>" +
+              "<p>Please use a modern browser with WebGL support.</p>" +
+              "</div>";
+          }
+        } catch (e) {
+          console.warn("WebGL detection failed:", e);
+        }
+      })();
+    </script>
+  </body>
+</html>

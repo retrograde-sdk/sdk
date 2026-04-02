@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>IRON SMASH</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script type="text/javascript">
+        window.SDK_OPTIONS = {
+           gameId: "wf42ep9hw8py43cv4h4vgorep74ylimk",
+           onEvent: function (a) {
+              switch (a.name) {
+                 case "SDK_GAME_PAUSE":
+                    // pause game logic / mute audio
+                    if (window.game) window.game.pauseGame();
+                    break;
+                 case "SDK_GAME_START":
+                    // advertisement done, resume game logic and unmute audio
+                    if (window.game) window.game.resumeGame();
+                    break;
+                 case "SDK_READY":
+                    // when sdk is ready
+                    console.log("SDK Ready");
+                    break;
+                 case "SDK_ERROR":
+                    // when sdk get error
+                    console.log("SDK Error");
+                    if (window.game) window.game.resumeGame();
+                    break;
+              }
+           }
+        };
+        (function (a, b, c) {
+           var d = a.getElementsByTagName(b)[0];
+           a.getElementById(c) || (a = a.createElement(b), a.id = c,
+           a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+        })(document, "script", "gamemonetize-sdk");
+    </script>
+</head>
+<body>
+    <div id="ui-layer">
+        <div class="hud-panel top-left">
+            <div class="stat-row">
+                <span class="stat-label">SCORE</span>
+                <span id="score-val" class="stat-value">0</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">LEVEL</span>
+                <span id="level-val" class="stat-value">1</span>
+            </div>
+        </div>
+        
+        <!-- Level Progress Bar -->
+        <div class="level-progress-container">
+            <div id="level-progress-bar"></div>
+        </div>
+        
+        <div id="combo-container">
+            <div id="combo-count" class="combo-count"></div>
+        </div>
+
+        <div id="start-screen" class="menu-screen">
+            <div class="menu-content">
+                <h1>IRON SMASH</h1>
+                <p>SWING THE BALL. CRUSH THE SQUARES.</p>
+                <button id="start-btn">PLAY NOW</button>
+            </div>
+        </div>
+
+        <div id="upgrade-screen" class="menu-screen hidden">
+            <div class="menu-content">
+                <h2>LEVEL COMPLETE!</h2>
+                <p>CHOOSE AN UPGRADE</p>
+                <div id="upgrade-options" class="upgrade-container"></div>
+            </div>
+        </div>
+
+        <div id="game-over-screen" class="menu-screen hidden">
+            <div class="menu-content">
+                <h1>SMASHED!</h1>
+                <p>FINAL SCORE: <span id="final-score">0</span></p>
+                <div class="btn-group">
+                    <button id="revive-btn" class="special-btn">📺 REVIVE (AD)</button>
+                    <button id="restart-btn">PLAY AGAIN</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <canvas id="gameCanvas"></canvas>
+
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>

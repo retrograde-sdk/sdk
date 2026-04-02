@@ -1,0 +1,1271 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<title>Christmas Christmas Ornaments Jigsaw Puzzless</title>
+<style>
+  :root{ --green:#0a6a3a; --green2:#0b7a41; --orange:#f3a63a; --shadow:rgba(0,0,0,.35); --w:100vw; --h:100vh; }
+  html,body{height:100%; margin:0; overflow:hidden; font-family: "Trebuchet MS", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;}
+  body{ background: var(--green); color:#fff; }
+  /* jigsaw-pattern background via inline SVG */
+  .bg{
+    position:fixed; inset:0;
+    background:
+      radial-gradient(900px 650px at 50% 0%, rgba(255,255,255,.14), transparent 60%),
+      repeating-linear-gradient(45deg, rgba(0,0,0,.10) 0 14px, rgba(0,0,0,.14) 14px 28px),
+      linear-gradient(#0a6a3a, #0b7a41);
+    opacity:1;
+  }
+  .screen{ position:fixed; inset:0; display:none; overflow:hidden; }
+  .screen.active{ display:block; }
+  .screenInner{ height:calc(var(--vh, 1vh) * 100); width:100%; box-sizing:border-box; display:flex; flex-direction:column; align-items:center; justify-content:center; padding: calc(72px + env(safe-area-inset-top, 0px)) 14px calc(36px + env(safe-area-inset-bottom, 0px)); }
+  .screenContent{ width:100%; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; max-width:1100px; padding: 6px 10px; box-sizing:border-box; }
+
+  .panel{
+    width:min(980px, calc(100vw - 40px));
+    display:grid;
+    grid-template-columns: 1.15fr .85fr;
+    gap:24px;
+    align-items:center;
+  }
+  .card{
+    background: rgba(0,0,0,.20);
+    border: 3px solid rgba(255,255,255,.20);
+    box-shadow: 0 14px 40px rgba(0,0,0,.35);
+    border-radius: 18px;
+    padding: 22px;
+    backdrop-filter: blur(2px);
+  }
+  .title{ font-size:52px; letter-spacing:1px; margin:0 0 10px; text-transform:uppercase; }
+  .sub{ margin:0 0 18px; opacity:.9; font-size:18px; line-height:1.4; }
+  .gameName{ font-size: clamp(24px, 3.2vw, 44px); font-weight:1000; letter-spacing:2px; color:#e8fff3; text-shadow: 0 4px 0 rgba(0,0,0,.25); }
+  .bigTitle{ font-size: clamp(20px, 3.6vw, 40px); font-weight:1000; letter-spacing:2px; color:#ffffff; text-shadow: 0 6px 0 rgba(0,0,0,.25); }
+  .footerBrand{ margin-top:18px; opacity:.9; font-weight:900; letter-spacing:.6px; }
+
+  .btn{
+    display:inline-flex; gap:10px; align-items:center; justify-content:center;
+    border:none; cursor:pointer; user-select:none;
+    background: var(--orange);
+    color:#4b2200;
+    font-weight:900;
+    padding: 16px 22px;
+    border-radius: 14px;
+    box-shadow: 0 10px 0 rgba(0,0,0,.25);
+    transform: translateY(0);
+    font-size:20px;
+  }
+  .btn:active{ transform: translateY(2px); box-shadow: 0 8px 0 rgba(0,0,0,.25); }
+  .btn.secondary{
+    background: rgba(255,255,255,.14);
+    color:#fff;
+    box-shadow:none;
+    border:2px solid rgba(255,255,255,.22);
+  }
+
+  /* choose image */
+  .chooseWrap{ display:flex; align-items:center; justify-content:center; gap:18px; }
+  .arrow{
+    width:74px; height:74px; border-radius:16px;
+    background: rgba(255,255,255,.12);
+    border:2px solid rgba(255,255,255,.22);
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+  }
+  .arrow:active{ transform: translateY(1px); }
+  .arrow span{ font-size:38px; line-height:1; }
+  .thumb{
+    width:min(700px, calc(100vw - 220px));
+    max-width:720px;
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap:18px;
+    align-items:stretch;
+   margin:0 auto; }
+  .thumb .item{
+    background: rgba(255,255,255,.12);
+    border:4px solid rgba(255,255,255,.85);
+    border-radius:16px;
+    padding:10px;
+    cursor:pointer;
+    box-shadow: 0 12px 0 rgba(0,0,0,.20);
+  }
+  .thumb .item.selected{ outline: 5px solid rgba(243,166,58,.95); }
+  .thumb img{ width:100%; height:210px; object-fit:cover; border-radius:10px; display:block; }
+  .topIcons{
+    position:fixed; top:calc(14px + env(safe-area-inset-top, 0px)); left:calc(14px + env(safe-area-inset-left, 0px)); display:flex; gap:10px; z-index:50;
+  }
+  .iconBtn{
+    width:70px; height:70px; border-radius:14px;
+    background: var(--orange);
+    display:flex; align-items:center; justify-content:center;
+    box-shadow: 0 10px 0 rgba(0,0,0,.25);
+    cursor:pointer; user-select:none;
+    color:#4b2200; font-weight:900;
+  }
+  .iconBtn:active{ transform: translateY(2px); box-shadow: 0 8px 0 rgba(0,0,0,.25); }
+
+  .rightIcons{
+    position:fixed; top:14px; right:14px; display:flex; gap:10px; z-index:50;
+  }
+
+  /* pieces choose */
+  .grid4{ width:min(820px, calc(100vw - 48px)); margin: 0 auto; display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap: clamp(10px, 1.8vw, 18px); }
+  .pieceCard{ background: rgba(255,255,255,.10); border:4px solid rgba(255,255,255,.80); border-radius:18px; padding: clamp(10px, 1.6vw, 14px); cursor:pointer; box-shadow: 0 12px 0 rgba(0,0,0,.20); display:flex; flex-direction:column; gap:8px; align-items:center; }
+  .pieceCard .label{ font-size: clamp(16px, 2.2vw, 22px); font-weight:1000; letter-spacing:.5px; }
+  .miniGrid{ width: min(18.5vw, 18.5vh, 210px); height: min(18.5vw, 18.5vh, 210px); border-radius:10px; border:3px solid rgba(255,255,255,.55); background: rgba(0,0,0,.14); display:grid; place-items:center; }
+  .miniGrid svg{ width:86%; height:86%; opacity:.9; }
+
+  /* Game */
+  #game{ position:fixed; inset:0; display:none; }
+  #game.active{ display:block; }
+  #c{ position:absolute; inset:0; width:100%; height:100%; }
+  .hudTop{
+    position:absolute; top:12px; left:110px; right:110px;
+    display:flex; align-items:center; justify-content:center; gap:30px;
+    pointer-events:none;
+    z-index:30;
+  }
+  .hudTop .stat{ font-weight:900; font-size:26px; letter-spacing:1px; text-shadow: 0 2px 0 rgba(0,0,0,.35); pointer-events:none;}
+  .hudBottom{
+    position:absolute; bottom:calc(16px + env(safe-area-inset-bottom, 0px)); right:14px; display:flex; gap:12px; z-index:40;
+  }
+  .hudBottom .iconBtn{ width:86px; height:86px; border-radius:16px; font-size:22px; }
+  .hintBadge{
+    position:absolute; bottom:18px; left:14px; z-index:40; 
+    background: rgba(0,0,0,.22); border:2px solid rgba(255,255,255,.18);
+    border-radius:14px; padding:10px 12px; font-weight:800;
+  }
+  .toast{
+    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    z-index:60;
+    background: rgba(0,0,0,.40);
+    border:3px solid rgba(255,255,255,.25);
+    border-radius:18px; padding:18px 18px 16px;
+    min-width:min(520px, calc(100vw - 60px));
+    box-shadow:0 20px 60px rgba(0,0,0,.45);
+    display:none;
+  }
+  .toast.show{ display:block; }
+  .toast h3{ margin:0 0 8px; font-size:34px; text-align:center; }
+  .toast p{ margin:0; text-align:center; opacity:.92; font-size:18px; }
+  .toast .row{ display:flex; justify-content:center; gap:12px; margin-top:14px; flex-wrap:wrap; }
+  .toast .closeX{
+    position:absolute; right:12px; top:12px;
+    width:44px; height:44px; border-radius:12px;
+    background: rgba(255,255,255,.12);
+    border:2px solid rgba(255,255,255,.20);
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+    font-size:22px; font-weight:900;
+  }
+
+  /* small screens */
+  @media (max-width:860px){
+    .panel{ grid-template-columns:1fr; }
+    .title{ font-size:38px; }
+    .bigTitle{ font-size: clamp(20px, 6vw, 34px); }
+    .gameName{ font-size: clamp(22px, 5vw, 34px); }
+    .thumb{ grid-template-columns:1fr; width:min(520px, calc(100vw - 120px)); }
+    .thumb img{ height:200px; }
+    .hudTop{ left:90px; right:90px; gap:16px; }
+    .hudTop .stat{ font-size:22px; }
+    /* on small screens trays move to bottom, so move extra buttons up */
+    .hudBottom{ top:132px; bottom:auto; right:14px; }
+    .hintBadge{ top:132px; bottom:auto; left:14px; }
+  }
+
+  .footerBrand a{ color:rgba(255,255,255,.92); text-decoration:none; }
+  .footerBrand a:hover{ text-decoration:underline; }
+
+  @media (max-height: 700px){
+  .bigTitle{ font-size: clamp(18px, 4.6vw, 30px); }
+  .gameName{ font-size: clamp(18px, 4.4vw, 30px); }
+  .grid4{ gap: 12px; }
+  .pieceCard{ padding: 12px; }
+  .miniGrid{ width: min(18vw, 18vh, 180px); height: min(18vw, 18vh, 180px); }
+}
+
+  /* Fit piece selection on short screens (no scroll) */
+  #screenChoosePieces .bigTitle{ font-size: clamp(22px, 3.6vw, 38px); }
+  #screenChoosePieces .gameName{ font-size: clamp(16px, 2.4vw, 22px); }
+  @media (max-height: 820px){
+    .screenInner{ padding-top: calc(64px + env(safe-area-inset-top, 0px)); padding-bottom: calc(26px + env(safe-area-inset-bottom, 0px)); }
+    #screenChoosePieces .bigTitle{ font-size: clamp(20px, 3.2vw, 34px); }
+  }
+  @media (max-height: 760px){
+    .grid4{ width:min(760px, calc(100vw - 40px)); gap: 10px; }
+    .pieceCard{ padding: 10px; }
+    .pieceCard .label{ font-size: clamp(14px, 2.0vw, 20px); }
+    .miniGrid{ width: min(16vw, 16vh, 180px); height: min(16vw, 16vh, 180px); }
+  }
+
+
+@media (max-width: 420px){
+  .iconBtn{ width:52px; height:52px; font-size:26px; border-radius:14px; }
+  .topIcons, .topRight{ gap:10px; }
+  .titleRow{ margin-top: 0; }
+}
+
+</style>
+
+<!-- GameMonetize SDK -->
+<script>
+  window.GM_GAME_ID = "azcopqbquvo19bl2wcht4kq3tpxx3136";
+  window.SDK_OPTIONS = {
+    gameId: window.GM_GAME_ID,
+    onEvent: function (event) {
+      try {
+        window.dispatchEvent(new CustomEvent("GM_SDK_EVENT", { detail: event }));
+      } catch (e) {}
+    }
+  };
+</script>
+<script src="https://api.gamemonetize.com/sdk.js"></script>
+
+</head>
+<body>
+<div class="bg"></div>
+
+<!-- Global icons (fullscreen, sound, close) -->
+<div class="topIcons">
+  <div class="iconBtn" id="btnFs" title="Fullscreen">⛶</div>
+</div>
+<div class="rightIcons">
+  <div class="iconBtn" id="btnSound" title="Sound">🔊</div>
+  <div class="iconBtn" id="btnClose" title="Exit">✕</div>
+</div>
+
+<!-- MENU -->
+<section class="screen" id="screenMenu" style="display:none">
+  <div class="panel">
+    <div class="card">
+      <h1 class="title">Christmas Ornaments Jigsaw Puzzles</h1>
+      <p class="sub">Build the picture from pieces. First choose an image, then pick the number of pieces — and start playing.</p>
+      <button class="btn" id="goChooseImage">▶ Play</button>
+      <div style="margin-top:14px;opacity:.8">Website: <a href="https://igrolis.ru" target="_top" rel="noopener">igrolis.ru</a></div>
+    </div>
+    <div class="card" style="text-align:center">
+      <div style="font-weight:900; font-size:22px; margin-bottom:10px">Preview</div>
+      <img id="menuPreview" src="assets/images/img1.webp" alt="preview" style="width:100%; border-radius:14px; border:3px solid rgba(255,255,255,.25); max-height:420px; object-fit:cover"/>
+      <div style="margin-top:10px; opacity:.9">Pieces: <b id="menuPieces">64</b></div>
+    </div>
+  </div>
+</section>
+
+<!-- CHOOSE IMAGE -->
+<section class="screen" id="screenChooseImage">
+  <div class="screenInner"><div class="screenContent">
+    <div class="gameName">CHRISTMAS ORNAMENTS JIGSAW PUZZLES</div>
+    <div class="bigTitle">CHOOSE A PICTURE</div>
+    <div class="chooseWrap">
+      <div class="arrow" id="imgPrev" aria-label="Back"><span>◀</span></div>
+      <div class="thumb" id="thumbGrid"></div>
+      <div class="arrow" id="imgNext" aria-label="Next"><span>▶</span></div>
+    </div>
+    <div style="margin-top:18px;">
+      <button class="btn" id="goChoosePieces">Next ▶</button>
+    </div>
+    <div class="footerBrand"><a href="https://igrolis.ru" target="_top" rel="noopener">igrolis.ru</a></div>
+  </div>
+
+</div>
+</section>
+
+<!-- CHOOSE PIECES -->
+<section class="screen" id="screenChoosePieces">
+  <div class="screenInner"><div class="screenContent">
+    <div class="gameName">CHRISTMAS ORNAMENTS JIGSAW PUZZLES</div>
+    <div class="bigTitle">CHOOSE NUMBER OF PIECES</div>
+    <div class="grid4">
+      <div class="pieceCard" data-n="16">
+        <div class="miniGrid" aria-hidden="true">
+          <svg viewBox="0 0 100 100">
+            <path d="M10 10H90V90H10Z" fill="none" stroke="rgba(255,255,255,.9)" stroke-width="4"/>
+            <path d="M10 35H90M10 60H90M35 10V90M60 10V90" fill="none" stroke="rgba(255,255,255,.9)" stroke-width="3"/>
+          </svg>
+        </div>
+        <div class="label">16 PIECES</div>
+      </div>
+      <div class="pieceCard" data-n="36">
+        <div class="miniGrid" aria-hidden="true">
+          <svg viewBox="0 0 100 100">
+            <path d="M10 10H90V90H10Z" fill="none" stroke="rgba(255,255,255,.9)" stroke-width="4"/>
+            <g stroke="rgba(255,255,255,.9)" stroke-width="2" fill="none">
+              <path d="M10 23H90M10 36H90M10 49H90M10 62H90M10 75H90"/>
+              <path d="M23 10V90M36 10V90M49 10V90M62 10V90M75 10V90"/>
+            </g>
+          </svg>
+        </div>
+        <div class="label">36 PIECES</div>
+      </div>
+      <div class="pieceCard" data-n="64">
+        <div class="miniGrid" aria-hidden="true">
+          <svg viewBox="0 0 100 100">
+            <path d="M10 10H90V90H10Z" fill="none" stroke="rgba(255,255,255,.9)" stroke-width="4"/>
+            <g stroke="rgba(255,255,255,.9)" stroke-width="1.6" fill="none">
+              <path d='M10 20H90'/>
+<path d='M10 30H90'/>
+<path d='M10 40H90'/>
+<path d='M10 50H90'/>
+<path d='M10 60H90'/>
+<path d='M10 70H90'/>
+<path d='M10 80H90'/>
+              <path d='M20 10V90'/>
+<path d='M30 10V90'/>
+<path d='M40 10V90'/>
+<path d='M50 10V90'/>
+<path d='M60 10V90'/>
+<path d='M70 10V90'/>
+<path d='M80 10V90'/>
+            </g>
+          </svg>
+        </div>
+        <div class="label">64 PIECES</div>
+      </div>
+      <div class="pieceCard" data-n="100">
+        <div class="miniGrid" aria-hidden="true">
+          <svg viewBox="0 0 100 100">
+            <path d="M10 10H90V90H10Z" fill="none" stroke="rgba(255,255,255,.9)" stroke-width="4"/>
+            <g stroke="rgba(255,255,255,.9)" stroke-width="1.2" fill="none">
+              <path d='M10 18H90'/>
+<path d='M10 26H90'/>
+<path d='M10 34H90'/>
+<path d='M10 42H90'/>
+<path d='M10 50H90'/>
+<path d='M10 58H90'/>
+<path d='M10 66H90'/>
+<path d='M10 74H90'/>
+<path d='M10 82H90'/>
+              <path d='M18 10V90'/>
+<path d='M26 10V90'/>
+<path d='M34 10V90'/>
+<path d='M42 10V90'/>
+<path d='M50 10V90'/>
+<path d='M58 10V90'/>
+<path d='M66 10V90'/>
+<path d='M74 10V90'/>
+<path d='M82 10V90'/>
+            </g>
+          </svg>
+        </div>
+        <div class="label">100 PIECES</div>
+      </div>
+    </div>
+    <div style="margin-top:18px;">
+      <button class="btn secondary" id="backToImages">← Back</button>
+      <div style="margin-top:10px; opacity:.9;">After you choose, the puzzle starts automatically.</div>
+    </div>
+    <div class="footerBrand"><a href="https://igrolis.ru" target="_top" rel="noopener">igrolis.ru</a></div>
+  </div>
+
+</div>
+</section>
+
+<!-- GAME -->
+<section id="game" class="screen">
+  <canvas id="c"></canvas>
+
+  <div class="hudTop">
+    <div class="stat"><span id="timeLabel">TIME</span> <span id="t">00:00</span></div>
+    <div class="stat"><span id="movesLabel">MOVES</span> <span id="m">0</span></div>
+  </div>
+
+  <div class="hudBottom">
+    <div class="iconBtn" id="btnHint" title="Hint">🧩</div>
+    <div class="iconBtn" id="btnShuffle" title="Shuffle">🔄</div>
+  </div>
+  <div class="hintBadge" id="hintState"><span id="hintLabel">Hint</span>: OFF</div>
+
+  <div class="toast" id="winToast" role="dialog" aria-modal="true">
+    <div class="closeX" id="winClose">✕</div>
+    <h3>DONE! 🎉</h3>
+    <p>Time: <b id="winTime">00:00</b> · Moves: <b id="winMoves">0</b></p>
+    <div class="row">
+      <button class="btn" id="winMore">More puzzles</button>
+      <button class="btn secondary" id="winReplay">Play again</button>
+    </div>
+  </div>
+</section>
+<audio id="bgm" src="assets/audio/bgm.mp3" loop preload="auto"></audio>
+<script>
+(() => {
+
+  // --- i18n (EN default, RU via ?lang=ru) ---
+  const LANG = (new URLSearchParams(location.search).get("lang") || "").toLowerCase().startsWith("ru") ? "ru" : "en";
+  const I18N = {
+    en: {
+      gameTitleTop: "CHRISTMAS ORNAMENTS JIGSAW PUZZLES",
+      choosePicture: "CHOOSE A PICTURE",
+      next: "Next ▶",
+      back: "◀ Back",
+      choosePieces: "CHOOSE PIECES",
+      time: "TIME",
+      moves: "MOVES",
+      hint: "Hint",
+      on: "ON",
+      off: "OFF"
+    },
+    ru: {
+      gameTitleTop: "НОВОГОДНИЕ ПАЗЛЫ: ЁЛОЧНЫЕ УКРАШЕНИЯ",
+      choosePicture: "ВЫБЕРИТЕ КАРТИНКУ",
+      next: "Дальше ▶",
+      back: "◀ Назад",
+      choosePieces: "ВЫБЕРИТЕ СЛОЖНОСТЬ",
+      time: "ВРЕМЯ",
+      moves: "ХОДЫ",
+      hint: "Подсказка",
+      on: "ВКЛ",
+      off: "ВЫКЛ"
+    }
+  };
+  const T = (k) => (I18N[LANG] && I18N[LANG][k]) || I18N.en[k] || k;
+
+  function applyI18n() {
+    const titleEl = document.querySelector("#screenMenu .title");
+    const subEl = document.querySelector("#screenMenu .sub");
+    const nextBtn = document.getElementById("goChoosePieces");
+    const backBtn = document.getElementById("btnBackToMenu");
+    const choosePiecesTitle = document.querySelector("#screenChoosePieces .title");
+
+    if (titleEl) titleEl.textContent = T("gameTitleTop");
+    if (subEl) subEl.textContent = T("choosePicture");
+    if (nextBtn) nextBtn.textContent = T("next");
+    if (backBtn) backBtn.textContent = T("back");
+    if (choosePiecesTitle) choosePiecesTitle.textContent = T("choosePieces");
+
+    const timeLabel = document.getElementById("timeLabel");
+    const movesLabel = document.getElementById("movesLabel");
+    if (timeLabel) timeLabel.textContent = T("time");
+    if (movesLabel) movesLabel.textContent = T("moves");
+
+    const hintLabel = document.getElementById("hintLabel");
+    if (hintLabel) hintLabel.textContent = T("hint");
+  }
+  document.addEventListener("DOMContentLoaded", applyI18n);
+
+  // --- GameMonetize SDK helpers (ads only at START and WIN) ---
+  let _adShownStart = false;
+  let _adShownWin = false;
+
+  function gmShowBannerOnce(kind) {
+    if (kind === "start" && _adShownStart) return;
+    if (kind === "win" && _adShownWin) return;
+
+    const sdkObj = window.sdk;
+    if (sdkObj && typeof sdkObj.showBanner === "function") {
+      try {
+        sdkObj.showBanner();
+        if (kind === "start") _adShownStart = true;
+        if (kind === "win") _adShownWin = true;
+      } catch (e) {}
+    }
+  }
+
+  // Pause/resume integration (mute music + freeze input)
+  let _gmPrevRunning = null;
+  let _gmPrevSoundOn = null;
+
+  function gmPauseForAd() {
+    try {
+      _gmPrevRunning = (typeof running !== "undefined") ? running : null;
+      if (typeof running !== "undefined") running = false;
+    } catch (e) {}
+
+    try {
+      _gmPrevSoundOn = (typeof soundOn !== "undefined") ? soundOn : null;
+      if (typeof soundOn !== "undefined") {
+        soundOn = false;
+        if (typeof syncBgm === "function") syncBgm();
+      }
+    } catch (e) {}
+
+    try {
+      const cvs = document.getElementById("canvas");
+      if (cvs) cvs.style.pointerEvents = "none";
+    } catch (e) {}
+  }
+
+  function gmResumeAfterAd() {
+    try {
+      if (_gmPrevRunning !== null && typeof running !== "undefined") running = _gmPrevRunning;
+    } catch (e) {}
+
+    try {
+      if (_gmPrevSoundOn !== null && typeof soundOn !== "undefined") {
+        soundOn = _gmPrevSoundOn;
+        if (typeof syncBgm === "function") syncBgm();
+      }
+    } catch (e) {}
+
+    try {
+      const cvs = document.getElementById("canvas");
+      if (cvs) cvs.style.pointerEvents = "";
+    } catch (e) {}
+  }
+
+  window.addEventListener("GM_SDK_EVENT", (ev) => {
+    const event = ev.detail || {};
+    if (event.name === "SDK_GAME_PAUSE") gmPauseForAd();
+    if (event.name === "SDK_GAME_START") gmResumeAfterAd();
+  });
+
+
+  // Correct "vh" for mobile browsers (address bar / safe areas)
+  function setVh(){
+    const vh = window.innerHeight * 0.01;
+    document.documentElement.style.setProperty('--vh', `${vh}px`);
+  }
+  setVh();
+  window.addEventListener('resize', setVh, {passive:true});
+  window.addEventListener('orientationchange', setVh, {passive:true});
+
+  // ====== helpers ======
+  const $ = (id) => document.getElementById(id);
+  const screens = {
+    menu: $("screenMenu"),
+    img: $("screenChooseImage"),
+    pieces: $("screenChoosePieces"),
+    game: $("game"),
+  };
+  function showScreen(which){
+    Object.values(screens).forEach(s => s.classList?.remove("active"));
+    if (which === "game") screens.game.classList.add("active");
+    else screens[which].classList.add("active");
+  }
+  function pad2(n){ return String(n).padStart(2,"0"); }
+  function fmtTime(sec){
+    sec = Math.max(0, sec|0);
+    const m = (sec/60)|0, s = sec%60;
+    return pad2(m)+":"+pad2(s);
+  }
+
+  // ====== sound (simple, optional) ======
+  let soundOn = true;
+  const bgm = document.getElementById("bgm");
+  let bgmUnlocked = false;
+  if (bgm){
+    bgm.volume = 0.25;
+  }
+  function syncBgm(){
+    if(!bgm) return;
+    if(!bgmUnlocked) return;
+    if(soundOn){
+      bgm.play().catch(()=>{});
+    }else{
+      bgm.pause();
+    }
+  }
+  function unlockBgmOnce(){
+    if(bgmUnlocked) return;
+    bgmUnlocked = true;
+    syncBgm();
+  }
+  // Browsers block autoplay: start music after the first user interaction
+  window.addEventListener("pointerdown", unlockBgmOnce, {once:true, passive:true});
+  window.addEventListener("keydown", unlockBgmOnce, {once:true});
+
+  function blip(){ if(!soundOn) return; /* silent by default */ }
+
+  // ====== assets ======
+  const IMAGES = [
+    {src:"assets/images/img1.webp", title:"Snow Globe House"},
+    {src:"assets/images/img2.webp", title:"Tree Ornament House"},
+    {src:"assets/images/img3.webp", title:"Gingerbread Snow Globe"},
+    {src:"assets/images/img4.webp", title:"Fox on a Toy Horse"},
+    {src:"assets/images/img5.webp", title:"Gingerbread Snow Globe"},
+    {src:"assets/images/img6.webp", title:"Three Ornaments on a Branch"},
+  ];
+
+  // ====== UI: thumbnails ======
+  let page = 0;
+  let selectedIndex = 0;
+  const pageSize = 3;
+  const thumbGrid = $("thumbGrid");
+
+  function renderThumbs(){
+    thumbGrid.innerHTML = "";
+    const start = page*pageSize;
+    const slice = IMAGES.slice(start, start+pageSize);
+    slice.forEach((it, i) => {
+      const idx = start+i;
+      const div = document.createElement("div");
+      div.className = "item"+(idx===selectedIndex?" selected":"");
+      div.innerHTML = `<img src="${it.src}" alt="${it.title}">`;
+      div.addEventListener("click", () => { selectedIndex = idx; renderThumbs(); $("menuPreview").src = IMAGES[selectedIndex].src; });
+      thumbGrid.appendChild(div);
+    });
+  }
+  $("imgPrev").addEventListener("click", () => { page = (page-1+Math.ceil(IMAGES.length/pageSize))%Math.ceil(IMAGES.length/pageSize); renderThumbs(); });
+  $("imgNext").addEventListener("click", () => { page = (page+1)%Math.ceil(IMAGES.length/pageSize); renderThumbs(); });
+
+  // ====== global buttons ======
+  $("btnClose").addEventListener("click", () => { showScreen("img"); stopGame(); });
+  $("goChooseImage").addEventListener("click", () => { showScreen("img"); renderThumbs(); });
+  const backToMenu1 = $("backToMenu1");
+  if (backToMenu1) backToMenu1.addEventListener("click", () => showScreen("img"));
+  $("goChoosePieces").addEventListener("click", () => showScreen("pieces"));
+  $("backToImages").addEventListener("click", () => showScreen("img"));
+
+  $("btnSound").addEventListener("click", () => {
+    soundOn = !soundOn;
+    $("btnSound").textContent = soundOn ? "🔊" : "🔇";
+    syncBgm();
+  });
+
+  $("btnFs").addEventListener("click", async () => {
+    const el = document.documentElement;
+    try{
+      if (!document.fullscreenElement) await el.requestFullscreen();
+      else await document.exitFullscreen();
+    }catch(e){}
+  });
+
+  // ====== choose pieces -> start game ======
+  let chosenPieces = 64;
+  document.querySelectorAll(".pieceCard").forEach(card => {
+    card.addEventListener("click", () => {
+      chosenPieces = parseInt(card.dataset.n, 10);
+      $("menuPieces").textContent = String(chosenPieces);
+      gmShowBannerOnce("start");
+      startGame();
+    });
+  });
+
+  // ====== Canvas game ======
+  const canvas = $("c");
+  const ctx = canvas.getContext("2d");
+  let dpr = 1;
+  function resize(){
+  dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+  const w = Math.floor(window.innerWidth);
+  const h = Math.floor(window.innerHeight);
+  canvas.width = Math.floor(w * dpr);
+  canvas.height = Math.floor(h * dpr);
+  canvas.style.width = w+"px";
+  canvas.style.height = h+"px";
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+
+// --- IMPORTANT: keep layout centered on fullscreen/resize WITHOUT resetting progress ---
+let _relayoutRAF = 0;
+let _relayoutTO  = 0;
+
+function captureStateForRelayout(){
+  const state = new Map();
+  const cellW = board.w/cols, cellH = board.h/rows;
+
+  pieces.forEach(p => {
+    const key = p.r + "_" + p.c;
+    const tray = ((p.r*cols + p.c) % 2 === 0) ? leftTray : rightTray;
+
+    const margin = 18;
+    const minX = tray.x + margin + p.extra;
+    const maxX = tray.x + tray.w - margin - p.extra - cellW;
+    const minY = tray.y + margin + p.extra;
+    const maxY = tray.y + tray.h - margin - p.extra - cellH;
+
+    let relX = 0.5, relY = 0.5;
+    if (!p.locked){
+      if (maxX > minX) relX = (p.x - minX) / (maxX - minX);
+      if (maxY > minY) relY = (p.y - minY) / (maxY - minY);
+    }
+    relX = Math.max(0, Math.min(1, relX));
+    relY = Math.max(0, Math.min(1, relY));
+
+    state.set(key, { locked: !!p.locked, relX, relY });
+  });
+
+  return state;
+}
+
+function applyStateAfterRelayout(state){
+  const cellW = board.w/cols, cellH = board.h/rows;
+
+  pieces.forEach(p => {
+    const key = p.r + "_" + p.c;
+    const s = state.get(key);
+    if (!s) return;
+
+    p.locked = !!s.locked;
+
+    if (p.locked){
+      p.x = p.tx;
+      p.y = p.ty;
+      return;
+    }
+
+    const tray = ((p.r*cols + p.c) % 2 === 0) ? leftTray : rightTray;
+    const margin = 18;
+
+    const minX = tray.x + margin + p.extra;
+    const maxX = tray.x + tray.w - margin - p.extra - cellW;
+    const minY = tray.y + margin + p.extra;
+    const maxY = tray.y + tray.h - margin - p.extra - cellH;
+
+    if (maxX <= minX) p.x = tray.x + (tray.w - cellW)/2;
+    else p.x = minX + s.relX * (maxX - minX);
+
+    if (maxY <= minY) p.y = tray.y + (tray.h - cellH)/2;
+    else p.y = minY + s.relY * (maxY - minY);
+  });
+
+  // cancel dragging safely
+  dragging = null;
+}
+
+function relayoutKeepProgress(){
+  // only when game screen is visible and image is loaded
+  if (!running) { resize(); return; }
+  if (!screens.game.classList.contains("active")) { resize(); return; }
+  if (!img || !img.naturalWidth) { resize(); return; }
+
+  const state = captureStateForRelayout();
+
+  resize();
+  layout();
+  // rebuild piece canvases to match new size, but keep same tabsMap and restore progress
+  buildPieces();
+  applyStateAfterRelayout(state);
+
+  redraw();
+}
+
+function scheduleRelayout(){
+  if (_relayoutRAF) cancelAnimationFrame(_relayoutRAF);
+  _relayoutRAF = requestAnimationFrame(() => {
+    _relayoutRAF = 0;
+    relayoutKeepProgress();
+  });
+
+  // some browsers update innerWidth/innerHeight a moment later on fullscreenchange
+  clearTimeout(_relayoutTO);
+  _relayoutTO = setTimeout(() => relayoutKeepProgress(), 120);
+}
+
+window.addEventListener("resize", scheduleRelayout);
+window.addEventListener("orientationchange", scheduleRelayout);
+document.addEventListener("fullscreenchange", scheduleRelayout);
+
+  // puzzle state
+  let img = new Image();
+  img.crossOrigin = "anonymous";
+  let cols=8, rows=8, total=64;
+  let board = {x:0,y:0,w:0,h:0};
+  let leftTray = {x:0,y:0,w:0,h:0};
+  let rightTray = {x:0,y:0,w:0,h:0};
+  let pieces = []; // {r,c,x,y,tx,ty,locked,path,maskCanvas,w,h,tab}
+  let tabsMap = null; // keep tab shapes so they don't change on resize/fullscreen
+  let finalReveal = false;
+  let finalStart = 0;
+  let finalAnim = 0;
+  let dragging = null;
+  let dragOff = {x:0,y:0};
+  let hintOn = false;
+  let moves = 0;
+  let startedAt = 0;
+  let tickTimer = null;
+  let sec = 0;
+  let running = false;
+
+  function computeGrid(n){
+    // prefer near-square grids: 16=4x4,36=6x6,64=8x8,100=10x10
+    const s = Math.round(Math.sqrt(n));
+    return {rows:s, cols:s};
+  }
+
+  function layout(){
+    const W = window.innerWidth, H = window.innerHeight;
+    const pad = 18;
+    const topHud = (W < 860 ? 84 : 96);
+    const ar = img.naturalWidth / img.naturalHeight;
+
+    const narrow = W < 820;
+
+    if (narrow){
+      // Mobile/tablet: trays at the bottom (2 columns)
+      const trayH = Math.max(160, Math.floor(H * 0.28));
+      const trayY = H - trayH - pad;
+      const trayW = (W - pad*3) / 2;
+
+      leftTray  = { x: pad,          y: trayY, w: trayW, h: trayH };
+      rightTray = { x: pad*2+trayW,  y: trayY, w: trayW, h: trayH };
+
+      const boardMaxW = W - pad*2;
+      const boardMaxH = trayY - topHud - pad;
+
+      let bw = Math.min(boardMaxW, boardMaxH * ar);
+      let bh = bw / ar;
+      if (bh > boardMaxH){ bh = boardMaxH; bw = bh * ar; }
+
+      board = { x: (W - bw)/2, y: topHud + (boardMaxH - bh)/2, w:bw, h:bh };
+      return;
+    }
+
+    // Desktop: trays on the sides
+    const trayW = Math.max(190, Math.min(320, Math.floor(W * 0.18)));
+    leftTray  = { x: pad,              y: topHud, w: trayW, h: H - topHud - pad };
+    rightTray = { x: W - pad - trayW,  y: topHud, w: trayW, h: H - topHud - pad };
+
+    const boardMaxW = W - (trayW*2 + pad*4);
+    const boardMaxH = H - topHud - 120;
+
+    let bw = Math.min(boardMaxW, boardMaxH * ar);
+    let bh = bw / ar;
+    if (bh > boardMaxH){ bh = boardMaxH; bw = bh * ar; }
+    board = { x: (W - bw)/2, y: topHud + (boardMaxH - bh)/2, w:bw, h:bh };
+  }
+
+  function randIn(rect, margin=10){
+    return {
+      x: rect.x + margin + Math.random()*(rect.w - margin*2),
+      y: rect.y + margin + Math.random()*(rect.h - margin*2),
+    };
+  }
+
+  // --- Safe spawn: never place pieces under UI buttons ---
+  function getUiAvoidRects(padPx=12){
+    const canvasRect = c.getBoundingClientRect();
+    const ids = ['btnFs','btnSound','btnClose','btnHint','btnShuffle'];
+    const rects = [];
+    ids.forEach(id => {
+      const el = document.getElementById(id);
+      if(!el) return;
+      const r = el.getBoundingClientRect();
+      if(r.width <= 0 || r.height <= 0) return;
+      rects.push({
+        x: (r.left - canvasRect.left) - padPx,
+        y: (r.top  - canvasRect.top ) - padPx,
+        w: r.width  + padPx*2,
+        h: r.height + padPx*2
+      });
+    });
+    return rects;
+  }
+
+  function rectsOverlap(a,b){
+    return !(a.x + a.w <= b.x || b.x + b.w <= a.x || a.y + a.h <= b.y || b.y + b.h <= a.y);
+  }
+
+  function randInSafe(rect, margin=10, w=0, h=0){
+    const avoid = getUiAvoidRects();
+    // If we have no avoid rects, fallback to normal rand.
+    if(!avoid || !avoid.length) return randIn(rect, margin);
+    for(let i=0;i<250;i++){
+      const xy = randIn(rect, margin);
+      const box = {x: xy.x, y: xy.y, w: w||0, h: h||0};
+      let ok = true;
+      for(const ar of avoid){ if(rectsOverlap(box, ar)){ ok=false; break; } }
+      if(ok) return xy;
+    }
+    return randIn(rect, margin);
+  }
+  // --- /Safe spawn ---
+
+
+  function piecePath(px, py, pw, ph, tabs){
+    // tabs: {top,right,bottom,left} values -1/0/1 (in/out)
+    const size = Math.min(pw, ph);
+    const tab = size*0.22;
+    const neck = tab*0.55;
+    const midx = px + pw/2;
+    const midy = py + ph/2;
+    const p = new Path2D();
+    p.moveTo(px, py);
+
+    // TOP
+    if (tabs.top !== 0){
+      const dir = tabs.top;
+      p.lineTo(midx - neck, py);
+      p.bezierCurveTo(midx - neck, py - dir*tab, midx + neck, py - dir*tab, midx + neck, py);
+    }
+    p.lineTo(px + pw, py);
+
+    // RIGHT
+    if (tabs.right !== 0){
+      const dir = tabs.right;
+      p.lineTo(px + pw, midy - neck);
+      p.bezierCurveTo(px + pw + dir*tab, midy - neck, px + pw + dir*tab, midy + neck, px + pw, midy + neck);
+    }
+    p.lineTo(px + pw, py + ph);
+
+    // BOTTOM
+    if (tabs.bottom !== 0){
+      const dir = tabs.bottom;
+      p.lineTo(midx + neck, py + ph);
+      p.bezierCurveTo(midx + neck, py + ph + dir*tab, midx - neck, py + ph + dir*tab, midx - neck, py + ph);
+    }
+    p.lineTo(px, py + ph);
+
+    // LEFT
+    if (tabs.left !== 0){
+      const dir = tabs.left;
+      p.lineTo(px, midy + neck);
+      p.bezierCurveTo(px - dir*tab, midy + neck, px - dir*tab, midy - neck, px, midy - neck);
+    }
+    p.closePath();
+    return p;
+  }
+
+  function buildPieces(){
+    pieces = [];
+    const cellW = board.w / cols;
+    const cellH = board.h / rows;
+
+    // tabs map
+    let tabs;
+if (tabsMap && tabsMap.length === rows && tabsMap[0] && tabsMap[0].length === cols){
+  tabs = tabsMap; // reuse previous tabs (important on fullscreen/resize)
+} else {
+  tabs = Array.from({length: rows}, () => Array.from({length: cols}, () => ({top:0,right:0,bottom:0,left:0})));
+  for (let r=0; r<rows; r++){
+    for (let c=0; c<cols; c++){
+      // edges: 0, internal: random +/-1 with matching neighbors
+      tabs[r][c].top = (r===0) ? 0 : -tabs[r-1][c].bottom;
+      tabs[r][c].left = (c===0) ? 0 : -tabs[r][c-1].right;
+      tabs[r][c].right = (c===cols-1) ? 0 : (Math.random()<0.5 ? 1 : -1);
+      tabs[r][c].bottom = (r===rows-1) ? 0 : (Math.random()<0.5 ? 1 : -1);
+    }
+  }
+  tabsMap = tabs;
+}
+
+    // create per-piece mask canvas (for clipped draw)
+    const srcW = img.naturalWidth, srcH = img.naturalHeight;
+    for (let r=0; r<rows; r++){
+      for (let c=0; c<cols; c++){
+        const tx = board.x + c*cellW;
+        const ty = board.y + r*cellH;
+        const pw = cellW;
+        const ph = cellH;
+        // Offscreen size includes tab extra
+        const extra = Math.min(pw,ph)*0.26;
+        const offW = Math.ceil(pw + extra*2);
+        const offH = Math.ceil(ph + extra*2);
+        const off = document.createElement("canvas");
+        off.width = Math.ceil(offW*dpr);
+        off.height = Math.ceil(offH*dpr);
+        const octx = off.getContext("2d");
+        octx.setTransform(dpr,0,0,dpr,0,0);
+
+        const localX = extra, localY = extra;
+        const path = piecePath(localX, localY, pw, ph, tabs[r][c]);
+
+        // clip
+        octx.save();
+        octx.clip(path);
+
+        // draw image portion with matching scaling
+        // map board rect -> image rect
+        // draw the full image aligned to the board so tabs contain real pixels (no empty gaps)
+        const bleed = 1.5;
+        octx.drawImage(
+          img,
+          0, 0, srcW, srcH,
+          localX - c*pw - bleed,
+          localY - r*ph - bleed,
+          pw*cols + bleed*2,
+          ph*rows + bleed*2
+        );
+        octx.restore();
+
+        // border highlight
+        octx.strokeStyle = "rgba(0,0,0,.35)";
+        octx.lineWidth = 3;
+        octx.stroke(path);
+        octx.strokeStyle = "rgba(255,255,255,.25)";
+        octx.lineWidth = 2;
+        octx.stroke(path);
+
+        // place in trays (left/right alternating)
+        const tray = ((r*cols+c) % 2 === 0) ? leftTray : rightTray;
+        const pos = randInSafe(tray, 24, offW, offH);
+        pieces.push({
+          r,c, tx,ty, locked:false,
+          x: pos.x, y: pos.y,
+          off, offW, offH, extra,
+          pathLocal: path, // in offscreen coords
+          tabs: tabs[r][c],
+        });
+      }
+    }
+    shufflePieces(false);
+  }
+
+  function shufflePieces(countMove=true){
+    // scatter pieces in trays, keep locked in place
+    const cellW = board.w/cols, cellH = board.h/rows;
+    pieces.forEach((p, idx) => {
+      if (p.locked) return;
+      const tray = (idx % 2 === 0) ? leftTray : rightTray;
+      const pos = randInSafe(tray, 34, p.offW || 0, p.offH || 0);
+      p.x = pos.x;
+      p.y = pos.y;
+    });
+    if (countMove) moves++; updateHud();
+    redraw();
+  }
+
+  function updateHud(){
+    $("m").textContent = String(moves);
+    $("t").textContent = fmtTime(sec);
+    $("hintState").textContent = "Hint: " + (hintOn ? "ON" : "OFF");
+  }
+
+  function startTimer(){
+    stopTimer();
+    sec = 0;
+    startedAt = Date.now();
+    tickTimer = setInterval(() => {
+      if(!running) return;
+      sec = Math.floor((Date.now()-startedAt)/1000);
+      updateHud();
+    }, 250);
+  }
+  function stopTimer(){
+    if (tickTimer){ clearInterval(tickTimer); tickTimer=null; }
+  }
+
+  function redraw(){
+    if (!screens.game.classList.contains("active")) return;
+    const W = window.innerWidth, H = window.innerHeight;
+    ctx.clearRect(0,0,W,H);
+
+    // background pattern already in CSS; we just draw translucent frame
+    // trays
+    ctx.save();
+    ctx.fillStyle = "rgba(0,0,0,.20)";
+    roundRect(ctx, leftTray.x, leftTray.y, leftTray.w, leftTray.h, 18, true, false);
+    roundRect(ctx, rightTray.x, rightTray.y, rightTray.w, rightTray.h, 18, true, false);
+    // board frame
+    ctx.fillStyle = "rgba(0,0,0,.18)";
+    roundRect(ctx, board.x-10, board.y-10, board.w+20, board.h+20, 16, true, false);
+    ctx.restore();
+
+    // board hint image
+    if (hintOn){
+      ctx.save();
+      ctx.globalAlpha = 0.22;
+      ctx.drawImage(img, board.x, board.y, board.w, board.h);
+      ctx.restore();
+    }
+
+    // draw locked pieces on the board (normal brightness)
+    pieces.forEach(p => {
+      if (!p.locked) return;
+      ctx.drawImage(p.off, p.tx - p.extra, p.ty - p.extra, p.offW, p.offH);
+    });
+    // If solved, fade in a clean full image on top (no seams)
+    if (finalReveal){
+      const t = Math.min(1, (performance.now() - finalStart) / 450);
+      ctx.save();
+      ctx.globalAlpha = t;
+      ctx.drawImage(img, board.x, board.y, board.w, board.h);
+      ctx.restore();
+      if (t < 1){
+        cancelAnimationFrame(finalAnim);
+        finalAnim = requestAnimationFrame(redraw);
+      }
+    }
+
+
+    // draw pieces (unlocked then dragged on top)
+    const list = pieces.slice().sort((a,b)=> (a===dragging?1:0) - (b===dragging?1:0));
+    list.forEach(p => {
+      if (p.locked) return;
+      drawPiece(p);
+    });
+    if (dragging && !dragging.locked) drawPiece(dragging, true);
+  }
+
+  function drawPiece(p, onTop=false){
+    ctx.save();
+    if (onTop){
+      ctx.shadowColor = "rgba(0,0,0,.45)";
+      ctx.shadowBlur = 22;
+      ctx.shadowOffsetY = 10;
+    } else {
+      ctx.shadowColor = "rgba(0,0,0,.28)";
+      ctx.shadowBlur = 14;
+      ctx.shadowOffsetY = 8;
+    }
+    ctx.drawImage(p.off, p.x - p.extra, p.y - p.extra, p.offW, p.offH);
+    ctx.restore();
+  }
+
+  function roundRect(ctx,x,y,w,h,r,fill,stroke){
+    const rr = Math.min(r, w/2, h/2);
+    ctx.beginPath();
+    ctx.moveTo(x+rr,y);
+    ctx.arcTo(x+w,y,x+w,y+h,rr);
+    ctx.arcTo(x+w,y+h,x,y+h,rr);
+    ctx.arcTo(x,y+h,x,y,rr);
+    ctx.arcTo(x,y,x+w,y,rr);
+    ctx.closePath();
+    if(fill) ctx.fill();
+    if(stroke) ctx.stroke();
+  }
+
+  // hit testing with offscreen path
+  function hitPiece(px, py){
+    // iterate from topmost to bottom
+    for (let i=pieces.length-1; i>=0; i--){
+      const p = pieces[i];
+      if (p.locked) continue;
+      // point in offscreen local coords
+      const lx = (px - (p.x - p.extra));
+      const ly = (py - (p.y - p.extra));
+      if (lx < 0 || ly < 0 || lx > p.offW || ly > p.offH) continue;
+      // use pathLocal (in offscreen CSS coords)
+      if (ctx.isPointInPath(p.pathLocal, lx, ly)){
+        return p;
+      }
+    }
+    return null;
+  }
+
+  function pointerPos(ev){
+    const rect = canvas.getBoundingClientRect();
+    const x = (ev.clientX - rect.left);
+    const y = (ev.clientY - rect.top);
+    return {x,y};
+  }
+
+  function onDown(ev){
+    ev.preventDefault();
+    const pos = pointerPos(ev);
+    const p = hitPiece(pos.x, pos.y);
+    if (!p) return;
+    dragging = p;
+    // bring to end
+    const idx = pieces.indexOf(p);
+    pieces.splice(idx,1);
+    pieces.push(p);
+    dragOff.x = pos.x - p.x;
+    dragOff.y = pos.y - p.y;
+    canvas.setPointerCapture(ev.pointerId);
+    redraw();
+  }
+  function onMove(ev){
+    if (!dragging) return;
+    ev.preventDefault();
+    const pos = pointerPos(ev);
+    dragging.x = pos.x - dragOff.x;
+    dragging.y = pos.y - dragOff.y;
+    redraw();
+  }
+  function onUp(ev){
+    if (!dragging) return;
+    ev.preventDefault();
+    const p = dragging;
+    dragging = null;
+    // snap if close
+    const dx = p.x - p.tx, dy = p.y - p.ty;
+    const dist = Math.hypot(dx,dy);
+    const snap = Math.min(board.w/cols, board.h/rows) * 0.25;
+    moves++; updateHud();
+    if (dist < snap){
+      p.x = p.tx;
+      p.y = p.ty;
+      p.locked = true;
+      blip();
+      if (pieces.every(pp => pp.locked)){
+        win();
+      }
+    }
+    redraw();
+  }
+
+  function win(){
+         gmShowBannerOnce("win");
+    // Reveal the final image first, then show the "Done" dialog
+    if (finalReveal) return;
+    finalReveal = true;
+    finalStart = performance.now();
+    hintOn = false;
+    updateHud();
+    redraw();
+
+    // Give the player a moment to enjoy the final picture
+    setTimeout(() => {
+      running = false;
+      stopTimer();
+      $("winTime").textContent = fmtTime(sec);
+      $("winMoves").textContent = String(moves);
+      $("winToast").classList.add("show");
+    }, 650);
+  }
+
+  function hideWin(){ $("winToast").classList.remove("show"); }
+
+  $("winClose").addEventListener("click", hideWin);
+  $("winMore").addEventListener("click", () => { hideWin(); showScreen("img"); });
+  $("winReplay").addEventListener("click", () => { hideWin(); startGame(true); });
+
+  // game buttons
+  $("btnHint").addEventListener("click", () => { hintOn = !hintOn; updateHud(); redraw(); });
+  $("btnShuffle").addEventListener("click", () => shufflePieces(true));
+
+  // keys (ESC exits)
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape"){
+      if ($("winToast").classList.contains("show")) hideWin();
+      else { showScreen("img"); stopGame(); }
+    }
+  });
+
+  function stopGame(){
+    running = false;
+    stopTimer();
+    canvas.removeEventListener("pointerdown", onDown);
+    canvas.removeEventListener("pointermove", onMove);
+    canvas.removeEventListener("pointerup", onUp);
+    canvas.removeEventListener("pointercancel", onUp);
+  }
+
+  function startGame(replay=false){ 
+    tabsMap = null; // new puzzle -> new tabs
+    finalReveal = false;
+    finalStart = 0;
+
+    showScreen("game");
+    resize();
+    hintOn = false;
+    moves = 0;
+    updateHud();
+    hideWin();
+
+    const grid = computeGrid(chosenPieces);
+    rows = grid.rows; cols = grid.cols; total = rows*cols;
+
+    // load image
+    const src = IMAGES[selectedIndex].src;
+    img = new Image();
+    img.onload = () => {
+      layout();
+      buildPieces();
+      running = true;
+      startTimer();
+      canvas.addEventListener("pointerdown", onDown, {passive:false});
+      canvas.addEventListener("pointermove", onMove, {passive:false});
+      canvas.addEventListener("pointerup", onUp, {passive:false});
+      canvas.addEventListener("pointercancel", onUp, {passive:false});
+      redraw();
+    };
+    img.onerror = () => {
+      // if image fails, just go back
+      alert("Could not load the image. Please check the assets/images folder.");
+      showScreen("img");
+    };
+    img.src = src + "?v=" + Date.now(); // bypass cache
+  }
+
+  // init
+  showScreen("img");
+  renderThumbs();
+  const mp = $("menuPreview");
+  if (mp) mp.src = IMAGES[selectedIndex].src;
+})();
+</script>
+</body>
+</html>

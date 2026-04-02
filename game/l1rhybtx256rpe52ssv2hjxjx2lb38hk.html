@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Journey_Of_Escape</title>
+  <style>
+    * {
+      padding: 0;
+      margin: 0;
+    }
+
+    body {
+      height: 100%;
+      width: 100%;
+      text-align: center;
+	  background-color: #000;
+    }
+
+    #unity-canvas {
+      position: absolute;
+      left: 0px;
+      top: 0px;
+      width: 100%;
+      height: 100%;
+    }
+
+    #unity-loading-bar {
+      position: absolute;
+      left: 30%;
+      top: 50%;
+      width: 40%;
+      height: 20px;
+      background-color: #fff;
+      border: 5px solid #ccc;
+      border-radius: 20px;
+    }
+
+    #unity-progress-bar {
+      position: absolute;
+      left: 0%;
+      top: 0%;
+      width: 1%;
+      height: 100%;
+      background-color: #ef6817;
+      border-radius: 20px;
+      transition: 400ms linear;
+    }
+	#games4king{
+       position: absolute;
+      left: 0%;
+      top: 15%;
+      width: 100%;
+      height: 25%;
+      object-fit: contain;
+    }
+	#container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0;
+            height: 0;
+            overflow: hidden;
+            max-width: 100%;
+            max-height: 100%;
+            min-width: 100%;
+            min-height: 100%;
+            box-sizing: border-box;
+			display: none;
+        }
+	#android{
+       position: absolute;
+      left: 0%;
+      bottom: 15%;
+      width: 100%;
+      height: 25%;
+      object-fit: contain;
+    }
+  </style>
+  <script>
+	function AD_Init() 
+	{
+	
+			 window.SDK_OPTIONS = {
+			  gameId: "l1rhybtx256rpe52ssv2hjxjx2lb38hk",
+			  onEvent: function (a) {
+				 switch (a.name) {
+					case "SDK_GAME_START":
+						game_resume()
+                      // advertisement done, resume game logic and unmute audio             
+                      break;
+                  case "SDK_GAME_PAUSE":
+						game_pause()
+                      // pause game logic / mute audio                     
+                      break;
+                  case "COMPLETE":
+					console.log("completed");
+			            gd_complete();
+			            break;
+                  case "SKIPPED":
+			            gd_complete();
+						console.log("skipped");
+			            break;
+                  case "SDK_GDPR_TRACKING":
+                      // this event is triggered when your user doesn't want to be tracked
+                      break;
+                  case "SDK_GDPR_TARGETING":
+                      // this event is triggered when your user doesn't want personalised targeting of ads and such
+                      break;
+                  case "AD_SDK_REQUEST_ADS":
+                      break;
+                  case "AD_SDK_FINISHED":
+
+                      break;
+                  case "AD_SDK_ERROR":
+                      break;
+                  case "SDK_REWARDED_WATCH_COMPLETE":
+				  console.log("RV_completed");
+                  game_mc.SendMessage("Canvas", "RV_completed",10);
+                  gd_complete();
+                      break;
+                  case "AD_CANCELED":
+				  
+                      break;
+                  case "SDK_READY":
+                      break;
+				 }
+			  }
+		   };
+		(function (a, b, c) {
+		   var d = a.getElementsByTagName(b)[0];
+		   a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+		})(document, "script", "gamemonetize-sdk"); 
+	}
+    </script>
+</head>
+
+<body>
+
+  <img src="games4king.png" id="games4king">
+  <canvas id="unity-canvas"></canvas>
+  <div id="unity-loading-bar">
+    <div id="unity-progress-bar">
+    </div>
+  </div>
+  <script src="Build/JourneyOfEscape.loader.js"></script>
+  <iframe id="container" frameborder="0" allow="autoplay" allowfullscreen seamless="seamless" scrolling="no"></iframe>
+  <script>
+	var JourneyOfEscape_available=1; 
+	var RV_available=0; 
+  console.log("document...."+window.document.referrer);
+  console.log("location...."+window.location.href);
+  if(window.document.referrer.includes("games4king"))
+  {
+	console.log("games4king...website");
+	if(window.document.referrer.includes("journey-of-escape"))
+	{
+		console.log("games4king...website...journey");
+		JourneyOfEscape_available=1;
+	}
+	else
+	{
+		console.log("games4king...website...other");
+		JourneyOfEscape_available=0;
+	}
+  }
+  else if(window.location.href.includes("games4king"))
+  {
+	console.log("games4king...website");
+	if(window.location.href.includes("journey-of-escape"))
+	{
+		console.log("games4king...website...journey");
+		JourneyOfEscape_available=1;
+	}
+	else
+	{
+		console.log("games4king...website...other");
+		JourneyOfEscape_available=0;
+	}
+  }
+  else if(extractHostname(window.document.referrer).includes("gamemonetize"))
+  {
+   console.log("load..gamemonetize");
+   JourneyOfEscape_available=1;
+  }
+  else if(extractHostname(window.document.referrer)=="")
+  {
+   console.log("load..gamemonetize..null");
+   JourneyOfEscape_available=1;
+  }
+  else
+  {
+	console.log("load..other_website..."+extractHostname(window.document.referrer));
+	JourneyOfEscape_available=0;
+  }
+  if(JourneyOfEscape_available==0)
+  {
+	document.getElementById('unity-canvas').style.display = 'none';
+	document.getElementById('unity-loading-bar').style.display = 'none';
+	document.getElementById('unity-progress-bar').style.display = 'none';
+	document.getElementById('container').style.display = 'block';
+	
+	const apiKey = "AIzaSyA040wEV_olkHQccupnFZwFQ5x4De19K5U";
+    const spreadsheetId = "1oDxcOK3FKBlswVTgYRwjz0LnLhJyUOjdRWifiPPTdBs";
+    const sheetUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?includeGridData=true&key=${apiKey}`;
+
+    let slugMap = {};
+
+    fetch(sheetUrl)
+      .then(res => res.json())
+      .then(sheet => {
+        const sheetData = sheet.sheets[0].data[0].rowData;
+        sheetData.forEach(row => {
+          if (!row?.values) return;
+          const developer = row.values[0]?.userEnteredValue?.stringValue;
+          const slug = row.values[1]?.userEnteredValue?.stringValue;
+          const link = row.values[2]?.userEnteredValue?.stringValue;
+          const extraValue = row.values[3]?.userEnteredValue?.stringValue;
+    
+          if (slug && link) {
+            slugMap[slug] = { link, extraValue, developer }; // store all three
+          }
+        });
+        openGameFromURL();
+      })
+      .catch(err => console.error(err));
+    
+    function openGameFromURL() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const gameUrlParam = urlParams.get('referrer_url');
+      if (!gameUrlParam) return;
+    
+      for (let slug in slugMap) {
+        if (gameUrlParam.includes(slug)) {
+          const { link, extraValue, developer } = slugMap[slug];
+          console.log("Extra value:", extraValue);
+          console.log("Developer:", developer);
+        //   if(!extraValue.includes('loader'))
+        //   {
+        //       document.getElementById('loader').style.display = 'block';
+        //   }
+		  document.getElementById('container').src = link;
+          break;
+        }
+      }
+    }
+	
+	
+  }
+  else
+  {
+  
+    const maxPixelRatioMobile = 2.0;
+    const maxPixelRatioDesktop = 1.5;
+
+    var isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    var maxDevicePixelRatio = isMobile? maxPixelRatioMobile: maxPixelRatioDesktop;
+    var pixelRatio = Math.min(window.devicePixelRatio, maxDevicePixelRatio);
+
+    var buildUrl = "Build";
+    var loaderUrl = buildUrl + "/JourneyOfEscape.loader.js";
+    var config = {
+      dataUrl: buildUrl + "/JourneyOfEscape.data.unityweb",
+      frameworkUrl: buildUrl + "/JourneyOfEscape.framework.js.unityweb",
+      codeUrl: buildUrl + "/JourneyOfEscape.wasm.unityweb",
+      streamingAssetsUrl: "StreamingAssets",
+      companyName: "Games4King",
+      productName: "Journey_Of_Escape",
+      productVersion: "1.0",
+      devicePixelRatio: pixelRatio
+    };
+
+    var canvas = document.querySelector("#unity-canvas");
+    var loadingBar = document.querySelector("#unity-loading-bar");
+    var progressBar = document.querySelector("#unity-progress-bar");
+	var game_mc;
+
+    var script = document.createElement("script");
+    script.src = loaderUrl;
+    script.onload = function() {
+      createUnityInstance(canvas, config, function(progress) {
+        progressBar.style.width = 100 * progress + "%";
+      }).then(function(unityInstance) 
+	  {
+		game_mc=unityInstance;
+        loadingBar.style.display = "none";
+      }).catch(function(message) {
+        alert(message);
+      });
+    };
+	
+    document.body.appendChild(script);
+    AD_Init();
+	}
+	 function gd_ad_call()
+    {
+		console.log("gd_first_ad_call");
+		if (typeof sdk !== 'undefined' && sdk.showBanner !== 'undefined') 
+		{
+			RV_available=0; 
+			sdk.showBanner();
+		}
+    }
+	function gd_again_ad_call()
+    {			
+		console.log("gd_main_ad_call");
+		if (typeof sdk !== 'undefined' && sdk.showBanner !== 'undefined') 
+		{
+			RV_available=0; 
+			sdk.showBanner();
+		}
+	}
+	function preload_RV_ad()
+	{
+		console.log("gd_RV_ad_load");
+	}
+	function RV_ad_call()
+	{
+	
+		if (typeof sdk !== 'undefined' && sdk.showBanner !== 'undefined') 
+		{
+			console.log("gm_RV_call");
+			RV_available=1; 
+			sdk.showBanner();
+		}
+	}
+	
+	function gd_complete()
+	{
+		console.log("ad_completed");
+		game_mc.SendMessage("Canvas", "game_pause_status",0);
+	}
+	function game_pause()
+	{
+		console.log("game_pause");
+		game_mc.SendMessage("Canvas", "game_pause_status",1);
+	}
+	function game_resume()
+	{
+		console.log("game_resume");
+		game_mc.SendMessage("Canvas", "game_pause_status",0);
+		if(RV_available==1)
+		{
+			game_mc.SendMessage("Canvas", "RV_completed",10);
+			gd_complete();
+		}
+	}
+    function extractHostname(url) 
+    {
+		console.log("main..url.."+url);
+        var hostname;
+        //find & remove protocol (http, ftp, etc.) and get hostname
+    
+        if (url.indexOf("//") > -1) {
+            hostname = url.split('/')[2];
+        }
+        else {
+            hostname = url.split('/')[0];
+        }
+    
+        //find & remove port number
+        hostname = hostname.split(':')[0];
+        //find & remove "?"
+        hostname = hostname.split('?')[0];
+    
+        return hostname;
+    }
+	function handleMsg(e) 
+	{
+		if(e!=undefined && e.data!=undefined && e.data.v1!=undefined)
+		{
+			console.log(e.data.v1);
+			if(e.data.v1=='AD_Init')
+			{
+				AD_Init();
+			}
+			else if(e.data.v1=='gd_main_ad_calling')
+			{
+				gd_ad_call();
+			}
+			else if(e.data.v1=='gd_RV_ad_calling' && e.data.v2!=undefined)
+			{
+				RV_ad_call();
+			}
+		}
+	}
+	addEventListener("message", handleMsg, true);
+  </script>
+</body>
+
+</html>

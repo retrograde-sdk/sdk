@@ -1,0 +1,1435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Ghost Shift</title>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 100%;
+            max-width: 900px;
+            height: 600px;
+            background: #1a1a2e;
+            box-shadow: 0 10px 50px rgba(0,0,0,0.8);
+            overflow: hidden;
+        }
+
+        #gameCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            cursor: pointer;
+        }
+
+        #ui {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        #gameUI {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            right: 15px;
+            bottom: 15px;
+            pointer-events: none;
+        }
+
+        #topLeft {
+            position: absolute;
+            top: 0;
+            left: 0;
+            display: flex;
+            gap: 10px;
+            pointer-events: all;
+        }
+
+        #topRight {
+            position: absolute;
+            top: 0;
+            right: 0;
+            text-align: right;
+        }
+
+        .iconBtn {
+            width: 50px;
+            height: 50px;
+            background: rgba(0,0,0,0.85);
+            border: 2px solid rgba(255,255,255,0.5);
+            border-radius: 12px;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: white;
+        }
+
+        .iconBtn:active {
+            transform: scale(0.9);
+            background: rgba(102, 126, 234, 0.9);
+        }
+
+        #score {
+            font-size: 48px;
+            color: white;
+            text-shadow: 0 0 20px rgba(255,255,255,0.9), 0 4px 12px rgba(0,0,0,0.8);
+            font-weight: bold;
+            line-height: 1;
+        }
+
+        #highScore, #coinsDisplay {
+            font-size: 16px;
+            color: #ffd700;
+            text-shadow: 0 0 12px rgba(255,215,0,0.9), 0 2px 6px rgba(0,0,0,0.8);
+            margin-top: 6px;
+        }
+
+        #controls {
+            position: absolute;
+            bottom: 80px;
+            right: 30px;
+            display: flex;
+            pointer-events: all;
+        }
+
+        .controlBtn {
+            width: 85px;
+            height: 85px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            border: 4px solid rgba(16, 185, 129, 0.8);
+            border-radius: 50%;
+            font-size: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            user-select: none;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 6px 25px rgba(16, 185, 129, 0.6);
+            transition: all 0.15s;
+        }
+
+        .controlBtn:active {
+            transform: scale(0.85);
+            background: linear-gradient(135deg, #34d399, #10b981);
+            border-color: #34d399;
+            box-shadow: 0 0 30px rgba(52, 211, 153, 0.9);
+        }
+
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.96);
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            flex-direction: column;
+            pointer-events: all;
+            overflow-y: auto;
+            padding: 40px 15px 20px;
+        }
+
+        h1 {
+            font-size: 48px;
+            color: white;
+            text-shadow: 0 0 45px #667eea, 0 0 90px #764ba2;
+            margin-bottom: 15px;
+            animation: glow 3s ease-in-out infinite;
+            line-height: 1.1;
+            text-align: center;
+            padding: 0 10px;
+        }
+
+        @keyframes glow {
+            0%, 100% { text-shadow: 0 0 45px #667eea, 0 0 90px #764ba2; }
+            50% { text-shadow: 0 0 65px #667eea, 0 0 130px #764ba2; }
+        }
+
+        .bigBtn {
+            font-size: 20px;
+            padding: 14px 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 8px;
+            box-shadow: 0 10px 45px rgba(102, 126, 234, 0.65);
+            pointer-events: all;
+            transition: all 0.3s;
+        }
+
+        .bigBtn:active {
+            transform: translateY(4px);
+            box-shadow: 0 5px 25px rgba(102, 126, 234, 0.65);
+        }
+
+        .infoBox {
+            color: white;
+            font-size: 14px;
+            margin: 5px;
+            padding: 10px 20px;
+            background: rgba(102, 126, 234, 0.35);
+            border-radius: 14px;
+            border: 2px solid rgba(102, 126, 234, 0.6);
+            max-width: 450px;
+            text-align: center;
+        }
+
+        .diffBtn.selected {
+            transform: scale(1.1);
+            box-shadow: 0 0 40px currentColor, 0 12px 40px rgba(0,0,0,0.5) !important;
+            animation: diffGlow 2s ease-in-out infinite;
+        }
+
+        @keyframes diffGlow {
+            0%, 100% { box-shadow: 0 0 40px currentColor, 0 12px 40px rgba(0,0,0,0.5); }
+            50% { box-shadow: 0 0 60px currentColor, 0 15px 50px rgba(0,0,0,0.6); }
+        }
+
+        .diffBtn:active {
+            transform: scale(0.95);
+        }
+
+        .skinGrid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin: 15px 0;
+            max-width: 450px;
+            width: 100%;
+        }
+
+        .skinCard {
+            background: rgba(102, 126, 234, 0.35);
+            border: 3px solid rgba(102, 126, 234, 0.6);
+            border-radius: 16px;
+            padding: 16px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .skinCard:active {
+            transform: scale(0.95);
+        }
+
+        .skinCard.selected {
+            border-color: #ffd700;
+            box-shadow: 0 0 28px rgba(255, 215, 0, 0.85);
+            background: rgba(255, 215, 0, 0.25);
+        }
+
+        .skinCard.locked {
+            opacity: 0.65;
+        }
+
+        .skinIcon {
+            font-size: 42px;
+            margin-bottom: 8px;
+        }
+
+        .skinName {
+            font-size: 14px;
+            color: white;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .skinCost {
+            font-size: 13px;
+            color: #ffd700;
+            font-weight: 600;
+        }
+
+        .coinIcon {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            background: radial-gradient(circle at 30% 30%, #ffd700, #ffb700);
+            border-radius: 50%;
+            border: 2px solid #ffed4e;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3), inset -2px -2px 4px rgba(0,0,0,0.2);
+            vertical-align: middle;
+            margin-right: 6px;
+            position: relative;
+        }
+
+        .coinIcon::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 6px;
+            height: 6px;
+            background: rgba(255,255,255,0.6);
+            border-radius: 50%;
+        }
+
+        .achievementItem {
+            background: rgba(102, 126, 234, 0.3);
+            border: 2px solid rgba(102, 126, 234, 0.6);
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin: 6px 0;
+            width: 100%;
+            max-width: 450px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .achievementItem.unlocked {
+            border-color: #ffd700;
+            background: rgba(255, 215, 0, 0.2);
+        }
+
+        .achievementIcon {
+            font-size: 32px;
+            filter: grayscale(100%);
+            opacity: 0.5;
+            flex-shrink: 0;
+        }
+
+        .achievementItem.unlocked .achievementIcon {
+            filter: none;
+            opacity: 1;
+        }
+
+        .achievementInfo {
+            flex: 1;
+            text-align: left;
+            min-width: 0;
+        }
+
+        .achievementTitle {
+            font-size: 15px;
+            font-weight: bold;
+            color: white;
+            margin-bottom: 3px;
+        }
+
+        .achievementDesc {
+            font-size: 12px;
+            color: #aaa;
+        }
+
+        .achievementItem.unlocked .achievementDesc {
+            color: #ffd700;
+        }
+
+        .leaderboardItem {
+            background: rgba(102, 126, 234, 0.3);
+            border: 2px solid rgba(102, 126, 234, 0.6);
+            border-radius: 12px;
+            padding: 10px 16px;
+            margin: 5px 0;
+            width: 100%;
+            max-width: 450px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .leaderboardRank {
+            font-size: 20px;
+            font-weight: bold;
+            color: #667eea;
+            min-width: 45px;
+        }
+
+        .leaderboardItem.gold { border-color: #ffd700; background: rgba(255, 215, 0, 0.2); }
+        .leaderboardItem.silver { border-color: #c0c0c0; background: rgba(192, 192, 192, 0.2); }
+        .leaderboardItem.bronze { border-color: #cd7f32; background: rgba(205, 127, 50, 0.2); }
+
+        .leaderboardItem.gold .leaderboardRank { color: #ffd700; }
+        .leaderboardItem.silver .leaderboardRank { color: #c0c0c0; }
+        .leaderboardItem.bronze .leaderboardRank { color: #cd7f32; }
+
+        .leaderboardName {
+            flex: 1;
+            font-size: 16px;
+            color: white;
+            font-weight: 600;
+            margin: 0 12px;
+        }
+
+        .leaderboardScore {
+            font-size: 18px;
+            color: #ffd700;
+            font-weight: bold;
+        }
+
+        .hidden { display: none !important; }
+
+        @media (max-width: 768px) {
+            #gameContainer { max-width: 100%; height: 100vh; height: 100dvh; }
+            h1 { font-size: 42px; margin-bottom: 10px; }
+            #score { font-size: 42px; }
+            .controlBtn { width: 75px; height: 75px; font-size: 34px; }
+            #controls { padding: 0; bottom: 80px; right: 25px; }
+            .screen { padding: 15px 10px; }
+            .bigBtn { font-size: 18px; padding: 12px 35px; margin: 6px; }
+            .infoBox { font-size: 13px; padding: 8px 16px; margin: 4px; }
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+        
+        <div id="ui">
+            <div id="gameUI" class="hidden">
+                <div id="topLeft">
+                    <div class="iconBtn" id="pauseBtn">⏸️</div>
+                    <div class="iconBtn" id="shopBtnGame">🛒</div>
+                    <div class="iconBtn" id="muteBtn">🔊</div>
+                </div>
+                <div id="topRight">
+                    <div id="score">0</div>
+                    <div id="highScore">Best: 0</div>
+                    <div id="coinsDisplay"><span class="coinIcon"></span>0</div>
+                </div>
+                <div id="controls">
+                    <div class="controlBtn" id="switchBtn">🔄</div>
+                </div>
+            </div>
+            
+            <div id="startScreen" class="screen">
+                <h1>⚡ GHOST SHIFT ⚡</h1>
+                
+                <div style="margin: 12px 0;">
+                    <div style="color: #aaa; font-size: 14px; margin-bottom: 8px;">SELECT DIFFICULTY:</div>
+                    <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                        <button class="diffBtn selected" data-diff="easy" style="background: linear-gradient(135deg, #4ade80, #22c55e); padding: 10px 24px; font-size: 15px; border-radius: 25px; border: none; color: white; cursor: pointer; font-weight: bold; box-shadow: 0 8px 25px rgba(74, 222, 128, 0.5);">😊 EASY</button>
+                        <button class="diffBtn" data-diff="normal" style="background: linear-gradient(135deg, #fbbf24, #f59e0b); padding: 10px 24px; font-size: 15px; border-radius: 25px; border: none; color: white; cursor: pointer; font-weight: bold; box-shadow: 0 8px 25px rgba(251, 191, 36, 0.5);">😐 NORMAL</button>
+                        <button class="diffBtn" data-diff="hard" style="background: linear-gradient(135deg, #ef4444, #dc2626); padding: 10px 24px; font-size: 15px; border-radius: 25px; border: none; color: white; cursor: pointer; font-weight: bold; box-shadow: 0 8px 25px rgba(239, 68, 68, 0.5);">😈 HARD</button>
+                    </div>
+                </div>
+                
+                <div class="infoBox"><strong>👤 HUMAN:</strong> Red blocks kill you</div>
+                <div class="infoBox"><strong>👻 GHOST:</strong> Blue barriers kill you</div>
+                <div class="infoBox"><strong>🖱️ Click/Tap</strong> to jump and collect coins</div>
+                <div class="infoBox"><strong>🔄 Switch</strong> to toggle mode</div>
+                
+                <button class="bigBtn" id="startBtn">▶️ START GAME</button>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;">
+                    <button class="bigBtn" id="shopMenuBtn" style="font-size: 18px; padding: 12px 32px;">🛒 Shop</button>
+                    <button class="bigBtn" id="achieveMenuBtn" style="font-size: 18px; padding: 12px 32px;">🏆 Achievements</button>
+                    <button class="bigBtn" id="leaderMenuBtn" style="font-size: 18px; padding: 12px 32px;">📊 Leaderboard</button>
+                </div>
+            </div>
+
+            <div id="gameOverScreen" class="screen hidden">
+                <h1>💀 GAME OVER</h1>
+                <div id="finalScore" style="font-size: 65px; color: #ffd700; margin: 15px; text-shadow: 0 0 45px rgba(255,215,0,1);">0</div>
+                <div id="finalStats" style="color: #aaa; font-size: 16px; margin-bottom: 20px; text-align: center;"></div>
+                <button class="bigBtn" id="retryBtn">🔄 PLAY AGAIN</button>
+                <button class="bigBtn" id="menuBtn" style="font-size: 18px; padding: 12px 32px;">🏠 Main Menu</button>
+            </div>
+
+            <div id="pauseScreen" class="screen hidden">
+                <h1>⏸️ PAUSED</h1>
+                <button class="bigBtn" id="resumeBtn">▶️ RESUME</button>
+                <button class="bigBtn" id="restartBtn">🔄 RESTART</button>
+                <button class="bigBtn" id="exitBtn" style="font-size: 18px; padding: 12px 32px;">🏠 Exit</button>
+            </div>
+
+            <div id="shopScreen" class="screen hidden">
+                <h1>🛒 SHOP</h1>
+                <div style="color: #ffd700; font-size: 22px; margin-bottom: 15px; font-weight: bold;" id="shopCoins">
+                    <span class="coinIcon" style="width: 24px; height: 24px; margin-right: 6px;"></span>0
+                </div>
+                <div class="skinGrid" id="skinGrid"></div>
+                <button class="bigBtn" id="closeShopBtn">❌ CLOSE</button>
+            </div>
+
+            <div id="achieveScreen" class="screen hidden">
+                <h1>🏆 ACHIEVEMENTS</h1>
+                <div style="width: 100%; max-width: 450px; margin: 10px 0; overflow-y: auto; max-height: 400px;" id="achieveList"></div>
+                <button class="bigBtn" id="closeAchieveBtn">❌ CLOSE</button>
+            </div>
+
+            <div id="leaderScreen" class="screen hidden">
+                <h1>📊 LEADERBOARD</h1>
+                <div style="width: 100%; max-width: 450px; margin: 10px 0; overflow-y: auto; max-height: 400px;" id="leaderList"></div>
+                <button class="bigBtn" id="closeLeaderBtn">❌ CLOSE</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class GhostShiftGame {
+            constructor() {
+                this.canvas = document.getElementById('gameCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.canvas.width = 900;
+                this.canvas.height = 600;
+                
+                this.state = 'menu';
+                this.score = 0;
+                this.highScore = parseInt(localStorage.getItem('gsHighScore') || '0');
+                this.coins = parseInt(localStorage.getItem('gsCoins') || '0');
+                this.difficulty = 'easy';
+                this.speed = 5;
+                this.baseSpeed = 5;
+                this.isGhost = false;
+                this.isMuted = localStorage.getItem('gsMuted') === 'true';
+                
+                this.skins = {
+                    default: { emoji: '😊', name: 'Happy', cost: 0, unlocked: true },
+                    cool: { emoji: '😎', name: 'Cool', cost: 50, unlocked: false },
+                    robot: { emoji: '🤖', name: 'Robot', cost: 100, unlocked: false },
+                    alien: { emoji: '👽', name: 'Alien', cost: 150, unlocked: false },
+                    fire: { emoji: '🔥', name: 'Fire', cost: 200, unlocked: false },
+                    star: { emoji: '⭐', name: 'Star', cost: 300, unlocked: false },
+                    king: { emoji: '👑', name: 'King', cost: 400, unlocked: false },
+                    devil: { emoji: '😈', name: 'Devil', cost: 500, unlocked: false },
+                    angel: { emoji: '😇', name: 'Angel', cost: 600, unlocked: false }
+                };
+                
+                this.achievements = {
+                    first: { icon: '🎯', title: 'First Steps', desc: 'Score 10 points', requirement: 10, unlocked: false },
+                    quarter: { icon: '🌟', title: 'Quarter Master', desc: 'Score 25 points', requirement: 25, unlocked: false },
+                    half: { icon: '💫', title: 'Half Century', desc: 'Score 50 points', requirement: 50, unlocked: false },
+                    century: { icon: '🔥', title: 'Century Club', desc: 'Score 100 points', requirement: 100, unlocked: false },
+                    rich: { icon: '💰', title: 'Coin Collector', desc: 'Collect 100 coins', requirement: 100, type: 'coins', unlocked: false },
+                    wealthy: { icon: '💎', title: 'Wealthy', desc: 'Collect 500 coins', requirement: 500, type: 'coins', unlocked: false },
+                    switcher: { icon: '🔄', title: 'Shape Shifter', desc: 'Switch modes 50 times', requirement: 50, type: 'switches', unlocked: false },
+                    survivor: { icon: '🛡️', title: 'Survivor', desc: 'Use shield 10 times', requirement: 10, type: 'shields', unlocked: false }
+                };
+                
+                this.stats = {
+                    totalCoins: this.coins,
+                    totalSwitches: parseInt(localStorage.getItem('gsSwitches') || '0'),
+                    totalShields: parseInt(localStorage.getItem('gsShields') || '0')
+                };
+                
+                this.ghostEmoji = '👻';
+                
+                this.loadSkins();
+                this.loadAchievements();
+                this.currentSkin = localStorage.getItem('gsCurrentSkin') || 'default';
+                
+                try {
+                    this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                } catch(e) {
+                    this.audioCtx = null;
+                }
+                
+                this.player = { x: 150, y: 350, w: 45, h: 45, vy: 0, onGround: false };
+                this.obstacles = [];
+                this.coinObjs = [];
+                this.powerUps = [];
+                this.particles = [];
+                this.stars = [];
+                this.frame = 0;
+                this.lastObstacle = 0;
+                this.shield = false;
+                this.shieldTimer = 0;
+                this.wasPlayingBeforeAd = false;
+                this.adShownOnStart = false;
+                this.gameOverCount = 0;
+                this.adPauseTime = 0;
+                
+                this.initStars();
+                this.setupControls();
+                this.updateUI();
+                this.animate();
+                
+                window.game = this;
+            }
+
+            initStars() {
+                for (let i = 0; i < 80; i++) {
+                    this.stars.push({
+                        x: Math.random() * 900,
+                        y: Math.random() * 600,
+                        size: Math.random() * 1.8 + 0.4,
+                        speed: Math.random() * 0.35 + 0.08
+                    });
+                }
+            }
+
+            loadSkins() {
+                const saved = localStorage.getItem('gsSkins');
+                if (saved) {
+                    try {
+                        const data = JSON.parse(saved);
+                        for (let k in data) {
+                            if (this.skins[k]) this.skins[k].unlocked = data[k];
+                        }
+                    } catch(e) {}
+                }
+            }
+
+            saveSkins() {
+                const data = {};
+                for (let k in this.skins) data[k] = this.skins[k].unlocked;
+                localStorage.setItem('gsSkins', JSON.stringify(data));
+            }
+
+            loadAchievements() {
+                const saved = localStorage.getItem('gsAchievements');
+                if (saved) {
+                    try {
+                        const data = JSON.parse(saved);
+                        for (let k in data) {
+                            if (this.achievements[k]) this.achievements[k].unlocked = data[k];
+                        }
+                    } catch(e) {}
+                }
+            }
+
+            saveAchievements() {
+                const data = {};
+                for (let k in this.achievements) data[k] = this.achievements[k].unlocked;
+                localStorage.setItem('gsAchievements', JSON.stringify(data));
+            }
+
+            checkAchievements(score) {
+                for (let k in this.achievements) {
+                    const a = this.achievements[k];
+                    if (!a.unlocked) {
+                        let progress = 0;
+                        if (a.type === 'coins') {
+                            progress = this.stats.totalCoins;
+                        } else if (a.type === 'switches') {
+                            progress = this.stats.totalSwitches;
+                        } else if (a.type === 'shields') {
+                            progress = this.stats.totalShields;
+                        } else {
+                            progress = score;
+                        }
+                        
+                        if (progress >= a.requirement) {
+                            a.unlocked = true;
+                            this.saveAchievements();
+                        }
+                    }
+                }
+            }
+
+            setupControls() {
+                const setupBtn = (id, action) => {
+                    const btn = document.getElementById(id);
+                    btn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        action();
+                    });
+                    btn.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        action();
+                    });
+                };
+
+                setupBtn('switchBtn', () => {
+                    if (this.state === 'playing') this.switchMode();
+                });
+
+                this.canvas.addEventListener('click', (e) => {
+                    if (this.state === 'playing') {
+                        this.jump();
+                    }
+                });
+
+                this.canvas.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    if (this.state === 'playing') {
+                        this.jump();
+                    }
+                });
+
+                document.addEventListener('keydown', (e) => {
+                    if (this.state === 'playing') {
+                        if (e.code === 'Space' || e.code === 'ArrowUp') {
+                            e.preventDefault();
+                            this.jump();
+                        } else if (e.code === 'KeyS' || e.code === 'ArrowDown') {
+                            e.preventDefault();
+                            this.switchMode();
+                        }
+                    }
+                });
+
+                document.getElementById('startBtn').onclick = () => this.startGame();
+                document.getElementById('retryBtn').onclick = () => this.startGame();
+                document.getElementById('resumeBtn').onclick = () => this.resumeGame();
+                document.getElementById('restartBtn').onclick = () => this.startGame();
+                document.getElementById('pauseBtn').onclick = () => this.pauseGame();
+                document.getElementById('menuBtn').onclick = () => this.showMenu();
+                document.getElementById('exitBtn').onclick = () => this.showMenu();
+                document.getElementById('shopBtnGame').onclick = () => {
+                    this.pauseGame();
+                    this.showShop();
+                };
+                document.getElementById('shopMenuBtn').onclick = () => this.showShop();
+                document.getElementById('achieveMenuBtn').onclick = () => this.showAchievements();
+                document.getElementById('leaderMenuBtn').onclick = () => this.showLeaderboard();
+                document.getElementById('closeShopBtn').onclick = () => this.closeShop();
+                document.getElementById('closeAchieveBtn').onclick = () => this.closeAchievements();
+                document.getElementById('closeLeaderBtn').onclick = () => this.closeLeaderboard();
+                document.getElementById('muteBtn').onclick = () => this.toggleMute();
+                
+                document.querySelectorAll('.diffBtn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        document.querySelectorAll('.diffBtn').forEach(b => b.classList.remove('selected'));
+                        btn.classList.add('selected');
+                        this.difficulty = btn.dataset.diff;
+                    });
+                });
+            }
+
+            getDifficultySettings() {
+                const settings = {
+                    easy: { speed: 5, spacing: 100, increase: 0.3, coinChance: 0.75, powerUpChance: 0.15 },
+                    normal: { speed: 6.5, spacing: 85, increase: 0.45, coinChance: 0.65, powerUpChance: 0.12 },
+                    hard: { speed: 8, spacing: 70, increase: 0.6, coinChance: 0.55, powerUpChance: 0.1 }
+                };
+                return settings[this.difficulty];
+            }
+
+            startGame() {
+                document.getElementById('startScreen').classList.add('hidden');
+                document.getElementById('gameOverScreen').classList.add('hidden');
+                document.getElementById('pauseScreen').classList.add('hidden');
+                document.getElementById('gameUI').classList.remove('hidden');
+                
+                const settings = this.getDifficultySettings();
+                
+                this.state = 'playing';
+                this.score = 0;
+                this.speed = settings.speed;
+                this.baseSpeed = settings.speed;
+                this.isGhost = false;
+                this.obstacles = [];
+                this.coinObjs = [];
+                this.powerUps = [];
+                this.particles = [];
+                this.player.y = 350;
+                this.player.vy = 0;
+                this.player.onGround = false;
+                this.frame = 0;
+                this.lastObstacle = 0;
+                this.shield = false;
+                this.shieldTimer = 0;
+                
+                this.updateUI();
+                
+                // NO AD on Play button - removed as per feedback
+            }
+
+            showMenu() {
+                this.state = 'menu';
+                document.getElementById('startScreen').classList.remove('hidden');
+                document.getElementById('gameOverScreen').classList.add('hidden');
+                document.getElementById('pauseScreen').classList.add('hidden');
+                document.getElementById('gameUI').classList.add('hidden');
+                document.getElementById('shopScreen').classList.add('hidden');
+                document.getElementById('achieveScreen').classList.add('hidden');
+                document.getElementById('leaderScreen').classList.add('hidden');
+            }
+
+            pauseGame() {
+                if (this.state !== 'playing') return;
+                this.state = 'paused';
+                document.getElementById('pauseScreen').classList.remove('hidden');
+            }
+
+            resumeGame() {
+                this.state = 'playing';
+                document.getElementById('pauseScreen').classList.add('hidden');
+            }
+
+            clearObstaclesAfterAd() {
+                // Remove all obstacles within collision range to prevent instant death after ad
+                this.obstacles = this.obstacles.filter(o => {
+                    return o.x > this.player.x + 200; // Keep only obstacles far from player
+                });
+                
+                // Also clear nearby coins and powerups
+                this.coinObjs = this.coinObjs.filter(c => c.x > this.player.x + 150);
+                this.powerUps = this.powerUps.filter(p => p.x > this.player.x + 150);
+                
+                // Reset player position to safe state
+                this.player.y = 495;
+                this.player.vy = 0;
+                this.player.onGround = true;
+            }
+
+            toggleMute() {
+                this.isMuted = !this.isMuted;
+                localStorage.setItem('gsMuted', this.isMuted);
+                document.getElementById('muteBtn').textContent = this.isMuted ? '🔇' : '🔊';
+            }
+
+            showShop() {
+                document.getElementById('shopScreen').classList.remove('hidden');
+                document.getElementById('startScreen').classList.add('hidden');
+                document.getElementById('shopCoins').innerHTML = `<span class="coinIcon" style="width: 24px; height: 24px; margin-right: 6px;"></span>${this.coins}`;
+                
+                const grid = document.getElementById('skinGrid');
+                grid.innerHTML = '';
+                
+                for (let [k, s] of Object.entries(this.skins)) {
+                    const div = document.createElement('div');
+                    div.className = 'skinCard';
+                    if (this.currentSkin === k) div.classList.add('selected');
+                    if (!s.unlocked) div.classList.add('locked');
+                    
+                    const costHTML = s.unlocked ? 
+                        (this.currentSkin === k ? '✓ Equipped' : 'Tap to Use') : 
+                        `🔒 <span class="coinIcon" style="width: 14px; height: 14px; margin: 0 2px;"></span>${s.cost}`;
+                    
+                    div.innerHTML = `
+                        <div class="skinIcon">${s.emoji}</div>
+                        <div class="skinName">${s.name}</div>
+                        <div class="skinCost">${costHTML}</div>
+                    `;
+                    
+                    div.onclick = () => {
+                        if (s.unlocked) {
+                            this.currentSkin = k;
+                            localStorage.setItem('gsCurrentSkin', k);
+                            this.showShop();
+                        } else if (this.coins >= s.cost) {
+                            this.coins -= s.cost;
+                            s.unlocked = true;
+                            this.currentSkin = k;
+                            localStorage.setItem('gsCoins', this.coins);
+                            localStorage.setItem('gsCurrentSkin', k);
+                            this.saveSkins();
+                            this.updateUI();
+                            this.showShop();
+                            this.playSound(1000, 0.3);
+                        }
+                    };
+                    
+                    grid.appendChild(div);
+                }
+            }
+
+            closeShop() {
+                document.getElementById('shopScreen').classList.add('hidden');
+                if (this.state === 'paused') {
+                    document.getElementById('pauseScreen').classList.remove('hidden');
+                } else {
+                    document.getElementById('startScreen').classList.remove('hidden');
+                }
+            }
+
+            showAchievements() {
+                document.getElementById('achieveScreen').classList.remove('hidden');
+                document.getElementById('startScreen').classList.add('hidden');
+                
+                const list = document.getElementById('achieveList');
+                list.innerHTML = '';
+                
+                for (let [k, a] of Object.entries(this.achievements)) {
+                    const div = document.createElement('div');
+                    div.className = 'achievementItem';
+                    if (a.unlocked) div.classList.add('unlocked');
+                    
+                    div.innerHTML = `
+                        <div class="achievementIcon">${a.icon}</div>
+                        <div class="achievementInfo">
+                            <div class="achievementTitle">${a.title}</div>
+                            <div class="achievementDesc">${a.desc}</div>
+                        </div>
+                    `;
+                    
+                    list.appendChild(div);
+                }
+            }
+
+            closeAchievements() {
+                document.getElementById('achieveScreen').classList.add('hidden');
+                document.getElementById('startScreen').classList.remove('hidden');
+            }
+
+            showLeaderboard() {
+                document.getElementById('leaderScreen').classList.remove('hidden');
+                document.getElementById('startScreen').classList.add('hidden');
+                
+                const list = document.getElementById('leaderList');
+                list.innerHTML = '';
+                
+                const scores = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key.startsWith('gsScore_')) {
+                        const name = key.replace('gsScore_', '');
+                        const score = parseInt(localStorage.getItem(key) || '0');
+                        scores.push({ name, score });
+                    }
+                }
+                
+                if (this.highScore > 0) {
+                    const exists = scores.find(s => s.name === 'You');
+                    if (!exists) {
+                        scores.push({ name: 'You', score: this.highScore });
+                        localStorage.setItem('gsScore_You', this.highScore);
+                    } else {
+                        exists.score = Math.max(exists.score, this.highScore);
+                        localStorage.setItem('gsScore_You', exists.score);
+                    }
+                }
+                
+                scores.sort((a, b) => b.score - a.score);
+                const top10 = scores.slice(0, 10);
+                
+                if (top10.length === 0) {
+                    list.innerHTML = '<div style="color: #aaa; text-align: center; padding: 40px;">Play a game to see your score here!</div>';
+                } else {
+                    top10.forEach((entry, idx) => {
+                        const div = document.createElement('div');
+                        div.className = 'leaderboardItem';
+                        if (idx === 0) div.classList.add('gold');
+                        if (idx === 1) div.classList.add('silver');
+                        if (idx === 2) div.classList.add('bronze');
+                        
+                        const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `#${idx + 1}`;
+                        
+                        div.innerHTML = `
+                            <div class="leaderboardRank">${medal}</div>
+                            <div class="leaderboardName">${entry.name}</div>
+                            <div class="leaderboardScore">${entry.score}</div>
+                        `;
+                        
+                        list.appendChild(div);
+                    });
+                }
+            }
+
+            closeLeaderboard() {
+                document.getElementById('leaderScreen').classList.add('hidden');
+                document.getElementById('startScreen').classList.remove('hidden');
+            }
+
+            jump() {
+                if (this.player.onGround) {
+                    this.player.vy = -20;
+                    this.playSound(520, 0.12);
+                }
+            }
+
+            switchMode() {
+                this.isGhost = !this.isGhost;
+                this.stats.totalSwitches++;
+                localStorage.setItem('gsSwitches', this.stats.totalSwitches);
+                this.burst(this.player.x + 22, this.player.y + 22, 18);
+                this.playSound(this.isGhost ? 950 : 420, 0.14);
+            }
+
+            updateUI() {
+                document.getElementById('score').textContent = this.score;
+                document.getElementById('highScore').textContent = `Best: ${this.highScore}`;
+                document.getElementById('coinsDisplay').innerHTML = `<span class="coinIcon"></span>${this.coins}`;
+                document.getElementById('muteBtn').textContent = this.isMuted ? '🔇' : '🔊';
+            }
+
+            playSound(freq, dur = 0.1) {
+                if (this.isMuted || !this.audioCtx) return;
+                try {
+                    const osc = this.audioCtx.createOscillator();
+                    const gain = this.audioCtx.createGain();
+                    osc.connect(gain);
+                    gain.connect(this.audioCtx.destination);
+                    osc.frequency.value = freq;
+                    osc.type = 'sine';
+                    gain.gain.setValueAtTime(0.15, this.audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, this.audioCtx.currentTime + dur);
+                    osc.start(this.audioCtx.currentTime);
+                    osc.stop(this.audioCtx.currentTime + dur);
+                } catch (e) {}
+            }
+
+            burst(x, y, count) {
+                for (let i = 0; i < count; i++) {
+                    const angle = (Math.PI * 2 * i) / count;
+                    const speed = 3.5 + Math.random() * 3;
+                    this.particles.push({
+                        x: x, y: y,
+                        vx: Math.cos(angle) * speed,
+                        vy: Math.sin(angle) * speed,
+                        life: 38,
+                        color: this.isGhost ? '#64c8ff' : '#ff6464'
+                    });
+                }
+            }
+
+            spawnObstacle() {
+                const types = [
+                    { danger: 'human', color: '#ff3030' },
+                    { danger: 'ghost', color: '#30b0ff' }
+                ];
+                const t = types[Math.floor(Math.random() * types.length)];
+                const h = 70 + Math.random() * 90;
+                
+                this.obstacles.push({
+                    x: 950,
+                    y: 540 - h,
+                    w: 55 + Math.random() * 35,
+                    h: h,
+                    danger: t.danger,
+                    color: t.color,
+                    passed: false
+                });
+                
+                const settings = this.getDifficultySettings();
+                
+                if (Math.random() < settings.coinChance) {
+                    const coinY = 320 + Math.random() * 140;
+                    this.coinObjs.push({
+                        x: 950 + 180,
+                        y: coinY,
+                        w: 34,
+                        h: 34,
+                        rot: 0
+                    });
+                }
+                
+                if (Math.random() < settings.powerUpChance) {
+                    const powerY = 300 + Math.random() * 150;
+                    this.powerUps.push({
+                        x: 950 + 250,
+                        y: powerY,
+                        w: 40,
+                        h: 40,
+                        rot: 0
+                    });
+                }
+            }
+
+            update() {
+                if (this.state !== 'playing') return;
+                
+                this.frame++;
+                
+                this.player.vy += 0.95;
+                this.player.y += this.player.vy;
+                
+                if (this.player.y >= 495) {
+                    this.player.y = 495;
+                    this.player.vy = 0;
+                    this.player.onGround = true;
+                } else {
+                    this.player.onGround = false;
+                }
+                
+                if (this.player.y < 0) {
+                    this.player.y = 0;
+                    this.player.vy = 0;
+                }
+                
+                if (this.frame - this.lastObstacle > 88) {
+                    this.spawnObstacle();
+                    this.lastObstacle = this.frame;
+                }
+                
+                const settings = this.getDifficultySettings();
+                
+                this.stars.forEach(s => {
+                    s.x -= s.speed * (this.speed / 6);
+                    if (s.x < 0) {
+                        s.x = 900;
+                        s.y = Math.random() * 600;
+                    }
+                });
+                
+                if (this.shield) {
+                    this.shieldTimer--;
+                    if (this.shieldTimer <= 0) {
+                        this.shield = false;
+                    }
+                }
+                
+                for (let i = this.obstacles.length - 1; i >= 0; i--) {
+                    const o = this.obstacles[i];
+                    o.x -= this.speed;
+                    
+                    if (o.x + o.w < 0) {
+                        this.obstacles.splice(i, 1);
+                        continue;
+                    }
+                    
+                    if (!o.passed && o.x + o.w < this.player.x) {
+                        o.passed = true;
+                        this.score++;
+                        this.updateUI();
+                        this.checkAchievements(this.score);
+                        
+                        if (this.score > this.highScore) {
+                            this.highScore = this.score;
+                            localStorage.setItem('gsHighScore', this.highScore);
+                            localStorage.setItem('gsScore_You', this.highScore);
+                            this.updateUI();
+                        }
+                        
+                        this.playSound(660, 0.09);
+                        
+                        if (this.score % 10 === 0) {
+                            this.speed = this.baseSpeed + (this.score / 10) * settings.increase;
+                        }
+                    }
+                    
+                    if (this.collide(this.player, o)) {
+                        const die = (o.danger === 'human' && !this.isGhost) || (o.danger === 'ghost' && this.isGhost);
+                        if (die && !this.shield) {
+                            this.gameOver();
+                        } else if (die && this.shield) {
+                            this.obstacles.splice(i, 1);
+                            this.burst(this.player.x + 22, this.player.y + 22, 20);
+                            this.playSound(1100, 0.2);
+                        }
+                    }
+                }
+                
+                for (let i = this.coinObjs.length - 1; i >= 0; i--) {
+                    const c = this.coinObjs[i];
+                    c.x -= this.speed;
+                    c.rot += 0.13;
+                    
+                    if (c.x + c.w < 0) {
+                        this.coinObjs.splice(i, 1);
+                        continue;
+                    }
+                    
+                    if (this.collide(this.player, c)) {
+                        this.coins++;
+                        this.stats.totalCoins = this.coins;
+                        localStorage.setItem('gsCoins', this.coins);
+                        this.updateUI();
+                        this.checkAchievements(this.score);
+                        this.burst(c.x + 17, c.y + 17, 12);
+                        this.coinObjs.splice(i, 1);
+                        this.playSound(870, 0.16);
+                    }
+                }
+                
+                for (let i = this.powerUps.length - 1; i >= 0; i--) {
+                    const p = this.powerUps[i];
+                    p.x -= this.speed;
+                    p.rot += 0.08;
+                    
+                    if (p.x + p.w < 0) {
+                        this.powerUps.splice(i, 1);
+                        continue;
+                    }
+                    
+                    if (this.collide(this.player, p)) {
+                        this.shield = true;
+                        this.shieldTimer = 300;
+                        this.stats.totalShields++;
+                        localStorage.setItem('gsShields', this.stats.totalShields);
+                        this.checkAchievements(this.score);
+                        this.burst(p.x + 20, p.y + 20, 15);
+                        this.powerUps.splice(i, 1);
+                        this.playSound(1200, 0.25);
+                    }
+                }
+                
+                for (let i = this.particles.length - 1; i >= 0; i--) {
+                    const p = this.particles[i];
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.27;
+                    p.life--;
+                    if (p.life <= 0) this.particles.splice(i, 1);
+                }
+            }
+
+            collide(a, b) {
+                return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+            }
+
+            draw() {
+                const bg = this.ctx.createLinearGradient(0, 0, 0, 600);
+                bg.addColorStop(0, '#0f0f1f');
+                bg.addColorStop(0.5, '#1a1a2e');
+                bg.addColorStop(1, '#18213a');
+                this.ctx.fillStyle = bg;
+                this.ctx.fillRect(0, 0, 900, 600);
+                
+                this.stars.forEach(s => {
+                    this.ctx.fillStyle = `rgba(255, 255, 255, ${0.3 + Math.random() * 0.35})`;
+                    this.ctx.fillRect(s.x, s.y, s.size, s.size);
+                });
+                
+                const grd = this.ctx.createLinearGradient(0, 540, 0, 600);
+                grd.addColorStop(0, '#2d3561');
+                grd.addColorStop(1, '#1a1f3a');
+                this.ctx.fillStyle = grd;
+                this.ctx.fillRect(0, 540, 900, 60);
+                
+                this.ctx.strokeStyle = '#667eea';
+                this.ctx.lineWidth = 4;
+                this.ctx.shadowBlur = 16;
+                this.ctx.shadowColor = '#667eea';
+                this.ctx.beginPath();
+                this.ctx.moveTo(0, 540);
+                this.ctx.lineTo(900, 540);
+                this.ctx.stroke();
+                this.ctx.shadowBlur = 0;
+                
+                this.ctx.save();
+                
+                if (!this.isGhost) {
+                    this.ctx.globalAlpha = 0.7;
+                    this.ctx.fillStyle = '#ff3030';
+                    this.ctx.shadowBlur = 35;
+                    this.ctx.shadowColor = '#ff3030';
+                    this.ctx.beginPath();
+                    this.ctx.arc(this.player.x + 22, this.player.y + 22, 32, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    
+                    this.ctx.globalAlpha = 0.45;
+                    this.ctx.beginPath();
+                    this.ctx.arc(this.player.x + 22, this.player.y + 22, 40, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    
+                    this.ctx.globalAlpha = 1;
+                    this.ctx.shadowBlur = 0;
+                }
+                
+                if (this.isGhost) {
+                    this.ctx.globalAlpha = 0.8;
+                    this.ctx.shadowBlur = 30;
+                    this.ctx.shadowColor = '#64c8ff';
+                    
+                    for (let i = 0; i < 4; i++) {
+                        this.ctx.globalAlpha = 0.25 - (i * 0.05);
+                        this.ctx.fillStyle = '#64c8ff';
+                        const offset = (i + 1) * 10;
+                        this.ctx.beginPath();
+                        this.ctx.arc(this.player.x + 22, this.player.y + 22, 24 + offset, 0, Math.PI * 2);
+                        this.ctx.fill();
+                    }
+                    
+                    this.ctx.globalAlpha = 0.9;
+                    this.ctx.shadowBlur = 35;
+                    this.ctx.shadowColor = '#64c8ff';
+                    
+                    this.ctx.font = 'bold 44px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.textBaseline = 'middle';
+                    this.ctx.fillText(this.ghostEmoji, this.player.x + 22, this.player.y + 22);
+                    
+                } else {
+                    this.ctx.shadowBlur = 12;
+                    this.ctx.shadowColor = 'rgba(0,0,0,0.5)';
+                    this.ctx.font = 'bold 44px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.textBaseline = 'middle';
+                    this.ctx.fillText(this.skins[this.currentSkin].emoji, this.player.x + 22, this.player.y + 22);
+                }
+                
+                this.ctx.restore();
+                
+                if (this.shield) {
+                    this.ctx.save();
+                    this.ctx.globalAlpha = 0.6;
+                    this.ctx.strokeStyle = '#ffd700';
+                    this.ctx.lineWidth = 5;
+                    this.ctx.shadowBlur = 25;
+                    this.ctx.shadowColor = '#ffd700';
+                    this.ctx.beginPath();
+                    this.ctx.arc(this.player.x + 22, this.player.y + 22, 35 + Math.sin(this.frame * 0.2) * 3, 0, Math.PI * 2);
+                    this.ctx.stroke();
+                    this.ctx.globalAlpha = 0.3;
+                    this.ctx.beginPath();
+                    this.ctx.arc(this.player.x + 22, this.player.y + 22, 40 + Math.sin(this.frame * 0.15) * 4, 0, Math.PI * 2);
+                    this.ctx.stroke();
+                    this.ctx.restore();
+                    this.ctx.shadowBlur = 0;
+                }
+                
+                this.obstacles.forEach(o => {
+                    this.ctx.fillStyle = o.color;
+                    this.ctx.shadowBlur = 20;
+                    this.ctx.shadowColor = o.color;
+                    this.ctx.fillRect(o.x, o.y, o.w, o.h);
+                    
+                    this.ctx.globalAlpha = 0.35;
+                    this.ctx.fillRect(o.x - 6, o.y - 6, o.w + 12, o.h + 12);
+                    this.ctx.globalAlpha = 1;
+                    this.ctx.shadowBlur = 0;
+                });
+                
+                this.coinObjs.forEach(c => {
+                    this.ctx.save();
+                    this.ctx.translate(c.x + 17, c.y + 17);
+                    this.ctx.rotate(c.rot);
+                    this.ctx.fillStyle = '#ffd700';
+                    this.ctx.shadowBlur = 22;
+                    this.ctx.shadowColor = '#ffd700';
+                    this.ctx.beginPath();
+                    this.ctx.arc(0, 0, 17, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    
+                    this.ctx.fillStyle = '#fff';
+                    this.ctx.globalAlpha = 0.55;
+                    this.ctx.beginPath();
+                    this.ctx.arc(-6, -6, 6, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    this.ctx.globalAlpha = 1;
+                    
+                    this.ctx.restore();
+                    this.ctx.shadowBlur = 0;
+                });
+                
+                this.powerUps.forEach(p => {
+                    this.ctx.save();
+                    this.ctx.translate(p.x + 20, p.y + 20);
+                    this.ctx.rotate(p.rot);
+                    
+                    const boxGrad = this.ctx.createLinearGradient(-20, -20, 20, 20);
+                    boxGrad.addColorStop(0, '#ffd700');
+                    boxGrad.addColorStop(1, '#ff8c00');
+                    this.ctx.fillStyle = boxGrad;
+                    this.ctx.shadowBlur = 25;
+                    this.ctx.shadowColor = '#ffd700';
+                    this.ctx.fillRect(-20, -20, 40, 40);
+                    
+                    this.ctx.font = 'bold 28px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.textBaseline = 'middle';
+                    this.ctx.fillStyle = 'white';
+                    this.ctx.shadowBlur = 0;
+                    this.ctx.fillText('🛡️', 0, 0);
+                    
+                    this.ctx.fillStyle = 'white';
+                    this.ctx.globalAlpha = 0.7 + Math.sin(this.frame * 0.3) * 0.3;
+                    this.ctx.beginPath();
+                    this.ctx.arc(-12, -12, 3, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    this.ctx.globalAlpha = 1;
+                    
+                    this.ctx.restore();
+                    this.ctx.shadowBlur = 0;
+                });
+                
+                this.particles.forEach(p => {
+                    this.ctx.globalAlpha = p.life / 38;
+                    this.ctx.fillStyle = p.color;
+                    this.ctx.shadowBlur = 9;
+                    this.ctx.shadowColor = p.color;
+                    this.ctx.fillRect(p.x - 2, p.y - 2, 5, 5);
+                    this.ctx.shadowBlur = 0;
+                });
+                this.ctx.globalAlpha = 1;
+            }
+
+            gameOver() {
+                this.state = 'gameover';
+                this.gameOverCount++;
+                
+                document.getElementById('gameUI').classList.add('hidden');
+                document.getElementById('finalScore').textContent = this.score;
+                document.getElementById('finalStats').innerHTML = `
+                    <span class="coinIcon" style="width: 24px; height: 24px;"></span> Total Coins: ${this.coins}<br>
+                    🏆 Your Best: ${this.highScore}
+                `;
+                
+                this.playSound(230, 0.65);
+                
+                setTimeout(() => {
+                    document.getElementById('gameOverScreen').classList.remove('hidden');
+                    
+                    // Show ad on every game over
+                    if (typeof sdk !== 'undefined' && typeof sdk.showBanner !== 'undefined') {
+                        sdk.showBanner();
+                    }
+                }, 450);
+            }
+
+            animate() {
+                this.update();
+                this.draw();
+                requestAnimationFrame(() => this.animate());
+            }
+        }
+
+        window.addEventListener('load', () => {
+            new GhostShiftGame();
+        });
+    </script>
+    
+    <script type="text/javascript">
+        window.SDK_OPTIONS = {
+            gameId: "exfdtiqpclhki6mvuiq1f6628eln6383",
+            onEvent: function (a) {
+                switch (a.name) {
+                    case "SDK_GAME_PAUSE":
+                        // pause game logic / mute audio
+                        if (window.game && window.game.state === 'playing') {
+                            window.game.pauseGame();
+                            window.game.wasPlayingBeforeAd = true;
+                            window.game.adPauseTime = Date.now();
+                        }
+                        break;
+                    case "SDK_GAME_START":
+                        // advertisement done, resume game logic and unmute audio
+                        if (window.game && window.game.wasPlayingBeforeAd) {
+                            window.game.clearObstaclesAfterAd();
+                            setTimeout(() => {
+                                window.game.resumeGame();
+                                window.game.wasPlayingBeforeAd = false;
+                            }, 100);
+                        }
+                        break;
+                    case "SDK_READY":
+                        // when sdk is ready
+                        console.log("GameMonetize SDK Ready");
+                        window.__sdkReady = true;
+                        break;
+                    case "SDK_ERROR":
+                        // when sdk get error
+                        console.error("GameMonetize SDK Error");
+                        window.__sdkReady = false;
+                        break;
+                }
+            }
+        };
+        (function (a, b, c) {
+            var d = a.getElementsByTagName(b)[0];
+            a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+        })(document, "script", "gamemonetize-sdk");
+    </script>
+</body>
+</html>

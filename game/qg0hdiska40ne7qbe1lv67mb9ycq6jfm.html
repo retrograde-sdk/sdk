@@ -1,0 +1,2086 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Velocity Breaker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: #000008;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            touch-action: none;
+        }
+
+        #gameCanvas {
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: radial-gradient(ellipse at center, rgba(0,20,40,0.95) 0%, rgba(0,5,15,0.98) 100%);
+            z-index: 15;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .title-container {
+            position: relative;
+            margin-bottom: 10px;
+        }
+
+        .title {
+            font-size: clamp(2.5rem, 10vw, 5rem);
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            background: linear-gradient(180deg, #ffffff 0%, #a0c4ff 30%, #60a0ff 60%, #3080ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 0 20px rgba(100, 180, 255, 0.8)) drop-shadow(0 0 40px rgba(100, 180, 255, 0.4));
+            position: relative;
+        }
+
+        .title-breaker {
+            font-size: clamp(2rem, 8vw, 4rem);
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            background: linear-gradient(180deg, #ff6030 0%, #ff4020 50%, #cc2010 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 0 20px rgba(255, 80, 30, 0.8)) drop-shadow(0 0 40px rgba(255, 50, 20, 0.4));
+            margin-top: -15px;
+        }
+
+        .subtitle {
+            font-size: clamp(0.7rem, 2.5vw, 1rem);
+            color: #4488cc;
+            margin-bottom: 50px;
+            letter-spacing: 0.8em;
+            text-transform: uppercase;
+            text-shadow: 0 0 20px rgba(68, 136, 204, 0.5);
+        }
+
+        .menu-btn {
+            width: 300px;
+            padding: 18px 40px;
+            margin: 12px;
+            font-size: 1.3rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.3) 100%);
+            backdrop-filter: blur(10px);
+            clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
+        }
+
+        .menu-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border: 2px solid;
+            clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
+            transition: all 0.3s ease;
+        }
+
+        .menu-btn::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .menu-btn:hover::after {
+            left: 100%;
+        }
+
+        .menu-btn.easy::before { border-color: #00ff88; box-shadow: inset 0 0 30px rgba(0,255,136,0.2); }
+        .menu-btn.medium::before { border-color: #00aaff; box-shadow: inset 0 0 30px rgba(0,170,255,0.2); }
+        .menu-btn.hard::before { border-color: #ff4040; box-shadow: inset 0 0 30px rgba(255,64,64,0.2); }
+
+        .menu-btn.easy { color: #00ff88; text-shadow: 0 0 20px rgba(0,255,136,0.8); }
+        .menu-btn.medium { color: #00aaff; text-shadow: 0 0 20px rgba(0,170,255,0.8); }
+        .menu-btn.hard { color: #ff4040; text-shadow: 0 0 20px rgba(255,64,64,0.8); }
+
+        .menu-btn:hover {
+            transform: scale(1.05) translateX(5px);
+        }
+
+        .menu-btn.easy:hover { 
+            background: linear-gradient(135deg, rgba(0,255,136,0.3) 0%, rgba(0,255,136,0.1) 100%);
+            box-shadow: 0 0 40px rgba(0,255,136,0.4), 0 0 80px rgba(0,255,136,0.2);
+        }
+        .menu-btn.medium:hover { 
+            background: linear-gradient(135deg, rgba(0,170,255,0.3) 0%, rgba(0,170,255,0.1) 100%);
+            box-shadow: 0 0 40px rgba(0,170,255,0.4), 0 0 80px rgba(0,170,255,0.2);
+        }
+        .menu-btn.hard:hover { 
+            background: linear-gradient(135deg, rgba(255,64,64,0.3) 0%, rgba(255,64,64,0.1) 100%);
+            box-shadow: 0 0 40px rgba(255,64,64,0.4), 0 0 80px rgba(255,64,64,0.2);
+        }
+
+        .best-score {
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.5);
+            margin-top: 5px;
+            font-weight: 400;
+        }
+
+        #hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .hud-item {
+            background: linear-gradient(135deg, rgba(0,20,40,0.8) 0%, rgba(0,10,30,0.6) 100%);
+            padding: 12px 24px;
+            border-radius: 5px;
+            border: 1px solid rgba(0, 180, 255, 0.4);
+            box-shadow: 0 0 20px rgba(0,180,255,0.2), inset 0 0 20px rgba(0,180,255,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .hud-label {
+            font-size: 0.7rem;
+            color: #4488aa;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+        }
+
+        .hud-value {
+            font-size: 1.6rem;
+            font-weight: 800;
+            background: linear-gradient(180deg, #ffffff 0%, #00d4ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 0 10px rgba(0,212,255,0.5));
+        }
+
+        #dashIndicator {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: linear-gradient(135deg, rgba(0,20,40,0.8) 0%, rgba(0,10,30,0.6) 100%);
+            padding: 12px 24px;
+            border-radius: 30px;
+            border: 1px solid rgba(255, 100, 50, 0.4);
+            box-shadow: 0 0 20px rgba(255,100,50,0.2), inset 0 0 20px rgba(255,100,50,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        #dashBar {
+            width: 160px;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            overflow: hidden;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+        }
+
+        #dashFill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff4020, #ff8040, #ffaa60);
+            border-radius: 5px;
+            transition: width 0.1s linear;
+            box-shadow: 0 0 15px rgba(255,100,50,0.8);
+        }
+
+        .dash-label {
+            font-size: 0.8rem;
+            color: #ff6040;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            font-weight: 700;
+            text-shadow: 0 0 10px rgba(255,96,64,0.5);
+        }
+
+        #gameOver {
+            text-align: center;
+        }
+
+        .game-over-title {
+            font-size: clamp(2.5rem, 12vw, 5rem);
+            font-weight: 900;
+            background: linear-gradient(180deg, #ff6040 0%, #ff3020 50%, #aa1010 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            margin-bottom: 30px;
+            filter: drop-shadow(0 0 30px rgba(255,50,30,0.8)) drop-shadow(0 0 60px rgba(255,30,20,0.4));
+        }
+
+        .score-display {
+            margin: 25px 0;
+        }
+
+        .score-label {
+            font-size: 1rem;
+            color: #4488aa;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+        }
+
+        .score-value {
+            font-size: 4rem;
+            font-weight: 900;
+            background: linear-gradient(180deg, #ffffff 0%, #00d4ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 0 20px rgba(0,212,255,0.6));
+        }
+
+        .best-label {
+            font-size: 1rem;
+            color: #ff8060;
+            margin-top: 15px;
+            text-shadow: 0 0 15px rgba(255,128,96,0.5);
+        }
+
+        .restart-btn {
+            margin-top: 45px;
+            padding: 20px 70px;
+            font-size: 1.4rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            background: linear-gradient(135deg, rgba(0,180,255,0.2) 0%, rgba(0,100,200,0.1) 100%);
+            border: 2px solid #00b4ff;
+            color: #00d4ff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            clip-path: polygon(15px 0, 100% 0, calc(100% - 15px) 100%, 0 100%);
+            text-shadow: 0 0 20px rgba(0,212,255,0.8);
+        }
+
+        .restart-btn:hover {
+            background: linear-gradient(135deg, rgba(0,180,255,0.4) 0%, rgba(0,100,200,0.2) 100%);
+            box-shadow: 0 0 40px rgba(0,180,255,0.5), 0 0 80px rgba(0,180,255,0.3);
+            transform: scale(1.05);
+        }
+
+        #mobileControls {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 15px;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .mobile-side {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            pointer-events: auto;
+        }
+
+        .mobile-btn {
+            width: 75px;
+            height: 75px;
+            background: linear-gradient(135deg, rgba(0,100,200,0.5) 0%, rgba(0,50,100,0.3) 100%);
+            border: 3px solid rgba(0, 180, 255, 0.7);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;
+            color: #00d4ff;
+            pointer-events: auto;
+            user-select: none;
+            box-shadow: 0 0 30px rgba(0,180,255,0.4), inset 0 0 25px rgba(0,180,255,0.3);
+            backdrop-filter: blur(10px);
+            text-shadow: 0 0 20px rgba(0,212,255,1);
+            transition: all 0.1s ease;
+        }
+
+        .mobile-btn:active, .mobile-btn.pressed {
+            background: linear-gradient(135deg, rgba(0,180,255,0.8) 0%, rgba(0,100,200,0.6) 100%);
+            transform: scale(0.9);
+            box-shadow: 0 0 50px rgba(0,180,255,0.8), inset 0 0 40px rgba(0,180,255,0.6);
+        }
+
+        .mobile-btn.dash-mobile {
+            width: 90px;
+            height: 90px;
+            background: linear-gradient(135deg, rgba(255,80,40,0.5) 0%, rgba(200,40,20,0.3) 100%);
+            border: 3px solid rgba(255, 100, 50, 0.7);
+            color: #ff6040;
+            font-size: 2.5rem;
+            box-shadow: 0 0 30px rgba(255,100,50,0.4), inset 0 0 25px rgba(255,100,50,0.3);
+            text-shadow: 0 0 20px rgba(255,96,64,1);
+        }
+
+        .mobile-btn.dash-mobile:active, .mobile-btn.dash-mobile.pressed {
+            background: linear-gradient(135deg, rgba(255,100,50,0.8) 0%, rgba(200,50,30,0.6) 100%);
+            box-shadow: 0 0 50px rgba(255,100,50,0.8), inset 0 0 40px rgba(255,100,50,0.6);
+        }
+
+        .mobile-btn.large {
+            width: 100px;
+            height: 100px;
+            font-size: 2.8rem;
+        }
+
+        @media (min-width: 769px) {
+            #mobileControls.hidden {
+                display: none !important;
+            }
+            #mobileControls:not(.hidden) {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            #mobileControls:not(.hidden) {
+                display: flex !important;
+            }
+            .controls-info {
+                display: none;
+            }
+            #dashIndicator {
+                bottom: 140px;
+            }
+        }
+
+        /* Swipe area */
+        #swipeArea {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 40%;
+            z-index: 5;
+            pointer-events: auto;
+        }
+
+        #swipeArea.hidden {
+            display: none;
+        }
+
+        /* Touch feedback */
+        @media (hover: none) and (pointer: coarse) {
+            .mobile-btn {
+                cursor: pointer;
+            }
+        }
+
+        #pauseOverlay {
+            background: radial-gradient(ellipse at center, rgba(0,20,40,0.95) 0%, rgba(0,5,15,0.98) 100%);
+            z-index: 20;
+        }
+
+        .pause-text {
+            font-size: 4rem;
+            font-weight: 900;
+            background: linear-gradient(180deg, #ffaa40 0%, #ff6020 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-transform: uppercase;
+            letter-spacing: 0.4em;
+            filter: drop-shadow(0 0 30px rgba(255,150,50,0.6));
+            animation: pausePulse 2s ease infinite;
+        }
+
+        @keyframes pausePulse {
+            0%, 100% { opacity: 1; filter: drop-shadow(0 0 30px rgba(255,150,50,0.6)); }
+            50% { opacity: 0.7; filter: drop-shadow(0 0 50px rgba(255,150,50,0.8)); }
+        }
+
+        .controls-info {
+            margin-top: 50px;
+            color: #4477aa;
+            font-size: 0.9rem;
+            text-align: center;
+            line-height: 2.2;
+        }
+
+        .key {
+            display: inline-block;
+            padding: 6px 16px;
+            background: linear-gradient(135deg, rgba(0,100,200,0.3) 0%, rgba(0,50,100,0.1) 100%);
+            border: 1px solid rgba(0,150,255,0.4);
+            border-radius: 6px;
+            margin: 0 5px;
+            color: #00b4ff;
+            font-weight: 600;
+            box-shadow: 0 0 10px rgba(0,150,255,0.2);
+        }
+
+
+        .loading-text {
+            color: #4488aa;
+            font-size: 1.4rem;
+            letter-spacing: 0.3em;
+            animation: loadPulse 1.5s ease infinite;
+        }
+
+        @keyframes loadPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="hud" class="hidden">
+        <div class="hud-item">
+            <div class="hud-label">Score</div>
+            <div class="hud-value" id="scoreDisplay">0</div>
+        </div>
+        <div class="hud-item">
+            <div class="hud-label">Speed</div>
+            <div class="hud-value" id="speedDisplay">100%</div>
+        </div>
+    </div>
+
+    <div id="dashIndicator" class="hidden">
+        <span class="dash-label">Dash</span>
+        <div id="dashBar">
+            <div id="dashFill" style="width: 100%"></div>
+        </div>
+    </div>
+
+    <div id="swipeArea" class="hidden"></div>
+    <div id="mobileControls" class="hidden">
+        <div class="mobile-side">
+            <div class="mobile-btn large" id="leftBtn">◀</div>
+        </div>
+        <div class="mobile-btn dash-mobile" id="dashBtn">⚡</div>
+        <div class="mobile-side">
+            <div class="mobile-btn large" id="rightBtn">▶</div>
+        </div>
+    </div>
+
+    <div id="mainMenu" class="overlay">
+        <div class="title-container">
+            <h1 class="title">VELOCITY</h1>
+            <h1 class="title-breaker">BREAKER</h1>
+        </div>
+        <p class="subtitle">Break the Speed Limit</p>
+        <button class="menu-btn easy" onclick="selectDifficulty('easy')">
+            Easy
+            <div class="best-score" id="bestEasy">Best: 0</div>
+        </button>
+        <button class="menu-btn medium" onclick="selectDifficulty('medium')">
+            Medium
+            <div class="best-score" id="bestMedium">Best: 0</div>
+        </button>
+        <button class="menu-btn hard" onclick="selectDifficulty('hard')">
+            Hard
+            <div class="best-score" id="bestHard">Best: 0</div>
+        </button>
+        <div class="controls-info">
+            <div><span class="key">←</span> <span class="key">→</span> or <span class="key">A</span> <span class="key">D</span> to move</div>
+            <div><span class="key">Space</span> or <span class="key">Shift</span> to dash</div>
+        </div>
+    </div>
+
+    <div id="gameOver" class="overlay hidden">
+        <h1 class="game-over-title">Game Over</h1>
+        <div class="score-display">
+            <div class="score-label">Final Score</div>
+            <div class="score-value" id="finalScore">0</div>
+            <div class="best-label" id="bestScoreLabel">Best: 0</div>
+        </div>
+        <button class="restart-btn" onclick="restartGame()">Play Again</button>
+    </div>
+
+    <div id="pauseOverlay" class="overlay hidden">
+        <div class="pause-text">Paused</div>
+    </div>
+
+    <div id="adOverlay" class="overlay hidden">
+        <div class="loading-text">Loading...</div>
+    </div>
+
+    <script type="text/javascript">
+        window.SDK_OPTIONS = {
+            gameId: "qg0hdiska40ne7qbe1lv67mb9ycq6jfm",
+            onEvent: function (a) {
+                switch (a.name) {
+                    case "SDK_GAME_PAUSE":
+                        if (typeof pauseForAd === 'function') pauseForAd();
+                        break;
+                    case "SDK_GAME_START":
+                        if (typeof resumeFromAd === 'function') resumeFromAd();
+                        break;
+                    case "SDK_READY":
+                        break;
+                }
+            }
+        };
+        (function (a, b, c) {
+            var d = a.getElementsByTagName(b)[0];
+            a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+        })(document, "script", "gamemonetize-sdk");
+    </script>
+
+    <script>
+        // Canvas setup
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // DOM elements
+        const mainMenu = document.getElementById('mainMenu');
+        const gameOverScreen = document.getElementById('gameOver');
+        const pauseOverlay = document.getElementById('pauseOverlay');
+        const adOverlay = document.getElementById('adOverlay');
+        const hud = document.getElementById('hud');
+        const dashIndicator = document.getElementById('dashIndicator');
+        const mobileControls = document.getElementById('mobileControls');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const speedDisplay = document.getElementById('speedDisplay');
+        const dashFill = document.getElementById('dashFill');
+        const finalScore = document.getElementById('finalScore');
+        const bestScoreLabel = document.getElementById('bestScoreLabel');
+
+        // Game state
+        let gameState = 'menu';
+        let difficulty = 'medium';
+        let score = 0;
+        let distance = 0;
+        let gameSpeed = 1;
+        let lastTime = 0;
+        let deltaTime = 0;
+        let animationId = null;
+        let isPaused = false;
+        let isTabVisible = true;
+        let adsPausedGame = false;
+        let globalTime = 0;
+
+        // Difficulty settings - BALANCED & FEWER OBSTACLES
+        const difficultySettings = {
+            easy: {
+                baseSpeed: 4,
+                maxSpeed: 9,
+                obstacleFrequency: 0.005,
+                dashCooldown: 600,
+                speedIncrease: 0.00007,
+                minObstacleGap: 550,
+                maxObstaclesPerWave: 1
+            },
+            medium: {
+                baseSpeed: 5.5,
+                maxSpeed: 12,
+                obstacleFrequency: 0.009,
+                dashCooldown: 700,
+                speedIncrease: 0.00014,
+                minObstacleGap: 450,
+                maxObstaclesPerWave: 1
+            },
+            hard: {
+                baseSpeed: 7,
+                maxSpeed: 16,
+                obstacleFrequency: 0.015,
+                dashCooldown: 850,
+                speedIncrease: 0.00028,
+                minObstacleGap: 380,
+                maxObstaclesPerWave: 1
+            }
+        };
+        
+        let lastObstacleY = -500;
+        let lastSafeLane = 2; // Track safe lane for fair gameplay
+
+        let settings = difficultySettings.medium;
+
+        // Player
+        const player = {
+            x: 0,
+            y: 0,
+            width: 50,
+            height: 70,
+            targetX: 0,
+            speed: 0,
+            lane: 1,
+            laneWidth: 0,
+            isDashing: false,
+            dashCooldown: 0,
+            dashDuration: 250,
+            dashTimer: 0,
+            invincible: false,
+            trail: []
+        };
+
+        // Game objects
+        let obstacles = [];
+        let particles = [];
+        let speedLines = [];
+        let tunnelSegments = [];
+        let energyRings = [];
+        let speedZones = [];
+        let lensFlares = [];
+
+        // Input state
+        const keys = {
+            left: false,
+            right: false,
+            dash: false
+        };
+
+        // Audio context
+        let audioCtx = null;
+        let isMuted = false;
+        let bgmGain = null;
+        let bgmInterval = null;
+
+        // Ad timer
+        let adTimer = 0;
+        let nextAdTime = 60000 + Math.random() * 30000;
+
+        // Initialize audio
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+
+        window.onload = function () {
+            showAd();
+        };
+        // Play sound effect
+        function playSound(type) {
+            if (!audioCtx || isMuted) return;
+
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            const filter = audioCtx.createBiquadFilter();
+
+            oscillator.connect(filter);
+            filter.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            switch(type) {
+                case 'dash':
+                    oscillator.type = 'sawtooth';
+                    oscillator.frequency.setValueAtTime(150, audioCtx.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.08);
+                    oscillator.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.15);
+                    filter.type = 'lowpass';
+                    filter.frequency.value = 3000;
+                    gainNode.gain.setValueAtTime(0.35, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+                    oscillator.start();
+                    oscillator.stop(audioCtx.currentTime + 0.25);
+                    break;
+                case 'crash':
+                    oscillator.type = 'square';
+                    oscillator.frequency.setValueAtTime(200, audioCtx.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(25, audioCtx.currentTime + 0.4);
+                    filter.type = 'lowpass';
+                    filter.frequency.setValueAtTime(2000, audioCtx.currentTime);
+                    filter.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.4);
+                    gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                    oscillator.start();
+                    oscillator.stop(audioCtx.currentTime + 0.5);
+                    break;
+                case 'speedzone':
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(300, audioCtx.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(900, audioCtx.currentTime + 0.1);
+                    oscillator.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.2);
+                    filter.type = 'bandpass';
+                    filter.frequency.value = 800;
+                    filter.Q.value = 2;
+                    gainNode.gain.setValueAtTime(0.25, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+                    oscillator.start();
+                    oscillator.stop(audioCtx.currentTime + 0.25);
+                    break;
+            }
+        }
+
+        // Start background music
+        function startBGM() {
+            if (!audioCtx || isMuted) return;
+            stopBGM();
+
+            bgmGain = audioCtx.createGain();
+            bgmGain.gain.value = 0.06;
+            bgmGain.connect(audioCtx.destination);
+
+            const playBass = (freq, time, duration) => {
+                const osc = audioCtx.createOscillator();
+                const env = audioCtx.createGain();
+                const flt = audioCtx.createBiquadFilter();
+                osc.type = 'sawtooth';
+                osc.frequency.value = freq;
+                flt.type = 'lowpass';
+                flt.frequency.value = 400;
+                osc.connect(flt);
+                flt.connect(env);
+                env.connect(bgmGain);
+                env.gain.setValueAtTime(0.4, time);
+                env.gain.exponentialRampToValueAtTime(0.01, time + duration * 0.8);
+                osc.start(time);
+                osc.stop(time + duration);
+            };
+
+            const playLead = (freq, time, duration) => {
+                const osc = audioCtx.createOscillator();
+                const env = audioCtx.createGain();
+                osc.type = 'square';
+                osc.frequency.value = freq;
+                osc.connect(env);
+                env.connect(bgmGain);
+                env.gain.setValueAtTime(0.15, time);
+                env.gain.exponentialRampToValueAtTime(0.01, time + duration * 0.6);
+                osc.start(time);
+                osc.stop(time + duration);
+            };
+
+            const bassPattern = [55, 55, 73.42, 55, 82.41, 82.41, 73.42, 55];
+            const leadPattern = [220, 330, 440, 550, 440, 330, 275, 220];
+            
+            const scheduleMusic = () => {
+                if (gameState !== 'playing' || isMuted || !bgmGain) return;
+                const now = audioCtx.currentTime;
+                const tempo = 0.12;
+                
+                for (let i = 0; i < 16; i++) {
+                    playBass(bassPattern[i % 8], now + i * tempo, tempo * 0.9);
+                    if (i % 2 === 0) {
+                        playLead(leadPattern[(i / 2) % 8], now + i * tempo, tempo * 0.7);
+                    }
+                }
+                
+                bgmInterval = setTimeout(scheduleMusic, tempo * 16 * 1000 - 50);
+            };
+
+            scheduleMusic();
+        }
+
+        // Stop background music
+        function stopBGM() {
+            if (bgmInterval) {
+                clearTimeout(bgmInterval);
+                bgmInterval = null;
+            }
+            if (bgmGain) {
+                bgmGain.disconnect();
+                bgmGain = null;
+            }
+        }
+
+        // Resize canvas
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            player.laneWidth = canvas.width / 5;
+            player.y = canvas.height - 150;
+            initTunnel();
+        }
+
+        // Initialize tunnel
+        function initTunnel() {
+            tunnelSegments = [];
+            for (let i = 0; i < 40; i++) {
+                tunnelSegments.push({
+                    z: i * 50,
+                    hue: Math.random() < 0.3 ? 0 : 200
+                });
+            }
+
+            speedLines = [];
+            for (let i = 0; i < 60; i++) {
+                speedLines.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    length: 50 + Math.random() * 150,
+                    speed: 0.5 + Math.random() * 0.5,
+                    alpha: 0.1 + Math.random() * 0.4,
+                    hue: Math.random() < 0.5 ? 200 + Math.random() * 20 : 10 + Math.random() * 20
+                });
+            }
+
+            energyRings = [];
+            for (let i = 0; i < 8; i++) {
+                energyRings.push({
+                    z: i * 200,
+                    rotation: Math.random() * Math.PI * 2,
+                    hue: Math.random() < 0.5 ? 200 : 10
+                });
+            }
+        }
+
+        // Create obstacle - FAIR SYSTEM: Always leave a path
+        function createObstacle() {
+            // Get highest obstacle (lowest Y value) to ensure proper spacing
+            const highestObsY = obstacles.length > 0 
+                ? Math.min(...obstacles.map(obs => obs.y)) 
+                : 999; // No obstacles, allow creation
+            
+            // Don't spawn if an obstacle is still near the top - respect minObstacleGap
+            if (highestObsY < -settings.minObstacleGap) return;
+            
+            // Pattern types with fair spawning - simplified for balance
+            const patterns = ['single', 'single', 'single', 'double', 'diamond', 'laser'];
+            const pattern = patterns[Math.floor(Math.random() * patterns.length)];
+            
+            // Determine safe lane - ensure variety
+            let safeLane;
+            if (Math.random() < 0.4) {
+                // Sometimes keep same safe lane for flow
+                safeLane = lastSafeLane;
+            } else {
+                // Change safe lane - prefer adjacent lanes for smoother gameplay
+                const adjacentLanes = lastSafeLane === 2 ? [1, 3] : [2];
+                if (lastSafeLane === 1) adjacentLanes.push(2);
+                if (lastSafeLane === 3) adjacentLanes.push(2);
+                safeLane = adjacentLanes[Math.floor(Math.random() * adjacentLanes.length)];
+            }
+            lastSafeLane = safeLane;
+            
+            // Get blocked lanes (all lanes except safe lane)
+            const blockedLanes = [1, 2, 3].filter(l => l !== safeLane);
+            
+            switch(pattern) {
+                case 'single':
+                    // Single obstacle in one blocked lane
+                    const singleLane = blockedLanes[Math.floor(Math.random() * blockedLanes.length)];
+                    obstacles.push({
+                        type: 'barrier',
+                        x: singleLane * player.laneWidth + player.laneWidth / 2,
+                        y: -100,
+                        width: player.laneWidth * 0.75,
+                        height: 35,
+                        hue: Math.random() < 0.5 ? 200 : 350,
+                        glow: 1
+                    });
+                    break;
+                    
+                case 'double':
+                    // Two obstacles blocking two lanes, one lane always free
+                    blockedLanes.forEach(lane => {
+                        obstacles.push({
+                            type: 'barrier',
+                            x: lane * player.laneWidth + player.laneWidth / 2,
+                            y: -100,
+                            width: player.laneWidth * 0.8,
+                            height: 35,
+                            hue: 30,
+                            glow: 1
+                        });
+                    });
+                    break;
+                    
+                case 'gap':
+                    // Wall with gap in safe lane
+                    blockedLanes.forEach(lane => {
+                        obstacles.push({
+                            type: 'barrier',
+                            x: lane * player.laneWidth + player.laneWidth / 2,
+                            y: -100,
+                            width: player.laneWidth * 0.85,
+                            height: 30,
+                            hue: 180,
+                            glow: 0.8
+                        });
+                    });
+                    break;
+                    
+                case 'diamond':
+                    // Rotating diamond in one blocked lane
+                    const diamondLane = blockedLanes[Math.floor(Math.random() * blockedLanes.length)];
+                    obstacles.push({
+                        type: 'diamond',
+                        x: diamondLane * player.laneWidth + player.laneWidth / 2,
+                        y: -100,
+                        size: 40,
+                        hue: 280,
+                        glow: 1.5,
+                        rotation: 0,
+                        rotSpeed: 0.06
+                    });
+                    break;
+                    
+                case 'zigzag':
+                    // Staggered obstacles - first blocks one lane, next blocks different lane
+                    // But always leaves a path through
+                    const firstLane = blockedLanes[0];
+                    const secondLane = blockedLanes[1];
+                    
+                    obstacles.push({
+                        type: 'barrier',
+                        x: firstLane * player.laneWidth + player.laneWidth / 2,
+                        y: -100,
+                        width: player.laneWidth * 0.7,
+                        height: 28,
+                        hue: 120,
+                        glow: 1
+                    });
+                    
+                    // Second obstacle at different position, still leaves path
+                    obstacles.push({
+                        type: 'barrier',
+                        x: secondLane * player.laneWidth + player.laneWidth / 2,
+                        y: -100 - settings.minObstacleGap,
+                        width: player.laneWidth * 0.7,
+                        height: 28,
+                        hue: 120,
+                        glow: 1
+                    });
+                    break;
+                    
+                case 'laser':
+                    // Laser gate with gap in safe lane
+                    obstacles.push({
+                        type: 'laser',
+                        x: canvas.width / 2,
+                        y: -100,
+                        width: canvas.width,
+                        height: 12,
+                        gapX: safeLane * player.laneWidth + player.laneWidth / 2,
+                        gapWidth: player.laneWidth * 0.75,
+                        hue: 0,
+                        glow: 2,
+                        pulse: 0
+                    });
+                    break;
+                    
+                case 'moving':
+                    // Moving wall that still leaves safe lane passable
+                    const movingSide = safeLane === 1 ? 'right' : (safeLane === 3 ? 'left' : (Math.random() < 0.5 ? 'left' : 'right'));
+                    const wallWidth = player.laneWidth * 1.8;
+                    obstacles.push({
+                        type: 'wall',
+                        x: movingSide === 'left' ? player.laneWidth * 1.5 : canvas.width - player.laneWidth * 1.5,
+                        y: -100,
+                        width: wallWidth,
+                        height: 40,
+                        hue: 10,
+                        glow: 1.2,
+                        moving: true,
+                        moveSpeed: (Math.random() * 2 + 1) * (movingSide === 'left' ? 1 : -1),
+                        side: movingSide,
+                        safeLane: safeLane
+                    });
+                    break;
+            }
+            
+            lastObstacleY = -100;
+        }
+
+        // Create speed zone
+        function createSpeedZone() {
+            speedZones.push({
+                y: -300,
+                height: 400,
+                active: true,
+                bonus: 150 + Math.floor(Math.random() * 250),
+                alpha: 0
+            });
+        }
+
+        // Create particle explosion
+        function createParticleExplosion(x, y, color, count, type) {
+            for (let i = 0; i < count; i++) {
+                const angle = (Math.PI * 2 / count) * i + Math.random() * 0.5;
+                const speed = type === 'crash' ? 8 + Math.random() * 12 : 3 + Math.random() * 6;
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    size: type === 'crash' ? 3 + Math.random() * 8 : 2 + Math.random() * 4,
+                    hue: color,
+                    life: 1,
+                    decay: 0.015 + Math.random() * 0.02,
+                    type: type
+                });
+            }
+        }
+
+        // Create trail particle
+        function createTrailParticle(x, y, hue) {
+            particles.push({
+                x: x + (Math.random() - 0.5) * 15,
+                y: y,
+                vx: (Math.random() - 0.5) * 2,
+                vy: 2 + Math.random() * 3,
+                size: 2 + Math.random() * 4,
+                hue: hue,
+                life: 1,
+                decay: 0.04 + Math.random() * 0.03,
+                type: 'trail'
+            });
+        }
+
+        // Create lens flare
+        function createLensFlare(x, y) {
+            lensFlares.push({
+                x: x,
+                y: y,
+                size: 50 + Math.random() * 100,
+                life: 1,
+                decay: 0.02
+            });
+        }
+
+        // Update game
+        function update(dt) {
+            if (gameState !== 'playing' || isPaused) return;
+
+            globalTime += dt;
+
+            const currentSpeed = settings.baseSpeed + (distance * settings.speedIncrease);
+            gameSpeed = Math.min(currentSpeed, settings.maxSpeed);
+
+            // Update distance and score
+            distance += gameSpeed * dt;
+            score = Math.floor(distance / 10);
+
+            // Update player position
+            const targetLane = player.lane;
+            player.targetX = targetLane * player.laneWidth + player.laneWidth / 2;
+            
+            const moveSpeed = player.isDashing ? 28 : 14;
+            const prevX = player.x;
+            player.x += (player.targetX - player.x) * moveSpeed * dt;
+
+            // Update player trail
+            player.trail.unshift({ x: player.x, y: player.y, alpha: 1 });
+            if (player.trail.length > 15) player.trail.pop();
+            player.trail.forEach((t, i) => t.alpha = 1 - (i / 15));
+
+            // Handle dash
+            if (player.isDashing) {
+                player.dashTimer -= dt * 1000;
+                if (player.dashTimer <= 0) {
+                    player.isDashing = false;
+                    player.invincible = false;
+                }
+                // Create dash particles
+                if (Math.random() < 0.5) {
+                    createTrailParticle(player.x, player.y + player.height / 2, 15);
+                }
+            }
+
+            if (player.dashCooldown > 0) {
+                player.dashCooldown -= dt * 1000;
+            }
+
+            // Update dash indicator
+            const cooldownPercent = Math.max(0, 1 - player.dashCooldown / settings.dashCooldown);
+            dashFill.style.width = (cooldownPercent * 100) + '%';
+
+            // Move input handling
+            if (keys.left && player.lane > 1) {
+                player.lane = 1;
+            }
+            if (keys.right && player.lane < 3) {
+                player.lane = 3;
+            }
+            if (!keys.left && !keys.right) {
+                player.lane = 2;
+            }
+
+            // Dash input
+            if (keys.dash && player.dashCooldown <= 0 && !player.isDashing) {
+                player.isDashing = true;
+                player.invincible = true;
+                player.dashTimer = player.dashDuration;
+                player.dashCooldown = settings.dashCooldown;
+                playSound('dash');
+                createParticleExplosion(player.x, player.y, 15, 20, 'dash');
+                createLensFlare(player.x, player.y);
+            }
+
+            // Create obstacles - balanced spawning
+            // Only spawn based on frequency, not too aggressively
+            if (Math.random() < settings.obstacleFrequency * gameSpeed * dt) {
+                createObstacle();
+            }
+            
+            // Only ensure minimum 1 obstacle, spawn if screen is completely empty
+            if (obstacles.length === 0) {
+                createObstacle();
+            }
+            
+            // Spawn new obstacle only when top of screen is very clear
+            const highestObs = obstacles.length > 0 ? Math.min(...obstacles.map(o => o.y)) : 999;
+            if (highestObs > 100 && obstacles.length < 4) {
+                createObstacle();
+            }
+
+            // Create speed zones occasionally
+            if (Math.random() < 0.0008 * dt * 60) {
+                createSpeedZone();
+            }
+
+            // Update obstacles
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                const obs = obstacles[i];
+                obs.y += gameSpeed * dt * 60;
+
+                if (obs.moving) {
+                    obs.x += obs.moveSpeed;
+                    
+                    // Boundary check - keep safe lane always accessible
+                    const leftBound = obs.width / 2 + 30;
+                    const rightBound = canvas.width - obs.width / 2 - 30;
+                    
+                    // If wall has a safe lane, ensure it doesn't block it
+                    if (obs.safeLane) {
+                        const safeLaneCenter = obs.safeLane * player.laneWidth + player.laneWidth / 2;
+                        const safeLaneLeft = safeLaneCenter - player.laneWidth * 0.4;
+                        const safeLaneRight = safeLaneCenter + player.laneWidth * 0.4;
+                        
+                        // Check if wall would block safe lane
+                        const wallLeft = obs.x - obs.width / 2;
+                        const wallRight = obs.x + obs.width / 2;
+                        
+                        if (wallLeft < safeLaneRight && wallRight > safeLaneLeft) {
+                            // Wall is entering safe lane, reverse direction
+                            obs.moveSpeed *= -1;
+                            obs.x += obs.moveSpeed * 2;
+                        }
+                    }
+                    
+                    if (obs.x < leftBound || obs.x > rightBound) {
+                        obs.moveSpeed *= -1;
+                    }
+                }
+
+                if (obs.type === 'diamond') {
+                    obs.rotation += obs.rotSpeed;
+                }
+
+                // Collision detection
+                if (!player.invincible) {
+                    let collision = false;
+                    const px = player.x;
+                    const py = player.y;
+
+                    if (obs.type === 'diamond') {
+                        const dist = Math.sqrt((px - obs.x) ** 2 + (py - obs.y) ** 2);
+                        collision = dist < obs.size * 0.7 + player.width * 0.3;
+                    } else if (obs.type === 'laser') {
+                        // Laser with gap
+                        const pw = player.width * 0.4;
+                        const ph = player.height * 0.4;
+                        const inYRange = py + ph > obs.y - obs.height / 2 && py - ph < obs.y + obs.height / 2;
+                        const inGap = px > obs.gapX - obs.gapWidth / 2 && px < obs.gapX + obs.gapWidth / 2;
+                        collision = inYRange && !inGap;
+                    } else {
+                        const pw = player.width * 0.4;
+                        const ph = player.height * 0.4;
+                        collision = px + pw > obs.x - obs.width / 2 &&
+                                   px - pw < obs.x + obs.width / 2 &&
+                                   py + ph > obs.y - obs.height / 2 &&
+                                   py - ph < obs.y + obs.height / 2;
+                    }
+
+                    if (collision) {
+                        gameOver();
+                        return;
+                    }
+                }
+                
+                // Update laser pulse
+                if (obs.type === 'laser') {
+                    obs.pulse = (obs.pulse + dt * 10) % (Math.PI * 2);
+                }
+
+                if (obs.y > canvas.height + 150) {
+                    obstacles.splice(i, 1);
+                }
+            }
+
+            // Update speed zones
+            for (let i = speedZones.length - 1; i >= 0; i--) {
+                const zone = speedZones[i];
+                zone.y += gameSpeed * dt * 60;
+
+                if (zone.active) {
+                    zone.alpha = Math.min(zone.alpha + dt * 2, 0.4);
+                }
+
+                if (zone.active && player.y > zone.y && player.y < zone.y + zone.height) {
+                    score += zone.bonus;
+                    zone.active = false;
+                    playSound('speedzone');
+                    createParticleExplosion(player.x, player.y, 140, 30, 'speed');
+                    createLensFlare(canvas.width / 2, canvas.height / 2);
+                }
+
+                if (zone.y > canvas.height + zone.height) {
+                    speedZones.splice(i, 1);
+                }
+            }
+
+            // Update speed lines
+            for (let line of speedLines) {
+                line.y += gameSpeed * dt * 60 * line.speed;
+                if (line.y > canvas.height + line.length) {
+                    line.y = -line.length;
+                    line.x = Math.random() * canvas.width;
+                }
+            }
+
+            // Update tunnel segments
+            for (let seg of tunnelSegments) {
+                seg.z -= gameSpeed * dt * 30;
+                if (seg.z < -50) {
+                    seg.z = tunnelSegments.length * 50;
+                    seg.hue = Math.random() < 0.3 ? 10 : 200;
+                }
+            }
+
+            // Update energy rings
+            for (let ring of energyRings) {
+                ring.z -= gameSpeed * dt * 40;
+                ring.rotation += dt * 0.5;
+                if (ring.z < -100) {
+                    ring.z = energyRings.length * 200;
+                    ring.hue = Math.random() < 0.5 ? 200 : 10;
+                }
+            }
+
+            // Update particles
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.1; // gravity
+                p.life -= p.decay;
+                p.size *= 0.98;
+                if (p.life <= 0 || p.size < 0.5) {
+                    particles.splice(i, 1);
+                }
+            }
+
+            // Update lens flares
+            for (let i = lensFlares.length - 1; i >= 0; i--) {
+                const f = lensFlares[i];
+                f.life -= f.decay;
+                if (f.life <= 0) {
+                    lensFlares.splice(i, 1);
+                }
+            }
+
+            // Create engine trail
+            if (Math.random() < 0.6) {
+                createTrailParticle(player.x, player.y + player.height / 2, player.isDashing ? 15 : 200);
+            }
+
+            // Update HUD
+            scoreDisplay.textContent = score.toLocaleString();
+            speedDisplay.textContent = Math.floor((gameSpeed / settings.baseSpeed) * 100) + '%';
+
+            // Ad timer
+            adTimer += dt * 1000;
+            if (adTimer >= nextAdTime) {
+                showAd();
+                adTimer = 0;
+                nextAdTime = 60000 + Math.random() * 30000;
+            }
+        }
+
+        // Draw game
+        function draw() {
+            // Clear with deep blue/black
+            ctx.fillStyle = '#000510';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw radial gradient background
+            const bgGrad = ctx.createRadialGradient(
+                canvas.width / 2, canvas.height * 0.3, 0,
+                canvas.width / 2, canvas.height * 0.3, canvas.height
+            );
+            bgGrad.addColorStop(0, 'rgba(0, 40, 80, 0.3)');
+            bgGrad.addColorStop(0.5, 'rgba(0, 20, 50, 0.2)');
+            bgGrad.addColorStop(1, 'rgba(0, 5, 15, 0)');
+            ctx.fillStyle = bgGrad;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw energy rings (perspective tunnel)
+            const cx = canvas.width / 2;
+            const cy = canvas.height * 0.35;
+            
+            for (let ring of energyRings) {
+                if (ring.z <= 0) continue;
+                const scale = 800 / ring.z;
+                const size = 300 * scale;
+                if (size < 10 || size > 2000) continue;
+
+                ctx.save();
+                ctx.translate(cx, cy);
+                ctx.rotate(ring.rotation);
+                ctx.strokeStyle = `hsla(${ring.hue}, 100%, 60%, ${Math.min(0.4, 3 / ring.z)})`;
+                ctx.lineWidth = Math.max(1, 3 * scale);
+                ctx.beginPath();
+                for (let j = 0; j < 6; j++) {
+                    const angle = (Math.PI * 2 / 6) * j;
+                    const x = Math.cos(angle) * size;
+                    const y = Math.sin(angle) * size;
+                    if (j === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.closePath();
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            // Draw perspective tunnel lines
+            ctx.strokeStyle = 'rgba(0, 150, 255, 0.1)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < 12; i++) {
+                const angle = (Math.PI * 2 / 12) * i;
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.lineTo(
+                    cx + Math.cos(angle) * canvas.width,
+                    cy + Math.sin(angle) * canvas.height * 2
+                );
+                ctx.stroke();
+            }
+
+            // Draw speed lines (motion blur effect)
+            for (let line of speedLines) {
+                const gradient = ctx.createLinearGradient(line.x, line.y, line.x, line.y + line.length);
+                gradient.addColorStop(0, `hsla(${line.hue}, 100%, 70%, 0)`);
+                gradient.addColorStop(0.3, `hsla(${line.hue}, 100%, 70%, ${line.alpha})`);
+                gradient.addColorStop(1, `hsla(${line.hue}, 100%, 70%, 0)`);
+                ctx.strokeStyle = gradient;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(line.x, line.y);
+                ctx.lineTo(line.x, line.y + line.length);
+                ctx.stroke();
+            }
+
+            // Draw lane markers
+            for (let i = 1; i <= 4; i++) {
+                const x = i * player.laneWidth;
+                const gradient = ctx.createLinearGradient(x, 0, x, canvas.height);
+                gradient.addColorStop(0, 'rgba(0, 180, 255, 0)');
+                gradient.addColorStop(0.3, 'rgba(0, 180, 255, 0.15)');
+                gradient.addColorStop(0.7, 'rgba(0, 180, 255, 0.15)');
+                gradient.addColorStop(1, 'rgba(0, 180, 255, 0)');
+                ctx.strokeStyle = gradient;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+
+            // Draw speed zones
+            for (let zone of speedZones) {
+                if (!zone.active) continue;
+                const zoneGradient = ctx.createLinearGradient(0, zone.y, 0, zone.y + zone.height);
+                zoneGradient.addColorStop(0, 'rgba(0, 255, 180, 0)');
+                zoneGradient.addColorStop(0.3, `rgba(0, 255, 180, ${zone.alpha})`);
+                zoneGradient.addColorStop(0.7, `rgba(0, 255, 180, ${zone.alpha})`);
+                zoneGradient.addColorStop(1, 'rgba(0, 255, 180, 0)');
+                ctx.fillStyle = zoneGradient;
+                ctx.fillRect(0, zone.y, canvas.width, zone.height);
+
+                // Speed zone text
+                ctx.save();
+                ctx.font = 'bold 28px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillStyle = `rgba(0, 255, 180, ${zone.alpha * 2})`;
+                ctx.shadowColor = 'rgba(0, 255, 180, 0.8)';
+                ctx.shadowBlur = 20;
+                ctx.fillText('⚡ SPEED ZONE +' + zone.bonus + ' ⚡', canvas.width / 2, zone.y + zone.height / 2);
+                ctx.restore();
+            }
+
+            // Draw obstacles
+            for (let obs of obstacles) {
+                ctx.save();
+                
+                const glowColor = `hsla(${obs.hue}, 100%, 50%, 0.8)`;
+                const mainColor = `hsl(${obs.hue}, 100%, 55%)`;
+                const lightColor = `hsl(${obs.hue}, 100%, 75%)`;
+                
+                ctx.shadowColor = glowColor;
+                ctx.shadowBlur = 30 * obs.glow;
+
+                if (obs.type === 'diamond') {
+                    ctx.translate(obs.x, obs.y);
+                    ctx.rotate(obs.rotation);
+                    
+                    // Diamond shape
+                    ctx.fillStyle = mainColor;
+                    ctx.beginPath();
+                    ctx.moveTo(0, -obs.size);
+                    ctx.lineTo(obs.size * 0.6, 0);
+                    ctx.lineTo(0, obs.size);
+                    ctx.lineTo(-obs.size * 0.6, 0);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    // Inner glow
+                    ctx.fillStyle = lightColor;
+                    ctx.beginPath();
+                    ctx.moveTo(0, -obs.size * 0.5);
+                    ctx.lineTo(obs.size * 0.3, 0);
+                    ctx.lineTo(0, obs.size * 0.5);
+                    ctx.lineTo(-obs.size * 0.3, 0);
+                    ctx.closePath();
+                    ctx.fill();
+                } else if (obs.type === 'laser') {
+                    // Laser beam with gap
+                    const pulseAlpha = 0.7 + Math.sin(obs.pulse) * 0.3;
+                    ctx.shadowBlur = 40 * obs.glow;
+                    
+                    // Left part
+                    const leftWidth = obs.gapX - obs.gapWidth / 2;
+                    if (leftWidth > 0) {
+                        const laserGrad = ctx.createLinearGradient(0, obs.y - obs.height, 0, obs.y + obs.height);
+                        laserGrad.addColorStop(0, 'rgba(255, 0, 0, 0)');
+                        laserGrad.addColorStop(0.5, `rgba(255, 50, 50, ${pulseAlpha})`);
+                        laserGrad.addColorStop(1, 'rgba(255, 0, 0, 0)');
+                        ctx.fillStyle = laserGrad;
+                        ctx.fillRect(0, obs.y - obs.height / 2, leftWidth, obs.height);
+                        
+                        // Core
+                        ctx.fillStyle = `rgba(255, 255, 255, ${pulseAlpha * 0.8})`;
+                        ctx.fillRect(0, obs.y - 2, leftWidth, 4);
+                    }
+                    
+                    // Right part
+                    const rightStart = obs.gapX + obs.gapWidth / 2;
+                    const rightWidth = canvas.width - rightStart;
+                    if (rightWidth > 0) {
+                        const laserGrad2 = ctx.createLinearGradient(0, obs.y - obs.height, 0, obs.y + obs.height);
+                        laserGrad2.addColorStop(0, 'rgba(255, 0, 0, 0)');
+                        laserGrad2.addColorStop(0.5, `rgba(255, 50, 50, ${pulseAlpha})`);
+                        laserGrad2.addColorStop(1, 'rgba(255, 0, 0, 0)');
+                        ctx.fillStyle = laserGrad2;
+                        ctx.fillRect(rightStart, obs.y - obs.height / 2, rightWidth, obs.height);
+                        
+                        // Core
+                        ctx.fillStyle = `rgba(255, 255, 255, ${pulseAlpha * 0.8})`;
+                        ctx.fillRect(rightStart, obs.y - 2, rightWidth, 4);
+                    }
+                    
+                    // Gap indicators
+                    ctx.strokeStyle = `rgba(0, 255, 100, ${0.5 + Math.sin(obs.pulse * 2) * 0.3})`;
+                    ctx.lineWidth = 3;
+                    ctx.setLineDash([10, 10]);
+                    ctx.beginPath();
+                    ctx.moveTo(obs.gapX - obs.gapWidth / 2, obs.y - 40);
+                    ctx.lineTo(obs.gapX - obs.gapWidth / 2, obs.y + 40);
+                    ctx.moveTo(obs.gapX + obs.gapWidth / 2, obs.y - 40);
+                    ctx.lineTo(obs.gapX + obs.gapWidth / 2, obs.y + 40);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                } else {
+                    // Barrier/Wall
+                    const gradient = ctx.createLinearGradient(
+                        obs.x - obs.width / 2, obs.y,
+                        obs.x + obs.width / 2, obs.y
+                    );
+                    gradient.addColorStop(0, mainColor);
+                    gradient.addColorStop(0.5, lightColor);
+                    gradient.addColorStop(1, mainColor);
+                    
+                    ctx.fillStyle = gradient;
+                    
+                    // Main bar
+                    ctx.beginPath();
+                    ctx.roundRect(
+                        obs.x - obs.width / 2,
+                        obs.y - obs.height / 2,
+                        obs.width,
+                        obs.height,
+                        5
+                    );
+                    ctx.fill();
+
+                    // Edge glow
+                    ctx.strokeStyle = lightColor;
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+
+                    // Energy pattern
+                    ctx.strokeStyle = `hsla(${obs.hue}, 100%, 80%, 0.5)`;
+                    ctx.lineWidth = 1;
+                    for (let i = 0; i < 5; i++) {
+                        const segX = obs.x - obs.width / 2 + (obs.width / 5) * i + obs.width / 10;
+                        ctx.beginPath();
+                        ctx.moveTo(segX, obs.y - obs.height / 2 + 5);
+                        ctx.lineTo(segX, obs.y + obs.height / 2 - 5);
+                        ctx.stroke();
+                    }
+                }
+                
+                ctx.restore();
+            }
+
+            // Draw particles
+            for (let p of particles) {
+                ctx.save();
+                ctx.globalAlpha = p.life;
+                
+                const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
+                gradient.addColorStop(0, `hsla(${p.hue}, 100%, 80%, 1)`);
+                gradient.addColorStop(0.5, `hsla(${p.hue}, 100%, 60%, 0.8)`);
+                gradient.addColorStop(1, `hsla(${p.hue}, 100%, 50%, 0)`);
+                
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size * 2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+
+            // Draw lens flares
+            for (let f of lensFlares) {
+                ctx.save();
+                ctx.globalAlpha = f.life * 0.6;
+                
+                const flareGrad = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.size);
+                flareGrad.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
+                flareGrad.addColorStop(0.2, 'rgba(150, 220, 255, 0.4)');
+                flareGrad.addColorStop(0.5, 'rgba(100, 180, 255, 0.1)');
+                flareGrad.addColorStop(1, 'rgba(50, 100, 200, 0)');
+                
+                ctx.fillStyle = flareGrad;
+                ctx.beginPath();
+                ctx.arc(f.x, f.y, f.size, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Lens streak
+                ctx.strokeStyle = `rgba(255, 255, 255, ${f.life * 0.3})`;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(f.x - f.size * 1.5, f.y);
+                ctx.lineTo(f.x + f.size * 1.5, f.y);
+                ctx.stroke();
+                
+                ctx.restore();
+            }
+
+            // Draw player trail
+            for (let i = player.trail.length - 1; i >= 0; i--) {
+                const t = player.trail[i];
+                ctx.save();
+                ctx.globalAlpha = t.alpha * 0.3;
+                drawPlayerShape(t.x, t.y, player.isDashing ? 15 : 200, 0.8 - i * 0.05);
+                ctx.restore();
+            }
+
+            // Draw player
+            ctx.save();
+            
+            // Player glow
+            const playerHue = player.isDashing ? 15 : 200;
+            ctx.shadowColor = `hsl(${playerHue}, 100%, 60%)`;
+            ctx.shadowBlur = player.isDashing ? 50 : 30;
+            
+            drawPlayerShape(player.x, player.y, playerHue, 1);
+            
+            ctx.restore();
+        }
+
+        // Draw player shape (energy crystal)
+        function drawPlayerShape(x, y, hue, scale) {
+            const w = player.width * scale;
+            const h = player.height * scale;
+            
+            // Main crystal body
+            const gradient = ctx.createLinearGradient(x - w/2, y - h/2, x + w/2, y + h/2);
+            gradient.addColorStop(0, `hsl(${hue}, 100%, 80%)`);
+            gradient.addColorStop(0.3, `hsl(${hue}, 100%, 60%)`);
+            gradient.addColorStop(0.7, `hsl(${hue + 20}, 100%, 50%)`);
+            gradient.addColorStop(1, `hsl(${hue}, 100%, 40%)`);
+            
+            ctx.fillStyle = gradient;
+            
+            // Crystal shape
+            ctx.beginPath();
+            ctx.moveTo(x, y - h * 0.5);                    // Top point
+            ctx.lineTo(x + w * 0.35, y - h * 0.15);        // Upper right
+            ctx.lineTo(x + w * 0.5, y + h * 0.1);          // Right point
+            ctx.lineTo(x + w * 0.25, y + h * 0.4);         // Lower right
+            ctx.lineTo(x, y + h * 0.5);                    // Bottom point
+            ctx.lineTo(x - w * 0.25, y + h * 0.4);         // Lower left
+            ctx.lineTo(x - w * 0.5, y + h * 0.1);          // Left point
+            ctx.lineTo(x - w * 0.35, y - h * 0.15);        // Upper left
+            ctx.closePath();
+            ctx.fill();
+
+            // Crystal facets
+            ctx.strokeStyle = `hsla(${hue}, 100%, 90%, 0.6)`;
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // Inner highlight
+            ctx.fillStyle = `hsla(${hue}, 100%, 95%, 0.8)`;
+            ctx.beginPath();
+            ctx.moveTo(x, y - h * 0.3);
+            ctx.lineTo(x + w * 0.15, y);
+            ctx.lineTo(x, y + h * 0.15);
+            ctx.lineTo(x - w * 0.15, y);
+            ctx.closePath();
+            ctx.fill();
+
+            // Core energy
+            const coreGrad = ctx.createRadialGradient(x, y, 0, x, y, w * 0.3);
+            coreGrad.addColorStop(0, 'rgba(255, 255, 255, 1)');
+            coreGrad.addColorStop(0.5, `hsla(${hue}, 100%, 80%, 0.8)`);
+            coreGrad.addColorStop(1, `hsla(${hue}, 100%, 60%, 0)`);
+            ctx.fillStyle = coreGrad;
+            ctx.beginPath();
+            ctx.arc(x, y - h * 0.05, w * 0.25, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // Game loop
+        function gameLoop(timestamp) {
+            if (!lastTime) lastTime = timestamp;
+            deltaTime = (timestamp - lastTime) / 1000;
+            lastTime = timestamp;
+
+            // Cap delta time
+            deltaTime = Math.min(deltaTime, 0.05);
+
+            if (!isPaused && isTabVisible) {
+                update(deltaTime);
+                draw();
+            }
+
+            animationId = requestAnimationFrame(gameLoop);
+        }
+
+        // Start game
+        function startGame() {
+            gameState = 'playing';
+            score = 0;
+            distance = 0;
+            gameSpeed = settings.baseSpeed;
+            obstacles = [];
+            particles = [];
+            speedZones = [];
+            lensFlares = [];
+            adTimer = 0;
+            nextAdTime = 60000 + Math.random() * 30000;
+            globalTime = 0;
+            lastObstacleY = -500;
+            lastSafeLane = 2; // Start with center as safe lane
+
+            player.x = canvas.width / 2;
+            player.lane = 2;
+            player.targetX = player.x;
+            player.isDashing = false;
+            player.dashCooldown = 0;
+            player.invincible = false;
+            player.trail = [];
+
+            mainMenu.classList.add('hidden');
+            gameOverScreen.classList.add('hidden');
+            hud.classList.remove('hidden');
+            dashIndicator.classList.remove('hidden');
+            
+            // Always show mobile controls on touch devices
+            if (isMobileDevice()) {
+                mobileControls.classList.remove('hidden');
+                swipeArea.classList.remove('hidden');
+            }
+
+            initAudio();
+            startBGM();
+            initTunnel();
+
+            lastTime = 0;
+            if (!animationId) {
+                animationId = requestAnimationFrame(gameLoop);
+            }
+        }
+
+        // Game over
+        function gameOver() {
+            gameState = 'gameover';
+            playSound('crash');
+            stopBGM();
+            createParticleExplosion(player.x, player.y, 10, 50, 'crash');
+            createLensFlare(player.x, player.y);
+
+            // Save best score
+            const bestKey = 'velocityBreaker_best_' + difficulty;
+            const currentBest = parseInt(localStorage.getItem(bestKey) || '0');
+            if (score > currentBest) {
+                localStorage.setItem(bestKey, score.toString());
+            }
+
+            setTimeout(() => {
+                hud.classList.add('hidden');
+                dashIndicator.classList.add('hidden');
+                mobileControls.classList.add('hidden');
+                swipeArea.classList.add('hidden');
+
+                finalScore.textContent = score.toLocaleString();
+                bestScoreLabel.textContent = 'Best: ' + Math.max(score, currentBest).toLocaleString();
+                
+                showAd();
+                gameOverScreen.classList.remove('hidden');
+            }, 600);
+        }
+
+        // Select difficulty
+        function selectDifficulty(diff) {
+            difficulty = diff;
+            settings = difficultySettings[diff];
+            setTimeout(startGame, 100);
+        }
+
+        // Restart game
+        function restartGame() {
+            gameOverScreen.classList.add('hidden');
+            startGame();
+        }
+
+        // Show advertisement
+        function showAd() {
+            if (typeof sdk !== 'undefined' && sdk.showBanner !== 'undefined') {
+                sdk.showBanner();
+            }
+        }
+
+        // Pause for ad
+        function pauseForAd() {
+            adsPausedGame = true;
+            isPaused = true;
+            isMuted = true;
+            stopBGM();
+        }
+
+        // Resume from ad
+        function resumeFromAd() {
+            if (adsPausedGame) {
+                adsPausedGame = false;
+                isPaused = false;
+                isMuted = false;
+                if (gameState === 'playing') {
+                    startBGM();
+                }
+            }
+        }
+
+        // Update best scores display
+        function updateBestScores() {
+            document.getElementById('bestEasy').textContent = 'Best: ' + (localStorage.getItem('velocityBreaker_best_easy') || '0');
+            document.getElementById('bestMedium').textContent = 'Best: ' + (localStorage.getItem('velocityBreaker_best_medium') || '0');
+            document.getElementById('bestHard').textContent = 'Best: ' + (localStorage.getItem('velocityBreaker_best_hard') || '0');
+        }
+
+        // Input handlers
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
+                keys.left = true;
+                keys.right = false;
+            }
+            if (e.code === 'ArrowRight' || e.code === 'KeyD') {
+                keys.right = true;
+                keys.left = false;
+            }
+            if (e.code === 'Space' || e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
+                keys.dash = true;
+                e.preventDefault();
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
+                keys.left = false;
+            }
+            if (e.code === 'ArrowRight' || e.code === 'KeyD') {
+                keys.right = false;
+            }
+            if (e.code === 'Space' || e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
+                keys.dash = false;
+            }
+        });
+
+        // Mobile controls
+        const leftBtn = document.getElementById('leftBtn');
+        const rightBtn = document.getElementById('rightBtn');
+        const dashBtn = document.getElementById('dashBtn');
+        const swipeArea = document.getElementById('swipeArea');
+
+        // Button controls
+        leftBtn.addEventListener('touchstart', (e) => { 
+            e.preventDefault(); 
+            keys.left = true; 
+            keys.right = false; 
+            leftBtn.classList.add('pressed');
+        });
+        leftBtn.addEventListener('touchend', (e) => { 
+            e.preventDefault(); 
+            keys.left = false; 
+            leftBtn.classList.remove('pressed');
+        });
+        leftBtn.addEventListener('touchcancel', (e) => { 
+            keys.left = false; 
+            leftBtn.classList.remove('pressed');
+        });
+        
+        rightBtn.addEventListener('touchstart', (e) => { 
+            e.preventDefault(); 
+            keys.right = true; 
+            keys.left = false; 
+            rightBtn.classList.add('pressed');
+        });
+        rightBtn.addEventListener('touchend', (e) => { 
+            e.preventDefault(); 
+            keys.right = false; 
+            rightBtn.classList.remove('pressed');
+        });
+        rightBtn.addEventListener('touchcancel', (e) => { 
+            keys.right = false; 
+            rightBtn.classList.remove('pressed');
+        });
+        
+        dashBtn.addEventListener('touchstart', (e) => { 
+            e.preventDefault(); 
+            keys.dash = true; 
+            dashBtn.classList.add('pressed');
+        });
+        dashBtn.addEventListener('touchend', (e) => { 
+            e.preventDefault(); 
+            keys.dash = false; 
+            dashBtn.classList.remove('pressed');
+        });
+        dashBtn.addEventListener('touchcancel', (e) => { 
+            keys.dash = false; 
+            dashBtn.classList.remove('pressed');
+        });
+
+        // Swipe gesture handling
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let isSwiping = false;
+
+        swipeArea.addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+            isSwiping = true;
+        });
+
+        swipeArea.addEventListener('touchmove', (e) => {
+            if (!isSwiping) return;
+            e.preventDefault();
+            
+            const touchX = e.touches[0].clientX;
+            const touchY = e.touches[0].clientY;
+            const diffX = touchX - touchStartX;
+            const diffY = touchY - touchStartY;
+            
+            // Horizontal swipe detection
+            if (Math.abs(diffX) > 30) {
+                if (diffX > 0) {
+                    keys.right = true;
+                    keys.left = false;
+                    rightBtn.classList.add('pressed');
+                    leftBtn.classList.remove('pressed');
+                } else {
+                    keys.left = true;
+                    keys.right = false;
+                    leftBtn.classList.add('pressed');
+                    rightBtn.classList.remove('pressed');
+                }
+            }
+            
+            // Upward swipe for dash
+            if (diffY < -50) {
+                keys.dash = true;
+                dashBtn.classList.add('pressed');
+            }
+        });
+
+        swipeArea.addEventListener('touchend', (e) => {
+            isSwiping = false;
+            keys.left = false;
+            keys.right = false;
+            keys.dash = false;
+            leftBtn.classList.remove('pressed');
+            rightBtn.classList.remove('pressed');
+            dashBtn.classList.remove('pressed');
+        });
+
+        swipeArea.addEventListener('touchcancel', (e) => {
+            isSwiping = false;
+            keys.left = false;
+            keys.right = false;
+            keys.dash = false;
+            leftBtn.classList.remove('pressed');
+            rightBtn.classList.remove('pressed');
+            dashBtn.classList.remove('pressed');
+        });
+
+        // Check if mobile device
+        function isMobileDevice() {
+            return ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || window.innerWidth <= 768;
+        }
+
+        // Visibility change handler
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                isTabVisible = false;
+                isPaused = true;
+                isMuted = true;
+                stopBGM();
+                if (gameState === 'playing') {
+                    pauseOverlay.classList.remove('hidden');
+                }
+            } else {
+                isTabVisible = true;
+                if (!adsPausedGame && gameState === 'playing') {
+                    isPaused = false;
+                    isMuted = false;
+                    startBGM();
+                    pauseOverlay.classList.add('hidden');
+                    lastTime = 0;
+                }
+            }
+        });
+
+        // Window blur/focus handlers
+        window.addEventListener('blur', () => {
+            if (gameState === 'playing') {
+                isPaused = true;
+                isMuted = true;
+                stopBGM();
+                pauseOverlay.classList.remove('hidden');
+            }
+        });
+
+        window.addEventListener('focus', () => {
+            if (!adsPausedGame && gameState === 'playing') {
+                isPaused = false;
+                isMuted = false;
+                startBGM();
+                pauseOverlay.classList.add('hidden');
+                lastTime = 0;
+            }
+        });
+
+        // Initialize
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        updateBestScores();
+
+        // Menu animation loop
+        let menuTime = 0;
+        function menuLoop(timestamp) {
+            if (gameState === 'menu' || gameState === 'gameover') {
+                menuTime = timestamp / 1000;
+                
+                // Dark background
+                ctx.fillStyle = '#000510';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // Animated background particles
+                const cx = canvas.width / 2;
+                const cy = canvas.height / 2;
+
+                // Radial lines
+                ctx.save();
+                ctx.translate(cx, cy);
+                for (let i = 0; i < 24; i++) {
+                    const angle = (Math.PI * 2 / 24) * i + menuTime * 0.1;
+                    const hue = (i * 15 + menuTime * 20) % 360;
+                    const gradient = ctx.createLinearGradient(0, 0, Math.cos(angle) * canvas.width, Math.sin(angle) * canvas.height);
+                    gradient.addColorStop(0, 'rgba(0, 100, 200, 0)');
+                    gradient.addColorStop(0.5, `hsla(${hue}, 100%, 50%, 0.1)`);
+                    gradient.addColorStop(1, 'rgba(0, 100, 200, 0)');
+                    ctx.strokeStyle = gradient;
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.lineTo(Math.cos(angle) * canvas.width, Math.sin(angle) * canvas.height);
+                    ctx.stroke();
+                }
+                ctx.restore();
+
+                // Floating particles
+                for (let i = 0; i < 80; i++) {
+                    const x = (Math.sin(menuTime * 0.5 + i * 0.5) * 0.5 + 0.5) * canvas.width;
+                    const y = ((menuTime * 30 + i * 25) % (canvas.height + 50)) - 25;
+                    const hue = i % 2 === 0 ? 200 : 10;
+                    const size = 2 + Math.sin(menuTime + i) * 1;
+                    
+                    ctx.fillStyle = `hsla(${hue}, 100%, 60%, ${0.3 + Math.sin(menuTime + i) * 0.2})`;
+                    ctx.beginPath();
+                    ctx.arc(x, y, size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                // Central glow
+                const glowGrad = ctx.createRadialGradient(cx, cy * 0.7, 0, cx, cy * 0.7, canvas.width * 0.4);
+                glowGrad.addColorStop(0, 'rgba(0, 100, 200, 0.15)');
+                glowGrad.addColorStop(0.5, 'rgba(100, 50, 150, 0.08)');
+                glowGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                ctx.fillStyle = glowGrad;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+            requestAnimationFrame(menuLoop);
+        }
+        menuLoop(0);
+    </script>
+</body>
+</html>

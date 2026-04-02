@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maze Runner</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Tone.js for sound effects -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    
+    <!-- GameMonetize SDK Implementation -->
+    <script type="text/javascript">
+        window.SDK_OPTIONS = {
+            gameId: "your_game_id_here", // تأكد من استبدال هذا بمعرف لعبتك الفعلي
+            onEvent: function (a) {
+                switch (a.name) {
+                    case "SDK_GAME_PAUSE":
+                        // إيقاف الصوت وإيقاف اللعبة مؤقتاً
+                        if (typeof pauseGame === 'function') pauseGame();
+                        break;
+                    case "SDK_GAME_START":
+                        // استئناف اللعبة بعد انتهاء الإعلان
+                        if (typeof resumeGame === 'function') resumeGame();
+                        break;
+                    case "SDK_READY":
+                        // SDK جاهز للاستخدام
+                        console.log("GameMonetize SDK is ready");
+                        break;
+                }
+            }
+        };
+        (function (a, b, c) {
+            var d = a.getElementsByTagName(b)[0];
+            a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+        })(document, "script", "gamemonetize-sdk"); 
+    </script>
+    
+    <style>
+        /* Inter font for consistency */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        
+        /* Full Screen Setup */
+        html, body {
+            height: 100%;
+            width: 100%;
+            overflow: hidden; /* Prevents scrolling */
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0d1117; 
+            color: #ffffff;
+            /* Ensures the game block is centered on the viewport */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Game container is now a centered block with a max size, surrounded by the dark background */
+        #game-container {
+            /* Restrict the size of the entire game block (header + canvas + controls) to 520px max */
+            max-width: 520px; /* 500px max canvas + 2x10px padding */
+            max-height: 100vh; /* Ensure it fits the screen height */
+            width: 100%; /* Take full width on small screens */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #0d1117; /* Dark background covers everything */
+            padding: 10px; /* Small padding for breathing room */
+            box-shadow: none; /* Removed shadow/border */
+            /* Add this to manage vertical overflow on very small screens */
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        #game-canvas {
+            display: block;
+            touch-action: none; 
+            border-radius: 10px;
+            background-color: #21262d; /* Maze background color */
+            /* Removed flex-grow to ensure JS size is respected precisely */
+            max-width: 100%;
+            max-height: 100%;
+            margin-bottom: 10px;
+        }
+
+        /* Header for Level Display - Centered Flex */
+        #header {
+            width: 100%;
+            padding: 10px 0;
+            display: flex; 
+            justify-content: center; /* Center the entire block */
+            align-items: center;
+        }
+        
+        /* Level Display Box */
+        .level-display-box {
+            text-2xl font-bold bg-gray-700/50 p-3 rounded-lg shadow-inner;
+            min-width: 120px; /* Minimum width to prevent jittering */
+            text-align: center;
+        }
+
+        /* Message Box and Confirmation Box Styling */
+        .modal-box {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9); 
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 0 35px #2ea043; 
+            text-align: center;
+            z-index: 1000;
+            max-width: 90%;
+            min-width: 280px;
+        }
+
+        /* Start/Next Button animation */
+        #start-button {
+            animation: pulse-glow 1.5s infinite;
+        }
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 5px #2ea043, 0 0 10px #2ea043; }
+            50% { box-shadow: 0 0 15px #2ea043, 0 0 25px #2ea043; }
+        }
+        
+        /* Restart Button specific styling */
+        #restart-button {
+            transition: all 0.1s ease;
+            box-shadow: 0 0 10px rgba(255, 165, 0, 0.5); /* Orange glow */
+            font-size: 1.5rem; /* Larger icon/emoji */
+            margin-right: 1rem; /* Space between button and level display */
+        }
+        #restart-button:hover {
+            transform: scale(1.05);
+            background-color: #d29922;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    
+    <!-- Header Section (Level Display and Restart Button) -->
+    <div id="header" class="mb-4">
+        
+        <!-- Restart Button -->
+        <button id="restart-button" class="w-12 h-12 bg-yellow-600 hover:bg-yellow-700 text-white font-bold rounded-full flex items-center justify-center p-2">
+            <span aria-label="Restart Level" role="img">🔁</span>
+        </button>
+
+        <!-- Level Display -->
+        <div class="level-display-box text-2xl font-bold bg-gray-700/50 p-3 rounded-lg shadow-inner">
+            LEVEL: <span id="level-display" class="text-yellow-400">1</span>
+        </div>
+    </div>
+    
+    <!-- Canvas is now the main focus -->
+    <canvas id="game-canvas"></canvas>
+
+    <!-- Welcome/Win Message Screen (English text) -->
+    <div id="message-box" class="modal-box hidden">
+        <h2 class="text-3xl font-bold mb-4" id="message-title"></h2>
+        <p class="text-gray-300 mb-6" id="message-text"></p>
+        <button id="start-button" class="px-8 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-full shadow-lg transition duration-200">
+        </button>
+    </div>
+
+    <!-- Confirmation Modal for Restart (English Text) -->
+    <div id="confirm-box" class="modal-box hidden">
+        <h2 class="text-3xl font-bold mb-4">Confirm Restart</h2>
+        <p class="text-gray-300 mb-8">Are you sure you want to restart the current level?</p>
+        <div class="flex justify-center space-x-4">
+            <button id="confirm-yes" class="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg transition duration-200">
+                Yes (Restart)
+            </button>
+            <button id="confirm-no" class="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white font-bold rounded-lg transition duration-200">
+                No (Cancel)
+            </button>
+        </div>
+    </div>
+
+    <!-- Keyboard Hint -->
+    <div id="controls-hint" class="text-center w-full mb-2">
+        <p class="text-sm text-gray-500">PC Controls: Arrow Keys</p>
+        <p class="text-sm text-gray-500 font-semibold text-green-500">Mobile Controls: Swipe on the Maze</p>
+    </div>
+
+</div>
+
+<script type="module">
+    // Import essential Firebase modules
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // Global constants for Canvas environment
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+    const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+    let app;
+    let db;
+    let auth;
+    let userId = null;
+    let firestoreReady = false;
+
+    // Game state
+    let currentLevel = 1;
+    let N; // Maze grid size (N x N)
+    let canvas, ctx;
+    let cellSize, wallThickness;
+    const MAX_GAME_SIZE = 500; 
+    
+    let player = { x: 0, y: 0, size: 0 }; 
+    let renderX = 0; 
+    let renderY = 0; 
+    let exit = { x: 0, y: 0 };
+    let maze = [];
+    let isGameRunning = false;
+    let isMoving = false; 
+    const moveDuration = 75; 
+
+    // Sound Synths
+    let moveSynth;
+    let winSynth;
+
+    // DOM elements
+    let levelDisplay, messageBox, messageTitle, messageText, startButton, gameContainer, headerElement, controlsHint;
+    let restartButton, confirmBox, confirmYesButton, confirmNoButton; 
+    
+    // Touch handling
+    let touchStartX, touchStartY;
+
+    // متغيرات تتبع الإعلانات
+    let levelsCompleted = 0;
+    let isAudioMuted = false;
+    let isGamePaused = false;
+
+    // =========================================================================
+    // 1. Firebase/Firestore Setup
+    // =========================================================================
+
+    // Reference to the user's progress document
+    const getUserDocRef = (uid) => doc(db, 'artifacts', appId, 'users', uid, 'maze_game', 'progress');
+
+    async function setupFirebase() {
+        try {
+            if (Object.keys(firebaseConfig).length === 0) {
+                console.error("Firebase config is missing. Running in local mode.");
+                firestoreReady = false;
+                loadLocalState();
+                return;
+            }
+
+            app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+
+            // Authentication
+            if (initialAuthToken) {
+                await signInWithCustomToken(auth, initialAuthToken);
+            } else {
+                await signInAnonymously(auth);
+            }
+
+            // Listen for auth state changes
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    userId = user.uid;
+                    firestoreReady = true;
+                    console.log("Firebase initialized. User ID:", userId);
+                    startFirestoreListeners();
+                } else {
+                    // Fall back to local/anonymous mode
+                    userId = crypto.randomUUID();
+                    firestoreReady = true;
+                    loadLocalState(); 
+                    console.log("Signed in anonymously. User ID:", userId);
+                }
+            });
+
+        } catch (error) {
+            console.error("Firebase setup failed:", error);
+            firestoreReady = false;
+            loadLocalState();
+        }
+    }
+
+    function startFirestoreListeners() {
+        if (!db || !userId) return;
+
+        // Listen for user's current level progress
+        onSnapshot(getUserDocRef(userId), (doc) => {
+            if (doc.exists()) {
+                const data = doc.data();
+                const storedLevel = data.currentLevel || 1;
+                // Only update currentLevel if the stored value is greater
+                if (storedLevel > currentLevel) {
+                    currentLevel = storedLevel;
+                    levelDisplay.textContent = currentLevel;
+                }
+                if (!isGameRunning && messageBox.classList.contains('hidden') && confirmBox.classList.contains('hidden')) {
+                    showStartScreen(false);
+                }
+            } else {
+                saveProgress(currentLevel); 
+                if (!isGameRunning && messageBox.classList.contains('hidden') && confirmBox.classList.contains('hidden')) {
+                    showStartScreen(false);
+                }
+            }
+        }, (error) => console.error("Error reading user progress:", error));
+    }
+
+    function loadLocalState() {
+        currentLevel = parseInt(localStorage.getItem('mazeLevel') || '1');
+        if (levelDisplay) levelDisplay.textContent = currentLevel;
+        if (!isGameRunning && messageBox && messageBox.classList.contains('hidden')) showStartScreen(false);
+    }
+
+    async function saveProgress(level) {
+        if (level < currentLevel) return; 
+
+        currentLevel = level;
+        levelDisplay.textContent = currentLevel;
+
+        if (firestoreReady) {
+            try {
+                await setDoc(getUserDocRef(userId), { currentLevel: level, lastUpdated: new Date().toISOString() }, { merge: true });
+            } catch (error) {
+                console.error("Failed to save progress to Firestore:", error);
+            }
+        } else {
+            localStorage.setItem('mazeLevel', level);
+        }
+    }
+
+
+    // =========================================================================
+    // 2. Sound Logic (Tone.js)
+    // =========================================================================
+    
+    function setupSound() {
+        try {
+            moveSynth = new Tone.PolySynth(Tone.Synth, {
+                volume: -10,
+                oscillator: { type: "square" },
+                envelope: { attack: 0.005, decay: 0.05, sustain: 0.1, release: 0.1 }
+            }).toDestination();
+            
+            winSynth = new Tone.Synth({
+                volume: -5,
+                oscillator: { type: "triangle" },
+                envelope: { attack: 0.1, decay: 0.5, sustain: 0.3, release: 0.5 }
+            }).toDestination();
+        } catch (e) {
+            console.error("Failed to initialize Tone.js:", e);
+        }
+    }
+
+    function playMoveSound() {
+        if (Tone.context.state !== 'running' || !moveSynth || isAudioMuted) return;
+        const notes = ["C4", "E4", "G4", "A4"];
+        const note = notes[Math.floor(Math.random() * notes.length)];
+        moveSynth.triggerAttackRelease(note, "16n");
+    }
+
+    function playWinSound() {
+        if (Tone.context.state !== 'running' || !winSynth || isAudioMuted) return;
+        winSynth.triggerAttackRelease("C5", "8n");
+        winSynth.triggerAttackRelease("E5", "8n", Tone.now() + 0.1);
+        winSynth.triggerAttackRelease("G5", "4n", Tone.now() + 0.2);
+    }
+
+    // =========================================================================
+    // 3. GameMonetize SDK Integration
+    // =========================================================================
+    
+    // وظائف للتحكم في الصوت وإيقاف اللعبة
+    function pauseGame() {
+        isGamePaused = true;
+        isAudioMuted = true;
+        console.log("Game paused and audio muted for ad");
+    }
+
+    function resumeGame() {
+        isGamePaused = false;
+        isAudioMuted = false;
+        console.log("Game resumed after ad");
+    }
+
+    // وظيفة عرض الإعلان
+    function showAd() {
+        if (typeof sdk !== 'undefined' && sdk.showBanner !== 'undefined') {
+            console.log("Showing ad banner");
+            sdk.showBanner();
+        } else {
+            console.log("SDK not available for showing ad");
+        }
+    }
+
+    // وظيفة تتبع المستويات المكتملة وعرض الإعلانات
+    function handleLevelCompletion() {
+        levelsCompleted++;
+        
+        // إظهار إعلان بعد الفوز بالمستوى الأول
+        if (levelsCompleted === 1) {
+            console.log("First level completed - showing ad");
+            showAd();
+        }
+        // إظهار إعلان بعد كل 3 مستويات مكتملة
+        else if (levelsCompleted % 3 === 0) {
+            console.log(`Completed ${levelsCompleted} levels - showing ad`);
+            showAd();
+        }
+    }
+
+
+    // =========================================================================
+    // 4. Maze Logic & Drawing
+    // =========================================================================
+
+    function seededRandom(seed) {
+        let x = Math.sin(seed++) * 10000;
+        return x - Math.floor(x);
+    }
+
+    /**
+     * Calculates the grid size (N x N) based on the level according to the user's detailed specification.
+     * @param {number} level - The current game level.
+     * @returns {number} The size N of the N x N grid.
+     */
+    function calculateGridSize(level) {
+        if (level >= 1 && level <= 3) {
+            return 5; // 5x5
+        } else if (level >= 4 && level <= 10) {
+            return 6; // 6x6
+        } else if (level >= 11 && level <= 20) {
+            return 7; // 7x7
+        } else if (level >= 21 && level <= 30) {
+            return 8; // 8x8
+        } else if (level >= 31 && level <= 50) {
+            return 9; // 9x9
+        } else if (level >= 51 && level <= 100) {
+            return 10; // 10x10
+        } else if (level >= 101 && level <= 900) {
+            // Start at N=11 for L101. Increase N by 1 every 50 levels.
+            const baseSize = 11;
+            const increaseStep = Math.floor((level - 101) / 50);
+            return baseSize + increaseStep; 
+            
+        } else if (level >= 901) {
+            // Levels 901+ up to 1000 (and beyond if applicable)
+            return 27; // 27x27 (Max difficulty)
+        }
+        
+        // Default safeguard (should not be reached if logic is correct)
+        return 27; 
+    }
+
+    function generateMaze(N, seed) {
+        let rand = () => seededRandom(seed++);
+        let grid = [];
+        for (let y = 0; y < N; y++) {
+            grid[y] = [];
+            for (let x = 0; x < N; x++) {
+                grid[y][x] = { visited: false, walls: { N: true, S: true, E: true, W: true } };
+            }
+        }
+        
+        let stack = [];
+        // Start the player at 0,0 
+        let startX = 0;
+        let startY = 0;
+        
+        stack.push({ x: startX, y: startY });
+        grid[startY][startX].visited = true;
+
+        const dx = [0, 0, 1, -1];
+        const dy = [-1, 1, 0, 0];
+        const wallNames = ['N', 'S', 'E', 'W'];
+        const oppositeWall = { 'N': 'S', 'S': 'N', 'E': 'W', 'W': 'E' };
+
+        while (stack.length > 0) {
+            let current = stack[stack.length - 1];
+            let neighbors = [];
+
+            for (let i = 0; i < 4; i++) {
+                let nextX = current.x + dx[i];
+                let nextY = current.y + dy[i];
+
+                if (nextX >= 0 && nextX < N && nextY >= 0 && nextY < N && !grid[nextY][nextX].visited) {
+                    neighbors.push({ x: nextX, y: nextY, dir: wallNames[i] });
+                }
+            }
+
+            if (neighbors.length > 0) {
+                // Introduce weighted randomness to make some paths more winding/less direct
+                let nextIndex = Math.floor(rand() * neighbors.length);
+                let next = neighbors[nextIndex];
+                
+                grid[current.y][current.x].walls[next.dir] = false;
+                grid[next.y][next.x].walls[oppositeWall[next.dir]] = false;
+
+                grid[next.y][next.x].visited = true;
+                stack.push(next);
+            } else {
+                stack.pop();
+            }
+        }
+        return grid;
+    }
+
+    function setupLevel() {
+        N = calculateGridSize(currentLevel);
+        
+        // --- START Responsive Canvas Sizing Fix ---
+        
+        const containerWidth = gameContainer.clientWidth;
+        const headerTotalHeight = headerElement.offsetHeight + 10; 
+        const controlsTotalHeight = controlsHint.offsetHeight; 
+        const availableCanvasHeight = window.innerHeight - headerTotalHeight - controlsTotalHeight - 20; 
+        
+        let maxCanvasSize = Math.floor(Math.min(containerWidth, availableCanvasHeight)); 
+        maxCanvasSize = Math.min(maxCanvasSize, MAX_GAME_SIZE); 
+        maxCanvasSize = Math.max(100, maxCanvasSize);
+
+        canvas.width = maxCanvasSize;
+        canvas.height = maxCanvasSize;
+        
+        // --- END Responsive Canvas Sizing Fix ---
+        
+        cellSize = canvas.width / N;
+        wallThickness = Math.max(1, Math.floor(cellSize / 10)); 
+
+        maze = generateMaze(N, currentLevel); 
+
+        // Player starts at (0, 0)
+        player.x = 0;
+        player.y = 0;
+        player.size = cellSize * 0.7;
+
+        // Exit is at the last cell
+        exit.x = N - 1;
+        exit.y = N - 1;
+
+        // Set initial render position
+        renderX = player.x * cellSize + (cellSize - player.size) / 2;
+        renderY = player.y * cellSize + (cellSize - player.size) / 2;
+
+        isGameRunning = true;
+        draw();
+    }
+
+    function draw() {
+        if (!ctx) return;
+        
+        // 1. Clear background
+        ctx.fillStyle = '#21262d';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // 2. Draw Exit (Goal)
+        ctx.fillStyle = '#38a169'; 
+        ctx.fillRect(exit.x * cellSize, exit.y * cellSize, cellSize, cellSize);
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `${cellSize * 0.5}px Inter`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('⭐', exit.x * cellSize + cellSize / 2, exit.y * cellSize + cellSize / 2);
+
+        // 3. Draw Maze (Walls)
+        ctx.strokeStyle = '#30363d'; 
+        ctx.lineWidth = wallThickness;
+
+        for (let y = 0; y < N; y++) {
+            for (let x = 0; x < N; x++) {
+                const cell = maze[y][x];
+                const X = x * cellSize;
+                const Y = y * cellSize;
+
+                if (cell.walls.N) { 
+                    ctx.beginPath();
+                    ctx.moveTo(X, Y);
+                    ctx.lineTo(X + cellSize, Y);
+                    ctx.stroke();
+                }
+                if (cell.walls.S) { 
+                    ctx.beginPath();
+                    ctx.moveTo(X, Y + cellSize);
+                    ctx.lineTo(X + cellSize, Y + cellSize);
+                    ctx.stroke();
+                }
+                if (cell.walls.E) { 
+                    ctx.beginPath();
+                    ctx.moveTo(X + cellSize, Y);
+                    ctx.lineTo(X + cellSize, Y + cellSize);
+                    ctx.stroke();
+                }
+                if (cell.walls.W) { 
+                    ctx.beginPath();
+                    ctx.moveTo(X, Y);
+                    ctx.lineTo(X, Y + cellSize);
+                    ctx.stroke();
+                }
+            }
+        }
+        
+        // 4. Draw Player (Cube)
+        ctx.fillStyle = '#d29922'; 
+        ctx.fillRect(renderX, renderY, player.size, player.size);
+    }
+    
+    function animateMove(startX, startY, targetX, targetY, startTime) {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(1, elapsed / moveDuration);
+        
+        renderX = startX + (targetX - startX) * progress;
+        renderY = startY + (targetY - startY) * progress;
+
+        draw();
+
+        if (progress < 1) {
+            requestAnimationFrame(() => animateMove(startX, startY, targetX, targetY, startTime));
+        } else {
+            isMoving = false;
+            renderX = targetX;
+            renderY = targetY;
+            draw(); 
+            checkWin(); 
+        }
+    }
+
+
+    // =========================================================================
+    // 5. Controls & Movement
+    // =========================================================================
+
+    function canMove(dir) {
+        const cell = maze[player.y][player.x];
+        return !cell.walls[dir];
+    }
+
+    function move(dir) {
+        if (!isGameRunning || isMoving || isGamePaused) return;
+
+        let newX = player.x;
+        let newY = player.y;
+
+        switch (dir) {
+            case 'N': if (canMove('N')) newY--; break;
+            case 'S': if (canMove('S')) newY++; break;
+            case 'W': if (canMove('W')) newX--; break;
+            case 'E': if (canMove('E')) newX++; break;
+            default: return;
+        }
+
+        if (newX !== player.x || newY !== player.y) {
+            playMoveSound();
+            
+            const startX = renderX; 
+            const startY = renderY;
+            
+            const targetCellX = newX * cellSize + (cellSize - player.size) / 2;
+            const targetCellY = newY * cellSize + (cellSize - player.size) / 2;
+
+            player.x = newX;
+            player.y = newY;
+
+            isMoving = true;
+            animateMove(startX, startY, targetCellX, targetCellY, Date.now());
+        }
+    }
+
+    // =========================================================================
+    // 6. Input Handling (Keyboard & Touch)
+    // =========================================================================
+
+    // Keyboard input handling 
+    document.addEventListener('keydown', (e) => {
+        if (!isGameRunning || isMoving || isGamePaused) return;
+        let direction = null;
+        switch (e.key.toLowerCase()) {
+            case 'arrowup':
+                direction = 'N';
+                break;
+            case 'arrowdown':
+                direction = 'S';
+                break;
+            case 'arrowleft':
+                direction = 'W';
+                break;
+            case 'arrowright':
+                direction = 'E';
+                break;
+        }
+        if (direction) {
+            e.preventDefault();
+            move(direction);
+        }
+    });
+
+    // =========================================================================
+    // 7. Game State & Modals
+    // =========================================================================
+    
+    // Function to show the restart confirmation modal
+    function showConfirmRestart() {
+        if (!isGameRunning) return; 
+        isGameRunning = false; // Pause game while modal is open
+        confirmBox.classList.remove('hidden');
+    }
+
+    // Function to hide the restart confirmation modal and resume the game
+    function hideConfirmRestart() {
+        confirmBox.classList.add('hidden');
+        isGameRunning = true; // Resume game
+    }
+
+
+    function checkWin() {
+        if (isMoving) return; 
+
+        if (player.x === exit.x && player.y === exit.y) {
+            isGameRunning = false;
+            playWinSound(); 
+            // Cap the max level at 1000 for the messages, even if progress saves higher
+            const nextLevel = Math.min(1001, currentLevel + 1);
+            saveProgress(nextLevel); 
+            
+            // تتبع المستويات المكتملة وعرض الإعلانات
+            handleLevelCompletion();
+            
+            showStartScreen(true);
+        }
+    }
+
+    function showStartScreen(isWin) {
+        messageBox.classList.remove('hidden');
+        
+        if (isWin) {
+            const currentSize = calculateGridSize(currentLevel);
+            const nextSize = calculateGridSize(currentLevel + 1);
+            
+            messageTitle.textContent = `Level ${currentLevel - 1} Mastered!`;
+            
+            if (currentLevel < 1001) {
+                messageText.textContent = `The challenge is growing! Next Level: ${currentLevel} (${nextSize}x${nextSize} grid).`;
+                startButton.textContent = `Start Level ${currentLevel}`;
+            } else {
+                 messageTitle.textContent = `Congratulations, Grand Master!`;
+                 messageText.textContent = `You have completed all 1000 levels! You can replay them or continue on the massive 27x27 grid.`;
+                 startButton.textContent = `Continue`;
+            }
+
+        } else {
+            const currentSize = calculateGridSize(currentLevel);
+            messageTitle.textContent = `The Challenge Begins, Level ${currentLevel}`;
+            messageText.textContent = `Maps the massive ${currentSize}x${currentSize} grid. The difficulty increases sharply!`;
+            startButton.textContent = `Start Level ${currentLevel}`;
+        }
+    }
+
+    // =========================================================================
+    // 8. Application Initialization
+    // =========================================================================
+
+    function init() {
+        // Assign DOM elements
+        canvas = document.getElementById('game-canvas');
+        ctx = canvas.getContext('2d');
+        levelDisplay = document.getElementById('level-display');
+        messageBox = document.getElementById('message-box');
+        messageTitle = document.getElementById('message-title');
+        messageText = document.getElementById('message-text');
+        startButton = document.getElementById('start-button');
+        gameContainer = document.getElementById('game-container');
+        headerElement = document.getElementById('header');
+        controlsHint = document.getElementById('controls-hint');
+        
+        // Confirmation elements assignment
+        restartButton = document.getElementById('restart-button');
+        confirmBox = document.getElementById('confirm-box');
+        confirmYesButton = document.getElementById('confirm-yes');
+        confirmNoButton = document.getElementById('confirm-no');
+        
+        // Initial setup
+        setupSound();
+        setupFirebase();
+        
+        // --- Event Listeners ---
+        
+        // Start/Next button handler
+        startButton.addEventListener('click', async () => {
+            if (Tone.context.state !== 'running') {
+                await Tone.start();
+            }
+            messageBox.classList.add('hidden');
+            setupLevel(); // Setup the level with correct sizing
+        });
+        
+        // Restart button handler
+        restartButton.addEventListener('click', showConfirmRestart);
+
+        // Confirmation "No" (Cancel) handler
+        confirmNoButton.addEventListener('click', hideConfirmRestart);
+
+        // Confirmation "Yes" (Restart) handler
+        confirmYesButton.addEventListener('click', () => {
+            hideConfirmRestart();
+            setupLevel(); // Re-run setup for the current level
+        });
+        
+        // Touch handling (Swipe)
+        canvas.addEventListener('touchstart', (e) => {
+            if (isMoving || !isGameRunning || isGamePaused) return;
+            e.preventDefault();
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        });
+
+        canvas.addEventListener('touchend', (e) => {
+            if (touchStartX === undefined || isMoving || !isGameRunning || isGamePaused) return;
+            
+            const touchEndX = e.changedTouches[0].clientX;
+            const touchEndY = e.changedTouches[0].clientY;
+
+            const deltaX = touchEndX - touchStartX;
+            const deltaY = touchEndY - touchStartY;
+            const threshold = 15; 
+            
+            touchStartX = touchStartY = undefined; 
+
+            if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > threshold) {
+                move(deltaX > 0 ? 'E' : 'W');
+            } else if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) > threshold) {
+                move(deltaY > 0 ? 'S' : 'N');
+            }
+        });
+
+        // Window resize handler (responsive canvas)
+        window.addEventListener('resize', () => {
+            if (isGameRunning) {
+                setupLevel(); // Recalculate size and redraw
+            } else {
+                // Set up the size even if the game is not running to ensure a smooth transition
+                setupLevel(); 
+                isGameRunning = false;
+                draw();
+            }
+        });
+        
+        // Initial sizing when the page loads
+        setupLevel(); 
+        isGameRunning = false; // Game starts paused on the message screen
+        showStartScreen(false);
+    }
+
+    // Start application on window load
+    window.onload = init;
+
+</script>
+</body>
+</html>

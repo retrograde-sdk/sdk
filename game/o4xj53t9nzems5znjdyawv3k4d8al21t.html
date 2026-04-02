@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"
+    />
+    <style>
+      html,
+      body,
+      #game-container {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background: #000;
+      }
+
+      body {
+        position: fixed;
+        inset: 0;
+        touch-action: manipulation;
+      }
+
+      #game-container {
+        position: fixed;
+        inset: 0;
+        width: 100vw;
+        height: 100vh;
+        height: 100svh;
+        height: 100dvh;
+      }
+
+      #game-container:fullscreen,
+      #game-container:-webkit-full-screen {
+        width: 100vw;
+        height: 100vh;
+        margin: 0;
+        padding: 0;
+      }
+
+      #game-container canvas {
+        display: block;
+      }
+    </style>
+    <script type="text/javascript">
+      window.SDK_OPTIONS = {
+        gameId: 'o4xj53t9nzems5znjdyawv3k4d8al21t',
+        onEvent: function (a) {
+          switch (a && a.name) {
+            case 'SDK_GAME_PAUSE':
+              if (window.__cueSoccerAdHooks && window.__cueSoccerAdHooks.pauseAndMute) {
+                window.__cueSoccerAdHooks.pauseAndMute()
+              }
+              break
+            case 'SDK_GAME_START':
+              if (window.__cueSoccerAdHooks && window.__cueSoccerAdHooks.resumeAndUnmute) {
+                window.__cueSoccerAdHooks.resumeAndUnmute()
+              }
+              break
+            case 'SDK_READY':
+              break
+          }
+        }
+      }
+      ;(function (a, b, c) {
+        var d = a.getElementsByTagName(b)[0]
+        if (!a.getElementById(c)) {
+          a = a.createElement(b)
+          a.id = c
+          a.src = 'https://api.gamemonetize.com/sdk.js'
+          d.parentNode.insertBefore(a, d)
+        }
+      })(document, 'script', 'gamemonetize-sdk')
+    </script>
+    <script type="module" crossorigin src="./assets/index-BWBCqCuA.js"></script>
+  </head>
+  <body style="margin: 0; background: #000;">
+    <div id="game-container"></div>
+  </body>
+</html>

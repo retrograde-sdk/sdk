@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+      <title>Neon Hockey 2 Game</title>
+        
+  
+  <style type="text/css">@font-face {font-family:Orbitron;font-style:normal;font-weight:400;src:url(/cf-fonts/v/orbitron/5.0.18/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Orbitron;font-style:normal;font-weight:700;src:url(/cf-fonts/v/orbitron/5.0.18/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Orbitron;font-style:normal;font-weight:900;src:url(/cf-fonts/v/orbitron/5.0.18/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}</style>
+  <style>
+    * { box-sizing: border-box; margin:0; padding:0; -webkit-tap-highlight-color: transparent; }
+    body { font-family: 'Orbitron', sans-serif; background: radial-gradient(circle at 50% 50%, #0a0e27 0%, #000000 100%); display:flex; justify-content:center; align-items:center; min-height:100vh; color:#fff; }
+    #container{ position:relative; max-width:100%; max-height:100vh; }
+    canvas{ display:block; background:linear-gradient(180deg,#0a0e27 0%,#1a1f3a 100%); border:3px solid #00ffff; box-shadow:0 0 60px rgba(0,255,255,.5), inset 0 0 100px rgba(0,255,255,.1); max-width:100%; height:auto; }
+
+    .menu{ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:linear-gradient(135deg, rgba(10,14,39,.98) 0%, rgba(26,31,58,.98) 100%); padding:40px; border:3px solid #00ffff; box-shadow:0 0 50px rgba(0,255,255,.6), inset 0 0 50px rgba(0,255,255,.1); text-align:center; z-index:10; min-width:360px; backdrop-filter: blur(8px); opacity:0; pointer-events:none; transition:opacity .25s ease, transform .25s ease; transform-origin:center; }
+    .menu.visible{ opacity:1; pointer-events:auto; transform:translate(-50%,-50%) scale(1); }
+    .menu.hidden{ display:none; }
+    .menu h1{ font-size:34px; margin-bottom:10px; background:linear-gradient(90deg,#00ffff,#ff00ff,#00ffff); -webkit-background-clip:text; -webkit-text-fill-color:transparent; font-weight:900; letter-spacing:3px; }
+    .menu-subtitle{ font-size:12px; color:#00ffff; margin-bottom:18px; opacity:.8; }
+    .menu-btn{ display:block; width:100%; padding:14px; margin:10px 0; font-size:14px; font-weight:700; background:linear-gradient(135deg,#00ffff 0%,#0099cc 100%); color:#0a0e27; border:2px solid #00ffff; cursor:pointer; text-transform:uppercase; letter-spacing:2px; position:relative; overflow:hidden; transition:transform .18s ease, box-shadow .18s ease; }
+    .menu-btn::before{ content:''; position:absolute; top:0; left:-100%; width:100%; height:100%; background:linear-gradient(90deg, transparent, rgba(255,255,255,.25), transparent); transition:left .5s; }
+    .menu-btn:hover::before{ left:100%; }
+    .menu-btn:hover{ transform:translateY(-3px); box-shadow:0 6px 25px rgba(0,255,255,.25); }
+    .menu-btn.secondary{ background:linear-gradient(135deg,#ff00ff 0%,#cc0099 100%); border-color:#ff00ff; }
+    .menu-btn.support{ background:linear-gradient(135deg,#ffd700 0%,#ff8c00 100%); border-color:#ffd700; color:#0a0e27; }
+    .menu-footer{ margin-top:14px; font-size:12px; color:#00ffff; opacity:.9; }
+
+    .countdown{ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:120px; font-weight:900; color:#00ffff; text-shadow:0 0 30px #00ffff, 0 0 60px #00ffff; z-index:5; pointer-events:none; animation:countPulse 1s ease-in-out; }
+    @keyframes countPulse{ 0%{ transform:translate(-50%,-50%) scale(.6); opacity:0 }50%{ transform:translate(-50%,-50%) scale(1.15); opacity:1 }100%{ transform:translate(-50%,-50%) scale(1); opacity:1 } }
+
+    .goal-text{ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:100px; font-weight:900; background:linear-gradient(90deg,#00ffff,#ff00ff); -webkit-background-clip:text; -webkit-text-fill-color:transparent; text-shadow:0 0 40px rgba(0,255,255,0.7), 0 0 80px rgba(255,0,255,0.5); z-index:6; pointer-events:none; animation:goalAnim 1s ease-out; }
+    @keyframes goalAnim{ 0%{ transform:translate(-50%,-50%) scale(2); opacity:0 } 60%{ transform:translate(-50%,-50%) scale(1); opacity:1 } 100%{ transform:translate(-50%,-50%) scale(1.1); opacity:0 } }
+
+    .pause-overlay{ position:absolute; top:0; left:0; right:0; bottom:0; background:rgba(10,14,39,.85); display:flex; flex-direction:column; justify-content:center; align-items:center; z-index:20; backdrop-filter: blur(4px); opacity:0; pointer-events:none; transition:opacity .18s ease; }
+    .pause-overlay.visible{ opacity:1; pointer-events:auto; }
+    .pause-box{ background:linear-gradient(135deg, rgba(255,255,255,.03), rgba(255,255,255,.01)); border:2px solid rgba(0,255,255,.12); padding:18px; border-radius:12px; min-width:320px; text-align:center; }
+    .pause-text{ font-size:40px; font-weight:900; background:linear-gradient(90deg,#00ffff,#ff00ff); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:10px; }
+    .pause-hint{ font-size:12px; color:#00ffff; opacity:.8; margin-bottom:10px; }
+
+    .about-content{ text-align:left; font-size:13px; line-height:1.6; color:#dfefff; }
+    .about-content strong{ color:#00ffff; }
+
+    .orientation-notice{ position:fixed; inset:0; background:#0a0e27; display:none; flex-direction:column; justify-content:center; align-items:center; z-index:1000; color:#00ffff; text-align:center; padding:20px; }
+    .rotate-icon{ font-size:80px; margin-bottom:20px; animation:rotate 2s infinite; }
+    @keyframes rotate{ 0%,100%{ transform:rotate(0deg) }50%{ transform:rotate(90deg) } }
+
+    @media (max-width:768px){ .menu{ min-width:300px; padding:26px; } .menu h1{ font-size:26px } .countdown{ font-size:80px } .pause-text{ font-size:28px } .goal-text{ font-size:70px } }
+
+    .match-indicator{ position:absolute; top:18px; left:50%; transform:translateX(-50%); background:rgba(0,255,255,.12); border:2px solid #00ffff; padding:6px 16px; border-radius:18px; font-size:12px; font-weight:700; color:#00ffff; z-index:1; }
+
+    .small-footer{ position:absolute; bottom:8px; left:50%; transform:translateX(-50%); font-size:12px; color:#00ffff; opacity:.9; z-index:11; }
+
+    #fullscreenBtn {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  z-index: 1001;
+  font-size: 24px;
+  background: rgba(0, 255, 255, 0.1);
+  color: #00ffff;
+  border: 2px solid #00ffff;
+  border-radius: 10px;
+  padding: 6px 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(6px);
+}
+#fullscreenBtn:hover {
+  background: rgba(0, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+  </style>
+</head>
+<body>
+
+  <script type = "text/javascript" >
+    window.SDK_OPTIONS = {
+      gameId: "gswoqzyqz7pbsqvzv8lvjbmspmsxnunp", // Game ID is preserved
+      onEvent: function (a) {
+        switch (a.name) {
+          case "SDK_GAME_PAUSE":
+            // pause game logic / mute audio
+            if(window.game) window.game.sdkPause();
+            break;
+          case "SDK_GAME_START":
+            // advertisement done, resume game logic and unmute audio
+            if(window.game) window.game.sdkResume();
+            break;
+          case "SDK_READY":
+            console.log("GameMonetize SDK is ready.");
+            // when sdk is ready
+            break;
+          case "SDK_ERROR":
+            console.error("GameMonetize SDK error:", a.message);
+            break;
+        }
+      }
+    };
+(function (a, b, c) {
+    var d = a.getElementsByTagName(b)[0];
+    a.getElementById(c) || (a = a.createElement(b), a.id = c, 
+    a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+})(document, "script", "gamemonetize-sdk"); 
+</script>
+
+
+  <div class="orientation-notice">
+    <div class="rotate-icon">📱</div>
+    <h2>Please Rotate Your Device</h2>
+    <p>This game is best played in landscape mode</p>
+  </div>
+
+  <div id="container">
+    <canvas id="gameCanvas"></canvas>
+    <div id="matchIndicator" class="match-indicator hidden"></div>
+    <div id="goalPopup" class="goal-text" style="display:none;">GOAL!!</div> <div id="mainMenu" class="menu visible">
+      <h1>NEON HOCKEY 2</h1>
+      <div class="menu-subtitle">CHAMPIONSHIP EDITION</div>
+      <button class="menu-btn" onclick="game.showModeMenu()">Start Game</button>
+      <button id="continueBtn" class="menu-btn secondary" style="display:none;" onclick="game.continueMatch()">Continue Match</button>
+      <button class="menu-btn" onclick="game.showSettings()">Settings</button> <button class="menu-btn" onclick="game.showControls()">Controls</button>
+      <button class="menu-btn" onclick="game.showAbout()">About Game</button>
+      <button class="menu-btn support" onclick="window.open('https://www.sternenkofund.org/en/donate', '_blank')">💛💙 Support Ukraine</button>
+      <div class="menu-footer">Game by Ihor Khodakivskyi</div>
+    </div>
+
+    <div id="modeMenu" class="menu hidden">
+      <h1>Select Mode</h1>
+      <div class="menu-subtitle">Choose your challenge</div>
+      <button class="menu-btn" onclick="game.showDifficultyMenu()">1 Player vs AI</button>
+      <button class="menu-btn secondary" onclick="game.setMode('2player')">2 Players</button>
+      <button class="menu-btn" style="background:#333; border-color:#666;" onclick="game.showModeMenu()">Back</button>
+    </div>
+
+    <div id="difficultyMenu" class="menu hidden">
+      <h1>Select Difficulty</h1>
+      <div class="menu-subtitle">Choose AI strength</div>
+      <div class="difficulty-grid">
+        <button class="menu-btn" onclick="game.setDifficulty('easy')">🟢 Easy</button>
+        <button class="menu-btn" onclick="game.setDifficulty('normal')">🟡 Normal</button>
+        <button class="menu-btn" onclick="game.setDifficulty('hard')">🔴 Hard</button>
+      </div>
+      <button class="menu-btn" style="background:#333; border-color:#666; margin-top:10px;" onclick="game.showModeMenu()">Back</button>
+    </div>
+    
+    <div id="settingsMenu" class="menu hidden">
+      <h1>Game Settings</h1>
+      <div class="menu-subtitle">Adjust parameters for V3.0</div>
+      
+      <h3 style="font-size:16px; margin-top:15px; margin-bottom:5px; color:#fff;">Mallet Size</h3>
+      <div style="display:flex; justify-content:space-around;">
+          <button class="menu-btn" style="width:30%; padding:8px 0; margin:5px; font-size:12px;" onclick="game.setMalletSize(45)">Normal</button>
+          <button class="menu-btn" style="width:30%; padding:8px 0; margin:5px; font-size:12px;" onclick="game.setMalletSize(60)">Large</button>
+          <button class="menu-btn" style="width:30%; padding:8px 0; margin:5px; font-size:12px;" onclick="game.setMalletSize(30)">Small</button>
+      </div>
+
+      <h3 style="font-size:16px; margin-top:15px; margin-bottom:5px; color:#fff;">Max Puck Speed</h3>
+      <div style="display:flex; justify-content:space-around;">
+          <button class="menu-btn secondary" style="width:30%; padding:8px 0; margin:5px; font-size:12px;" onclick="game.setMaxSpeed(15)">Fast</button>
+          <button class="menu-btn secondary" style="width:30%; padding:8px 0; margin:5px; font-size:12px;" onclick="game.setMaxSpeed(20)">Very Fast</button>
+          <button class="menu-btn secondary" style="width:30%; padding:8px 0; margin:5px; font-size:12px;" onclick="game.setMaxSpeed(30)">Extreme</button>
+      </div>
+
+      <h3 style="font-size:16px; margin-top:15px; margin-bottom:5px; color:#fff;">Sound Volume</h3>
+<input id="volumeSlider" type="range" min="0" max="100" value="100"
+       style="width:100%; margin:10px 0;" 
+       oninput="game.setVolume(this.value)">
+
+
+      <button class="menu-btn" style="background:#333; border-color:#666; margin-top:20px;" onclick="game.showMainMenu()">Back</button>
+    </div>
+
+    <div id="controlsMenu" class="menu hidden">
+      <h1>Controls</h1>
+      <div class="menu-subtitle">How to play</div>
+      <div class="about-content" style="margin-top:12px;">
+        <p><strong>PLAYER 1 (Left):</strong> Mouse or Touch (left side), **WASD**.</p>
+        <p><strong>PLAYER 2 (Right):</strong> Touch (right side), **Arrow Keys (↑↓←→)**.</p>
+        <p><strong>PAUSE:</strong> ESC or P</p>
+        <p style="margin-top:8px; font-size:13px; color:#bfefff;">*Keyboard controls provide 2D movement for mallets.*</p>
+      </div>
+      <button class="menu-btn" onclick="game.showMainMenu()">Back</button>
+    </div>
+
+    <div id="aboutMenu" class="menu hidden">
+      <h1>About Game</h1>
+      <div class="menu-subtitle">Neon Hockey Championship 2026</div>
+      <div class="about-content" style="margin-top:8px;">
+        <p><strong>Developed by:</strong> Ihor Khodakivskyi</p>
+        <p><strong>© 2026 All Rights Reserved</strong></p>
+        <p style="margin-top:8px;">Retro-inspired Air Hockey with modern effects, AI difficulty system, and smooth 2-player controls. Built for fast-paced fun!</p>
+      </div>
+      <button class="menu-btn" onclick="game.showMainMenu()">Back</button>
+    </div>
+
+    <div id="pauseOverlay" class="pause-overlay">
+      <div class="pause-box">
+        <div class="pause-text">Paused</div>
+        <div class="pause-hint">Game is paused - your match will remain saved</div>
+        <button class="menu-btn" onclick="game.togglePause()">Resume Game</button>
+        <button class="menu-btn" onclick="game.showMainMenuFromPause()">Main Menu</button>
+      </div>
+    </div>
+
+    <div id="setPopup" class="pause-overlay">
+  <div class="pause-box">
+    <div id="setPopupTitle" class="pause-text"></div>
+    <div id="setPopupInfo" class="pause-hint" style="margin-bottom:18px;"></div>
+
+    <button class="menu-btn" onclick="game.nextPeriod()">Next Period</button>
+    <button class="menu-btn" onclick="game.showMainMenu()">Main Menu</button>
+  </div>
+</div>
+
+<div id="matchPopup" class="pause-overlay">
+  <div class="pause-box">
+    <div id="matchPopupTitle" class="pause-text"></div>
+    <div id="matchPopupInfo" class="pause-hint" style="margin-bottom:18px;"></div>
+
+    <button class="menu-btn" onclick="game.restartMatch()">Play Again</button>
+    <button class="menu-btn" onclick="game.showMainMenu()">Main Menu</button>
+  </div>
+</div>
+
+
+    <div class="small-footer">Neon Hockey 2 by Ihor Khodakivskyi • 2025</div>
+
+    <button id="fullscreenBtn" title="Fullscreen">⛶</button>
+
+  </div>
+
+  <script src="main.js?v=3.0.1"></script>
+</body>
+</html>

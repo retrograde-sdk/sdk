@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Escape the Police</title>
+  <link rel="stylesheet" href="style.css">
+  
+  <!-- GameMonetize SDK -->
+  <script type="text/javascript">
+    window.SDK_OPTIONS = {
+      gameId: "2lzr44fn0gin4uqxgjfqcbqt1ul43r6h",
+      onEvent: function (a) {
+        switch (a.name) {
+          case "SDK_GAME_PAUSE":
+            // Pause game logic and mute audio when ad starts
+            if (window.gameSDKPause) {
+              window.gameSDKPause();
+            }
+            break;
+          case "SDK_GAME_START":
+            // Resume game logic and unmute audio when ad ends
+            if (window.gameSDKResume) {
+              window.gameSDKResume();
+            }
+            break;
+          case "SDK_READY":
+            // SDK is ready
+            console.log("GameMonetize SDK Ready");
+            break;
+        }
+      }
+    };
+    (function (a, b, c) {
+      var d = a.getElementsByTagName(b)[0];
+      a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = 
+      "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+    })(document, "script", "gamemonetize-sdk");
+  </script>
+</head>
+<body>
+  <div id="game-container">
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="mobile-controls">
+      <div id="btn-left" class="steer-btn">◀</div>
+      <div id="btn-right" class="steer-btn">▶</div>
+    </div>
+
+    <!-- Start Screen -->
+    <div id="startScreen" class="screen">
+      <div class="screen-content">
+        <h1 class="game-title">Escape the Police</h1>
+        <p class="game-subtitle">Collect coins and escape from the law!</p>
+        
+        <div class="top-row">
+          <div class="button-group">
+            <button id="startBtn" class="btn btn-primary">Start Game</button>
+            <button id="howBtn" class="btn btn-secondary">How to Play</button>
+          </div>
+
+          <div class="coins-display">
+            <span class="coin-icon">💰</span>
+            <span id="menuCoins">0</span>
+          </div>
+        </div>
+
+        <!-- Boosters Selection -->
+        <div class="boosters-section">
+          <h3>Select Boosters</h3>
+          
+          <div class="booster-card">
+            <div class="booster-info">
+              <span class="booster-icon">💎</span>
+              <div>
+                <div class="booster-name">Double Coins</div>
+                <div class="booster-desc">2x coins for this game</div>
+              </div>
+            </div>
+            <div class="booster-actions">
+              <button class="booster-buy-btn" data-booster="double" data-type="ad">
+                📺 AD
+              </button>
+            </div>
+            <div class="booster-owned" id="doubleOwned">Active: <span>No</span></div>
+          </div>
+        </div>
+        
+        <div id="instructions" class="instructions hidden">
+          <h3>Controls</h3>
+          <p><kbd>←</kbd> <kbd>→</kbd> or <kbd>A</kbd> <kbd>D</kbd> to steer</p>
+          <p><kbd>P</kbd> Pause game</p>
+          <h3>Objective</h3>
+          <p>💰 Collect coins while avoiding traffic!</p>
+          <p>🚔 Escape the police - make them crash into traffic!</p>
+          <p>Stay on the road - the grass will slow you down!</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pause Screen -->
+    <div id="pauseScreen" class="screen hidden">
+      <div class="screen-content">
+        <h2>⏸️ Paused</h2>
+        <p>Take a breath...</p>
+        <div class="button-group">
+          <button id="resumeBtn" class="btn btn-primary">Resume</button>
+          <button id="restartPauseBtn" class="btn btn-secondary">Restart</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="gameOverScreen" class="screen hidden">
+      <div class="screen-content">
+        <h2>💥 Game Over!</h2>
+        <div class="game-over-stats">
+          <span id="finalScore" class="final-score">Score: 0</span>
+          <span id="coinsEarned" class="coins-earned">Coins: +0</span>
+          <span id="bestScore" class="best-score">Best: 0</span>
+        </div>
+        <p id="gameOverReason" class="game-over-reason"></p>
+
+        <!-- Post-game boosters -->
+        <div class="postgame-boosters">
+          <div class="postgame-booster">
+            <div class="postgame-booster-title">💎 Double Coins Earned</div>
+            <button class="booster-buy-btn-large" id="doubleCoinsPostBtn">
+              📺 Watch Ad
+            </button>
+          </div>
+        </div>
+
+        <div class="button-group">
+          <div class="continue-section">
+            <div class="continue-title">Continue Playing?</div>
+            <div class="continue-actions">
+              <button class="booster-buy-btn-large" id="continueCoinsBtn">
+                <span class="coin-icon-small">💰</span> 25
+              </button>
+              <button class="booster-buy-btn-large" id="continueAdBtn">
+                📺 AD
+              </button>
+            </div>
+          </div>
+          <button id="restartBtn" class="btn btn-primary">Play Again</button>
+          <button id="menuBtn" class="btn btn-secondary">Main Menu</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- HUD -->
+    <div id="hud" class="hidden">
+      <div class="hud-left">
+        <div class="hud-item">
+          <span class="hud-label">Score:</span>
+          <span id="scoreValue">0</span>
+        </div>
+        <div class="hud-item">
+          <span class="coin-icon-small">💰</span>
+          <span id="coinsValue">0</span>
+        </div>
+        <div class="hud-item">
+          <span class="hud-label">Speed:</span>
+          <span id="speedValue">0</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,1465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ocean Catcher Fun</title>
+
+    <script type="text/javascript">
+        // Global flag to track SDK status
+        window.sdkReady = false;
+
+        // STEP 1: Global flags for Ad flow control
+        var pendingStart = false;
+        var pendingRestart = false;
+
+        window.SDK_OPTIONS = {
+            gameId: "45krpb29q3e11xey9vzktjpbe9b5p8xr", 
+            onEvent: function (a) {
+                switch (a.name) {
+                    case "SDK_GAME_PAUSE":
+                        // FIX: Hide UI so it doesn't block the ad
+                        document.body.classList.add('ad-active');
+                        
+                        if (typeof gameState !== 'undefined') gameState.isPaused = true;
+                        if (typeof AdSoundManager !== 'undefined') AdSoundManager.muteForAd();
+                        break;
+                        
+                    case "SDK_GAME_START":
+                        // FIX: Show UI again
+                        document.body.classList.remove('ad-active');
+                        
+                        if (typeof gameState !== 'undefined') {
+                            gameState.isPaused = false;
+                            if (typeof lastTime !== 'undefined') lastTime = Date.now();
+                        }
+                        if (typeof AdSoundManager !== 'undefined') AdSoundManager.restoreAfterAd();
+
+                        // STEP 2: Logic to start game ONLY after ad finishes
+                        if (pendingRestart) {
+                            pendingRestart = false;
+                            if (typeof autoStartGame === 'function') autoStartGame();
+                        } else if (pendingStart) {
+                            pendingStart = false;
+                            if (typeof autoStartGame === 'function') autoStartGame();
+                        }
+                        break;
+                        
+                    case "SDK_READY":
+                        console.log("✅ SDK Ready Event Received");
+                        window.sdkReady = true;
+                        // Attempt to start if assets are already loaded
+                        if (typeof window.checkAllReadyAndHide === 'function') {
+                            window.checkAllReadyAndHide();
+                        }
+                        break;
+                }
+            }
+        };
+        (function (a, b, c) {
+            var d = a.getElementsByTagName(b)[0];
+            a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+        })(document, "script", "gamemonetize-sdk");
+    </script>
+
+    <style>
+        :root {
+            --bg1: #06182E;
+            --bg2: #0B3D5E;
+            --neon: #44E5E7;
+            --gold: #FFD700;
+            --vio: #7C3AED;
+            --rose: #FF5DA2;
+            --glass: rgba(255,255,255,.08);
+            --line: rgba(255,255,255,.18);
+            --vh: 1vh;
+            --header-h: 60px;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        html, body {
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: radial-gradient(1200px 1200px at 10% 10%, #0f2850 0%, #071a33 40%, #030B17 100%);
+            color: #EAF6FF;
+        }
+        
+        .container {
+            height: 100vh;
+            height: calc(var(--vh, 1vh) * 100);
+            display: flex;
+            flex-direction: column;
+            padding: 8px;
+            gap: 8px;
+        }
+        
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 10px;
+            border-radius: 14px;
+            background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+            border: 1px solid var(--line);
+            backdrop-filter: blur(8px);
+            box-shadow: 0 10px 30px rgba(0,0,0,.35);
+            flex-shrink: 0;
+            z-index: 100;
+            transition: all 0.3s ease;
+        }
+        
+        h1 {
+            font-size: clamp(1.1rem, 4vw, 1.8rem);
+            color: var(--gold);
+            letter-spacing: .5px;
+            text-shadow: 0 0 12px rgba(255,215,0,.35);
+            white-space: nowrap;
+        }
+        
+        .head-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+        
+        .simple-link {
+            padding: 6px 10px;
+            font-size: 0.9rem;
+            border-radius: 10px;
+            background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+            border: 1px solid var(--line);
+            color: #EAF6FF;
+            text-decoration: none;
+            cursor: pointer;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,.04);
+            transition: all 0.2s;
+        }
+        
+        .simple-link:hover {
+            box-shadow: inset 0 0 0 1px var(--neon), 0 0 12px rgba(68,229,231,.25);
+        }
+        
+        .game-area {
+            display: flex;
+            flex: 1;
+            gap: 10px;
+            overflow: hidden;
+            min-height: 0;
+        }
+        
+        .left-column {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-height: 0;
+        }
+        
+        .right-column {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            overflow-y: auto;
+            min-width: 200px;
+        }
+        
+        @media (max-width: 900px) {
+            .game-area {
+                flex-direction: column;
+            }
+            .head-actions { gap: 4px; }
+            .simple-link { padding: 8px 10px; font-size: 0.85rem; }
+            .game-info { grid-template-columns: repeat(3, 1fr) !important; gap: 6px; padding: 8px; }
+            .net-selector { flex-direction: row; overflow-x: auto; }
+            .controls { flex-wrap: wrap; }
+            .controls button { flex: 1; min-width: 100px; padding: 12px 12px; min-height: 44px; }
+        }
+        
+        @media (max-height: 500px) and (orientation: landscape) {
+            .container { padding: 2px; gap: 4px; }
+            header { padding: 2px 8px; min-height: 32px; }
+            h1 { font-size: 1rem; margin-right: 8px; }
+            .head-actions { gap: 4px; }
+            .simple-link { padding: 2px 6px; font-size: 0.75rem; border-radius: 6px; }
+            .game-area { flex-direction: row; }
+            .right-column { flex: 0 0 220px; max-width: 220px; gap: 4px; }
+            .left-column { flex: 1; gap: 4px; }
+            .panel { padding: 4px; }
+            .panel h3 { font-size: 0.9rem; margin-bottom: 2px; }
+            .mission { padding: 2px; font-size: 0.75rem; }
+            .net-option { padding: 4px; min-width: 0; }
+            .net-name { font-size: 0.75rem; }
+            .net-stats, .net-cost { font-size: 0.65rem; display: none; }
+            button { padding: 4px 8px; font-size: 0.75rem; min-height: 32px; }
+            .game-info { gap: 4px; padding: 2px; grid-template-columns: repeat(6, 1fr) !important; }
+            .info-label { font-size: 0.6rem; }
+            .info-value { font-size: 0.9rem; }
+            .energy-bar { height: 6px; }
+            .progress-bar { height: 8px; }
+            .progress-fill { font-size: 0.55rem; }
+        }
+        
+        .game-info {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 6px;
+            background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+            padding: 6px;
+            border-radius: 14px;
+            border: 1px solid var(--line);
+        }
+        
+        .info-box { text-align: center; padding: 4px 2px; }
+        .info-label { font-size: .7rem; color: #a8d8ff; margin-bottom: 2px; }
+        .info-value { font-size: clamp(1rem, 3vw, 1.5rem); font-weight: 800; color: var(--gold); text-shadow: 0 0 10px rgba(255,215,0,.25); }
+        
+        .energy-container {
+            position: relative;
+            background: rgba(0,0,0,.35);
+            border-radius: 10px;
+            padding: 2px;
+            margin-top: 4px;
+            border: 1px solid var(--line);
+        }
+        
+        .energy-bar {
+            height: 10px;
+            background: linear-gradient(90deg, #41E26C, #C6FF6B);
+            border-radius: 6px;
+            transition: width .3s ease;
+            width: 100%;
+        }
+        
+        .energy-text {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .7rem;
+            font-weight: 700;
+            color: #fff;
+            text-shadow: 0 1px 2px rgba(0,0,0,.7);
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 14px;
+            background: rgba(255,255,255,.06);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--line);
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #41E26C, #C6FF6B);
+            transition: width .3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: .7rem;
+            text-shadow: 0 1px 2px rgba(0,0,0,.5);
+        }
+        
+        .game-canvas-container {
+            position: relative;
+            border-radius: 16px;
+            overflow: hidden;
+            background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+            border: 1px solid var(--line);
+            box-shadow: 0 10px 30px rgba(0,0,0,.35);
+            flex: 1;
+            min-height: 10px;
+        }
+        
+        #gameCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+            touch-action: none;
+        }
+        
+        #darkOverlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,.35);
+            display: none;
+            pointer-events: none;
+        }
+        
+        .net-selector, .controls {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .net-selector {
+            background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 8px;
+        }
+        
+        .net-option {
+            flex: 1;
+            min-width: 100px;
+            padding: 8px 10px;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            background: rgba(0,0,0,.35);
+            cursor: pointer;
+            transition: all .25s;
+        }
+        
+        .net-option:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,.35); }
+        .net-option.selected { outline: 2px solid var(--neon); box-shadow: 0 0 18px rgba(68,229,231,.35); }
+        .net-name { font-weight: 800; font-size: 0.9rem; color: var(--gold); margin-bottom: 4px; }
+        .net-stats { font-size: .75rem; color: #a8d8ff; }
+        .net-cost { margin-top: 4px; font-size: .7rem; color: #FF8D8D; }
+        
+        .controls { margin-top: 2px; }
+        
+        button {
+            padding: 8px 12px;
+            font-size: 0.9rem;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff;
+            font-weight: 800;
+            letter-spacing: .3px;
+            transition: transform .15s, box-shadow .15s;
+            box-shadow: 0 6px 20px rgba(0,0,0,.35);
+        }
+        
+        button:hover { transform: translateY(-2px); }
+        button:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+        
+        .panel {
+            background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,.35);
+            overflow: auto;
+            max-height: 200px;
+        }
+        
+        .panel h3 { color: var(--gold); margin-bottom: 6px; }
+        
+        .mission {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            border: 1px dashed var(--neon);
+            border-radius: 10px;
+            margin-bottom: 8px;
+            background: rgba(0,0,0,.25);
+        }
+        
+        .mission small { color: #a8d8ff; }
+        .claim { background: linear-gradient(135deg, #22c55e, #16a34a); }
+        .claim-inline { background: linear-gradient(135deg, #22c55e, #16a34a); padding: 4px 8px; font-size: 0.75rem; border-radius: 6px; }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,12,.86);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        
+        .modal .content {
+            background: radial-gradient(800px 600px at 50% 0%, rgba(124,58,237,.45), rgba(12,12,24,.9));
+            padding: 22px;
+            border-radius: 18px;
+            max-width: 560px;
+            width: 92%;
+            text-align: center;
+            border: 1px solid var(--line);
+            box-shadow: 0 20px 60px rgba(0,0,0,.6);
+        }
+        
+        .modal h2 { color: var(--gold); margin-bottom: 8px; }
+        .modal p { margin: 6px 0; }
+        .ad { background: linear-gradient(135deg, #101010, #1c1c1c); border: 2px solid var(--gold); }
+        
+        #levelUpModal .content { max-width: 640px; }
+        #levelUpText { font-size: clamp(2rem, 8vw, 4rem); font-weight: 900; color: var(--gold); text-shadow: 0 0 20px rgba(255,215,0,.45), 0 0 60px rgba(124,58,237,.45); }
+        #levelUpLevel { font-size: clamp(1.2rem, 5vw, 2rem); color: #a8d8ff; margin-top: 6px; }
+        
+        .web-graphic {
+            margin: 12px auto 0;
+            width: min(70vw, 360px);
+            height: min(70vw, 360px);
+            position: relative;
+        }
+        
+        .toast {
+            position: fixed;
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: 16px;
+            background: rgba(0,0,0,.75);
+            padding: 10px 12px;
+            border: 1px solid var(--gold);
+            border-radius: 10px;
+            display: none;
+            z-index: 1200;
+        }
+
+        #sdkLoading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            color: white;
+            font-size: 1.5rem;
+        }
+
+        @keyframes floatUp {
+            0% { transform: translateY(20px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes bounce {
+            from { transform: translateY(0px); }
+            to { transform: translateY(-10px); }
+        }
+
+        .modal .content { animation: floatUp 0.3s ease-out; }
+        .upgrade-limit { font-size: 0.8rem; color: #FF8D8D; margin-top: 4px; }
+        .upgrade-maxed { color: #FFD700; font-weight: bold; }
+        
+        /* Ad Playing Indicator */
+        #adPlayingIndicator {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 10px;
+            font-size: 12px;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            display: none;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.7; }
+            50% { opacity: 1; }
+            100% { opacity: 0.7; }
+        }
+
+        /* NEW UI CHANGES: Hide inline panel, disable scroll, add mission ready glow */
+        .right-column > .panel {
+            display: none !important;
+        }
+        .right-column {
+            overflow-y: hidden !important;
+        }
+        .mission-ready {
+            box-shadow: 0 0 12px #22c55e;
+            border-color: #22c55e;
+            animation: pulse-border 1.5s infinite;
+        }
+        @keyframes pulse-border {
+            0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+            70% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        }
+
+        /* SDK FIX: Hide game UI during ad playback so it doesn't cover the ad */
+        .ad-active #gameUI {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div id="sdkLoading">Loading Game...</div>
+    <div id="adPlayingIndicator">🔇 Ad Playing</div>
+    
+    <div class="container" id="gameUI">
+        <header>
+            <h1>🎣 Ocean Catcher 🎣</h1>
+            <div class="head-actions">
+                <button id="helpBtn" class="simple-link">Help</button>
+                <button id="shopBtn" class="simple-link">Shop</button>
+                <button id="missionsBtn" class="simple-link">Missions</button>
+                <button id="dailyBtn" class="simple-link">Daily Reward</button>
+                <button id="leaderBtn" class="simple-link">📜 History</button>
+                <button id="muteBtn" class="simple-link">🔊 Music</button>
+            </div>
+        </header>
+        
+        <div class="game-area">
+            <div class="left-column">
+                <div class="game-info">
+                    <div class="info-box">
+                        <div class="info-label">Score</div>
+                        <div class="info-value" id="score">0</div>
+                    </div>
+                    <div class="info-box">
+                        <div class="info-label">Level</div>
+                        <div class="info-value" id="level">1</div>
+                    </div>
+                    <div class="info-box">
+                        <div class="info-label">Time</div>
+                        <div class="info-value" id="timer">60</div>
+                    </div>
+                    <div class="info-box">
+                        <div class="info-label">Energy</div>
+                        <div class="info-value" id="energy">100</div>
+                        <div class="energy-container">
+                            <div class="energy-bar" id="energyBar"></div>
+                            <div class="energy-text" id="energyText">100/200</div>
+                        </div>
+                    </div>
+                    <div class="info-box">
+                        <div class="info-label">Target</div>
+                        <div class="info-value" id="target">100</div>
+                    </div>
+                    <div class="info-box">
+                        <div class="info-label">Coins</div>
+                        <div class="info-value" id="coins">0</div>
+                    </div>
+                </div>
+                
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress"><span id="progressText">0%</span></div>
+                </div>
+                
+                <div class="game-canvas-container">
+                    <canvas id="gameCanvas"></canvas>
+                    <div id="darkOverlay"></div>
+                </div>
+                
+            </div>
+            
+            <div class="right-column">
+                <div class="panel">
+                    <h3>Today's Missions</h3>
+                    <div id="missionList"></div>
+                </div>
+                
+                <div class="net-selector">
+                    <div class="net-option selected" data-net="small">
+                        <div class="net-name">Small Net</div>
+                        <div class="net-stats">18px | 0.5s | 1x</div>
+                        <div class="net-cost">Cost: <span id="smallNetCost">10</span> ⚡</div>
+                    </div>
+                    <div class="net-option" data-net="medium">
+                        <div class="net-name">Medium Net</div>
+                        <div class="net-stats">27px | 1.5s | 1.5x</div>
+                        <div class="net-cost">Cost: <span id="mediumNetCost">15</span> ⚡</div>
+                    </div>
+                    <div class="net-option" data-net="large">
+                        <div class="net-name">Large Net</div>
+                        <div class="net-stats">36px | 3s | 2x</div>
+                        <div class="net-cost">Cost: <span id="largeNetCost">20</span> ⚡</div>
+                    </div>
+                </div>
+                
+                <div class="controls">
+                    <button id="pauseBtn" disabled>Pause</button>
+                    <button id="restartBtn">Restart</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal" id="helpModal">
+        <div class="content">
+            <h2>How to Play</h2>
+            <p>Click/tap to cast a net. Catch fish for score, coins and energy.</p>
+            <p>Avoid dangerous fish (Lionfish, Shark, Octopus). Watch out for events like the Energy Rush!</p>
+            <p style="color: var(--neon); font-weight: bold; margin-top: 10px;">⭐ COMBO SYSTEM (Unlocks at Level 3) ⭐</p>
+            <p>Catch good fish quickly to build a combo and multiply your score!<br>(3+ fish = x2 score, 6+ fish = x3 score, etc.)<br>Hitting a danger fish or waiting too long will break your combo.</p>
+            <button id="closeHelp" class="simple-link" style="margin-top: 10px;">Close</button>
+            <button id="resetProgressBtn" class="simple-link" style="background-color: #c0392b; margin-left: 10px;">Reset All Progress</button>
+        </div>
+    </div>
+    
+    <div class="modal" id="shopModal">
+        <div class="content">
+            <h2>🐚 Upgrade Shop</h2>
+            <p><b>Max Energy +20</b> — <span id="energyPrice">300</span> coins <button id="buyEnergy" class="simple-link">Buy</button></p>
+            <p><b>Base Time +5s</b> — <span id="timePrice">500</span> coins <button id="buyTime" class="simple-link">Buy</button></p>
+            <div id="timeLimitInfo" class="upgrade-limit">Maximum: 80 seconds</div>
+            <small>Upgrades are permanent and save locally.</small><br/>
+            <button id="closeShop" class="simple-link" style="margin-top:8px">Close</button>
+        </div>
+    </div>
+    
+    <div class="modal" id="missionsModal">
+        <div class="content">
+            <h2>💎 Missions</h2>
+            <div id="missionsModalList"></div>
+            <button id="closeMissions" class="simple-link" style="margin-top:8px">Close</button>
+        </div>
+    </div>
+    
+    <div class="modal" id="dailyModal">
+        <div class="content">
+            <h2>🎁 Daily Reward</h2>
+            <p id="dailyStatus">Come back daily for a bonus!</p>
+            <button id="claimDaily" class="claim" disabled>Claim</button>
+            <button id="closeDaily" class="simple-link" style="margin-left:6px">Close</button>
+        </div>
+    </div>
+    
+    <div class="modal" id="leaderModal">
+        <div class="content">
+            <h2>📜 Score History</h2>
+            <p><small> Score History below:</small></p>
+            <ol id="leaderLocalList"></ol>
+            <button id="closeLeader" class="simple-link" style="margin-top:8px">Close</button>
+        </div>
+    </div>
+    
+    <div class="modal" id="gameOverModal">
+        <div class="content">
+            <h2>Game Over</h2>
+            <p>Score: <span id="finalScore">0</span></p>
+            <p>Level: <span id="finalLevel">1</span></p>
+            <p>Energy: <span id="finalEnergy">0</span></p>
+            <button id="againBtn" class="simple-link">Play Again</button>
+        </div>
+    </div>
+    
+    <div class="modal" id="levelUpModal">
+        <div class="content">
+            <div id="levelUpText">LEVEL UP!</div>
+            <div id="levelUpLevel">Level 2</div>
+            <canvas id="levelWeb" class="web-graphic"></canvas>
+        </div>
+    </div>
+    
+    <div class="toast" id="toast">Saved</div>
+
+    <script>
+        // ======================
+        // GAME CONSTANTS & VARS
+        // ======================
+        const MAX_BASE_ENERGY = 200;
+        const START_BASE_TIME = 60;
+        const MAX_TIME_LIMIT = 80;
+        const REWARD_THRESHOLD = 40;
+        const ENERGY_BASE_PRICE = 300;
+        const TIME_BASE_PRICE = 500;
+        const COMBO_WINDOW_SECONDS = 2.0;
+
+        let userInteracted = false;
+        const byId = id => document.getElementById(id);
+        const audioElements = {};
+
+        // ======================
+        // AD SOUND MANAGER
+        // ======================
+        const AdSoundManager = {
+            adActive: false,
+            wasUserMuted: false,
+            muteForAd() {
+                if (this.adActive) return;
+                this.adActive = true;
+                const bgm = audioElements['bgm'];
+                if (bgm) {
+                    this.wasUserMuted = bgm.paused || bgm.muted;
+                    bgm.pause();
+                    bgm.muted = true;
+                }
+                const indicator = byId('adPlayingIndicator');
+                if (indicator) indicator.style.display = 'flex';
+            },
+            restoreAfterAd() {
+                if (!this.adActive) return;
+                this.adActive = false;
+                const bgm = audioElements['bgm'];
+                if (bgm) {
+                    bgm.muted = false;
+                    if (!this.wasUserMuted && gameState && gameState.isRunning && !gameState.isPaused) {
+                        bgm.play().catch(() => {});
+                    }
+                }
+                const indicator = byId('adPlayingIndicator');
+                if (indicator) indicator.style.display = 'none';
+            },
+            isAdPlaying() { return this.adActive; }
+        };
+
+        window.adSoundManager = AdSoundManager;
+
+        // ======================
+        // SIMPLE AD CALL WRAPPER
+        // ======================
+       function showBanner() {
+    if (typeof sdk !== 'undefined' && sdk.showBanner !== 'undefined') {
+        sdk.showBanner();
+    } else {
+        console.log("Banner not available");
+    }
+}
+
+function showGameMonetizeAd() {
+    if (typeof sdk !== 'undefined' && sdk.showBanner !== 'undefined') {
+        sdk.showBanner();
+    } else {
+        console.log("SDK not ready yet to show ad");
+    }
+}
+
+
+
+
+
+        // ======================
+        // GAME INITIALIZATION
+        // ======================
+        const canvas = byId('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let gameState = {
+            score: 0, coins: 0, level: 1, timeLeft: START_BASE_TIME,
+            energy: 100, target: 100, isPaused: false, isRunning: false,
+            selectedNet: 'small', comboCount: 0, comboTimer: 0,
+            scoreMultiplier: 1, netDisabledUntil: 0
+        };
+
+        let upgrades = { energy: 0, time: 0 };
+        let MAX_ENERGY = MAX_BASE_ENERGY + 20 * upgrades.energy;
+        let START_TIME = Math.min(MAX_TIME_LIMIT, START_BASE_TIME + 5 * upgrades.time);
+
+        const netTypes = {
+            small: { size: 18, duration: 500, multiplier: 0.5 },
+            medium: { size: 27, duration: 1500, multiplier: 1.0 },
+            large: { size: 36, duration: 3000, multiplier: 1.5 }
+        };
+
+        const fishTypes = {
+            blueTang: { name: 'Blue Tang', points: 10, energy: 5, size: 60, speed: 1.5, prob: 0.18, pattern: 'normal', coins: 2, key: 'blueTang', color: '#4A90E2' },
+            clownFish: { name: 'Clownfish', points: 20, energy: 8, size: 55, speed: 2.0, prob: 0.18, pattern: 'normal', coins: 3, key: 'clownFish', color: '#FF6B35' },
+            butterfly: { name: 'Butterfly', points: 15, energy: 6, size: 45, speed: 3.0, prob: 0.15, pattern: 'zigzag', coins: 3, key: 'butterfly', color: '#FFD166' },
+            jelly: { name: 'Jellyfish', points: 30, energy: 12, size: 70, speed: 1.2, prob: 0.10, pattern: 'float', coins: 4, key: 'jelly', color: '#9B59B6' },
+            seaHorse: { name: 'Seahorse', points: 35, energy: 14, size: 50, speed: 0.9, prob: 0.08, pattern: 'vertical', coins: 5, key: 'seaHorse', color: '#06D6A0' },
+            puffer: { name: 'Puffer', points: 40, energy: 16, size: 55, speed: 1.0, prob: 0.06, pattern: 'bounce', coins: 6, key: 'puffer', color: '#FF9E64' },
+            lion: { name: 'Lionfish', points: -20, energy: -10, size: 60, speed: 1.5, prob: 0.05, pattern: 'normal', coins: 0, key: 'lion', danger: true, color: '#EF476F' },
+            golden: { name: 'Golden Fish', points: 150, energy: 30, size: 65, speed: 2.2, prob: 0.02, pattern: 'zigzag', coins: 40, key: 'golden', rare: true, color: '#FFD700' },
+            shark: { name: 'Shark', points: -70, energy: -30, size: 80, speed: 2.4, prob: 0.02, pattern: 'dash', coins: 0, key: 'shark', danger: true, color: '#6C757D' },
+            octopus: { name: 'Octopus', points: -50, energy: -25, size: 75, speed: 1.8, prob: 0.06, pattern: 'lurk', coins: 0, key: 'octopus', danger: true, color: '#C06A30', minLevel: 8 }
+        };
+
+        let fish = [];
+        let nets = [];
+        let bubbles = [];
+        let treasures = [];
+        let currentEvent = null;
+        let spawnFactor = 1;
+        let particles = [];
+        let floatingTexts = [];
+        let lastTime = Date.now();
+        let spawnTimer = 0;
+        let secTimer = 0;
+        let totalPlay = 0;
+
+        const backgroundImg = new Image();
+        const treasureImg = new Image();
+        const fishImages = {}; 
+        let assetsLoaded = 0;
+        let assetsLoadedCalled = false;
+        const totalAssets =  16; 
+        let allAssetsLoaded = false;
+
+        function resizeCanvas() {
+            const container = document.querySelector('.game-canvas-container');
+            if (container) {
+                canvas.width = container.clientWidth;
+                canvas.height = container.clientHeight;
+            }
+        }
+
+        function assetLoadError(e) {
+            console.warn(`Error loading asset: ${e.target.src}`);
+            assetLoadedCallback();
+        }
+
+        function assetLoadedCallback() {
+            if (assetsLoadedCalled) return;
+            assetsLoaded++;
+            if (assetsLoaded >= totalAssets) {
+                assetsLoadedCalled = true;
+                byId('muteBtn').disabled = false;
+                allAssetsLoaded = true;
+                checkAllReadyAndHide();
+            }
+        }
+
+        // IMPROVEMENT 2: Exposed function to check both Assets and SDK
+        window.checkAllReadyAndHide = function() {
+    if (allAssetsLoaded && window.sdkReady) {
+
+        console.log("Assets & SDK Ready");
+
+        hideSDKLoading();
+
+        // Show ad FIRST, start game only after ad finishes
+        pendingStart = true;
+
+        showGameMonetizeAd();
+
+    } else {
+        console.log('⏳ Waiting... Assets:', allAssetsLoaded, 'SDK:', window.sdkReady);
+    }
+}
+
+
+        function loadAssets() {
+            byId('muteBtn').disabled = true;
+            assetsLoaded = 0;
+            assetsLoadedCalled = false;
+            allAssetsLoaded = false;
+            resizeCanvas();
+            
+            backgroundImg.onload = assetLoadedCallback;
+            backgroundImg.onerror = assetLoadError; 
+            backgroundImg.src = 'assets/background/underwaterSeaBackground.png';
+            if (backgroundImg.complete && backgroundImg.naturalWidth > 0) setTimeout(assetLoadedCallback, 0);
+            
+            treasureImg.onload = assetLoadedCallback;
+            treasureImg.onerror = assetLoadError;
+            treasureImg.src = 'assets/treasure/treasure.png';
+            if (treasureImg.complete && treasureImg.naturalWidth > 0) setTimeout(assetLoadedCallback, 0);
+
+            const fishAssets = {
+                blueTang: 'assets/fish/blue-tang-fish.png',
+                clownFish: 'assets/fish/clown-fish.png',
+                butterfly: 'assets/fish/butterfly-fish.png',
+                jelly: 'assets/fish/jelly-fish.png',
+                seaHorse: 'assets/fish/seahorse.png',
+                puffer: 'assets/fish/puffer-fish.png',
+                lion: 'assets/fish/lion-fish.png',
+                golden: 'assets/fish/golden-fish.png',
+                shark: 'assets/fish/shark.png',
+                octopus: 'assets/fish/octopus.png'
+            };
+            
+            for (const key in fishAssets) {
+                const img = new Image();
+                img.onload = assetLoadedCallback;
+                img.onerror = assetLoadError;
+                img.src = fishAssets[key];
+                fishImages[key] = img;
+            }
+            
+            const audioAssets = {
+               bgm: 'assets/audio/bgm.mp3',
+                levelUp: 'assets/audio/levelUpSound.ogg',
+                levelFail: 'assets/audio/levelFailedSound.wav',
+                danger: 'assets/audio/dangerFishCaught.wav',
+            };
+            
+            for (const key in audioAssets) {
+                const audio = new Audio();
+                audio.oncanplaythrough = assetLoadedCallback;
+                audio.onerror = assetLoadError;
+                audio.src = audioAssets[key];
+                if (key === 'bgm') audio.loop = true;
+                audioElements[key] = audio;
+            }
+        }
+
+        function initializeGame() {
+            resizeCanvas();
+            loadAssets();
+            loadGameData();
+            missions = loadMissions();
+            updateUI();
+            renderMissionsInline();
+            refreshDailyUI();
+            
+            
+
+            // Listeners
+            canvas.addEventListener('click', handleInput);
+            canvas.addEventListener('touchstart', handleInput, { passive: false });
+            
+            document.querySelectorAll('.net-option').forEach(opt => {
+                opt.addEventListener('click', () => {
+                    document.querySelectorAll('.net-option').forEach(o => o.classList.remove('selected'));
+                    opt.classList.add('selected');
+                    gameState.selectedNet = opt.dataset.net;
+                });
+            });
+
+            byId('pauseBtn').addEventListener('click', () => {
+                gameState.isPaused = !gameState.isPaused;
+                byId('pauseBtn').textContent = gameState.isPaused ? 'Resume' : 'Pause';
+                if (!gameState.isPaused) lastTime = Date.now();
+            });
+
+            // STEP 4 FIX: Modify Restart button with fallback
+            byId('restartBtn').addEventListener('click', () => {
+                if (AdSoundManager.isAdPlaying()) return;
+                
+                gameState.isRunning = false;
+                updateUI();
+                
+                pendingRestart = true;
+                showGameMonetizeAd();
+
+                
+                
+            });
+
+            // STEP 5 FIX: Modify Play Again button with fallback
+            byId('againBtn').addEventListener('click', () => {
+                if (AdSoundManager.isAdPlaying()) return;
+
+                byId('gameOverModal').style.display = 'none';
+
+                pendingRestart = true;
+                showGameMonetizeAd();
+
+                
+            });
+
+            byId('helpBtn').onclick = () => byId('helpModal').style.display = 'flex';
+            byId('closeHelp').onclick = () => byId('helpModal').style.display = 'none';
+            byId('resetProgressBtn').onclick = () => {
+                if (confirm("Delete ALL progress?")) {
+                    localStorage.removeItem('fc_save');
+                    localStorage.removeItem('fc_missions');
+                    localStorage.removeItem('fc_missions_day');
+                    location.reload();
+                }
+            };
+            byId('shopBtn').onclick = () => { updateShopPrices(); byId('shopModal').style.display = 'flex'; };
+            byId('closeShop').onclick = () => byId('shopModal').style.display = 'none';
+            byId('missionsBtn').onclick = () => { renderMissionsModal(); byId('missionsModal').style.display = 'flex'; };
+            byId('closeMissions').onclick = () => byId('missionsModal').style.display = 'none';
+            byId('dailyBtn').onclick = () => { refreshDailyUI(); byId('dailyModal').style.display = 'flex'; };
+            byId('closeDaily').onclick = () => byId('dailyModal').style.display = 'none';
+            byId('leaderBtn').onclick = () => { renderLeaderboardModal(); byId('leaderModal').style.display = 'flex'; };
+            byId('closeLeader').onclick = () => byId('leaderModal').style.display = 'none';
+            
+            byId('muteBtn').onclick = () => {
+                const bgm = audioElements['bgm'];
+                if (!bgm) return;
+                if (bgm.paused) {
+                    bgm.play().catch(e => console.error(e));
+                    byId('muteBtn').textContent = '🔊 Music';
+                } else {
+                    bgm.pause();
+                    byId('muteBtn').textContent = '🔈 Music';
+                }
+            };
+
+            byId('buyEnergy').onclick = buyEnergy;
+            byId('buyTime').onclick = buyTime;
+            byId('claimDaily').onclick = claimDaily;
+            
+            document.querySelectorAll('.modal').forEach(m => {
+                m.addEventListener('click', (e) => { if (e.target === m) m.style.display = 'none'; });
+            });
+        }
+
+        function handleInput(e) {
+            if (!userInteracted) {
+                userInteracted = true;
+                const bgm = audioElements['bgm'];
+                if (bgm && bgm.paused) {
+                    bgm.loop = true;
+                    bgm.volume = 0.6;
+                    bgm.play().catch(console.warn);
+                    byId('muteBtn').textContent = '🔊 Music';
+                }
+            }
+            cast(e);
+        }
+
+        function hideSDKLoading() {
+            const loadingElement = document.getElementById('sdkLoading');
+            if (loadingElement) {
+                loadingElement.style.display = 'none';
+            }
+        }
+
+        function autoStartGame() {
+            if (gameState.isRunning) return;
+            totalPlay = 0;
+            gameState = {
+                score: 0, coins: gameState.coins, level: 1, timeLeft: START_TIME,
+                energy: MAX_ENERGY, target: 100, isPaused: false, isRunning: true,
+                selectedNet: gameState.selectedNet || 'small', comboCount: 0, comboTimer: 0,
+                scoreMultiplier: 1, netDisabledUntil: 0
+            };
+            fish = []; nets = []; bubbles = []; particles = []; floatingTexts = []; treasures = [];
+            currentEvent = null; spawnFactor = 1;
+            updateUI();
+            lastTime = Date.now();
+            byId('pauseBtn').disabled = false;
+            resizeCanvas();
+            loop();
+        }
+
+        function playSound(key) { if (!AdSoundManager.isAdPlaying()) { const s = audioElements[key]; if (s) { s.currentTime=0; s.play().catch(()=>{}); }}}
+        
+        class Fish {
+            constructor() {
+                const k = this.pick(); this.type = fishTypes[k]; this.size = this.type.size;
+                this.dir = Math.random()>0.5?1:-1; this.x = this.dir===1?-this.size:canvas.width+this.size;
+                this.y = 60+Math.random()*(canvas.height-140); 
+                this.baseSpeed = (this.type.speed+Math.random()*0.5)*(0.6+gameState.level*0.1);
+                this.speed = this.baseSpeed; this.w=0; this.z=0; this.caught=false; 
+                this.image = fishImages[this.type.key];
+            }
+            pick() { const r=Math.random(); let a=0; for(const k in fishTypes){ if(fishTypes[k].minLevel && gameState.level<fishTypes[k].minLevel) continue; a+=fishTypes[k].prob; if(r<=a) return k;} return 'blueTang';}
+            update() {
+                this.w+=0.05; this.x+=this.speed*this.dir; this.y+=Math.sin(this.w)*0.5;
+                if(this.type.pattern==='zigzag'){this.z+=0.08;this.y+=Math.sin(this.z)*2;}
+                if(this.type.pattern==='float'){this.w+=0.03; this.y+=Math.sin(this.w)*0.3; this.x+=Math.cos(this.w)*0.2*this.dir;}
+                if(this.type.pattern==='vertical'){this.w+=0.05; this.y+=Math.sin(this.w)*1.4; this.speed=this.baseSpeed*0.6;}
+                if(this.type.pattern==='bounce'){this.w+=0.06; this.y+=Math.abs(Math.sin(this.w))*1.5;}
+                if(this.type.pattern==='dash'){if(Math.random()<0.02)this.speed=this.baseSpeed*3;}
+                if(this.type.pattern==='lurk'){this.w+=0.03; if(Math.sin(this.w)>0.1)this.speed=this.baseSpeed; else this.speed=0; this.y+=Math.sin(this.w*0.7)*0.5;}
+                return this.x>-this.size*2 && this.x<canvas.width+this.size*2;
+            }
+            draw() {
+                ctx.save(); ctx.translate(this.x,this.y); if(this.dir===-1)ctx.scale(-1,1);
+                if(this.image && this.image.complete && this.image.width>0) {
+                    const h=this.size*(this.image.height/this.image.width); ctx.drawImage(this.image,-this.size/2,-h/2,this.size,h);
+                } else { ctx.fillStyle=this.type.color; ctx.beginPath(); ctx.arc(0,0,this.size/2,0,Math.PI*2); ctx.fill(); }
+                ctx.restore();
+            }
+        }
+        
+        class Net {
+            constructor(x,y,t){this.x=x;this.y=y;this.props=netTypes[t];this.max=this.props.size;this.size=0;this.created=Date.now();this.duration=this.props.duration;this.mult=this.props.multiplier;}
+            update(){const e=Date.now()-this.created;this.size=Math.min(this.max,(e/280)*this.max);return e<this.duration;}
+            draw() {
+                const e = Date.now() - this.created;
+                const alpha = Math.max(0, 1 - (e / this.duration));
+
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.globalAlpha = alpha * 0.9;
+                ctx.strokeStyle = 'rgba(255,255,255,.85)';
+                ctx.lineWidth = 1.5;
+
+                const R = this.size;
+                const rings = 4;
+                const spokes = 12;
+
+                // Outer circle
+                ctx.beginPath();
+                ctx.arc(0, 0, R, 0, Math.PI * 2);
+                ctx.stroke();
+
+                // Inner rings
+                for (let i = 1; i <= rings; i++) {
+                    ctx.beginPath();
+                    ctx.arc(0, 0, (R / rings) * i, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+
+                // Spokes
+                for (let i = 0; i < spokes; i++) {
+                    const a = (i / spokes) * Math.PI * 2;
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.lineTo(Math.cos(a) * R, Math.sin(a) * R);
+                    ctx.stroke();
+                }
+
+                ctx.restore();
+            }
+            hit(f){return Math.hypot(this.x-f.x,this.y-f.y)<(this.size+f.size/2);}
+        }
+
+        class Particle {
+            constructor(x,y,color){this.x=x;this.y=y;this.vx=(Math.random()-0.5)*4;this.vy=(Math.random()-0.5)*4;this.size=2+Math.random()*5;this.color=color;this.life=1;}
+            update(){this.x+=this.vx;this.y+=this.vy;this.life-=0.04;return this.life>0;}
+            draw(){ctx.save();ctx.globalAlpha=this.life;ctx.fillStyle=this.color;ctx.beginPath();ctx.arc(this.x,this.y,this.size,0,Math.PI*2);ctx.fill();ctx.restore();}
+        }
+
+        class FloatingText {
+            constructor(x,y,text,color,size=18){this.x=x;this.y=y;this.text=text;this.color=color;this.size=size;this.life=1;this.vy=-1;}
+            update(){this.y+=this.vy;this.life-=0.02;return this.life>0;}
+            draw(){ctx.save();ctx.globalAlpha=this.life;ctx.fillStyle=this.color;ctx.font=`bold ${this.size}px "Segoe UI"`;ctx.shadowColor='#000';ctx.shadowBlur=6;ctx.fillText(this.text,this.x,this.y);ctx.restore();}
+        }
+
+        function calculateNetCosts(score, target) {
+            const base = Math.round(target / 20);
+            let add = 0;
+            if (score >= 40) add = 1.3; else if (score >= 30) add = 0.8; else if (score >= 20) add = 1; else if (score >= 10) add = 0.2;
+            return { small: Math.round(base + add), medium: Math.round(base * 1.1 + add), large: Math.round(base * 1.5 + add) };
+        }
+
+        function updateNetCosts() {
+            const c = calculateNetCosts(gameState.score, gameState.target);
+            byId('smallNetCost').textContent = c.small;
+            byId('mediumNetCost').textContent = c.medium;
+            byId('largeNetCost').textContent = c.large;
+            return c;
+        }
+
+        function updateUI() {
+            byId('score').textContent = gameState.score;
+            byId('level').textContent = gameState.level;
+            byId('timer').textContent = gameState.timeLeft;
+            byId('energy').textContent = gameState.energy;
+            byId('coins').textContent = gameState.coins;
+            byId('target').textContent = gameState.target;
+
+            const prog = Math.min(100, Math.floor((gameState.score / gameState.target) * 100));
+            byId('progress').style.width = prog + '%';
+            byId('progressText').textContent = prog + '%';
+
+            const p = (gameState.energy / MAX_ENERGY) * 100;
+            byId('energyBar').style.width = p + '%';
+            byId('energyText').textContent = `${gameState.energy}/${MAX_ENERGY}`;
+
+            renderMissionsInline();
+            updateShopPrices();
+
+            // NEW: Toggle glow on Missions button if something is claimable
+            if (typeof missions !== 'undefined') {
+                const hasReady = missions.some(m => m.ready && !m.done && !m.fail);
+                const btn = byId('missionsBtn');
+                if(btn) {
+                    // Cleaner toggle using CSS class
+                    if (hasReady) btn.classList.add('mission-ready');
+                    else btn.classList.remove('mission-ready');
+                }
+            }
+        }
+
+        function updateShopPrices() {
+            let energyPrice = Math.floor(ENERGY_BASE_PRICE * Math.pow(1.1, upgrades.energy));
+            let timePrice = Math.floor(TIME_BASE_PRICE * Math.pow(1.1, upgrades.time));
+            byId('energyPrice').textContent = energyPrice;
+            byId('timePrice').textContent = timePrice;
+            
+            const timeLimitInfo = byId('timeLimitInfo');
+            const newTime = START_BASE_TIME + 5 * (upgrades.time + 1);
+            if (newTime > MAX_TIME_LIMIT) {
+                timeLimitInfo.innerHTML = '<span class="upgrade-maxed">Maximum reached: 80 seconds</span>';
+            } else {
+                timeLimitInfo.textContent = `Maximum: 80 seconds (Current: ${START_TIME}s)`;
+            }
+        }
+        
+        function toast(msg) {
+            const t = byId('toast'); t.textContent = msg; t.style.display = 'block';
+            setTimeout(() => t.style.display = 'none', 1200);
+        }
+
+        function spawnFish() { if(gameState.isRunning && !gameState.isPaused) fish.push(new Fish()); }
+
+        function maybeTriggerEvent() {
+            const now = performance.now()/1000;
+            if(currentEvent && now < currentEvent.until) return;
+            if(currentEvent && now >= currentEvent.until) {
+                if(currentEvent.name==='TREASURE'||currentEvent.name==='ENERGY_RUSH') treasures=[];
+                spawnFactor=1; byId('darkOverlay').style.display='none'; currentEvent=null;
+            }
+            if(Math.random()<0.015) {
+                let kinds=['FRENZY','BUBBLE','DARK','TREASURE'];
+                if(gameState.level>9) kinds.push('ENERGY_RUSH');
+                let k=kinds[Math.floor(Math.random()*kinds.length)];
+                if(k==='ENERGY_RUSH' && Math.random()>0.3) k='FRENZY';
+                let dur=0;
+                if(k==='ENERGY_RUSH') { dur=7; toast('ENERGY RUSH!'); }
+                else if(k==='TREASURE') { dur=0; spawnTreasure(); toast('Treasure appeared!'); }
+                else {
+                    dur=(8+Math.random()*6);
+                    if(k==='FRENZY'){spawnFactor=2.2;toast('Feeding Frenzy!');}
+                    if(k==='BUBBLE'){spawnFactor=0.7;toast('Bubble Storm!');}
+                    if(k==='DARK'){byId('darkOverlay').style.display='block';toast('Dark Water!');}
+                }
+                if(dur>0) currentEvent={name:k,until:now+dur,spawnTimer:0};
+            }
+        }
+
+        function spawnTreasure() { treasures.push({type:'chest',x:100+Math.random()*(canvas.width-200),y:120+Math.random()*(canvas.height-240),r:26,alive:true}); }
+        function spawnRushItem() { const isEnergy=Math.random()<0.2; treasures.push({type:isEnergy?'energy':'chest',x:100+Math.random()*(canvas.width-200),y:120+Math.random()*(canvas.height-240),r:isEnergy?22:26,alive:true}); }
+
+        function levelUp() {
+            gameState.level++; gameState.timeLeft=START_TIME; gameState.energy=MAX_ENERGY;
+            gameState.target=Math.floor(gameState.target*1.5);
+            toast('Level Up!'); playSound('levelUp'); updateUI();
+            const modal=byId('levelUpModal'); byId('levelUpLevel').textContent='Level '+gameState.level;
+            modal.style.display='flex';
+            const c=byId('levelWeb'), g=c.getContext('2d'), s=Math.min(c.clientWidth,c.clientHeight);
+            c.width=s; c.height=s; let t=0;
+            function anim(){if(modal.style.display!=='flex')return;t+=0.04;g.clearRect(0,0,s,s);g.translate(s/2,s/2);const R=s*0.44*Math.min(1,t*1.2);g.globalAlpha=1;g.strokeStyle='rgba(255,255,255,.9)';g.lineWidth=2;const spokes=14;for(let i=0;i<spokes;i++){const ang=(i/spokes)*Math.PI*2;g.beginPath();g.moveTo(0,0);g.lineTo(Math.cos(ang)*R,Math.sin(ang)*R);g.stroke();}g.lineWidth=1.5;for(let k=0.2;k<=1;k+=0.12){g.beginPath();g.arc(0,0,R*k,0,Math.PI*2);g.stroke();}g.setTransform(1,0,0,1,0,0);if(t<1.2)requestAnimationFrame(anim);}
+            anim(); setTimeout(()=>{modal.style.display='none';},1400);
+        }
+
+        function endGame() {
+            // FIX PROBLEM 1: REMOVED showGameMonetizeAd()
+            gameState.isRunning=false; byId('finalScore').textContent=gameState.score;
+            byId('finalLevel').textContent=gameState.level; byId('finalEnergy').textContent=gameState.energy;
+            byId('gameOverModal').style.display='flex'; byId('pauseBtn').disabled=true;
+            playSound('levelFail'); pushLocalScore(gameState.score);
+        }
+
+        function loop() {
+            if(!gameState.isRunning) return;
+            if(gameState.isPaused) { requestAnimationFrame(loop); return; }
+            const now=Date.now(); const dt=(now-lastTime)/1000; lastTime=now; totalPlay+=dt;
+            
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            if(backgroundImg.complete && backgroundImg.naturalWidth>0) ctx.drawImage(backgroundImg,0,0,canvas.width,canvas.height);
+            else {const g=ctx.createLinearGradient(0,0,0,canvas.height);g.addColorStop(0,'#0a2e5e');g.addColorStop(1,'#1a6ea0');ctx.fillStyle=g;ctx.fillRect(0,0,canvas.width,canvas.height);}
+            
+            treasures.forEach(t=>{if(t.alive){ctx.save();ctx.globalAlpha=0.9;if(t.type==='energy'){ctx.fillStyle='#44E5E7';ctx.beginPath();ctx.arc(t.x,t.y,t.r,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#FFFFFF';ctx.lineWidth=2;ctx.stroke();}else{if(treasureImg.complete&&treasureImg.naturalWidth>0)ctx.drawImage(treasureImg,t.x-t.r,t.y-t.r,t.r*2,t.r*2);else{ctx.fillStyle='#FFD700';ctx.beginPath();ctx.arc(t.x,t.y,t.r,0,Math.PI*2);ctx.fill();}}ctx.restore();}});
+            
+            if(Math.random()<0.1) bubbles.push({x:Math.random()*canvas.width,y:canvas.height,size:2+Math.random()*5,speed:1+Math.random()*2});
+            bubbles=bubbles.filter(b=>{b.y-=b.speed;ctx.save();ctx.globalAlpha=.3;ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(b.x,b.y,b.size,0,Math.PI*2);ctx.fill();ctx.restore();return b.y>0;});
+
+            spawnTimer+=dt;
+            if(spawnTimer>= (1.4-gameState.level*0.09)/spawnFactor) { spawnFish(); spawnTimer=0; }
+            
+            fish = fish.filter(f => {
+                const alive = f.update();
+                if(alive) f.draw();
+                return alive && !f.caught;
+            });
+            
+            nets = nets.filter(n => {
+                const alive = n.update();
+                if(alive) n.draw();
+                fish.forEach(f => {
+                    if(!f.caught && n.hit(f)) {
+                        f.caught=true; 
+                        if(f.type.key==='octopus'){gameState.netDisabledUntil=Date.now()+6000;toast('NET JAMMED for 6s!');playSound('danger');}
+                        const base=Math.floor(f.type.points*n.mult); let cm=1; let pc=f.type.color;
+                        if(gameState.level>=3){
+                            if(f.type.danger){
+                                if(gameState.comboCount>0) floatingTexts.push(new FloatingText(f.x,f.y-20,"Combo Lost!","#ff4d4d",22));
+                                gameState.comboCount=0;gameState.comboTimer=0;gameState.scoreMultiplier=1;pc='#ff4d4d';if(f.type.key!=='octopus')playSound('danger');
+                            } else {
+                                gameState.comboCount++;gameState.comboTimer=COMBO_WINDOW_SECONDS;gameState.scoreMultiplier=1+Math.floor(gameState.comboCount/3);cm=gameState.scoreMultiplier;
+                                if(cm>1) floatingTexts.push(new FloatingText(f.x,f.y+40,`x${cm} Combo!`,"#44E5E7",22));
+                            }
+                        } else { if(f.type.danger){pc='#ff4d4d';if(f.type.key!=='octopus')playSound('danger');} }
+                        
+                        const fp=base*cm; gameState.score+=fp;
+                        gameState.coins+=Math.max(0,(f.type.coins||0)*n.mult|0);
+                        const eg=f.type.energy; gameState.energy=Math.min(MAX_ENERGY,Math.max(0,gameState.energy+eg));
+                        
+                        floatingTexts.push(new FloatingText(f.x,f.y,(fp>0?'+':'')+fp,f.type.danger?'#ff4d4d':'#ffd700'));
+                        if(eg) floatingTexts.push(new FloatingText(f.x,f.y+20,(eg>0?'+':'')+eg+'⚡',eg>0?'#7CFC00':'#ff4d4d'));
+                        
+                        updateUI(); checkMissionsOnCatch(f);
+                        for(let i=0;i<8;i++) particles.push(new Particle(f.x,f.y,pc));
+                    }
+                });
+                return alive;
+            });
+            
+            particles=particles.filter(p=>{const a=p.update();if(a)p.draw();return a;});
+            floatingTexts=floatingTexts.filter(t=>{const a=t.update();if(a)t.draw();return a;});
+            
+            if(currentEvent && currentEvent.name==='ENERGY_RUSH'){
+                currentEvent.spawnTimer+=dt;
+                if(currentEvent.spawnTimer>=0.35){spawnRushItem();currentEvent.spawnTimer=0;}
+            }
+
+            secTimer+=dt;
+            if(secTimer>=1) { gameState.timeLeft--; secTimer=0; updateUI(); if(gameState.timeLeft<=0) endGame(); }
+            
+            if(gameState.level>=3 && gameState.comboTimer>0){
+                gameState.comboTimer-=dt;
+                if(gameState.comboTimer<=0){gameState.comboCount=0;gameState.scoreMultiplier=1;}
+            }
+
+            if(gameState.score>=gameState.target) levelUp();
+            maybeTriggerEvent();
+            requestAnimationFrame(loop);
+        }
+
+        function getCanvasCoords(e) {
+            const r=canvas.getBoundingClientRect();
+            const x=(e.touches?e.touches[0].clientX:e.clientX)-r.left;
+            const y=(e.touches?e.touches[0].clientY:e.clientY)-r.top;
+            return {x:x*(canvas.width/r.width), y:y*(canvas.height/r.height)};
+        }
+
+        function cast(e) {
+            if(Date.now()<gameState.netDisabledUntil){toast('Net is jammed!');return;}
+            if(!gameState.isRunning || gameState.isPaused) return;
+            const p=getCanvasCoords(e);
+
+            for(let i=treasures.length-1;i>=0;i--){
+                const t=treasures[i];
+                if(t.alive){
+                    if(Math.hypot(p.x-t.x,p.y-t.y)<=t.r+6){
+                        t.alive=false; let pc='#FFD700'; if(t.type==='energy') pc='#44E5E7';
+                        for(let j=0;j<15;j++) particles.push(new Particle(t.x,t.y,pc));
+                        if(t.type==='energy'){gameState.energy=MAX_ENERGY;floatingTexts.push(new FloatingText(p.x,p.y,'MAX ENERGY!','#44E5E7',22));}
+                        else{const g=60+Math.floor(Math.random()*60);gameState.coins+=g;floatingTexts.push(new FloatingText(p.x,p.y,`+${g}💰`,'#FFD700'));}
+                        treasures.splice(i,1); updateUI(); return;
+                    }
+                }
+            }
+
+            const c=updateNetCosts()[gameState.selectedNet];
+            if(gameState.energy<c) { toast('Not enough energy'); return; }
+            nets.push(new Net(p.x,p.y,gameState.selectedNet));
+            gameState.energy-=c; updateUI();
+        }
+
+        function buyEnergy(){ const p=Math.floor(ENERGY_BASE_PRICE*Math.pow(1.1,upgrades.energy)); if(gameState.coins>=p){gameState.coins-=p;upgrades.energy++;MAX_ENERGY=MAX_BASE_ENERGY+20*upgrades.energy;saveUp();updateUI();toast('Energy upgraded!');} else toast('Not enough coins'); }
+        function buyTime(){ const p=Math.floor(TIME_BASE_PRICE*Math.pow(1.1,upgrades.time)); const t=START_BASE_TIME+5*(upgrades.time+1); if(t>MAX_TIME_LIMIT){toast(`Time limit reached! Max: ${MAX_TIME_LIMIT}s`);return;} if(gameState.coins>=p){gameState.coins-=p;upgrades.time++;START_TIME=Math.min(MAX_TIME_LIMIT,t);saveUp();updateUI();toast('Time upgraded!');} else toast('Not enough coins'); }
+
+        // Missions & Data Persistence
+        const missionDefs = [
+            {id:'score',make:(l)=>({target:120*l,desc:(t)=>`Score ${t} points`,check:(c)=>c.score>=c.target,onCatch:null,reward:(l)=>30*l})},
+            {id:'fish',make:(l)=>({target:10+2*l,desc:(t)=>`Catch ${t} fish`,check:null,onCatch:(f,c)=>{c.count=(c.count||0)+1;},reward:(l)=>20*l})},
+            {id:'clown',make:(l)=>({target:3+Math.floor(l/2),desc:(t)=>`Catch ${t} clownfish`,onCatch:(f,c)=>{if(f.type.key==='clownFish')c.count=(c.count||0)+1;},reward:(l)=>25*l})},
+            {id:'noShark',make:(l)=>({target:1,desc:()=>`Finish a level without catching a shark`,onCatch:(f,c)=>{if(f.type.key==='shark'){c.fail=true;toast('❌ Shark caught - Mission failed!');}},check:(c)=>!c.fail,reward:(l)=>35*l})},
+            {id:'energy',make:(l)=>({target:200,desc:()=>`Earn 200⚡ from fish`,onCatch:(f,c)=>{if(f.type.energy>0)c.energy=(c.energy||0)+f.type.energy;},reward:(l)=>25*l})},
+            {id:'golden',make:(l)=>({target:1+Math.floor(l/3),desc:(t)=>`Catch ${t} golden fish`,onCatch:(f,c)=>{if(f.type.key==='golden')c.count=(c.count||0)+1;},reward:(l)=>50*l})}
+        ];
+
+        let missions = [];
+        function saveUp() { try{localStorage.setItem('fc_save',JSON.stringify({coins:gameState.coins,upgrades,missions,daily:getDailyState()}));}catch(e){} }
+        function loadGameData() { try{const d=JSON.parse(localStorage.getItem('fc_save')); if(d){gameState.coins=d.coins||0; upgrades=d.upgrades||{energy:0,time:0}; missions=d.missions||[]; MAX_ENERGY=MAX_BASE_ENERGY+20*upgrades.energy; START_TIME=Math.min(MAX_TIME_LIMIT,START_BASE_TIME+5*upgrades.time);}}catch(e){} }
+        
+        function todayKey() { return new Date().toISOString().slice(0,10); }
+        function getDailyState() { try{return JSON.parse(localStorage.getItem('fc_daily')||'{}');}catch{return{};} }
+        function claimDaily() { const s=getDailyState();s.lastClaim=todayKey();const st=(s.streak||0)+1;s.streak=st;const r=50+10*Math.min(st,7);gameState.coins+=r;toast(`Daily +${r}💰 (streak ${st})`);localStorage.setItem('fc_daily',JSON.stringify(s));saveUp();refreshDailyUI();updateUI(); }
+        function refreshDailyUI() { const ok=getDailyState().lastClaim!==todayKey(); byId('claimDaily').disabled=!ok; byId('dailyStatus').textContent=ok?'Reward available today!':'Already claimed today. Come back tomorrow!'; }
+        
+        function rngSeedFromDay(){return parseInt(todayKey().replace(/-/g,''),10);}
+        function seededRand(s){let x=Math.sin(s++)*10000;return x-Math.floor(x);}
+        function pickMissionsForDay(l){const seed=rngSeedFromDay(),arr=[...missionDefs],picks=[];let s=seed;for(let i=0;i<3;i++){s+=i;picks.push(arr.splice(Math.floor(seededRand(s)*arr.length),1)[0]);}return picks.map(m=>{const mk=m.make(l),t=mk.target;return{key:m.id,level:l,target:t,desc:mk.desc(t),reward:mk.reward(l),progress:0,done:false,fail:false};});}
+        
+        function loadMissions(){
+            const s=localStorage.getItem('fc_missions'),t=localStorage.getItem('fc_missions_day');
+            if(t===todayKey()&&s)try{const p=JSON.parse(s);if(Array.isArray(p)&&p.length>0)return p;}catch(e){}
+            const m=pickMissionsForDay(Math.max(1,gameState.level));
+            localStorage.setItem('fc_missions',JSON.stringify(m));localStorage.setItem('fc_missions_day',todayKey());return m;
+        }
+
+        function checkMissionCompletion() {
+            let any=false;
+            missions.forEach(m=>{
+                if(m.done||m.fail||m.ready)return;
+                const d=missionDefs.find(x=>x.id===m.key); if(!d)return;
+                const ctx=m._ctx||{}; let ok=false;
+                if(m.key==='score') { ok=gameState.score>=m.target; m.progress=Math.min(m.target,gameState.score); }
+                else if(m.key==='noShark') { ok=!ctx.fail && gameState.level>m.level; }
+                else { if(d.make(m.level).check) try{ok=d.make(m.level).check(ctx);}catch(e){} else ok=(ctx.count||ctx.energy||0)>=m.target; }
+                if(ok && !m.done) { m.ready=true; any=true; toast(`✅ Mission Complete! Tap to claim +${m.reward}💰`); }
+            });
+            if(any){localStorage.setItem('fc_missions',JSON.stringify(missions));saveUp();updateUI();}
+        }
+
+        function checkMissionsOnCatch(f) {
+            missions.forEach(m=>{
+                if(m.done||m.fail)return;
+                const d=missionDefs.find(x=>x.id===m.key); if(!d)return;
+                const ctx=m._ctx||(m._ctx={});
+                if(d.make(m.level).onCatch) d.make(m.level).onCatch(f,ctx);
+                if(m.key==='score') m.progress=gameState.score;
+                else if(m.key==='noShark') m.progress=ctx.fail?0:1;
+                else if(m.key==='energy'){ctx.energy=ctx.energy||0;m.progress=ctx.energy;}
+                else {ctx.count=ctx.count||0;m.progress=ctx.count;}
+            });
+            localStorage.setItem('fc_missions',JSON.stringify(missions));saveUp();checkMissionCompletion();
+        }
+
+        function showMissionRewardWindow(name,amt,desc) {
+            const m=document.createElement('div');m.className='modal';m.style.display='flex';
+            m.innerHTML=`<div class="content" style="background:linear-gradient(135deg,rgba(124,58,237,0.15),rgba(12,12,24,0.9));"><h2 style="color:var(--gold);">+ 🎯 Mission Reward Earned! 🎯</h2><p style="color:#a8d8ff;">"${desc}"</p><div style="text-align:center;margin:25px 0;"><div style="font-size:4rem;color:#FFD700;margin-bottom:10px;">💰</div><div style="font-size:2.5rem;color:var(--gold);font-weight:800;">+${amt} Coins</div></div><div style="display:flex;justify-content:center;"><button id="cmr" style="padding:12px 24px;background:linear-gradient(135deg,#22c55e,#16a34a);color:white;border:none;border-radius:12px;font-weight:bold;cursor:pointer;">Collect Reward</button></div></div>`;
+            document.body.appendChild(m);
+            byId('cmr').onclick=()=>{m.remove();};
+        }
+
+        function renderMissionsInline() {
+            const b=byId('missionList'); if(!b)return; b.innerHTML='';
+            missions.forEach((m,i)=>{
+                const li=document.createElement('div');li.className='mission';
+                const p=Math.min(100,Math.floor((m.progress/(m.target||1))*100));
+                const cv=(!m.done && !m.fail && (m.ready===true || m.progress>=m.target));
+                li.innerHTML=`<div><div>${m.desc}</div><small>${m.done?'✅ Completed':(m.fail?'❌ Failed':'Progress: '+m.progress+'/'+m.target+' ('+p+'%)')}</small></div><div>${m.done?('+'+m.reward+'💰'):(cv?'<button class="claim-inline" data-mi="'+i+'">Claim</button>':'')}</div>`;
+                b.appendChild(li);
+            });
+            b.querySelectorAll('.claim-inline').forEach(btn=>{btn.onclick=(e)=>{claimMission(parseInt(e.target.dataset.mi));};});
+        }
+
+        function renderMissionsModal() {
+            const b=byId('missionsModalList');b.innerHTML='';
+            missions.forEach((m,i)=>{
+                const p=Math.min(100,Math.floor((m.progress/(m.target||1))*100));
+                const cv=(!m.done && !m.fail && (m.ready===true || m.progress>=m.target));
+                const btn=cv?`<button data-mi="${i}" class="claim">Claim +${m.reward}💰</button>`:'';
+                const r=document.createElement('div');r.className='mission';
+                r.innerHTML=`<div><div>${m.desc}</div><small>${m.done?'✅ Completed':(m.fail?'❌ Failed':'Progress: '+m.progress+'/'+m.target+' ('+p+'%)')}</small></div><div>${btn}</div>`;
+                b.appendChild(r);
+            });
+            b.querySelectorAll('.claim').forEach(btn=>{btn.onclick=(e)=>{claimMission(parseInt(e.target.dataset.mi));byId('missionsModal').style.display='none';};});
+        }
+
+        function claimMission(i) {
+            if(!missions[i]||missions[i].done)return;
+            const amt=missions[i].reward, desc=missions[i].desc;
+            missions[i].done=true; missions[i].ready=false; gameState.coins+=amt;
+            localStorage.setItem('fc_missions',JSON.stringify(missions));saveUp();updateUI();renderMissionsInline();renderMissionsModal();
+            showMissionRewardWindow('',amt,desc);
+        }
+
+        function getLocalLB(){try{return JSON.parse(localStorage.getItem('fc_lb')||'[]');}catch{return[];}}
+        function pushLocalScore(s){const a=getLocalLB();a.push({score:s,ts:Date.now()});a.sort((x,y)=>y.score-x.score);localStorage.setItem('fc_lb',JSON.stringify(a.slice(0,10)));}
+        function renderLeaderboardModal(){
+            const b=byId('leaderLocalList');b.innerHTML='';const a=getLocalLB();
+            if(a.length===0){b.innerHTML='<li>No scores yet. Play a game!</li>';return;}
+            a.forEach((e,i)=>{const li=document.createElement('li');li.textContent=`#${i+1} — ${e.score} (${new Date(e.ts).toLocaleString()})`;b.appendChild(li);});
+        }
+
+        (function(){
+            function u(){
+                const v=(window.visualViewport?window.visualViewport.height:window.innerHeight)*0.01;
+                document.documentElement.style.setProperty('--vh',v+'px');
+                try{if(typeof resizeCanvas==='function')resizeCanvas();}catch(e){}
+            }
+            window.addEventListener('load',u);window.addEventListener('resize',u);
+            window.addEventListener('orientationchange',()=>setTimeout(u,80));
+        })();
+
+        window.addEventListener('load', initializeGame);
+        window.addEventListener('resize', resizeCanvas);
+    </script>
+</body>
+</html>

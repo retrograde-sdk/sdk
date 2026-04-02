@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Shiny Dodge</title>
+
+
+<style>
+  html,body{height:100%;margin:0;background:#000;font-family:Arial,Helvetica,sans-serif;overflow:hidden}
+  body{display:flex;justify-content:center;align-items:flex-start}
+  #gameContainer{position:relative;width:400px;height:600px;background:#111;overflow:hidden;margin-top:20px}
+  canvas#gameCanvas{position:absolute;left:0;top:0;width:400px;height:600px;z-index:1;background:#111;display:block}
+  #ui{position:absolute;left:10px;top:10px;color:#fff;font-size:20px;z-index:40;pointer-events:none}
+  #soundBtn{position:absolute;right:70px;top:10px;width:40px;height:40px;border-radius:8px;border:none;background:#fff;z-index:45;cursor:pointer}
+  #pauseBtn{position:absolute;right:10px;top:10px;width:40px;height:40px;border-radius:8px;border:none;background:#fff;z-index:45;cursor:pointer}
+  #powerUpBar{position:absolute;right:10px;top:60px;width:140px;color:#fff;font-size:15px;z-index:45;text-align:right}
+  .powerBox{margin:6px 0}
+
+  #startScreen{position:absolute;width:400px;height:600px;z-index:50;display:flex;flex-direction:column;justify-content:center;align-items:center;background:linear-gradient(#0b0f17,#020306)}
+  #title{font-size:48px;color:#48d0ff;text-shadow:0 0 12px #48d0ff;margin-bottom:18px}
+  #startBtn{padding:12px 24px;font-size:22px;border-radius:10px;border:none;background:#fff;cursor:pointer}
+
+  #pauseMenu,#gameOverScreen{position:absolute;width:400px;height:600px;z-index:60;display:none;flex-direction:column;justify-content:center;align-items:center;color:#fff}
+  #pauseMenu{background:rgba(10,15,20,0.88);backdrop-filter:blur(4px)}
+  #gameOverScreen{background:rgba(0,0,0,0.6)}
+  #pauseMenu button,#gameOverScreen button{padding:10px 20px;font-size:20px;border-radius:10px;border:none;background:#fff;margin:8px;cursor:pointer}
+
+  @media (max-width:420px){
+    body{justify-content:center}
+    #gameContainer{margin-top:8px}
+  }
+
+  /* -----------------------------
+     TUTORIAL POPUP
+  ------------------------------*/
+  #tutorialPopup {
+    position:absolute;
+    width:400px;
+    height:600px;
+    background:rgba(0,0,0,0.78);
+    backdrop-filter:blur(4px);
+    z-index:70;
+    color:white;
+    display:none;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    text-align:center;
+    padding:20px;
+    box-sizing:border-box;
+  }
+  #tutorialPopup h2 {font-size:32px;margin-bottom:12px;color:#48d0ff;}
+  #tutorialPopup p {font-size:18px;margin:6px 0;line-height:1.4;}
+  #closeTutorialBtn {
+    margin-top:18px;
+    padding:12px 26px;
+    font-size:20px;
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
+    background:white;
+    color:black;
+  }
+
+  /* -----------------------------
+     LOADING SCREEN
+  ------------------------------*/
+  #loadingScreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+  }
+  #loaderDot {
+    width: 18px;
+    height: 18px;
+    background: #4285f4;
+    border-radius: 50%;
+    animation: loaderBounce 0.6s infinite alternate ease-in-out;
+  }
+  @keyframes loaderBounce {
+    from { transform: translateY(0); }
+    to   { transform: translateY(-18px); }
+  }
+  #loaderText {
+    font-size: 20px;
+    color: #333;
+    margin-top: 12px;
+    font-family: Arial, sans-serif;
+  }
+
+</style>
+</head>
+<body>
+  <div id="gameContainer">
+
+    <canvas id="gameCanvas" width="400" height="600"></canvas>
+
+    <div id="ui">Score: 0</div>
+    <button id="soundBtn">🔊</button>
+    <button id="pauseBtn">Ⅱ</button>
+
+    <div id="powerUpBar">
+      <div id="shieldIcon" class="powerBox"></div>
+      <div id="magnetIcon" class="powerBox"></div>
+      <div id="slowIcon" class="powerBox"></div>
+    </div>
+
+    <div id="startScreen">
+      <div id="title">SHINY DODGE</div>
+      <button id="startBtn">Start Game</button>
+      <div style="color:#ccc;margin-top:14px">Use ← → or touch</div>
+    </div>
+
+    <div id="pauseMenu">
+      <h2>Paused</h2>
+      <button id="resumeBtn">Resume</button>
+      <button id="homeBtn">Home</button>
+    </div>
+
+    <div id="gameOverScreen">
+      <h2>Game Over</h2>
+      <button id="restartBtn">Restart</button>
+      <button id="homeBtn2">Home</button>
+    </div>
+
+    <!-- TUTORIAL POPUP -->
+    <div id="tutorialPopup">
+      <h2>How to Play</h2>
+      <p>🟦 Dodge red spikes.</p>
+      <p>🟡 Collect coins & ⭐ stars.</p>
+      <p>🛡 Shield protects once.</p>
+      <p>🧲 Magnet pulls coins.</p>
+      <p>🐌 Slow-motion helps.</p>
+      <button id="closeTutorialBtn">Got it!</button>
+    </div>
+
+    <!-- LOADING SCREEN -->
+    <div id="loadingScreen">
+      <div id="loaderDot"></div>
+      <div id="loaderText">Loading…</div>
+    </div>
+
+  </div>
+<script>
+window.SDK_OPTIONS = {
+    gameId: "6wrigosarx8psz95dcfcrcsaus91jgk5",
+    onEvent: function (event) {
+        switch (event.name) {
+
+            case "SDK_READY":
+                console.log("SDK Ready");
+                break;
+
+            case "SDK_GAME_PAUSE":
+                console.log("Ad is starting → PAUSING game");
+                if (window.pauseBySDK) window.pauseBySDK();
+                break;
+
+            case "SDK_GAME_START":
+                console.log("Ad finished → RESUMING game");
+                if (window.resumeBySDK) window.resumeBySDK();
+                break;
+        }
+    }
+};
+
+(function (d, s, id) {
+    var js = d.getElementsByTagName(s)[0];
+    if (d.getElementById(id)) return;
+    var jsNew = d.createElement(s);
+    jsNew.id = id;
+    jsNew.src = "https://api.gamemonetize.com/sdk.js";
+    js.parentNode.insertBefore(jsNew, js);
+})(document, "script", "gamemonetize-sdk");
+</script>
+
+<script src="game.js"></script>
+</body>
+</html>

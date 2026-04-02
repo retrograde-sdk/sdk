@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flappy Bird</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="">
+
+    <!-- ALL UI ELEMENTS WRAPPED IN THIS CLASS TO HIDE DURING ADS -->
+    <div class="game-ui-layer">
+        <!-- HOME SCREEN -->
+        <div id="homeScreen" class="screen">
+            <img src="assets/images/bg.png" class="bg">
+            <div class="home-content">
+                <h2 id="homeHighscore">Highscore: 0</h2>
+                <h1 class="game-title">🔥Flappy Bacchan!!🔥</h1>
+                <img src="assets/images/main.png" id="homeBird" class="bird-home">
+                <button id="playBtn" class="play-btn">PLAY</button>
+                <p>Warning: This game contains sounds some may find offensive.</p>
+                <p>I do not take ownership of any sounds used.</p>
+            </div>
+        </div>
+
+        <!-- GAME SCREEN -->
+        <div id="gameScreen" class="screen" style="display:none;">
+            <img src="assets/images/bg.png" class="bg">
+            <div class="border-box">
+                <canvas id="gameCanvas"></canvas>
+                <div id="countdown" class="countdown"></div>
+            </div>
+        </div>
+
+        <!-- OUT SCREEN -->
+        <div id="outScreen" class="screen" style="display:none;">
+            <img src="assets/images/bg.png" class="bg">
+            <div class="out-content">
+                <h1 id="outText">🔥Samay Samapt!!🔥</h1>
+                <img src="assets/images/out.png" id="outBird" class="out-bird">
+            </div>
+        </div>
+    </div>
+
+    <!-- GAMEMONETIZE SDK START -->
+    <script type="text/javascript">
+    window.isAdPlaying = false;
+    window.SDK_OPTIONS = {
+      gameId: "r276cvpzjp8ehtfbbw6sivefvir90imc",
+      onEvent: function (a) {
+        switch (a.name) {
+          case "SDK_GAME_PAUSE":
+            window.isAdPlaying = true;
+            document.body.classList.add('ad-playing');
+            if (typeof bgMusic !== 'undefined') bgMusic.pause();
+            if (typeof mainMusic !== 'undefined') mainMusic.pause();
+            break;
+          case "SDK_GAME_START":
+            window.isAdPlaying = false;
+            document.body.classList.remove('ad-playing');
+            if (typeof bgMusic !== 'undefined' && gameRunning) bgMusic.play();
+            break;
+          case "SDK_READY": console.log("SDK Ready"); break;
+        }
+      }
+    };
+    (function (a, b, c) {
+      var d = a.getElementsByTagName(b)[0];
+      if (!a.getElementById(c)) {
+        var s = a.createElement(b);
+        s.id = c;
+        s.src = "https://api.gamemonetize.com/sdk.js";
+        d.parentNode.insertBefore(s, d);
+      }
+    })(document, "script", "gamemonetize-sdk");
+
+    function showGameAd() {
+        if (typeof sdk !== 'undefined' && typeof sdk.showBanner === 'function') {
+            sdk.showBanner();
+        }
+    }
+    </script>
+    <script src="script.js"></script>
+</body>
+</html>

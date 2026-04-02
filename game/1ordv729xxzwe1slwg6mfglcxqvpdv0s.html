@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Void Runner</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            background-color: #000; 
+            font-family: 'Courier New', Courier, monospace; 
+            user-select: none; 
+            -webkit-user-select: none; 
+            touch-action: none; 
+            overscroll-behavior: none; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        #canvas-container { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none; }
+        .hud-text { text-shadow: 0 0 10px #00ffff; }
+        
+        #start-screen, #game-over-screen, #hangar-screen, #settings-screen, .settings-trigger { pointer-events: auto; }
+
+        /* Zones */
+        .touch-zone { position: absolute; top: 0; bottom: 0; width: 50%; z-index: 5; -webkit-tap-highlight-color: transparent; }
+        #left-zone { left: 0; }
+        #right-zone { right: 0; }
+        
+        /* Feedback Animation */
+        .touch-feedback {
+            position: absolute; top: 50%; width: 100px; height: 100px; border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1); transform: translate(-50%, -50%) scale(0);
+            transition: transform 0.1s; pointer-events: none; z-index: 6;
+        }
+        #left-zone:active + .touch-feedback { transform: translate(-50%, -50%) scale(1); left: 25%; }
+        #right-zone:active ~ .touch-feedback-right { transform: translate(-50%, -50%) scale(1); left: 75%; }
+
+        /* UI Animations */
+        .glitch { position: relative; }
+        .glitch::before, .glitch::after {
+            content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; background-clip: text; -webkit-background-clip: text; color: transparent; opacity: 0.8;
+        }
+        .glitch::before {
+            left: 2px; text-shadow: 2px 0 #ff00c1; animation: glitch-anim-1 2s infinite linear alternate-reverse; z-index: -1; color: #ff00c1;
+        }
+        .glitch::after {
+            left: -2px; text-shadow: -2px 0 #00fff9; animation: glitch-anim-2 3s infinite linear alternate-reverse; z-index: -2; color: #00fff9;
+        }
+        @keyframes glitch-anim-1 {
+            0% { clip-path: inset(20% 0 80% 0); transform: translate(-2px, 1px); }
+            100% { clip-path: inset(30% 0 50% 0); transform: translate(1px, -1px); }
+        }
+        @keyframes glitch-anim-2 {
+            0% { clip-path: inset(10% 0 60% 0); transform: translate(2px, -1px); }
+            100% { clip-path: inset(40% 0 30% 0); transform: translate(-2px, -1px); }
+        }
+
+        .neon-btn { position: relative; overflow: hidden; transition: all 0.3s ease; }
+        .neon-btn:hover { box-shadow: 0 0 20px #00ffff, inset 0 0 10px #00ffff; background-color: rgba(0, 255, 255, 0.2); border-color: #00ffff; text-shadow: 0 0 5px #fff; transform: scale(1.05); }
+        
+        .slam-in { animation: slam 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; opacity: 0; }
+        @keyframes slam { 0% { transform: scale(3); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 20px; width: 20px; border-radius: 50%; background: #00ffff; margin-top: -8px; box-shadow: 0 0 10px #00ffff; cursor: pointer; }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: #333; border-radius: 2px; }
+    </style>
+</head>
+<body>
+
+    <div id="canvas-container"></div>
+    <div id="left-zone" class="touch-zone"></div>
+    <div class="touch-feedback"></div>
+    <div id="right-zone" class="touch-zone"></div>
+    <div class="touch-feedback touch-feedback-right" style="left: 75%"></div>
+
+    <div id="ui-layer" class="flex flex-col justify-between p-4 md:p-6">
+        <div id="hud" class="flex justify-between items-start opacity-0 transition-opacity duration-500">
+            <div class="text-cyan-400">
+                <div class="text-xs md:text-sm font-bold tracking-widest">SCORE</div>
+                <div id="score-display" class="text-3xl md:text-4xl font-bold hud-text">0</div>
+            </div>
+            <div class="text-pink-400 text-right">
+                <div class="text-xs md:text-sm font-bold tracking-widest">COINS</div>
+                <div id="coin-display" class="text-3xl md:text-4xl font-bold hud-text" style="text-shadow: 0 0 10px #ff00ff;">0</div>
+            </div>
+        </div>
+
+        <!-- Start Screen -->
+        <div id="start-screen" class="absolute inset-0 flex flex-col items-center justify-center bg-black/90 backdrop-blur-md transition-opacity duration-500 z-50 px-4">
+            <button class="settings-trigger absolute top-6 right-6 text-white hover:text-cyan-400 z-50">
+                <i data-lucide="settings" width="32" height="32"></i>
+            </button>
+
+            <h1 class="glitch text-5xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-b from-cyan-300 to-blue-600 mb-2 tracking-tighter text-center" data-text="VOID RUNNER" style="filter: drop-shadow(0 0 20px rgba(0,255,255,0.5));">VOID RUNNER</h1>
+            <div class="flex gap-4 mb-8">
+                <div class="text-yellow-400 text-sm md:text-lg font-bold tracking-widest border border-yellow-400/30 bg-yellow-400/10 px-4 py-2 rounded-lg text-center">BEST: <span id="high-score-display">0</span></div>
+                <div class="text-pink-400 text-sm md:text-lg font-bold tracking-widest border border-pink-400/30 bg-pink-400/10 px-4 py-2 rounded-lg text-center">COINS: <span id="total-coins-display">0</span></div>
+            </div>
+            <div class="flex flex-col gap-4 w-full max-w-sm">
+                <button id="start-btn" class="neon-btn border-2 border-cyan-500 px-8 py-4 text-cyan-400 font-bold rounded-full text-2xl tracking-widest w-full">START MISSION</button>
+                <button id="hangar-btn" class="neon-btn border-2 border-purple-500 px-8 py-3 text-purple-400 font-bold rounded-full text-xl tracking-widest w-full">HANGAR (SHIPS)</button>
+            </div>
+            <div class="mt-8 flex flex-col items-center gap-2 text-white/40 text-xs animate-pulse">
+                <div class="flex gap-8">
+                    <div class="text-center"><div>←</div><div>Hold Left</div></div>
+                    <div class="text-center"><div>→</div><div>Hold Right</div></div>
+                </div>
+            </div>
+
+            <div class="absolute bottom-6 text-white/30 text-xs tracking-widest">Made by Zazzy</div>
+        </div>
+
+        <!-- Settings Screen -->
+        <div id="settings-screen" class="hidden absolute inset-0 flex flex-col items-center justify-center bg-black/95 backdrop-blur-xl z-[60]">
+            <h2 class="text-4xl text-white font-bold mb-8 tracking-widest">SETTINGS</h2>
+            <div class="w-full max-w-xs mb-6">
+                <div class="flex justify-between text-cyan-400 mb-2 font-bold"><span>MUSIC</span> <span id="music-val">100%</span></div>
+                <input type="range" id="music-slider" min="0" max="100" value="100">
+            </div>
+            <div class="w-full max-w-xs mb-8">
+                <div class="flex justify-between text-pink-400 mb-2 font-bold"><span>SFX</span> <span id="sfx-val">100%</span></div>
+                <input type="range" id="sfx-slider" min="0" max="100" value="100">
+            </div>
+            <button id="close-settings-btn" class="neon-btn border-2 border-white px-8 py-2 text-white font-bold rounded-full text-lg tracking-widest">CLOSE</button>
+        </div>
+
+        <!-- Hangar Screen -->
+        <div id="hangar-screen" class="hidden absolute inset-0 flex flex-col items-center justify-center bg-black/80 backdrop-blur-md z-50">
+            <h2 class="text-4xl text-white font-bold mb-4 tracking-widest">SELECT SHIP</h2>
+            <div class="absolute top-6 right-6 text-pink-400 text-xl font-bold tracking-widest border border-pink-400/30 bg-pink-400/10 px-4 py-2 rounded-lg"><span id="hangar-coins">0</span> C</div>
+            <div class="flex items-center justify-between w-full max-w-lg px-4 mb-8">
+                <button id="prev-ship" class="text-4xl text-white hover:text-cyan-400 p-4 font-bold">&lt;</button>
+                <div class="text-center w-full">
+                    <div id="ship-name" class="text-2xl md:text-3xl font-black text-cyan-400 tracking-wider">NEON DART</div>
+                    <div id="ship-desc" class="text-sm text-gray-400 mt-2">Balanced Interceptor</div>
+                    <div id="ship-bonus" class="text-xs text-green-400 mt-1 font-bold">+0% Coin Bonus</div>
+                    <div id="ship-status" class="mt-2 font-bold text-yellow-400 text-sm tracking-widest">OWNED</div>
+                </div>
+                <button id="next-ship" class="text-4xl text-white hover:text-cyan-400 p-4 font-bold">&gt;</button>
+            </div>
+            <button id="action-btn" class="neon-btn border-2 border-green-500 px-10 py-3 text-green-400 font-bold rounded-full text-xl tracking-widest">EQUIP SHIP</button>
+            <button id="close-hangar-btn" class="mt-8 text-white/50 hover:text-white underline text-sm">BACK TO MENU</button>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div id="game-over-screen" class="hidden absolute inset-0 flex flex-col items-center justify-center bg-red-950/90 backdrop-blur-xl z-50">
+            <button class="settings-trigger absolute top-6 right-6 text-white hover:text-cyan-400 z-50">
+                <i data-lucide="settings" width="32" height="32"></i>
+            </button>
+            <h2 class="slam-in text-6xl md:text-8xl font-black text-red-500 mb-4 tracking-tighter" style="text-shadow: 0 0 30px #ff0000;">CRASHED</h2>
+            <div class="slam-in flex flex-col items-center gap-2 mb-8" style="animation-delay: 0.1s;">
+                <div class="text-2xl text-white">Score: <span id="final-score" class="font-bold text-cyan-400">0</span></div>
+                <div class="text-xl text-pink-300">Collected: <span id="final-coins" class="font-bold text-white">0</span> Coins</div>
+                <div id="new-record-msg" class="hidden text-yellow-400 font-bold tracking-widest animate-bounce">NEW RECORD!</div>
+            </div>
+            <div class="flex flex-col gap-4 slam-in" style="animation-delay: 0.2s;">
+                <button id="restart-btn" class="neon-btn border-2 border-white px-12 py-4 text-white font-bold rounded-full text-2xl tracking-widest">REPLAY</button>
+                <button id="hangar-gameover-btn" class="text-white/60 hover:text-white text-sm tracking-widest underline">CHANGE SHIP</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // --- GLOBALS & STATE ---
+        let scene, camera, renderer, ship, engineLight;
+        let stars = [], particles = [], asteroids = [], obstacles = []; 
+        let isPlaying = false, score = 0, coins = 0, startTime = 0, gameSpeed = 0.85;
+        let frameCount = 0, shipVelocityX = 0, steeringInput = 0; 
+        let lastSpawnX = 0, spawnMode = 'RANDOM', patternCount = 0, spawnTimer = 0; 
+        let selectedShipIndex = 0, isHangarMode = false;
+        let bonusCoinProgress = 0;
+        
+        // --- FIX: Renamed 'isMobile' to 'isDeviceMobile' to prevent crash ---
+        let isDeviceMobile = false; 
+
+        let scoreEl, coinEl, finalScoreEl, finalCoinsEl, startScreen, hangarScreen, gameOverScreen, hud;
+        let shipNameEl, shipDescEl, shipBonusEl, settingsScreen;
+
+        // --- AUDIO SYSTEM DEFINITION ---
+        const AudioSys = {
+            ctx: null, masterGain: null, musicGain: null, sfxGain: null, loopId: null, nextNoteTime: 0, beatCount: 0,
+            init: function() {
+                window.AudioContext = window.AudioContext || window.webkitAudioContext;
+                this.ctx = new AudioContext();
+                this.masterGain = this.ctx.createGain();
+                this.masterGain.connect(this.ctx.destination);
+                this.musicGain = this.ctx.createGain();
+                this.musicGain.connect(this.masterGain);
+                this.sfxGain = this.ctx.createGain();
+                this.sfxGain.connect(this.masterGain);
+                this.updateVolumes();
+            },
+            updateVolumes: function() {
+                if(this.musicGain) this.musicGain.gain.value = GameStorage.state.musicVol / 100;
+                if(this.sfxGain) this.sfxGain.gain.value = GameStorage.state.sfxVol / 100;
+            },
+            startMusic: function() {
+                if (!this.ctx) return;
+                this.stopMusic();
+                this.beatCount = 0;
+                const beatLen = 0.4; 
+                this.nextNoteTime = this.ctx.currentTime + 0.1;
+                const schedule = () => {
+                    while (this.nextNoteTime < this.ctx.currentTime + 0.1) {
+                        this.playBeat(this.nextNoteTime, this.beatCount);
+                        this.nextNoteTime += beatLen;
+                        this.beatCount++;
+                    }
+                    this.loopId = requestAnimationFrame(schedule);
+                };
+                schedule();
+            },
+            stopMusic: function() { if (this.loopId) cancelAnimationFrame(this.loopId); },
+            playBeat: function(time, rawBeatCount) {
+                let phase = (rawBeatCount < 16) ? 1 : 2 + Math.floor(((rawBeatCount - 16) % (16 * 5)) / 16);
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.frequency.setValueAtTime(150, time);
+                osc.frequency.exponentialRampToValueAtTime(0.01, time + 0.5);
+                gain.gain.setValueAtTime(0.8, time);
+                gain.gain.exponentialRampToValueAtTime(0.01, time + 0.5);
+                osc.connect(gain); gain.connect(this.musicGain);
+                osc.start(time); osc.stop(time + 0.5);
+                if (rawBeatCount % 2 === 1) { 
+                    const hatOsc = this.ctx.createOscillator();
+                    const hatGain = this.ctx.createGain();
+                    hatOsc.type = 'square'; hatOsc.frequency.setValueAtTime(800, time);
+                    hatGain.gain.setValueAtTime(0.1, time); hatGain.gain.exponentialRampToValueAtTime(0.01, time + 0.05);
+                    hatOsc.connect(hatGain); hatGain.connect(this.musicGain);
+                    hatOsc.start(time); hatOsc.stop(time + 0.05);
+                }
+                if (phase >= 2 && rawBeatCount % 2 === 1) { 
+                    const bassOsc = this.ctx.createOscillator(); const bassGain = this.ctx.createGain();
+                    bassOsc.type = 'sawtooth';
+                    const freq = (Math.floor(rawBeatCount/4) % 2 === 0) ? 55 : 43.65; 
+                    bassOsc.frequency.setValueAtTime(freq, time);
+                    bassGain.gain.setValueAtTime(0.5, time); bassGain.gain.exponentialRampToValueAtTime(0.01, time + 0.3);
+                    bassOsc.connect(bassGain); bassGain.connect(this.musicGain);
+                    bassOsc.start(time); bassOsc.stop(time + 0.3);
+                }
+                if (phase >= 3) {
+                    const notes = [440, 523, 659, 880]; const note = notes[rawBeatCount % 4];
+                    const leadOsc = this.ctx.createOscillator(); const leadGain = this.ctx.createGain();
+                    leadOsc.type = 'triangle'; leadOsc.frequency.setValueAtTime(note, time);
+                    leadGain.gain.setValueAtTime(0.2, time); leadGain.gain.exponentialRampToValueAtTime(0.01, time + 0.1);
+                    leadOsc.connect(leadGain); leadGain.connect(this.musicGain);
+                    leadOsc.start(time); leadOsc.stop(time + 0.1);
+                }
+                if (phase >= 4 && rawBeatCount % 8 === 0) { 
+                    const padOsc = this.ctx.createOscillator(); const padGain = this.ctx.createGain();
+                    padOsc.type = 'sine'; padOsc.frequency.setValueAtTime(220, time); 
+                    padGain.gain.setValueAtTime(0, time); padGain.gain.linearRampToValueAtTime(0.2, time + 1);
+                    padGain.gain.linearRampToValueAtTime(0, time + 2);
+                    padOsc.connect(padGain); padGain.connect(this.masterGain);
+                    padOsc.start(time); padOsc.stop(time + 2);
+                }
+                if (phase >= 5 && rawBeatCount % 4 === 2) { 
+                    const snareOsc = this.ctx.createOscillator(); const snareGain = this.ctx.createGain();
+                    snareOsc.type = 'triangle'; snareOsc.frequency.setValueAtTime(100, time); 
+                    snareGain.gain.setValueAtTime(0.5, time); snareGain.gain.exponentialRampToValueAtTime(0.01, time + 0.15);
+                    snareOsc.connect(snareGain); snareGain.connect(this.masterGain);
+                    snareOsc.start(time); snareOsc.stop(time + 0.15);
+                }
+                if (phase >= 6) {
+                    const hatOsc = this.ctx.createOscillator(); const hatGain = this.ctx.createGain();
+                    hatOsc.type = 'square'; hatOsc.frequency.setValueAtTime(1200, time + 0.2); 
+                    hatGain.gain.setValueAtTime(0.05, time + 0.2); hatGain.gain.exponentialRampToValueAtTime(0.01, time + 0.25);
+                    hatOsc.connect(hatGain); hatGain.connect(this.masterGain);
+                    hatOsc.start(time + 0.2); hatOsc.stop(time + 0.25);
+                }
+            },
+            playGatePass: function() {
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                [440, 523, 659].forEach((freq, i) => {
+                    const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain();
+                    osc.type = 'triangle'; osc.frequency.setValueAtTime(freq, now + (i * 0.05));
+                    gain.gain.setValueAtTime(0, now + (i * 0.05));
+                    gain.gain.linearRampToValueAtTime(0.1, now + (i * 0.05) + 0.05);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + (i * 0.05) + 0.3);
+                    osc.connect(gain); gain.connect(this.sfxGain);
+                    osc.start(now + (i * 0.05)); osc.stop(now + (i * 0.05) + 0.4);
+                });
+            },
+            playCrash: function() {
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain();
+                osc.type = 'sawtooth'; osc.frequency.setValueAtTime(100, now);
+                osc.frequency.exponentialRampToValueAtTime(10, now + 1.0);
+                gain.gain.setValueAtTime(0.5, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 1.0);
+                osc.connect(gain); gain.connect(this.sfxGain);
+                osc.start(now); osc.stop(now + 1.0);
+            }
+        };
+
+        // --- GAMEMONETIZE SDK SETUP ---
+        window.SDK_OPTIONS = {
+            gameId: "1ordv729xxzwe1slwg6mfglcxqvpdv0s", // !!! REPLACE WITH YOUR ID AGAIN !!!
+            onEvent: function (a) {
+                switch (a.name) {
+                    case "SDK_GAME_PAUSE":
+                        if(AudioSys && AudioSys.ctx) AudioSys.ctx.suspend();
+                        isPlaying = false;
+                        break;
+                    case "SDK_GAME_START":
+                        if(AudioSys && AudioSys.ctx) AudioSys.ctx.resume();
+                        const goScreen = document.getElementById('game-over-screen');
+                        if(goScreen && !goScreen.classList.contains('hidden')) {
+                            startGame();
+                        }
+                        break;
+                    case "SDK_READY":
+                        console.log("SDK Ready");
+                        break;
+                }
+            }
+        };
+
+        // Dynamically load the SDK script
+        (function(d, s, id) {
+            var js, fjs = d.getElementsByTagName(s)[0];
+            if (d.getElementById(id)) return;
+            js = d.createElement(s); js.id = id;
+            js.src = "https://api.gamemonetize.com/sdk.js";
+            fjs.parentNode.insertBefore(js, fjs);
+        }(document, 'script', 'gamemonetize-sdk'));
+
+
+        // --- STORAGE MANAGER ---
+        const GameStorage = {
+            state: { highScore: 0, totalCoins: 0, unlockedShips: [0], equippedShip: 0, musicVol: 100, sfxVol: 100 },
+            init: function() {
+                const s = localStorage.getItem('voidRunnerHighScore');
+                const c = localStorage.getItem('voidRunnerCoins');
+                const u = localStorage.getItem('voidRunnerUnlocked');
+                const e = localStorage.getItem('voidRunnerEquipped');
+                const mv = localStorage.getItem('voidRunnerMusicVol');
+                const sv = localStorage.getItem('voidRunnerSfxVol');
+
+                if(s !== null) this.state.highScore = parseInt(s);
+                if(c !== null) this.state.totalCoins = parseInt(c);
+                if(u !== null) this.state.unlockedShips = JSON.parse(u);
+                if(e !== null) this.state.equippedShip = parseInt(e);
+                if(mv !== null) this.state.musicVol = parseFloat(mv);
+                if(sv !== null) this.state.sfxVol = parseFloat(sv);
+                
+                this.updateUI();
+            },
+            saveSettings: function(music, sfx) {
+                this.state.musicVol = music;
+                this.state.sfxVol = sfx;
+                localStorage.setItem('voidRunnerMusicVol', music);
+                localStorage.setItem('voidRunnerSfxVol', sfx);
+            },
+            saveProgress: function(score, gained) {
+                if(score > this.state.highScore) {
+                    this.state.highScore = score;
+                    document.getElementById('new-record-msg').classList.remove('hidden');
+                } else {
+                    document.getElementById('new-record-msg').classList.add('hidden');
+                }
+                this.state.totalCoins += gained;
+                this.persist();
+            },
+            unlockShip: function(id, cost) {
+                if (this.state.totalCoins >= cost) {
+                    this.state.totalCoins -= cost;
+                    this.state.unlockedShips.push(id);
+                    this.persist();
+                    return true;
+                }
+                return false;
+            },
+            equip: function(id) {
+                this.state.equippedShip = id;
+                this.persist();
+            },
+            persist: function() {
+                localStorage.setItem('voidRunnerHighScore', this.state.highScore);
+                localStorage.setItem('voidRunnerCoins', this.state.totalCoins);
+                localStorage.setItem('voidRunnerUnlocked', JSON.stringify(this.state.unlockedShips));
+                localStorage.setItem('voidRunnerEquipped', this.state.equippedShip);
+                this.updateUI();
+            },
+            updateUI: function() {
+                if(scoreEl) document.getElementById('high-score-display').innerText = this.state.highScore;
+                if(coinEl) document.getElementById('total-coins-display').innerText = this.state.totalCoins;
+                if(document.getElementById('hangar-coins')) document.getElementById('hangar-coins').innerText = this.state.totalCoins;
+            }
+        };
+
+        // --- CONFIG & DATA ---
+        const CONFIG = {
+            acceleration: 0.03, // +20% from 0.025
+            friction: 0.96,     
+            maxSpeed: 1.15,      // +20% from 0.95
+            bankFactor: 0.6,
+            baseSpeed: 0.85,    // +21% from 0.70
+            speedIncrement: 0.00012, // +20% from 0.0001
+            spawnRate: 125, 
+            spawnDist: -320,
+            boundary: 16, 
+            colors: { shapes: [0x4deeea, 0x74ee15, 0xffe700, 0xf000ff, 0xff5500] }
+        };
+
+        // TRAIL CONFIGS: offsets = [{x,y,z}, ...]
+        const SHIPS = [
+            { id: 0, price: 0, name: "NEON DART", desc: "Balanced Interceptor", colors: { body: 0x222222, wing: 0x00bcd4, cockpit: 0xff0055, engine: 0x00ffff }, trailColor: 0x00ffff, trails: [{x:0, y:0, z:2.2}] },
+            { id: 1, price: 150, name: "VOID REAPER", desc: "Stealth Assault", colors: { body: 0x111111, wing: 0xcc0000, cockpit: 0xffaa00, engine: 0xff3355 }, trailColor: 0xff0055, trails: [{x:-1.2, y:0, z:2.2}, {x:1.2, y:0, z:2.2}] },
+            { id: 2, price: 250, name: "GAIA SENTINEL", desc: "Heavy Industrial", colors: { body: 0x333333, wing: 0x44ff44, cockpit: 0x00aaff, engine: 0x33ff00 }, trailColor: 0x33ff00, trails: [{x:-1.4, y:0, z:2.2}, {x:1.4, y:0, z:2.2}] },
+            { id: 3, price: 350, name: "SOLAR STRIKER", desc: "High Energy Racer", colors: { body: 0xffaa00, wing: 0xff5500, cockpit: 0xffffff, engine: 0xffdd00 }, trailColor: 0xffaa00, trails: [{x:0, y:0, z:2.2}] },
+            { id: 4, price: 450, name: "CYBER SHADE", desc: "Prototype X-Class", colors: { body: 0x0a0a0a, wing: 0xaa00ff, cockpit: 0x00ffff, engine: 0xff00ff }, trailColor: 0xaa00ff, trails: [{x:-0.8, y:0.8, z:2.0}, {x:0.8, y:-0.8, z:2.0}] },
+            { id: 5, price: 550, name: "PHANTOM WING", desc: "Shadow Ops Bomber", colors: { body: 0x1a1a2e, wing: 0x4b0082, cockpit: 0xff00ff, engine: 0x9900ff }, trailColor: 0x9900ff, trails: [{x:-2.5, y:0, z:2.0}, {x:2.5, y:0, z:2.0}] },
+            { id: 6, price: 650, name: "CRIMSON FURY", desc: "Aggressive Vanguard", colors: { body: 0x550000, wing: 0xff0000, cockpit: 0xffa500, engine: 0xff4500 }, trailColor: 0xff0000, trails: [{x:-1.0, y:0, z:2.0}, {x:1.0, y:0, z:2.0}] },
+            { id: 7, price: 750, name: "STARLIGHT VOYAGER", desc: "Quantum Cruiser", colors: { body: 0xffffff, wing: 0x00ccff, cockpit: 0x0000ff, engine: 0x00ffff }, trailColor: 0x00ccff, trails: [{x:-0.8, y:0, z:2.5}, {x:0.8, y:0, z:2.5}] },
+            { id: 8, price: 850, name: "OBSIDIAN OMEGA", desc: "Crystalline Shard", colors: { body: 0x000000, wing: 0x444444, cockpit: 0x00ff00, engine: 0x00ffaa }, trailColor: 0x00ffaa, trails: [{x:0, y:0, z:2.0}] },
+            { id: 9, price: 950, name: "TITAN MAUL", desc: "Armored Dreadnought", colors: { body: 0x555555, wing: 0x884400, cockpit: 0xff0000, engine: 0xff8800 }, trailColor: 0xff8800, trails: [{x:-1.8, y:-0.2, z:2.2}, {x:1.8, y:-0.2, z:2.2}] },
+            { id: 10, price: 1050, name: "COSMIC OVERLORD", desc: "Ultimate Dreadnought", colors: { body: 0x000000, wing: 0xff0000, cockpit: 0xffd700, engine: 0xff3300 }, trailColor: 0xff3300, trails: [{x:-1.8, y:1.2, z:2.5}, {x:1.8, y:1.2, z:2.5}, {x:-1.8, y:-1.2, z:2.5}, {x:1.8, y:-1.2, z:2.5}] }
+        ];
+
+        const Assets = {
+            geometries: {}, materials: [], glowMatTemplate: null, glowGeo: null, particleGeo: null, asteroidGeo: null, asteroidMat: null,
+            init: function() {
+                const radius = 3.85, tube = 0.33;   
+                this.geometries['square'] = new THREE.TorusGeometry(radius, tube, 4, 4);
+                this.geometries['heptagon'] = new THREE.TorusGeometry(radius, tube, 4, 7); 
+                this.geometries['pentagon'] = new THREE.TorusGeometry(radius, tube, 4, 5);
+                this.geometries['hexagon'] = new THREE.TorusGeometry(radius, tube, 4, 6);
+                this.geometries['circle'] = new THREE.TorusGeometry(radius, tube, 12, 32);
+                CONFIG.colors.shapes.forEach(color => {
+                    this.materials.push(new THREE.MeshPhongMaterial({ color: color, emissive: color, emissiveIntensity: 0.5 }));
+                });
+                this.particleGeo = new THREE.CylinderGeometry(0.08, 0, 4.0, 5);
+                this.particleGeo.rotateX(Math.PI / 2); this.particleGeo.translate(0, 0, 2.0); 
+                this.glowGeo = new THREE.PlaneGeometry(radius * 1.5, radius * 1.5);
+                this.glowMatTemplate = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.05, side: THREE.DoubleSide, depthWrite: false });
+                this.asteroidGeo = new THREE.DodecahedronGeometry(1, 0); 
+                this.asteroidMat = new THREE.MeshPhongMaterial({ color: 0x444444, shininess: 5, flatShading: true });
+            }
+        };
+
+        function init() {
+            // DETECT MOBILE (Using renamed variable)
+            isDeviceMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+            scoreEl = document.getElementById('score-display');
+            coinEl = document.getElementById('coin-display');
+            finalScoreEl = document.getElementById('final-score');
+            finalCoinsEl = document.getElementById('final-coins');
+            startScreen = document.getElementById('start-screen');
+            hangarScreen = document.getElementById('hangar-screen');
+            gameOverScreen = document.getElementById('game-over-screen');
+            settingsScreen = document.getElementById('settings-screen');
+            hud = document.getElementById('hud');
+            shipNameEl = document.getElementById('ship-name');
+            shipDescEl = document.getElementById('ship-desc');
+            shipBonusEl = document.getElementById('ship-bonus');
+
+            GameStorage.init();
+
+            scene = new THREE.Scene();
+            scene.fog = new THREE.Fog(0x000000, 60, 320);
+
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 3.5, 9);
+            camera.lookAt(0, 0, -20);
+
+            renderer = new THREE.WebGLRenderer({ 
+                alpha: false, 
+                antialias: true, 
+                powerPreference: "high-performance"
+            });
+            
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+            
+            renderer.shadowMap.enabled = true; 
+            renderer.shadowMap.type = THREE.PCFShadowMap;
+            
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+            const ambient = new THREE.AmbientLight(0xffffff, 0.4); scene.add(ambient);
+            const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+            dirLight.position.set(10, 20, 10); 
+            dirLight.castShadow = true; 
+            scene.add(dirLight);
+
+            Assets.init();
+            selectedShipIndex = GameStorage.state.equippedShip;
+            createShip(selectedShipIndex);
+            createStarfield();
+            createAsteroidField();
+            
+            updateCameraForResponsive();
+
+            window.addEventListener('resize', updateCameraForResponsive, false);
+            setupControls();
+            setupHangarControls();
+            setupSettingsControls();
+            
+            // --- AUTO SHOW AD ON LOAD ---
+            if (typeof sdk !== 'undefined' && typeof sdk.showBanner !== 'undefined') {
+                 sdk.showBanner();
+            }
+
+            animate();
+        }
+
+        // --- RESPONSIVE CAMERA LOGIC ---
+        function updateCameraForResponsive() {
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            const aspect = window.innerWidth / window.innerHeight;
+            camera.aspect = aspect;
+            camera.updateProjectionMatrix();
+
+            // Mobile-aware zoom
+            const targetVisibleWidth = 20; 
+            const vFOV = THREE.MathUtils.degToRad(camera.fov);
+            const requiredDist = (targetVisibleWidth / 2) / (aspect * Math.tan(vFOV / 2));
+            
+            camera.position.z = Math.max(9, requiredDist);
+
+            const finalDist = camera.position.z;
+            const finalHeight = 2 * Math.tan(vFOV / 2) * finalDist;
+            const finalWidth = finalHeight * aspect;
+            CONFIG.boundary = (finalWidth / 2) - 2.5; 
+        }
+
+        function createShip(idx) {
+            if(ship) scene.remove(ship);
+            ship = new THREE.Group();
+            const data = SHIPS[idx];
+            
+            // FULL SHIP GEOMETRY RESTORED
+            if(idx === 0) { // NEON DART
+                 const bodyGeo = new THREE.BoxGeometry(1, 0.6, 4);
+                 const body = new THREE.Mesh(bodyGeo, new THREE.MeshPhongMaterial({ color: 0x222222, shininess: 80 }));
+                 body.castShadow = true; ship.add(body);
+                 const noseGeo = new THREE.ConeGeometry(0.55, 2.5, 32); noseGeo.rotateX(-Math.PI/2);
+                 const nose = new THREE.Mesh(noseGeo, new THREE.MeshPhongMaterial({ color: data.colors.cockpit, emissive: 0x440022 }));
+                 nose.position.z = -2.0; nose.castShadow=true; ship.add(nose);
+                 const wingGeo = new THREE.BoxGeometry(5, 0.1, 1.5); wingGeo.translate(0, 0, 1.0);
+                 const pos = wingGeo.attributes.position;
+                 for(let i=0; i<pos.count; i++){ if(Math.abs(pos.getX(i))>1) pos.setZ(i, pos.getZ(i)+1.5); }
+                 wingGeo.computeVertexNormals();
+                 const wings = new THREE.Mesh(wingGeo, new THREE.MeshPhongMaterial({ color: data.colors.wing, shininess: 100 }));
+                 wings.castShadow=true; ship.add(wings);
+            } else if(idx === 1) { // VOID REAPER
+                 const bodyGeo = new THREE.ConeGeometry(1.2, 5, 4); bodyGeo.rotateY(Math.PI/4); bodyGeo.rotateX(-Math.PI/2);
+                 const body = new THREE.Mesh(bodyGeo, new THREE.MeshPhongMaterial({ color: data.colors.body, shininess: 100 }));
+                 body.scale.set(1, 0.4, 1); body.castShadow=true; ship.add(body);
+                 const prongGeo = new THREE.BoxGeometry(0.2, 0.1, 3);
+                 const prongMat = new THREE.MeshPhongMaterial({ color: data.colors.wing });
+                 const lP = new THREE.Mesh(prongGeo, prongMat); lP.position.set(-1.2, 0, -0.5); ship.add(lP);
+                 const rP = new THREE.Mesh(prongGeo, prongMat); rP.position.set(1.2, 0, -0.5); ship.add(rP);
+                 const cockGeo = new THREE.DodecahedronGeometry(0.4);
+                 const cock = new THREE.Mesh(cockGeo, new THREE.MeshBasicMaterial({ color: data.colors.cockpit }));
+                 cock.position.set(0, 0.3, -0.5); ship.add(cock);
+            } else if(idx === 2) { // GAIA SENTINEL
+                 const bodyGeo = new THREE.BoxGeometry(1.8, 0.8, 3.5);
+                 const body = new THREE.Mesh(bodyGeo, new THREE.MeshPhongMaterial({ color: data.colors.body }));
+                 body.castShadow=true; ship.add(body);
+                 const engGeo = new THREE.CylinderGeometry(0.6, 0.6, 2.5, 16); engGeo.rotateX(Math.PI/2);
+                 const engMat = new THREE.MeshPhongMaterial({ color: data.colors.wing });
+                 const lE = new THREE.Mesh(engGeo, engMat); lE.position.set(-1.4, 0, 1.0); ship.add(lE);
+                 const rE = new THREE.Mesh(engGeo, engMat); rE.position.set(1.4, 0, 1.0); ship.add(rE);
+                 const barGeo = new THREE.BoxGeometry(1.4, 0.3, 0.8);
+                 const bar = new THREE.Mesh(barGeo, new THREE.MeshBasicMaterial({ color: data.colors.cockpit }));
+                 bar.position.set(0, 0.6, -0.8); ship.add(bar);
+            } else if(idx === 3) { // SOLAR STRIKER
+                 const bodyGeo = new THREE.ConeGeometry(0.4, 6, 8); bodyGeo.rotateX(-Math.PI/2);
+                 const body = new THREE.Mesh(bodyGeo, new THREE.MeshPhongMaterial({ color: data.colors.body, shininess: 120 }));
+                 ship.add(body);
+                 const ringGeo = new THREE.TorusGeometry(1.5, 0.1, 8, 32);
+                 const ring = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color: data.colors.wing }));
+                 ring.position.z = 2.0; ship.add(ring);
+                 const stabGeo = new THREE.BoxGeometry(0.1, 4, 1);
+                 const lS = new THREE.Mesh(stabGeo, new THREE.MeshPhongMaterial({ color: data.colors.wing }));
+                 lS.position.set(-1.5, 0, 2.0); lS.rotation.z = Math.PI/4; ship.add(lS);
+                 const rS = new THREE.Mesh(stabGeo, new THREE.MeshPhongMaterial({ color: data.colors.wing }));
+                 rS.position.set(1.5, 0, 2.0); rS.rotation.z = -Math.PI/4; ship.add(rS);
+                 const cockGeo = new THREE.SphereGeometry(0.35, 16, 16);
+                 const cock = new THREE.Mesh(cockGeo, new THREE.MeshBasicMaterial({ color: data.colors.cockpit }));
+                 cock.position.set(0, 0.3, -1.0); ship.add(cock);
+            } else if(idx === 4) { // CYBER SHADE
+                 const coreGeo = new THREE.BoxGeometry(0.8, 0.8, 3);
+                 const core = new THREE.Mesh(coreGeo, new THREE.MeshPhongMaterial({ color: data.colors.body }));
+                 ship.add(core);
+                 const wingGeo = new THREE.BoxGeometry(0.1, 5, 1.5);
+                 const wingMat = new THREE.MeshPhongMaterial({ color: data.colors.wing, emissive: data.colors.wing, emissiveIntensity: 0.4 });
+                 const w1 = new THREE.Mesh(wingGeo, wingMat); w1.rotation.z=Math.PI/4; w1.position.z=1.0; ship.add(w1);
+                 const w2 = new THREE.Mesh(wingGeo, wingMat); w2.rotation.z=-Math.PI/4; w2.position.z=1.0; ship.add(w2);
+                 const spikeGeo = new THREE.ConeGeometry(0.2, 2, 4); spikeGeo.rotateX(-Math.PI/2);
+                 const spike = new THREE.Mesh(spikeGeo, new THREE.MeshBasicMaterial({ color: data.colors.cockpit }));
+                 spike.position.z = -2.0; ship.add(spike);
+            } else if(idx === 5) { // PHANTOM WING
+                 const bodyGeo = new THREE.CylinderGeometry(0.2, 1.0, 4, 3); bodyGeo.rotateX(-Math.PI/2); bodyGeo.scale(1.5, 0.3, 1);
+                 const body = new THREE.Mesh(bodyGeo, new THREE.MeshPhongMaterial({ color: data.colors.body, shininess: 30, flatShading: true }));
+                 body.castShadow=true; ship.add(body);
+                 const wingGeo = new THREE.BoxGeometry(7, 0.1, 2);
+                 const wings = new THREE.Mesh(wingGeo, new THREE.MeshPhongMaterial({ color: data.colors.wing }));
+                 wings.position.set(0, 0, 0.5);
+                 const pos = wingGeo.attributes.position;
+                 for(let i=0; i<pos.count; i++){ if(Math.abs(pos.getX(i))>1) pos.setZ(i, pos.getZ(i)+2.0); }
+                 wingGeo.computeVertexNormals();
+                 ship.add(wings);
+                 const cockGeo = new THREE.BoxGeometry(0.8, 0.1, 0.4);
+                 const cock = new THREE.Mesh(cockGeo, new THREE.MeshBasicMaterial({ color: data.colors.cockpit }));
+                 cock.position.set(0, 0.2, -1.2); ship.add(cock);
+            } else if(idx === 6) { // CRIMSON FURY
+                 const spineGeo = new THREE.BoxGeometry(0.6, 0.6, 5);
+                 const spine = new THREE.Mesh(spineGeo, new THREE.MeshPhongMaterial({ color: data.colors.body }));
+                 spine.castShadow=true; ship.add(spine);
+                 const podGeo = new THREE.ConeGeometry(0.4, 4, 8); podGeo.rotateX(-Math.PI/2);
+                 const lP = new THREE.Mesh(podGeo, new THREE.MeshPhongMaterial({ color: data.colors.wing }));
+                 lP.position.set(-1.0, 0, -0.5); ship.add(lP);
+                 const rP = new THREE.Mesh(podGeo, new THREE.MeshPhongMaterial({ color: data.colors.wing }));
+                 rP.position.set(1.0, 0, -0.5); ship.add(rP);
+                 const cockGeo = new THREE.ConeGeometry(0.3, 1.5, 4); cockGeo.rotateX(-Math.PI/2);
+                 const cock = new THREE.Mesh(cockGeo, new THREE.MeshBasicMaterial({ color: data.colors.cockpit }));
+                 cock.position.set(0, 0.4, -1.0); ship.add(cock);
+            } else if(idx === 7) { // STARLIGHT VOYAGER
+                 const coreGeo = new THREE.SphereGeometry(0.8, 32, 32); coreGeo.scale(1, 0.8, 2.5);
+                 const core = new THREE.Mesh(coreGeo, new THREE.MeshPhongMaterial({ color: data.colors.body, shininess: 150 }));
+                 core.castShadow=true; ship.add(core);
+                 const ringGeo = new THREE.TorusGeometry(1.2, 0.15, 16, 50);
+                 const ring = new THREE.Mesh(ringGeo, new THREE.MeshPhongMaterial({ color: 0xffd700, emissive: 0xffd700, emissiveIntensity: 0.3 }));
+                 ring.position.z = 0.5; ring.rotation.x = Math.PI/6; ship.add(ring);
+                 const tailGeo = new THREE.BoxGeometry(0.1, 0.1, 3);
+                 const lT = new THREE.Mesh(tailGeo, new THREE.MeshBasicMaterial({ color: data.colors.wing }));
+                 lT.position.set(-0.8, 0, 2); ship.add(lT);
+                 const rT = new THREE.Mesh(tailGeo, new THREE.MeshBasicMaterial({ color: data.colors.wing }));
+                 rT.position.set(0.8, 0, 2); ship.add(rT);
+                 const cockGeo = new THREE.SphereGeometry(0.4, 16, 16);
+                 const cock = new THREE.Mesh(cockGeo, new THREE.MeshPhongMaterial({ color: data.colors.cockpit, transparent: true, opacity: 0.8 }));
+                 cock.position.set(0, 0.4, -1.0); ship.add(cock);
+            } else if(idx === 8) { // OBSIDIAN OMEGA
+                 const bodyGeo = new THREE.ConeGeometry(0.8, 5, 3); bodyGeo.rotateX(-Math.PI/2);
+                 const body = new THREE.Mesh(bodyGeo, new THREE.MeshPhongMaterial({ color: data.colors.body, shininess: 150, flatShading: true, emissive: 0x002211, emissiveIntensity: 0.2 }));
+                 body.scale.set(1, 0.5, 1); body.castShadow=true; ship.add(body);
+                 const crysGeo = new THREE.OctahedronGeometry(0.4, 0);
+                 const lC = new THREE.Mesh(crysGeo, new THREE.MeshBasicMaterial({ color: data.colors.wing, wireframe: true }));
+                 lC.position.set(-1.2, 0, 1); ship.add(lC);
+                 const rC = new THREE.Mesh(crysGeo, new THREE.MeshBasicMaterial({ color: data.colors.wing, wireframe: true }));
+                 rC.position.set(1.2, 0, 1); ship.add(rC);
+                 const coreGeo = new THREE.SphereGeometry(0.3, 8, 8);
+                 const core = new THREE.Mesh(coreGeo, new THREE.MeshBasicMaterial({ color: data.colors.cockpit }));
+                 core.position.set(0, 0.2, 0); ship.add(core);
+            } else if(idx === 9) { // TITAN MAUL
+                 const bodyGeo = new THREE.BoxGeometry(2.2, 1.2, 4);
+                 const body = new THREE.Mesh(bodyGeo, new THREE.MeshPhongMaterial({ color: data.colors.body }));
+                 body.castShadow=true; ship.add(body);
+                 const thrustGeo = new THREE.BoxGeometry(1, 1, 3);
+                 const lT = new THREE.Mesh(thrustGeo, new THREE.MeshPhongMaterial({ color: data.colors.wing }));
+                 lT.position.set(-1.8, -0.2, 1); ship.add(lT);
+                 const rT = new THREE.Mesh(thrustGeo, new THREE.MeshPhongMaterial({ color: data.colors.wing }));
+                 rT.position.set(1.8, -0.2, 1); ship.add(rT);
+                 const cockGeo = new THREE.BoxGeometry(1.5, 0.2, 0.5);
+                 const cock = new THREE.Mesh(cockGeo, new THREE.MeshBasicMaterial({ color: data.colors.cockpit }));
+                 cock.position.set(0, 0.6, -1.5); ship.add(cock);
+                 const ramGeo = new THREE.BoxGeometry(2.0, 0.5, 1);
+                 const ram = new THREE.Mesh(ramGeo, new THREE.MeshPhongMaterial({ color: 0x222222 }));
+                 ram.position.set(0, -0.3, -2.5); ship.add(ram);
+            } else if(idx === 10) { // COSMIC OVERLORD
+                 const bodyGeo = new THREE.CylinderGeometry(0.8, 1.2, 8, 6); bodyGeo.rotateX(-Math.PI/2);
+                 const body = new THREE.Mesh(bodyGeo, new THREE.MeshPhongMaterial({ color: data.colors.body, shininess: 100 }));
+                 body.castShadow=true; ship.add(body);
+                 const wingGeo = new THREE.BoxGeometry(1.5, 0.2, 4);
+                 const wingMat = new THREE.MeshPhongMaterial({ color: data.colors.wing });
+                 [ {x:-1.5,y:1.0,z:2,r:Math.PI/6}, {x:1.5,y:1.0,z:2,r:-Math.PI/6}, {x:-1.5,y:-1.0,z:2,r:-Math.PI/6}, {x:1.5,y:-1.0,z:2,r:Math.PI/6} ].forEach(p => {
+                      const w = new THREE.Mesh(wingGeo, wingMat); w.position.set(p.x,p.y,p.z); w.rotation.z=p.r; ship.add(w);
+                      const eg = new THREE.CylinderGeometry(0.4, 0.5, 2, 16); eg.rotateX(-Math.PI/2);
+                      const eng = new THREE.Mesh(eg, new THREE.MeshPhongMaterial({ color: 0x333333 }));
+                      eng.position.set(p.x*1.2, p.y*1.2, p.z+1.0); ship.add(eng);
+                      const gg = new THREE.SphereGeometry(0.3, 8, 8);
+                      const gl = new THREE.Mesh(gg, new THREE.MeshBasicMaterial({ color: data.colors.engine }));
+                      gl.position.set(p.x*1.2, p.y*1.2, p.z+2.1); ship.add(gl);
+                 });
+                 const cockGeo = new THREE.ConeGeometry(0.6, 2, 4); cockGeo.rotateX(-Math.PI/2); cockGeo.rotateZ(Math.PI/4);
+                 const cock = new THREE.Mesh(cockGeo, new THREE.MeshBasicMaterial({ color: data.colors.cockpit }));
+                 cock.position.set(0, 0.8, -2.5); ship.add(cock);
+            }
+            
+            engineLight = new THREE.PointLight(data.colors.engine, 2, 8);
+            engineLight.position.set(0, 0.5, 2.5);
+            ship.add(engineLight);
+
+            scene.add(ship);
+        }
+
+        function updateParticles() {
+            const shipData = SHIPS[selectedShipIndex];
+            const trailColor = shipData.trailColor;
+            const offsets = shipData.trails; 
+            if (isPlaying) {
+                // Loop through defined trail positions for this ship
+                offsets.forEach(off => {
+                    for(let i=0; i<4; i++){ // UNIFIED PARTICLE COUNT
+                        const pMat = new THREE.MeshBasicMaterial({ 
+                            color: trailColor, transparent: true, opacity: 0.6, side: THREE.DoubleSide, blending: THREE.AdditiveBlending 
+                        });
+                        const p = new THREE.Mesh(Assets.particleGeo, pMat);
+                        p.position.set(ship.position.x + off.x + (Math.random()-0.5)*0.1, ship.position.y + off.y + (Math.random()-0.5)*0.1, ship.position.z + off.z);
+                        scene.add(p); particles.push({ mesh: p, life: 1.0 });
+                    }
+                });
+            }
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i]; p.life -= 0.05; p.mesh.position.z += 0.5 + (gameSpeed*0.5); p.mesh.scale.set(p.life, 1, 1); p.mesh.material.opacity = p.life * 0.6;
+                if(p.life<=0) { scene.remove(p.mesh); p.mesh.material.dispose(); particles.splice(i,1); }
+            }
+        }
+
+        function createStarfield() {
+            const geometry = new THREE.BufferGeometry();
+            const vertices = [];
+            for (let i = 0; i < 3000; i++) vertices.push((Math.random() - 0.5) * 600, (Math.random() - 0.5) * 400, -Math.random() * 400);
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+            const points = new THREE.Points(geometry, new THREE.PointsMaterial({ color: 0xffffff, size: 0.25, transparent: true }));
+            scene.add(points);
+            stars.push(points);
+        }
+
+        function createAsteroidField() {
+            for(let i=0; i<30; i++) {
+                const rock = new THREE.Mesh(Assets.asteroidGeo, Assets.asteroidMat);
+                rock.scale.setScalar(0.2 + Math.random() * 4.3);
+                rock.userData = { rotX: Math.random()*0.05, rotY: Math.random()*0.05 };
+                rock.position.set((Math.random() - 0.5) * 120, (Math.random() - 0.5) * 60, -Math.random() * 300 - 50);
+                scene.add(rock); asteroids.push(rock);
+            }
+        }
+
+        function setupControls() {
+            const handleKey = (key, val) => { if (key === 'ArrowLeft' || key === 'a') steeringInput = -val; if (key === 'ArrowRight' || key === 'd') steeringInput = val; };
+            document.addEventListener('keydown', (e) => handleKey(e.key, 1));
+            document.addEventListener('keyup', (e) => steeringInput = 0);
+            const startInput = (val) => steeringInput = val;
+            const endInput = () => steeringInput = 0;
+            document.getElementById('left-zone').addEventListener('touchstart', (e) => { e.preventDefault(); startInput(-1); });
+            document.getElementById('left-zone').addEventListener('touchend', endInput);
+            document.getElementById('left-zone').addEventListener('mousedown', () => startInput(-1));
+            document.getElementById('left-zone').addEventListener('mouseup', endInput);
+            document.getElementById('right-zone').addEventListener('touchstart', (e) => { e.preventDefault(); startInput(1); });
+            document.getElementById('right-zone').addEventListener('touchend', endInput);
+            document.getElementById('right-zone').addEventListener('mousedown', () => startInput(1));
+            document.getElementById('right-zone').addEventListener('mouseup', endInput);
+            document.getElementById('start-btn').addEventListener('click', startGame);
+            
+            // MODIFIED RESTART BUTTON TO SHOW AD
+            document.getElementById('restart-btn').addEventListener('click', () => {
+                // Check if SDK is available
+                if (typeof sdk !== 'undefined' && typeof sdk.showBanner !== 'undefined') {
+                    sdk.showBanner();
+                } else {
+                    resetGame();
+                }
+            });
+        }
+
+        function setupSettingsControls() {
+            const btns = document.querySelectorAll('.settings-trigger');
+            const closeBtn = document.getElementById('close-settings-btn');
+            const mSlider = document.getElementById('music-slider');
+            const sSlider = document.getElementById('sfx-slider');
+            const mVal = document.getElementById('music-val');
+            const sVal = document.getElementById('sfx-val');
+            mSlider.value = GameStorage.state.musicVol; sSlider.value = GameStorage.state.sfxVol;
+            mVal.innerText = GameStorage.state.musicVol + '%'; sVal.innerText = GameStorage.state.sfxVol + '%';
+            btns.forEach(btn => btn.addEventListener('click', () => settingsScreen.classList.remove('hidden')));
+            closeBtn.addEventListener('click', () => settingsScreen.classList.add('hidden'));
+            mSlider.addEventListener('input', (e) => { mVal.innerText = e.target.value + '%'; GameStorage.saveSettings(e.target.value, sSlider.value); AudioSys.updateVolumes(); });
+            sSlider.addEventListener('input', (e) => { sVal.innerText = e.target.value + '%'; GameStorage.saveSettings(mSlider.value, e.target.value); AudioSys.updateVolumes(); });
+        }
+
+        function setupHangarControls() {
+            const actionBtn = document.getElementById('action-btn');
+            const openHangar = () => {
+                isHangarMode = true;
+                startScreen.classList.add('hidden');
+                gameOverScreen.classList.add('hidden');
+                hangarScreen.classList.remove('hidden');
+                selectedShipIndex = GameStorage.state.equippedShip;
+                updateHangarUI();
+            };
+            const closeHangar = () => {
+                isHangarMode = false;
+                hangarScreen.classList.add('hidden');
+                startScreen.classList.remove('hidden');
+                createShip(GameStorage.state.equippedShip);
+                if(ship) ship.rotation.set(0, 0, 0);
+                selectedShipIndex = GameStorage.state.equippedShip;
+                GameStorage.updateUI(); 
+            };
+            const updateHangarUI = () => {
+                createShip(selectedShipIndex);
+                const data = SHIPS[selectedShipIndex];
+                shipNameEl.innerText = data.name;
+                shipDescEl.innerText = data.desc;
+                shipBonusEl.innerText = `+${data.id * 10}% Coin Bonus`;
+                const isUnlocked = GameStorage.state.unlockedShips.includes(data.id);
+                const isEquipped = GameStorage.state.equippedShip === data.id;
+
+                if (isEquipped) {
+                    actionBtn.innerText = "EQUIPPED"; actionBtn.disabled = true;
+                    actionBtn.className = "neon-btn border-2 border-cyan-500 px-10 py-3 text-cyan-400 font-bold rounded-full text-xl opacity-50";
+                    document.getElementById('ship-status').innerText = "OWNED";
+                    document.getElementById('ship-status').className = "mt-2 font-bold text-cyan-400 tracking-widest";
+                } else if (isUnlocked) {
+                    actionBtn.innerText = "EQUIP SHIP"; actionBtn.disabled = false;
+                    actionBtn.className = "neon-btn border-2 border-green-500 px-10 py-3 text-green-400 font-bold rounded-full text-xl";
+                    document.getElementById('ship-status').innerText = "OWNED";
+                    document.getElementById('ship-status').className = "mt-2 font-bold text-green-400 tracking-widest";
+                    actionBtn.onclick = () => { GameStorage.equip(data.id); updateHangarUI(); };
+                } else {
+                    actionBtn.innerText = `UNLOCK (${data.price} C)`; actionBtn.disabled = false;
+                    const canAfford = GameStorage.state.totalCoins >= data.price;
+                    actionBtn.className = canAfford ? "neon-btn border-2 border-yellow-500 px-10 py-3 text-yellow-400 font-bold rounded-full text-xl" : "neon-btn border-2 border-red-500 px-10 py-3 text-red-400 font-bold rounded-full text-xl";
+                    document.getElementById('ship-status').innerText = "LOCKED";
+                    document.getElementById('ship-status').className = "mt-2 font-bold text-red-400 tracking-widest";
+                    actionBtn.onclick = () => {
+                          if(GameStorage.unlockShip(data.id, data.price)) { updateHangarUI(); }
+                          else { 
+                             actionBtn.innerText = "NEED COINS"; 
+                             setTimeout(() => updateHangarUI(), 1000); 
+                          }
+                    };
+                }
+            };
+            document.getElementById('hangar-btn').addEventListener('click', openHangar);
+            document.getElementById('hangar-gameover-btn').addEventListener('click', openHangar);
+            document.getElementById('close-hangar-btn').addEventListener('click', closeHangar);
+            document.getElementById('prev-ship').addEventListener('click', () => { selectedShipIndex--; if(selectedShipIndex < 0) selectedShipIndex = SHIPS.length-1; updateHangarUI(); });
+            document.getElementById('next-ship').addEventListener('click', () => { selectedShipIndex++; if(selectedShipIndex >= SHIPS.length) selectedShipIndex = 0; updateHangarUI(); });
+        }
+
+        function startGame() {
+            if (!AudioSys.ctx) AudioSys.init();
+            if (AudioSys.ctx && AudioSys.ctx.state === 'suspended') AudioSys.ctx.resume();
+            AudioSys.startMusic();
+            isPlaying = true; isHangarMode = false;
+            score = 0; coins = 0; frameCount = 0; spawnTimer = 0;
+            startTime = Date.now(); gameSpeed = CONFIG.baseSpeed;
+            ship.position.x = 0; shipVelocityX = 0; steeringInput = 0;
+            bonusCoinProgress = 0;
+            selectedShipIndex = GameStorage.state.equippedShip;
+            if(ship) ship.rotation.set(0,0,0);
+            startScreen.classList.add('hidden'); gameOverScreen.classList.add('hidden'); hud.classList.remove('opacity-0');
+            scoreEl.innerText = '0'; coinEl.innerText = '0';
+            if(selectedShipIndex > 0) { coinEl.style.color = '#ffd700'; setTimeout(() => coinEl.style.color = '', 1000); }
+            obstacles.forEach(ob => { scene.remove(ob.mesh); if(ob.glowMat) ob.glowMat.dispose(); });
+            obstacles = [];
+        }
+
+        function resetGame() { startGame(); }
+
+        function spawnObstacle() {
+            const x = (Math.random() - 0.5) * (CONFIG.boundary * 1.8);
+            const type = Math.floor(Math.random() * 5);
+            let geo;
+            if(type===0) geo=Assets.geometries['square'];
+            else if(type===1) geo=Assets.geometries['heptagon'];
+            else if(type===2) geo=Assets.geometries['circle'];
+            else if(type===3) geo=Assets.geometries['pentagon'];
+            else geo=Assets.geometries['hexagon'];
+
+            const colIdx = Math.floor(Math.random()*CONFIG.colors.shapes.length);
+            const mesh = new THREE.Mesh(geo, Assets.materials[colIdx]);
+            mesh.position.set(x, 0, CONFIG.spawnDist);
+            if(type===0) mesh.rotation.z = Math.PI/4;
+            if(type===1) mesh.rotation.z = Math.PI/2;
+            const glowMat = Assets.glowMatTemplate.clone();
+            glowMat.color.setHex(CONFIG.colors.shapes[colIdx]);
+            const glow = new THREE.Mesh(Assets.glowGeo, glowMat);
+            mesh.add(glow);
+
+            scene.add(mesh);
+            obstacles.push({ mesh: mesh, passed: false, glowMat: glowMat });
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if(isHangarMode && ship) { ship.rotation.y += 0.01; renderer.render(scene, camera); return; }
+            stars.forEach(s => {
+                const p = s.geometry.attributes.position.array;
+                const spd = isPlaying ? 0.5 + gameSpeed : 0.2;
+                for(let i=2; i<p.length; i+=3) { p[i] += spd; if(p[i]>20) p[i]=-400; }
+                s.geometry.attributes.position.needsUpdate = true;
+            });
+            asteroids.forEach(r => {
+                r.position.z += isPlaying ? gameSpeed * 0.8 : 0.1;
+                r.rotation.x += r.userData.rotX;
+                if(r.position.z > 20) { r.position.z = -350; r.position.x = (Math.random()-0.5)*120; }
+            });
+            updateParticles();
+            if(isPlaying) {
+                shipVelocityX += steeringInput * CONFIG.acceleration;
+                shipVelocityX *= CONFIG.friction;
+                ship.position.x += shipVelocityX;
+                if(ship.position.x > CONFIG.boundary) ship.position.x = CONFIG.boundary;
+                if(ship.position.x < -CONFIG.boundary) ship.position.x = -CONFIG.boundary;
+                ship.rotation.z = THREE.MathUtils.lerp(ship.rotation.z, -shipVelocityX * 7.0, 0.1);
+                spawnTimer++;
+                if(spawnTimer > (CONFIG.spawnRate / gameSpeed)) { spawnObstacle(); spawnTimer = 0; }
+                for(let i=obstacles.length-1; i>=0; i--) {
+                    const ob = obstacles[i];
+                    ob.mesh.position.z += gameSpeed;
+                    if(ob.mesh.position.z > -2 && ob.mesh.position.z < 2) {
+                        if(!ob.passed) {
+                            if(Math.abs(ship.position.x - ob.mesh.position.x) < 3.3) {
+                                score += 100;
+                                let coinGain = 1;
+                                const bonusRate = selectedShipIndex * 0.1;
+                                bonusCoinProgress += bonusRate;
+                                if (bonusCoinProgress >= 1.0) { coinGain += 1; bonusCoinProgress -= 1.0; coinEl.style.color = '#ffd700'; setTimeout(() => coinEl.style.color='', 200); }
+                                coins += coinGain; scoreEl.innerText=score; coinEl.innerText=coins;
+                                ob.passed = true; AudioSys.playGatePass();
+                            } else {
+                                isPlaying = false; AudioSys.stopMusic(); AudioSys.playCrash();
+                                GameStorage.saveProgress(score, coins);
+                                finalScoreEl.innerText = score; finalCoinsEl.innerText = coins;
+                                gameOverScreen.classList.remove('hidden'); hud.classList.add('opacity-0');
+                            }
+                        }
+                    }
+                    if(ob.mesh.position.z > 20) { scene.remove(ob.mesh); obstacles.splice(i,1); }
+                }
+                gameSpeed += CONFIG.speedIncrement;
+            } else {
+                if(ship) { ship.rotation.set(0,0,0); ship.position.y = Math.sin(Date.now()*0.002)*0.2; }
+            }
+            renderer.render(scene, camera);
+        }
+
+        init();
+    </script>
+</body>
+</html>

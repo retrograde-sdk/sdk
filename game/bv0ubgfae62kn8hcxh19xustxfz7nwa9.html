@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no"/>
+  <title>NEON ASSAULT</title>
+  <link rel="stylesheet" href="styles.css"/>
+
+  <!-- GameMonetize.com SDK -->
+  <script type="text/javascript">
+    window.SDK_OPTIONS = {
+      gameId: "bv0ubgfae62kn8hcxh19xustxfz7nwa9",
+      onEvent: function (a) {
+        switch (a.name) {
+          case "SDK_GAME_PAUSE":
+            // Pause game and mute all audio
+            if (typeof paused !== 'undefined' && !paused && typeof STATE !== 'undefined' && STATE === 'playing') {
+              paused = true;
+            }
+            if (typeof MUSIC !== 'undefined' && MUSIC.stop) {
+              MUSIC.stop();
+            }
+            // Mute SFX by setting volume to 0 via a flag
+            if (typeof SETTINGS !== 'undefined') {
+              window._sdkMutedSfx = SETTINGS.sfxVol;
+              window._sdkMutedMusic = SETTINGS.musicOn;
+              SETTINGS.sfxVol = 0;
+              SETTINGS.musicOn = false;
+            }
+            break;
+          case "SDK_GAME_START":
+            // Resume game and restore audio
+            if (typeof paused !== 'undefined' && paused && typeof STATE !== 'undefined' && STATE === 'playing') {
+              paused = false;
+              if (typeof lastTime !== 'undefined') lastTime = performance.now();
+            }
+            if (typeof SETTINGS !== 'undefined') {
+              if (window._sdkMutedSfx !== undefined) SETTINGS.sfxVol = window._sdkMutedSfx;
+              if (window._sdkMutedMusic !== undefined) SETTINGS.musicOn = window._sdkMutedMusic;
+            }
+            if (typeof MUSIC !== 'undefined' && MUSIC.start && typeof SETTINGS !== 'undefined' && SETTINGS.musicOn) {
+              MUSIC.start();
+            }
+            break;
+          case "SDK_READY":
+            // SDK is ready — show an ad at game start
+            if (typeof sdk !== 'undefined' && sdk.showBanner !== 'undefined') {
+              sdk.showBanner();
+            }
+            break;
+        }
+      }
+    };
+    (function (a, b, c) {
+      var d = a.getElementsByTagName(b)[0];
+      a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+    })(document, "script", "gamemonetize-sdk");
+  </script>
+</head>
+<body>
+<div id="gc">
+  <canvas id="c"></canvas>
+
+  <!-- ── HUD ── -->
+  <div id="hud">
+    <div id="h-left">
+      <div class="hstat">
+        <span class="hlbl">SCORE</span>
+        <span id="hv-score">0</span>
+      </div>
+      <div class="hstat">
+        <span class="hlbl">LIVES</span>
+        <span id="hv-lives">♦♦♦</span>
+      </div>
+      <div class="hstat">
+        <span class="hlbl">🪙</span>
+        <span id="hv-coins">0</span>
+      </div>
+      <div class="hstat" style="margin-top:3px">
+        <span class="hlbl">WEAPON</span>
+        <span id="hv-tier">LVL 1</span>
+      </div>
+    </div>
+
+    <div id="h-center">
+      <span id="hv-wave">WAVE 1</span>
+    </div>
+
+    <div id="h-right">
+      <div class="hstat" style="align-items:flex-end">
+        <span class="hlbl">BEST</span>
+        <span id="hv-best">0</span>
+      </div>
+      <button id="btn-pause" onclick="togglePause()" title="Pause [P]">⏸</button>
+    </div>
+
+    <!-- Boss health bar -->
+    <div id="h-boss">
+      <div id="h-boss-row">
+        <span id="h-boss-lbl">⚠ BOSS</span>
+        <span id="h-boss-pct">100%</span>
+      </div>
+      <div id="h-boss-track"><div id="h-boss-fill"></div></div>
+    </div>
+
+    <!-- Combo -->
+    <div id="h-combo" class="hidden">
+      <span id="hv-combo">×2</span>
+      <div id="h-combo-track"><div id="h-combo-fill"></div></div>
+    </div>
+
+    <!-- Active power-up chips -->
+    <div id="h-putray"></div>
+  </div>
+
+  <!-- Boss zone divider line -->
+  <div id="boss-div"></div>
+
+  <!-- IN-GAME ONBOARDING OVERLAY (Wave 1 only, skippable) -->
+  <div id="onboarding" class="hidden">
+    <div id="ob-inner">
+      <div class="ob-row">
+        <div class="ob-icon">↔</div>
+        <div class="ob-text">DRAG TO MOVE</div>
+      </div>
+      <div class="ob-row">
+        <div class="ob-icon">🔫</div>
+        <div class="ob-text">AUTO FIRE</div>
+      </div>
+      <div class="ob-row ob-kbd">
+        <span class="kbd">◄</span>
+        <span class="kbd">A</span>
+        <span class="ob-slash">/</span>
+        <span class="kbd">Q</span>
+        <span class="ob-sep">·</span>
+        <span class="kbd">►</span>
+        <span class="kbd">D</span>
+        <span class="ob-label">TO MOVE</span>
+      </div>
+      <button class="ob-skip" onclick="dismissOnboarding()">GOT IT ✓</button>
+    </div>
+  </div>
+
+  <!-- ══ SCREENS ══ -->
+
+  <!-- MAIN MENU -->
+  <div id="s-start" class="screen on">
+    <div class="sc menu-sc">
+      <div class="logo">NEON<span class="logo-sub">ASSAULT</span></div>
+      <div class="stags">
+        <span>👾 Waves</span><span>⚡ Power-Ups</span><span>🪙 Coins</span><span>💀 Bosses</span>
+      </div>
+      <div class="menu-btns">
+        <button class="mbtn mbtn-primary blink-border" onclick="startGame()">▶&nbsp; PLAY</button>
+        <button class="mbtn" onclick="openShop()">🛒&nbsp; SHIP SHOP</button>
+        <button class="mbtn" onclick="openSettings(false)">⚙&nbsp; SETTINGS</button>
+        <button class="mbtn" onclick="openHowTo()">❓&nbsp; HOW TO PLAY</button>
+      </div>
+      <div class="best-ln">BEST: <span id="sv-start-best">0</span> &nbsp;·&nbsp; 🪙 <span id="sv-total-coins">0</span></div>
+    </div>
+  </div>
+
+  <!-- WAVE ANNOUNCE -->
+  <div id="s-wave" class="screen">
+    <div class="sc">
+      <div id="sv-wnum" class="wnum"></div>
+      <div id="sv-whint" class="whint"></div>
+      <div class="skip-hint">TAP OR PRESS SPACE TO SKIP</div>
+    </div>
+  </div>
+
+  <!-- BOSS WARNING -->
+  <div id="s-bwarn" class="screen">
+    <div class="sc">
+      <div class="bw-icon">⚠</div>
+      <div class="bw-title">BOSS</div>
+      <div class="bw-sub">INCOMING</div>
+      <div class="bw-hint">Lower zone only · Powerups drop mid-fight</div>
+      <div class="skip-hint" style="margin-top:20px">TAP OR PRESS SPACE TO SKIP</div>
+    </div>
+  </div>
+
+  <!-- DEAD -->
+  <div id="s-dead" class="screen">
+    <div class="sc">
+      <div class="dead-hd">DESTROYED</div>
+      <div class="dead-lbl">SCORE</div>
+      <div id="sv-dead-score" class="dead-score">0</div>
+      <div class="dead-meta">
+        WAVE <span id="sv-dead-wave">1</span>
+        &nbsp;·&nbsp;
+        🪙 <span id="sv-dead-coins">0</span>
+      </div>
+      <div id="sv-dead-best" class="dead-best"></div>
+      <div class="menu-btns" style="margin-top:28px">
+        <button class="mbtn mbtn-primary blink-border" onclick="startGame()">▶&nbsp; RETRY</button>
+        <button class="mbtn" onclick="goMainMenu()">⌂&nbsp; MAIN MENU</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAUSE -->
+  <div id="s-pause" class="screen">
+    <div class="sc">
+      <div class="pause-title">⏸ PAUSED</div>
+      <div class="menu-btns">
+        <button class="mbtn mbtn-primary" onclick="togglePause()">▶&nbsp; RESUME</button>
+        <button class="mbtn" onclick="openSettings(true)">⚙&nbsp; SETTINGS</button>
+        <button class="mbtn" onclick="quitToMenu()">⌂&nbsp; QUIT TO MENU</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div id="s-settings" class="screen">
+    <div class="sc panel-sc">
+      <div class="panel-title">⚙ SETTINGS</div>
+      <div class="setting-row">
+        <span class="sett-lbl">🔊 SFX VOLUME</span>
+        <div class="slider-wrap">
+          <input type="range" id="sfx-vol" min="0" max="100" value="80" oninput="onSfxVol(this.value)"/>
+          <span id="sfx-vol-v" class="slider-val">80</span>
+        </div>
+      </div>
+      <div class="setting-row">
+        <span class="sett-lbl">🎵 MUSIC VOL</span>
+        <div class="slider-wrap">
+          <input type="range" id="music-vol" min="0" max="100" value="50" oninput="onMusicVol(this.value)"/>
+          <span id="music-vol-v" class="slider-val">50</span>
+        </div>
+      </div>
+      <div class="setting-row">
+        <span class="sett-lbl">🎵 MUSIC</span>
+        <button class="toggle-btn" id="music-toggle" onclick="onMusicToggle()">ON</button>
+      </div>
+      <div class="setting-row">
+        <span class="sett-lbl">📳 SCREEN SHAKE</span>
+        <button class="toggle-btn" id="shake-toggle" onclick="onShakeToggle()">ON</button>
+      </div>
+      <div class="setting-row">
+        <span class="sett-lbl">✨ PARTICLES</span>
+        <button class="toggle-btn" id="particles-toggle" onclick="onParticlesToggle()">ON</button>
+      </div>
+      <button class="mbtn" style="margin-top:24px" id="settings-back-btn" onclick="closeSettings()">← BACK</button>
+    </div>
+  </div>
+
+  <!-- HOW TO PLAY -->
+  <div id="s-howto" class="screen">
+    <div class="sc panel-sc">
+      <div class="panel-title">❓ HOW TO PLAY</div>
+      <div class="howto-grid">
+        <div class="howto-item"><span class="hi-icon">👆</span><span>Drag left/right to move</span></div>
+        <div class="howto-item"><span class="hi-icon">🔫</span><span>Ship fires automatically</span></div>
+        <div class="howto-item"><span class="hi-icon">⬆</span><span>Weapon upgrades every 3 waves</span></div>
+        <div class="howto-item"><span class="hi-icon">⚡</span><span>Collect hexagons for power-ups</span></div>
+        <div class="howto-item"><span class="hi-icon">🪙</span><span>Coins unlock skins in Shop</span></div>
+        <div class="howto-item"><span class="hi-icon">💀</span><span>Boss arrives every 5 waves</span></div>
+        <div class="howto-item"><span class="hi-icon">🔴</span><span>Stay in lower zone vs. boss</span></div>
+        <div class="howto-item"><span class="hi-icon">🎯</span><span>Near-miss = bonus score!</span></div>
+      </div>
+      <div class="howto-pu">
+        <div class="howto-pu-title">POWER-UPS</div>
+        <div class="howto-pu-list">
+          <span style="color:#39ff7a">◈ SPREAD — 5-way shot</span>
+          <span style="color:#ffe740">≋ RAPID — 3× fire rate</span>
+          <span style="color:#bf5fff">❋ SHIELD — absorb 1 hit</span>
+          <span style="color:#00f7ff">╫ LASER — beam weapon</span>
+          <span style="color:#ff8c00">✦ BOMB — clear screen</span>
+          <span style="color:#ff69b4">⊕ MAGNET — attract coins</span>
+        </div>
+      </div>
+      <button class="mbtn" style="margin-top:18px" onclick="closeHowTo()">← BACK</button>
+    </div>
+  </div>
+
+  <!-- SHIP SHOP -->
+  <div id="s-shop" class="screen">
+    <div class="sc panel-sc shop-sc">
+      <div class="panel-title">🛒 SHIP SHOP</div>
+      <div class="shop-wallet">🪙 <span id="shop-wallet-val">0</span> coins available</div>
+      <div id="shop-grid" class="shop-grid"></div>
+      <button class="mbtn" style="margin-top:18px" onclick="closeShop()">← BACK</button>
+    </div>
+  </div>
+
+</div>
+<script src="game.js"></script>
+</body>
+</html>

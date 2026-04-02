@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+
+<meta name="format-detection" content="telephone=no">
+<meta name="msapplication-tap-highlight" content="no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Multiplication Master Game</title>
+	<style type="text/css">@font-face {font-family:Inter;font-style:normal;font-weight:400;src:url(/cf-fonts/v/inter/5.0.16/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:400;src:url(/cf-fonts/v/inter/5.0.16/greek/wght/normal.woff2);unicode-range:U+0370-03FF;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:400;src:url(/cf-fonts/v/inter/5.0.16/latin-ext/wght/normal.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:400;src:url(/cf-fonts/v/inter/5.0.16/vietnamese/wght/normal.woff2);unicode-range:U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:400;src:url(/cf-fonts/v/inter/5.0.16/cyrillic/wght/normal.woff2);unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:400;src:url(/cf-fonts/v/inter/5.0.16/greek-ext/wght/normal.woff2);unicode-range:U+1F00-1FFF;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:400;src:url(/cf-fonts/v/inter/5.0.16/cyrillic-ext/wght/normal.woff2);unicode-range:U+0460-052F,U+1C80-1C88,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F;font-display:swap;}</style>
+  <link rel="stylesheet" href="./styles.css?v=1.51">
+
+
+<script>
+window.__gm_prerollDone = false;    
+window.__gm_adInProgress = false;   
+
+window.SDK_OPTIONS = {
+  gameId: "v6qpevlp4d7jt4uhznzfg5g8a4ugerl1",
+  onEvent: function (a) {
+    switch (a.name) {
+      case "SDK_GAME_PAUSE":
+        window.__gm_adInProgress = true;
+        if (window.gameController && typeof window.gameController.pauseGame === 'function') {
+          window.gameController.pauseGame();
+        }
+        console.log('🎮 Game paused for ad');
+        break;
+
+      case "SDK_GAME_START":
+
+        window.__gm_adInProgress = false;
+        window.__gm_prerollDone = true;
+        if (window.gameController && typeof window.gameController.resumeGame === 'function') {
+          window.gameController.resumeGame();
+        }
+        console.log('🎮 Game resumed after ad');
+        break;
+
+      case "SDK_READY":
+        console.log('🎮 GameMonetize SDK ready');
+        if (window.gameController && typeof window.gameController.onSDKReady === 'function') {
+          window.gameController.onSDKReady();
+        }
+        break;
+
+ 
+      case "SDK_ERROR":
+        console.warn('⚠️ SDK_ERROR', a);
+
+        window.__gm_adInProgress = false;
+        window.__gm_prerollDone = true;
+        if (window.gameController && typeof window.gameController.resumeGame === 'function') {
+          window.gameController.resumeGame();
+        }
+        break;
+
+      case "AD_CANCELED":
+      case "AD_SAFETY_TIMER":
+        console.warn('⚠️ Ad canceled/timeout', a.name);
+
+        window.__gm_adInProgress = false;
+        window.__gm_prerollDone = true;
+        if (window.gameController && typeof window.gameController.resumeGame === 'function') {
+          window.gameController.resumeGame();
+        }
+        break;
+    }
+  }
+};
+
+
+(function (a, b, c) {
+  var d = a.getElementsByTagName(b)[0];
+  if (!a.getElementById(c)) {
+    var s = a.createElement(b);
+    s.id = c;
+    s.src = "https://api.gamemonetize.com/sdk.js";
+    d.parentNode.insertBefore(s, d);
+  }
+})(document, "script", "gamemonetize-sdk");
+</script>
+
+
+</head>
+    <div class="floating-emoji emoji-1">🌟</div>
+    <div class="floating-emoji emoji-2">🎯</div>
+    <div class="floating-emoji emoji-3">🚀</div>
+    <div class="floating-emoji emoji-4">🎉</div>
+
+<!-- AD OVERLAY -->
+<div id="ad-overlay" style="display: none;">
+    <div class="ad-overlay-content">
+        <div class="ad-loading">
+            <div class="spinner"></div>
+            <p>Loading advertisement...</p>
+            <small>Please wait, ad will start shortly</small>
+        </div>
+    </div>
+</div>
+
+<div id="game-container" class="container" data-original-width="800" data-original-height="750">
+        <div id="cta-wrap" class="cta-wrap" style="display:flex;justify-content:center;margin:16px 0;">
+          <button id="ctaPlay" class="big-play" data-level="2"
+            style="font-size:clamp(18px,3.5vw,28px);padding:14px 28px;border-radius:999px;border:none;
+                   box-shadow:0 6px 16px rgba(0,0,0,.25);cursor:pointer;outline:none;
+                   font-weight:700;letter-spacing:.5px;
+                   display:inline-flex;align-items:center;gap:12px;
+                   background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;">
+            <span aria-hidden="true">▶</span> Play
+          </button>
+        </div> 
+        <button class="btn back-to-menu" id="backToMenu" style="display: none;">← Back to Menu</button>
+        
+        <h1>🧮 Multiplication Master 🧮</h1>
+
+        
+        <div class="level-selector">
+            <h2>Choose your challenge:</h2>
+                <div class="difficulty-tabs">
+        <button class="difficulty-tab active" data-difficulty="normal" title="Normal Mode">
+            <span class="text-label">Normal</span>
+            <span class="icon-label" aria-hidden="true">🧠</span>
+        </button>
+        <button class="difficulty-tab" data-difficulty="timed" title="Time Challenge">
+            <span class="text-label">Timed</span>
+            <span class="icon-label" aria-hidden="true">⏱️</span>
+        </button>
+        <button class="difficulty-tab" data-difficulty="quick" title="Quick Answers">
+            <span class="text-label">Quick</span>
+            <span class="icon-label" aria-hidden="true">⚡</span>
+        </button>
+        <button class="difficulty-tab" data-difficulty="survival" title="Survival Mode">
+            <span class="text-label">Survive</span>
+            <span class="icon-label" aria-hidden="true">💀</span>
+        </button>
+        <button class="difficulty-tab" data-difficulty="bomb" title="Bomb Mode">
+            <span class="text-label">Bomb</span>
+            <span class="icon-label" aria-hidden="true">💣</span>
+        </button>
+		<button class="difficulty-tab" data-difficulty="marathon">
+    <span class="text-label">Marathon</span>
+    <span class="icon-label" aria-hidden="true">🏃</span>
+</button>
+    </div>
+            <div class="theme-selector">
+                <h3>🎨 Choose Theme:</h3>
+                <div class="theme-buttons">
+                    <button class="theme-btn active" data-theme="default" title="📚 Classic Board">📚</button>
+                    <button class="theme-btn" data-theme="space" title="🚀 Space">🚀</button>
+                    <button class="theme-btn" data-theme="ocean" title="🌊 Ocean">🌊</button>
+                    <button class="theme-btn" data-theme="sunset" title="🌅 Sunset">🌅</button>
+                </div>
+            </div>
+            <div class="menu-extras">
+                <button class="extra-btn" onclick="showRankings()">🏆 Rankings</button>
+                <button class="extra-btn" onclick="showBadges()">🎖️ Badges</button>
+				<button class="extra-btn" onclick="showGameModesInfo()">💭 Guide</button>
+            </div>
+            
+        <div class="level-buttons">
+        <button class="level-btn" data-level="2" title="Times Table 2">x2</button>
+        <button class="level-btn" data-level="3" title="Times Table 3">x3</button>
+        <button class="level-btn" data-level="4" title="Times Table 4">x4</button>
+        <button class="level-btn" data-level="5" title="Times Table 5">x5</button>
+        <button class="level-btn" data-level="6" title="Times Table 6">x6</button>
+        <button class="level-btn" data-level="7" title="Times Table 7">x7</button>
+        <button class="level-btn" data-level="8" title="Times Table 8">x8</button>
+        <button class="level-btn" data-level="9" title="Times Table 9">x9</button>
+        <button class="level-btn" data-level="10" title="Times Table 10">x10</button>
+        <button class="level-btn" data-level="12" title="Times Table 12">x12</button>
+        <button class="level-btn" data-level="mix" title="Mixed Tables (2-12)">Mix 🔀</button>
+        <button class="level-btn" data-level="challenge" title="Expert Challenge">Expert 🧠</button>
+    </div>
+        </div>
+
+        <div class="game-area" id="gameArea">
+            <div class="game-header">
+                <div class="timer-streak-container">
+                    <div class="timer" id="timer" style="display: none;">
+                        ⏰ <span id="timeLeft">30</span>s
+                    </div>
+                    <div class="bomb-timer" id="bombTimer" style="display: none;">
+                        💣 <span id="bombTimeLeft">8</span>s
+                    </div>
+                    <div class="streak" id="streak">
+                        🔥 Streak: <span id="streakCount">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="progress-bar">
+                <div class="progress" id="progress"></div>
+            </div>
+            
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-value" id="currentQuestion">1</div>
+                    <div>Question</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="correctCount">0</div>
+                    <div>Correct</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalQuestions">10</div>
+                    <div>Total</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="accuracy">100%</div>
+                    <div>Accuracy</div>
+                </div>
+            </div>
+
+            <div class="main-game-content">
+                <div class="question-answer-section">
+                    <div class="question" id="question">2 × 1 = ?</div>
+                    
+                    <div class="answer-section">
+                        <input type="number" class="answer-input" id="answerInput" placeholder="?" autocomplete="off">
+                        
+                        <div class="quick-answers" id="quickAnswers" style="display: none;">
+                            <!-- Quick answer buttons will be generated here -->
+                        </div>
+                    </div>
+                </div>
+                                
+                <div class="feedback-container">
+                    <div class="feedback" id="feedback" contenteditable="true" data-text="Feedback..."></div>
+                </div>
+                <div class="timer-container">
+                    <button class="btn" id="checkBtn">
+                        <span class="btn-text">Check</span>
+                        <span class="btn-icon">🔍</span>
+                    </button>
+
+                    <button class="btn" id="nextBtn" style="display: none;">
+                        <span class="btn-text">Next</span>
+                        <span class="btn-icon">➡️</span>
+                    </button>
+
+                    <button class="btn" id="hintBtn">
+                        <span class="btn-text">Hint</span>
+                        <span class="btn-icon">❓</span>
+                    </button>
+
+                    <button class="btn back-to-menu-inline">
+                        <span class="btn-text">Menu</span>
+                        <span class="btn-icon">🏠</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="achievements" id="achievements"></div>
+        </div>
+    </div>
+
+    <!-- ENHANCED FINAL SCORE MODAL -->
+    <div class="final-score" id="finalScore" style="display: none;">
+        <div class="final-score-content">
+            <h2>🎉 Congratulations! 🎉</h2>
+            <div class="score-grade" id="grade">A+</div>
+            <div class="grade-text" id="gradeText">Perfect!</div>
+            <div id="scoreMessage">Amazing work!</div>
+            
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-value" id="finalCorrect">0</div>
+                    <div>Correct Answers</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="finalPercentage">0%</div>
+                    <div>Accuracy</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="finalTime">0s</div>
+                    <div>Total Time</div>
+                </div>
+                <div class="stat-card">
+					<div class="stat-value" id="finalPoints">0</div>
+					<div>Points Earned</div>
+				</div>
+            </div>
+            
+            <div class="achievements" id="finalAchievements"></div>
+            <div class="final-actions">
+                <button class="retry-button" id="retryButton">Play Again</button>
+                <button class="btn" id="restartBtn">Different Level</button>
+                <button class="btn" id="shareBtn">Share Result</button>
+                <button class="btn" id="shareChallengeBtn">Share Challenge</button>
+                <button class="btn back-to-menu-inline">← Back to Menu</button>
+            </div>
+        </div>
+    </div>
+
+<script src="./autoscaler.min.js?v=1.51"></script>
+<script src="./script.min.js?v=1.51"></script>
+
+<style>
+/* AD OVERLAY STYLES */
+#ad-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.9);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    backdrop-filter: blur(5px);
+}
+
+.ad-overlay-content {
+    text-align: center;
+    color: white;
+    padding: 40px;
+    border-radius: 15px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.ad-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid rgba(255, 255, 255, 0.3);
+    border-top: 5px solid #3498db;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.ad-loading p {
+    font-size: 1.2em;
+    margin: 0;
+    font-weight: bold;
+}
+
+.ad-loading small {
+    font-size: 0.9em;
+    opacity: 0.8;
+}
+
+/* PLAY BUTTON STYLES */
+.play-section {
+    text-align: center;
+    margin: 30px 0;
+    padding: 20px;
+}
+
+.play-btn {
+    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    border: none;
+    border-radius: 25px;
+    padding: 20px 40px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 25px rgba(46, 204, 113, 0.3);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    min-width: 250px;
+    margin: 0 auto;
+    position: relative;
+    overflow: hidden;
+}
+
+.play-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 35px rgba(46, 204, 113, 0.4);
+    background: linear-gradient(135deg, #229954, #27ae60);
+}
+
+.play-btn:active {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(46, 204, 113, 0.3);
+}
+
+.play-btn::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transform: rotate(45deg);
+    transition: all 0.5s;
+    opacity: 0;
+}
+
+.play-btn:hover::before {
+    animation: shimmer 0.6s ease-in-out;
+}
+
+@keyframes shimmer {
+    0% {
+        transform: translateX(-100%) translateY(-100%) rotate(45deg);
+        opacity: 0;
+    }
+    50% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateX(100%) translateY(100%) rotate(45deg);
+        opacity: 0;
+    }
+}
+
+.play-icon {
+    font-size: 2em;
+    margin-bottom: 5px;
+}
+
+.play-text {
+    color: white;
+    font-size: 1.4em;
+    font-weight: bold;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    letter-spacing: 1px;
+}
+
+.play-subtext {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.9em;
+    font-weight: 300;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+    .play-btn {
+        min-width: 200px;
+        padding: 18px 35px;
+    }
+    
+    .play-text {
+        font-size: 1.2em;
+    }
+    
+    .play-subtext {
+        font-size: 0.8em;
+    }
+}
+
+/* Ad notification styles */
+.ad-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #3498db;
+    color: white;
+    padding: 15px 20px;
+    border-radius: 10px;
+    z-index: 9999;
+    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Game paused overlay */
+.game-paused-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9998;
+    backdrop-filter: blur(3px);
+}
+
+.game-paused-content {
+    background: white;
+    padding: 30px;
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.game-paused-content h3 {
+    margin: 0 0 10px 0;
+    color: #2c3e50;
+}
+
+.game-paused-content p {
+    margin: 0;
+    color: #7f8c8d;
+}
+</style>
+
+</body>
+</html>

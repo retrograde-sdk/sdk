@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Om Nom Run - Fixed Sound</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+        
+        body {
+            font-family: 'Arial Rounded MT Bold', 'Arial', sans-serif;
+            background: linear-gradient(135deg, #6e48aa, #9d50bb);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+            padding: 20px;
+        }
+        
+        #game-container {
+            position: relative;
+            width: 800px;
+            max-width: 100%;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        #game-header {
+            background: linear-gradient(to right, #2c3e50, #4a6491);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        #game-title {
+            font-size: 28px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        #score-container {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .score-box {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 8px 15px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        #game-canvas {
+            background: linear-gradient(to bottom, #87CEEB, #E0F7FA);
+            display: block;
+            width: 100%;
+        }
+        
+        #controls {
+            background: linear-gradient(to right, #2c3e50, #4a6491);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        #instructions {
+            font-size: 16px;
+        }
+        
+        #jump-button {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            transition: transform 0.1s;
+        }
+        
+        #jump-button:hover {
+            transform: scale(1.05);
+            background: #c0392b;
+        }
+        
+        #start-screen, #game-over-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            z-index: 10;
+            text-align: center;
+        }
+        
+        #game-over-screen {
+            display: none;
+        }
+        
+        h1 {
+            font-size: 48px;
+            color: #f1c40f;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7);
+        }
+        
+        h2 {
+            font-size: 32px;
+            margin-bottom: 30px;
+            color: #2ecc71;
+        }
+        
+        #final-score {
+            font-size: 28px;
+            color: #f1c40f;
+            margin: 20px 0;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px 30px;
+            border-radius: 30px;
+        }
+        
+        .start-button {
+            padding: 15px 40px;
+            font-size: 22px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 40px;
+            cursor: pointer;
+            margin-top: 30px;
+            font-weight: bold;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+            transition: transform 0.1s;
+        }
+        
+        .start-button:hover {
+            transform: scale(1.05);
+            background: #c0392b;
+        }
+        
+        .character {
+            margin: 20px 0;
+            font-size: 80px;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5);
+        }
+        
+        .instructions {
+            max-width: 80%;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            font-size: 18px;
+            color: #bdc3c7;
+        }
+        
+        #sound-control {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            z-index: 20;
+        }
+        
+        #sound-control i {
+            font-size: 24px;
+            color: white;
+        }
+        
+        @media (max-width: 600px) {
+            #game-header {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            #controls {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            h1 {
+                font-size: 36px;
+            }
+            
+            h2 {
+                font-size: 24px;
+            }
+            
+            .character {
+                font-size: 60px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="sound-control">
+            <i>🔊</i>
+        </div>
+        
+        <div id="game-header">
+            <div id="game-title">Om Nom Run</div>
+            <div id="score-container">
+                <div class="score-box">
+                    <span>Score:</span>
+                    <span id="score">0</span>
+                </div>
+                <div class="score-box">
+                    <span>High Score:</span>
+                    <span id="high-score">0</span>
+                </div>
+            </div>
+        </div>
+        
+        <canvas id="game-canvas" width="800" height="400"></canvas>
+        
+        <div id="controls">
+            <div id="instructions">Press SPACE or UP ARROW to jump. Collect candies for bonus points!</div>
+            <button id="jump-button">JUMP</button>
+        </div>
+        
+        <div id="start-screen">
+            <h1>Om Nom Run</h1>
+            <div class="character">🐱</div>
+            <h2>Help Om Nom collect candies!</h2>
+            <div class="instructions">Avoid obstacles by jumping over them. Collect as many candies as you can to score points. How far can you run?</div>
+            <button class="start-button" id="start-button">START GAME</button>
+        </div>
+        
+        <div id="game-over-screen">
+            <h1>Game Over</h1>
+            <div class="character">😢</div>
+            <div id="final-score">Score: 0</div>
+            <div class="instructions">You ran far and collected many candies! Want to try again?</div>
+            <button class="start-button" id="restart-button">PLAY AGAIN</button>
+        </div>
+    </div>
+
+    <script>
+        // Game variables
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+        const scoreDisplay = document.getElementById('score');
+        const highScoreDisplay = document.getElementById('high-score');
+        const finalScoreDisplay = document.getElementById('final-score');
+        const startScreen = document.getElementById('start-screen');
+        const gameOverScreen = document.getElementById('game-over-screen');
+        const startButton = document.getElementById('start-button');
+        const restartButton = document.getElementById('restart-button');
+        const jumpButton = document.getElementById('jump-button');
+        const soundControl = document.getElementById('sound-control');
+        
+        // Sound variables
+        let soundEnabled = true;
+        let audioContext;
+        
+        // Initialize audio context
+        function initAudio() {
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            } catch (e) {
+                console.log("Web Audio API is not supported in this browser");
+                soundEnabled = false;
+                soundControl.innerHTML = '<i>🔇</i>';
+            }
+        }
+        
+        // Play sound if enabled
+        function playSound(type) {
+            if (!soundEnabled || !audioContext) return;
+            
+            try {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                switch(type) {
+                    case 'jump':
+                        oscillator.frequency.setValueAtTime(600, audioContext.currentTime);
+                        oscillator.frequency.exponentialRampToValueAtTime(300, audioContext.currentTime + 0.3);
+                        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                        break;
+                    case 'candy':
+                        oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime);
+                        oscillator.frequency.setValueAtTime(659.25, audioContext.currentTime + 0.1);
+                        oscillator.frequency.setValueAtTime(783.99, audioContext.currentTime + 0.2);
+                        gainNode.gain.setValueAtTime(0.4, audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                        break;
+                    case 'gameover':
+                        oscillator.frequency.setValueAtTime(200, audioContext.currentTime);
+                        oscillator.frequency.exponentialRampToValueAtTime(100, audioContext.currentTime + 0.5);
+                        gainNode.gain.setValueAtTime(0.4, audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                        break;
+                }
+                
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.5);
+            } catch (e) {
+                console.log("Error playing sound:", e);
+            }
+        }
+        
+        // Toggle sound on/off
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            soundControl.innerHTML = soundEnabled ? '<i>🔊</i>' : '<i>🔇</i>';
+        }
+        
+        // Set canvas size to match its display size
+        function resizeCanvas() {
+            const displayWidth = canvas.clientWidth;
+            const displayHeight = canvas.clientHeight;
+            
+            if (canvas.width !== displayWidth || canvas.height !== displayHeight) {
+                canvas.width = displayWidth;
+                canvas.height = displayHeight;
+            }
+        }
+        
+        // Game state
+        let gameRunning = false;
+        let score = 0;
+        let highScore = 0;
+        let frames = 0;
+        let gameSpeed = 5;
+        
+        // Game objects
+        const player = {
+            x: 50,
+            y: 0,
+            width: 0,
+            height: 0,
+            groundY: 0,
+            speedY: 0,
+            gravity: 0.5,
+            jumpForce: 12,
+            jumping: false,
+            
+            update: function() {
+                // Apply gravity
+                this.speedY += this.gravity;
+                this.y += this.speedY;
+                
+                // Floor collision
+                if (this.y > this.groundY) {
+                    this.y = this.groundY;
+                    this.jumping = false;
+                    this.speedY = 0;
+                }
+            },
+            
+            jump: function() {
+                if (!this.jumping) {
+                    this.speedY = -this.jumpForce;
+                    this.jumping = true;
+                    playSound('jump');
+                }
+            },
+            
+            draw: function() {
+                // Draw Om Nom body (green)
+                ctx.fillStyle = '#2ecc71';
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+                
+                // Draw eyes
+                ctx.fillStyle = 'white';
+                ctx.fillRect(this.x + this.width * 0.6, this.y + this.height * 0.2, this.width * 0.2, this.height * 0.15);
+                ctx.fillRect(this.x + this.width * 0.25, this.y + this.height * 0.2, this.width * 0.2, this.height * 0.15);
+                
+                // Draw pupils
+                ctx.fillStyle = '#2c3e50';
+                ctx.fillRect(this.x + this.width * 0.67, this.y + this.height * 0.25, this.width * 0.1, this.height * 0.08);
+                ctx.fillRect(this.x + this.width * 0.32, this.y + this.height * 0.25, this.width * 0.1, this.height * 0.08);
+                
+                // Draw mouth
+                ctx.fillStyle = '#e74c3c';
+                ctx.fillRect(this.x + this.width * 0.35, this.y + this.height * 0.6, this.width * 0.3, this.height * 0.1);
+            },
+            
+            init: function() {
+                // Set player dimensions relative to canvas size
+                this.width = canvas.width * 0.08;
+                this.height = canvas.width * 0.08;
+                this.groundY = canvas.height - this.height - canvas.height * 0.1;
+                this.y = this.groundY;
+            }
+        };
+        
+        // Obstacles and collectibles
+        let obstacles = [];
+        let candies = [];
+        
+        // Obstacle class
+        class Obstacle {
+            constructor() {
+                this.width = canvas.width * 0.06;
+                this.height = Math.random() * (canvas.height * 0.2) + (canvas.height * 0.1);
+                this.x = canvas.width;
+                this.y = canvas.height - this.height - canvas.height * 0.1;
+                this.speed = gameSpeed;
+            }
+            
+            update() {
+                this.x -= this.speed;
+            }
+            
+            draw() {
+                ctx.fillStyle = '#e74c3c';
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+                
+                // Add some details to the obstacle
+                ctx.fillStyle = '#c0392b';
+                ctx.fillRect(this.x, this.y, this.width, this.height * 0.2);
+            }
+        }
+        
+        // Candy class
+        class Candy {
+            constructor() {
+                this.width = canvas.width * 0.05;
+                this.height = canvas.width * 0.05;
+                this.x = canvas.width;
+                this.y = Math.random() * (canvas.height * 0.6) + (canvas.height * 0.2);
+                this.speed = gameSpeed;
+                this.rotation = 0;
+            }
+            
+            update() {
+                this.x -= this.speed;
+                this.rotation += 0.05;
+            }
+            
+            draw() {
+                ctx.save();
+                ctx.translate(this.x + this.width/2, this.y + this.height/2);
+                ctx.rotate(this.rotation);
+                
+                // Draw candy
+                ctx.fillStyle = '#f1c40f';
+                ctx.beginPath();
+                ctx.arc(0, 0, this.width/2, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Add some details to make it look like a candy
+                ctx.fillStyle = '#e74c3c';
+                ctx.fillRect(-this.width/2 * 0.7, -this.height/2 * 0.2, this.width * 0.7, this.height * 0.4);
+                
+                ctx.restore();
+            }
+        }
+        
+        // Check collisions
+        function checkCollisions() {
+            // Check obstacle collisions
+            for (let i = 0; i < obstacles.length; i++) {
+                if (
+                    player.x < obstacles[i].x + obstacles[i].width &&
+                    player.x + player.width > obstacles[i].x &&
+                    player.y < obstacles[i].y + obstacles[i].height &&
+                    player.y + player.height > obstacles[i].y
+                ) {
+                    gameOver();
+                    return;
+                }
+            }
+            
+            // Check candy collections
+            for (let i = 0; i < candies.length; i++) {
+                if (
+                    player.x < candies[i].x + candies[i].width &&
+                    player.x + player.width > candies[i].x &&
+                    player.y < candies[i].y + candies[i].height &&
+                    player.y + player.height > candies[i].y
+                ) {
+                    score += 10;
+                    scoreDisplay.textContent = score;
+                    playSound('candy');
+                    candies.splice(i, 1);
+                    i--;
+                }
+            }
+        }
+        
+        // Generate obstacles and candies
+        function generateGameElements() {
+            // Generate obstacles
+            if (frames % 100 === 0) {
+                obstacles.push(new Obstacle());
+            }
+            
+            // Generate candies
+            if (frames % 150 === 0) {
+                candies.push(new Candy());
+            }
+        }
+        
+        // Update game objects
+        function updateGame() {
+            player.update();
+            
+            // Update obstacles
+            for (let i = 0; i < obstacles.length; i++) {
+                obstacles[i].update();
+                
+                // Remove obstacles that are off-screen
+                if (obstacles[i].x + obstacles[i].width < 0) {
+                    obstacles.splice(i, 1);
+                    i--;
+                }
+            }
+            
+            // Update candies
+            for (let i = 0; i < candies.length; i++) {
+                candies[i].update();
+                
+                // Remove candies that are off-screen
+                if (candies[i].x + candies[i].width < 0) {
+                    candies.splice(i, 1);
+                    i--;
+                }
+            }
+            
+            // Increase score over time
+            if (frames % 10 === 0) {
+                score++;
+                scoreDisplay.textContent = score;
+            }
+            
+            // Gradually increase game speed
+            if (frames % 500 === 0) {
+                gameSpeed += 0.5;
+            }
+            
+            checkCollisions();
+        }
+        
+        // Draw game elements
+        function drawGame() {
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw sky background
+            ctx.fillStyle = '#87CEEB';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw clouds
+            ctx.fillStyle = 'white';
+            for (let i = 0; i < 5; i++) {
+                const x = (frames / 2 + i * 200) % (canvas.width + 200) - 100;
+                const y = canvas.height * 0.2 + Math.sin(frames / 100 + i) * 20;
+                drawCloud(x, y);
+            }
+            
+            // Draw ground
+            ctx.fillStyle = '#27ae60';
+            ctx.fillRect(0, canvas.height - canvas.height * 0.1, canvas.width, canvas.height * 0.1);
+            
+            // Draw grass details
+            ctx.fillStyle = '#2ecc71';
+            for (let i = 0; i < canvas.width; i += 20) {
+                ctx.fillRect(i, canvas.height - canvas.height * 0.1, 10, 5);
+            }
+            
+            // Draw player
+            player.draw();
+            
+            // Draw obstacles
+            for (let i = 0; i < obstacles.length; i++) {
+                obstacles[i].draw();
+            }
+            
+            // Draw candies
+            for (let i = 0; i < candies.length; i++) {
+                candies[i].draw();
+            }
+        }
+        
+        // Draw a cloud
+        function drawCloud(x, y) {
+            ctx.beginPath();
+            ctx.arc(x, y, 30, 0, Math.PI * 2);
+            ctx.arc(x + 25, y - 15, 25, 0, Math.PI * 2);
+            ctx.arc(x + 50, y, 30, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        // Game loop
+        function gameLoop() {
+            if (gameRunning) {
+                resizeCanvas();
+                frames++;
+                generateGameElements();
+                updateGame();
+                drawGame();
+                requestAnimationFrame(gameLoop);
+            }
+        }
+        
+        // Start game
+        function startGame() {
+            // Resume audio context if it was suspended
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+            
+            gameRunning = true;
+            score = 0;
+            frames = 0;
+            gameSpeed = 5;
+            obstacles = [];
+            candies = [];
+            player.init();
+            scoreDisplay.textContent = score;
+            startScreen.style.display = 'none';
+            gameOverScreen.style.display = 'none';
+            
+            gameLoop();
+        }
+        
+        // Game over
+        function gameOver() {
+            gameRunning = false;
+            
+            // Play game over sound
+            playSound('gameover');
+            
+            // Update high score if needed
+            if (score > highScore) {
+                highScore = score;
+                highScoreDisplay.textContent = highScore;
+            }
+            
+            finalScoreDisplay.textContent = `Score: ${score}`;
+            gameOverScreen.style.display = 'flex';
+        }
+        
+        // Event listeners
+        let pendingStart = false;
+
+    window.SDK_OPTIONS = {
+        gameId: "z8gamat20izb3pw25e3e1ruonuafdd5y",
+        onEvent: function (a) {
+            switch (a.name) {
+                case "SDK_GAME_PAUSE":
+                    break;
+                case "SDK_GAME_START":
+                    if (pendingStart) {
+                        startGame();
+                        pendingStart = false;
+                    }
+                    break;
+                case "SDK_READY":
+                    break;
+                case "SDK_ERROR":
+                    if (pendingStart) {
+                        startGame();
+                        pendingStart = false;
+                    }
+                    break;
+            }
+        }
+    };
+
+    // START button: show ad first, then start after ad closes
+    startButton.addEventListener('click', () => {
+        if (typeof sdk !== "undefined" && sdk.showBanner) {
+            pendingStart = true;
+            sdk.showBanner();
+
+            // Fallback: if ad SDK doesn't respond in 5 seconds, start anyway
+            setTimeout(() => {
+                if (pendingStart) {
+                    startGame();
+                    pendingStart = false;
+                }
+            }, 5000);
+        } else {
+            // If SDK not ready, just start the game
+            startGame();
+        }
+    });
+
+    // RESTART button: show ad every 10th time
+    let playAgainCount = 0;
+    restartButton.addEventListener('click', () => {
+        playAgainCount++;
+        if (playAgainCount >= 10) {
+            playAgainCount = 0; // reset counter
+            if (typeof sdk !== "undefined" && sdk.showBanner) {
+                pendingStart = true;
+                sdk.showBanner();
+                setTimeout(() => {
+                    if (pendingStart) {
+                        startGame();
+                        pendingStart = false;
+                    }
+                }, 5000);
+            } else {
+                startGame();
+            }
+        } else {
+            startGame();
+        }
+    });
+    jumpButton.addEventListener('click', () => {
+        if (gameRunning) player.jump();
+    });
+
+    soundControl.addEventListener('click', toggleSound);
+        
+        document.addEventListener('keydown', function(e) {
+            if ((e.code === 'Space' || e.code === 'ArrowUp') && gameRunning) {
+                player.jump();
+                e.preventDefault();
+            }
+            
+            // Start game with space/enter if not running
+            if ((e.code === 'Space' || e.code === 'Enter') && !gameRunning) {
+                if (gameOverScreen.style.display === 'flex') {
+                    startGame();
+                } else if (startScreen.style.display !== 'none') {
+                    startGame();
+                }
+            }
+        });
+        
+        // Touch support for mobile devices
+        canvas.addEventListener('touchstart', function(e) {
+            if (gameRunning) {
+                player.jump();
+                e.preventDefault();
+            }
+        });
+        
+        // Initialize the game
+        window.addEventListener('load', function() {
+            resizeCanvas();
+            player.init();
+            initAudio();
+        });
+        
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            resizeCanvas();
+            if (!gameRunning) player.init();
+        });
+    </script>
+    <script type = "text/javascript" >
+   window.SDK_OPTIONS = {
+      gameId: "z8gamat20izb3pw25e3e1ruonuafdd5y", // Fill the game_id
+      onEvent: function (a) {
+         switch (a.name) {
+            case "SDK_GAME_PAUSE":
+               // pause game logic / mute audio
+               break;
+            case "SDK_GAME_START":
+               // advertisement done, resume game logic and unmute audio
+               break;
+            case "SDK_READY":
+               // when sdk is ready
+               break;
+            case "SDK_ERROR":
+               // when sdk get error
+               break;
+         }
+      }
+   };
+(function (a, b, c) {
+   var d = a.getElementsByTagName(b)[0];
+   a.getElementById(c) || (a = a.createElement(b), a.id = c, 
+   a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+})(document, "script", "gamemonetize-sdk"); 
+</script>
+</body>
+</html>

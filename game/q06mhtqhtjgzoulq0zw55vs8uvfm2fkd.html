@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Heat & Temperature Knockout Quiz</title>
+  <style>
+    :root{
+      /* New palette: midnight wine + magenta + chartreuse */
+      --bg:#18091f; --panel:#201227; --text:#fff7fb; --muted:#d9c0d3;
+      --accent:#db2777; /* magenta */
+      --accent2:#a3e635; /* chartreuse */
+      --danger:#ef4444; --gold:#f59e0b; --ink:#0b0e14;
+      --glow:0 10px 30px rgba(219,39,119,.25);
+    }
+    *{box-sizing:border-box}
+    body{margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif; background:radial-gradient(1200px 800px at 50% -10%, #2a1631, var(--bg)); color:var(--text); min-height:100dvh; display:grid; place-items:center}
+    .wrap{width:min(1000px,92vw)}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02)); border:1px solid rgba(255,255,255,0.1); border-radius:20px; padding:22px; box-shadow:var(--glow)}
+    h1{margin:0 0 6px; font-weight:900}
+    .muted{color:var(--muted)}
+    .row{display:flex; gap:12px; flex-wrap:wrap; align-items:center; justify-content:space-between}
+    .badge{background:rgba(255,255,255,.08); padding:8px 10px; border-radius:10px}
+    .gold{color:var(--gold)}
+    .center{display:grid; place-items:center; text-align:center; gap:14px; padding:20px}
+
+    /* Layout: 2×2 chunky cards with corner letter chips */
+    .board{ margin-top:14px; padding:16px; border-radius:16px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08)}
+    .question{ font-size:clamp(22px, 4.2vw, 40px); font-weight:900; text-align:center; margin:10px 0 14px }
+    .choices{ display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:12px }
+    @media (max-width:640px){ .choices{ grid-template-columns:1fr } }
+    .choice{ position:relative; overflow:hidden; padding:16px 18px; border-radius:16px; border:1px solid rgba(255,255,255,.14); background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02)); color:var(--text); cursor:pointer; font-weight:800; letter-spacing:.2px; box-shadow:0 8px 18px rgba(163,230,53,.18); transition:.14s transform, .2s box-shadow, .2s border-color }
+    .choice:hover{ transform:translateY(-1px); box-shadow:0 10px 22px rgba(219,39,119,.28); border-color:rgba(255,255,255,.24) }
+    .chip{ position:absolute; top:8px; right:8px; width:26px; height:26px; display:grid; place-items:center; border-radius:999px; background:linear-gradient(90deg, var(--accent), var(--accent2)); color:var(--ink); font-weight:900; font-size:12px }
+
+    .status{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:space-between; margin-top:8px }
+    .timer{flex:1; height:10px; background:rgba(255,255,255,.1); border-radius:999px; overflow:hidden}
+    .bar{height:100%; width:100%; background:linear-gradient(90deg, var(--accent), var(--accent2)); transform-origin:left center}
+    .small{font-size:13px}
+    .hide{ display:none !important }
+    .pulse{ animation:pulse .9s infinite }
+    .btn{background:var(--accent); color:var(--ink); border:0; padding:12px 16px; border-radius:12px; font-weight:800; cursor:pointer; box-shadow:0 8px 18px rgba(219,39,119,.35)}
+    .ghost{background:transparent; border:1px solid rgba(255,255,255,.18); color:var(--text)}
+    @keyframes pulse{ 0%{transform:scale(1)} 50%{transform:scale(1.04)} 100%{transform:scale(1)} }
+  </style>
+</head>
+<body>
+
+<script type="text/javascript">
+   window.SDK_OPTIONS = {
+      gameId: "q06mhtqhtjgzoulq0zw55vs8uvfm2fkd",
+      onEvent: function (a) {
+         switch (a.name) {
+            case "fi7gbbxtopjxhbm6j2kyufuxc0coam9i":
+               // pause game logic / mute audio
+               break;
+            case "SDK_GAME_START":
+               // advertisement done, resume game logic and unmute audio
+               break;
+            case "SDK_READY":
+               // when sdk is ready
+               break;
+         }
+      }
+   };
+(function (a, b, c) {
+   var d = a.getElementsByTagName(b)[0];
+   a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+})(document, "script", "gamemonetize-sdk"); 
+</script>
+
+
+
+
+
+
+
+  <div class="wrap">
+    <div class="card">
+      <div class="row">
+        <div>
+          <h1>Heat & Temperature — Knockout Quiz</h1>
+          <p class="muted">Temperature scales • Kinetic theory • Heat transfer • Specific & latent heat • Calorimetry • Thermal expansion • Phase change • Blackbody basics • 100+ MCQs • One wrong answer ends the game.</p>
+        </div>
+        <div class="row">
+          <div class="badge">Best: <span id="best" class="gold">0</span></div>
+          <div class="badge">Streak: <span id="streak">0</span></div>
+          <div class="badge">Last: <span id="last">0</span></div>
+        </div>
+      </div>
+
+      <div id="intro" class="center">
+        <div style="font-size:clamp(30px,6vw,50px); font-weight:900">Feel the heat?</div>
+        <p class="muted">Answer multiple-choice <b>heat & temperature</b> questions. Each is <b>timed</b>. <br><b>Knockout rule:</b> one mistake or timeout ends your run.</p>
+        <div class="row" style="justify-content:center">
+          <button id="start" class="btn pulse">Start</button>
+          <button id="how" class="btn ghost">How to play</button>
+        </div>
+        <p class="small muted">Shortcuts: <b>1–4</b> to answer • <b>Enter</b> to start/restart</p>
+      </div>
+
+      <div id="board" class="board hide" role="group" aria-label="Question and answers">
+        <div class="status">
+          <div class="badge">Q <span id="qnum">1</span></div>
+          <div class="timer" aria-label="Time remaining"><div class="bar" id="bar"></div></div>
+          <div class="badge">Time: <span id="time">0</span>s</div>
+        </div>
+        <div id="q" class="question">—</div>
+        <div id="choices" class="choices"></div>
+      </div>
+
+      <div id="summary" class="center hide">
+        <div style="font-size:clamp(30px,6vw,50px); font-weight:900" id="sumTitle">Game Over</div>
+        <p class="muted" id="sumReason"></p>
+        <div class="row" style="justify-content:center">
+          <button id="again" class="btn">Play Again</button>
+          <button id="back" class="btn ghost">Back</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  const TIME_PER_Q = 12; // seconds
+
+  // ====== State ======
+  let best = Number(localStorage.getItem('heat.best')) || 0;
+  let last = Number(localStorage.getItem('heat.last')) || 0;
+  let streak = 0; let qIndex = 0; let ticking = null; let current = null; let bank = [];
+
+  // ====== Elements ======
+  const elBest = document.getElementById('best');
+  const elLast = document.getElementById('last');
+  const elStreak = document.getElementById('streak');
+  const elIntro = document.getElementById('intro');
+  const elBoard = document.getElementById('board');
+  const elSummary = document.getElementById('summary');
+  const elBar = document.getElementById('bar');
+  const elTime = document.getElementById('time');
+  const elQ = document.getElementById('q');
+  const elChoices = document.getElementById('choices');
+  const elQnum = document.getElementById('qnum');
+  const elSumTitle = document.getElementById('sumTitle');
+  const elSumReason = document.getElementById('sumReason');
+  elBest.textContent = best; elLast.textContent = last; elStreak.textContent = 0;
+
+  // ====== Util ======
+  const rand = (a,b)=> Math.floor(Math.random()*(b-a+1))+a;
+  function shuffle(arr){ for(let i=arr.length-1;i>0;i--){ const j = rand(0,i); [arr[i],arr[j]]=[arr[j],arr[i]] } return arr }
+
+  // ====== Question Banks ======
+  function unitsBank(){
+    const items = [
+      ['SI unit of temperature', 'Kelvin (K)', ['Celsius (°C)','Fahrenheit (°F)','Joule (J)']],
+      ['SI unit of heat (energy)', 'Joule (J)', ['Calorie (cal)','Watt (W)','Kelvin (K)']],
+      ['1 calorie is approximately', '4.18 J', ['0.418 J','41.8 J','418 J']],
+      ['Specific heat capacity units', 'J·kg⁻¹·K⁻¹', ['J·K⁻¹','kg·J⁻¹·K','J·m⁻³']],
+      ['Thermal conductivity k units', 'W·m⁻¹·K⁻¹', ['W·m·K','W·K⁻¹','J·kg⁻¹·K⁻¹']],
+      ['Emissivity is', 'Dimensionless (0–1)', ['W·m⁻²·K⁻⁴','J·K⁻¹','kg·m⁻²']],
+      ['Coefficient of linear expansion α units', 'K⁻¹', ['K','m·K⁻¹','W·m⁻¹·K⁻¹']],
+      ['Latent heat units (specific)', 'J·kg⁻¹', ['J·mol⁻¹','J·K⁻¹','W·s⁻¹']],
+      ['Heat flux units', 'W·m⁻²', ['J·m⁻²','W·m','Pa']],
+      ['Stefan–Boltzmann constant σ units', 'W·m⁻²·K⁻⁴', ['W·m⁻¹·K⁻¹','J·kg⁻¹·K⁻¹','m·s⁻²']],
+      ['Pressure unit relevant to gases', 'Pascal (Pa)', ['Newton (N)','Joule (J)','Watt (W)']],
+      ['Thermal diffusivity units', 'm²·s⁻¹', ['m·s⁻¹','m·K⁻¹','s·m⁻¹']],
+    ];
+    return items.map(([q,a,wrong])=>({ q, choices: shuffle([a,...wrong]), answer: a }));
+  }
+
+  function scalesBank(){
+    const items = [
+      ['Absolute zero equals', '0 K (−273.15 °C approx.)', ['0 °C','−100 °F','273 K']],
+      ['Water freezes at (normal pressure)', '0 °C = 273 K', ['4 °C','32 K','−273 °C']],
+      ['Water boils at (normal pressure)', '100 °C = 373 K', ['212 K','273 K','0 °C']],
+      ['Fahrenheit to Celsius conversion is', 'C = (5/9)(F − 32)', ['C = (9/5)(F − 32)','F = (5/9)(C − 32)','C = F + 32']],
+      ['Celsius to Kelvin conversion is', 'K = °C + 273 (approx.)', ['K = °C − 273','K = 273 − °C','K = °C/273']],
+      ['On the Kelvin scale, equal intervals correspond to', 'Equal temperature differences', ['Equal heat differences','Equal energy','Equal entropy']],
+      ['Thermodynamic temperature is measured from', 'Absolute zero', ['Ice point','Steam point','Triple point only']],
+      ['Triple point of water (approx.)', '0.01 °C and 611 Pa', ['0 °C and 1 atm','100 °C and 1 atm','4 °C and 101 kPa']],
+      ['Celsius and Fahrenheit scales are equal at', '−40', ['0','100','212']],
+      ['A degree on Kelvin equals', 'A degree on Celsius', ['1.8 °F','0.5 °C','Undefined']],
+    ];
+    return items.map(([q,a,wrong])=>({ q, choices: shuffle([a,...wrong]), answer: a }));
+  }
+
+  function kineticTheoryBank(){
+    const items = [
+      ['Temperature is proportional to', 'Average kinetic energy of particles', ['Total potential energy','Number of particles','Pressure only']],
+      ['At absolute zero, for an ideal gas', 'Molecular motion (translational) approaches zero', ['Pressure infinite','Volume infinite','Temperature undefined']],
+      ['For an ideal monatomic gas, average KE per molecule is', '\\(3/2 k_B T\\)', ['\\(1/2 k_B T\\)','\\(k_B T\\)','\\(2 k_B T\\)']],
+      ['RMS speed depends on', 'Temperature and molar mass', ['Pressure only','Volume only','Surface area']],
+      ['Heating a gas at constant volume tends to', 'Increase pressure', ['Decrease pressure','No effect','Condense it']],
+      ['Heating a gas at constant pressure tends to', 'Increase volume', ['Decrease volume','No effect','Increase mass']],
+      ['Zeroth law of thermodynamics states', 'If A in thermal eq. with B and B with C, then A with C', ['Heat flows hot→cold','Energy conserved','Entropy increases']],
+      ['Equipartition theorem (classical) gives', 'Each quadratic DOF has (1/2)k_B T energy', ['Each atom has k_B T','Each mode has k_B T','Energy equally split between KE and PE always']],
+      ['Ideal gas internal energy depends on', 'Temperature only (for ideal gas)', ['Pressure only','Volume only','Both P and V independently']],
+      ['Brownian motion provides evidence of', 'Molecular nature of matter', ['Electrostatics','Nuclear forces','Gravitational waves']],
+    ];
+    return items.map(([q,a,wrong])=>({ q, choices: shuffle([a,...wrong]), answer: a }));
+  }
+
+  function transferBank(){
+    const items = [
+      ['Conduction requires', 'Material contact', ['Bulk fluid motion','Electromagnetic waves','Vacuum']],
+      ['Convection involves', 'Bulk motion of fluid', ['Heat via photons only','Heat via lattice only','No motion']],
+      ['Radiation transfers heat via', 'Electromagnetic waves', ['Molecular collisions only','Bulk motion only','Conduction paths']],
+      ['Which can occur in vacuum?', 'Radiation', ['Conduction','Convection','All of the above']],
+      ['Blackbody has emissivity', 'e = 1', ['e = 0','e = 0.5','Depends on color only']],
+      ['Shiny surfaces generally have', 'Low emissivity & high reflectivity', ['High emissivity','Low reflectivity','High absorptivity']],
+      ['Newton’s law of cooling is', 'Rate ∝ (T − T_env)', ['Rate ∝ (T − T_env)²','Rate ∝ T','Independent of temperature']],
+      ['Fourier’s law for conduction', 'q = −k A dT/dx', ['q = k A T','q = σ T⁴','q = m c ΔT']],
+      ['Increasing thickness of insulation', 'Decreases heat loss (to a point)', ['Increases heat loss','No effect','Always increases temperature']],
+      ['Natural convection driven by', 'Buoyancy due to density differences', ['Fans only','Radiative pressure','Surface tension only']],
+      ['Stefan–Boltzmann law states', 'P = ε σ A T⁴', ['P = k A ΔT','P = m c ΔT','P = p V']],
+      ['Doubling absolute temperature of a blackbody increases radiated power by', '16×', ['2×','4×','8×']],
+    ];
+    return items.map(([q,a,wrong])=>({ q, choices: shuffle([a,...wrong]), answer: a }));
+  }
+
+  function expansionBank(){
+    const items = [
+      ['Linear expansion formula', 'ΔL = α L ΔT', ['ΔL = L/α ΔT','ΔL = α ΔT/L','ΔL = α L / ΔT']],
+      ['Area expansion coefficient β (approx.)', 'β ≈ 2α', ['β ≈ α/2','β ≈ 3α','β independent of α']],
+      ['Volume expansion coefficient γ (approx.)', 'γ ≈ 3α', ['γ ≈ α','γ ≈ 2α','γ ≈ 6α']],
+      ['Bimetallic strip bends because', 'Metals have different α', ['Different densities','Different specific heat','Different color']],
+      ['Anomalous expansion of water occurs', 'Near 4 °C', ['Near 0 °C','Near 100 °C','No anomaly']],
+      ['Gases have expansion coefficients', 'Much larger than solids/liquids', ['Much smaller','Same as solids','Undefined']],
+      ['Thermometer works due to', 'Thermal expansion (liquid-in-glass)', ['Conduction only','Convection only','Radiation only']],
+      ['Railway tracks leave gaps to', 'Allow thermal expansion', ['Reduce friction','Drain water','Anchor sleepers']],
+      ['If length increases by 0.1% for ΔT', 'α ≈ 0.001/ΔT', ['α ≈ ΔT/0.001','α ≈ 0.1ΔT','α ≈ 100/ΔT']],
+      ['Heating increases resistance of metals mainly due to', 'Increased lattice vibrations', ['More electrons created','Bandgap increases','Mass increases']],
+    ];
+    return items.map(([q,a,wrong])=>({ q, choices: shuffle([a,...wrong]), answer: a }));
+  }
+
+  function phaseChangeBank(){
+    const items = [
+      ['During melting at constant pressure', 'Temperature stays constant', ['Temperature rises','Pressure falls to zero','Heat stops flowing']],
+      ['Latent heat refers to', 'Heat absorbed/released at constant T during phase change', ['Heat causing temperature rise','Heat at absolute zero','Heat only in gases']],
+      ['Boiling occurs when', 'Vapour pressure equals external pressure', ['Vapour pressure less than external','Only at 100 °C always','Bubbles form at surface only']],
+      ['Evaporation differs from boiling because', 'Occurs at any temperature from surface', ['Occurs only at boiling point','Occurs in bulk with bubbles','Requires vacuum']],
+      ['Condensation releases', 'Latent heat to surroundings', ['Absorbs heat','No heat exchange','Only in winter']],
+      ['Sublimation is', 'Solid ↔ gas transition', ['Liquid ↔ gas','Solid ↔ liquid','Gas ↔ plasma']],
+      ['Latent heat of fusion of water ≈', '3.34×10⁵ J·kg⁻¹', ['2.26×10⁶ J·kg⁻¹','4.2×10³ J·kg⁻¹·K⁻¹','1.00×10⁵ J·kg⁻¹']],
+      ['Latent heat of vaporization of water ≈', '2.26×10⁶ J·kg⁻¹', ['3.34×10⁵ J·kg⁻¹','4.2×10³ J·kg⁻¹·K⁻¹','2.26×10⁵ J·kg⁻¹']],
+      ['Pressure cooker boils water at', 'Higher than 100 °C (raises boiling point)', ['Exactly 100 °C','Lower temperature','Independent of pressure']],
+      ['Cooling effect of evaporation due to', 'High-energy molecules escape taking heat', ['Air blows colder','Sunlight absent','Water absorbs radiation']],
+    ];
+    return items.map(([q,a,wrong])=>({ q, choices: shuffle([a,...wrong]), answer: a }));
+  }
+
+  function calorimetryBank(){
+    const items = [
+      ['Heat gained = heat lost principle applies to', 'Isolated mixing (no losses)', ['Open systems','Systems with work only','Adiabatic walls only']],
+      ['Calorimeter is used to measure', 'Heat exchange (specific/latent heat)', ['Pressure','Magnetic field','Frequency']],
+      ['If equal masses of water at 80 °C and 20 °C mix (no loss)', 'Final temperature is 50 °C', ['60 °C','40 °C','30 °C']],
+      ['Specific heat of water is high, so it', 'Resists temperature change (thermal buffer)', ['Heats quickly','Has low thermal inertia','Boils easily at low heat']],
+      ['Adding ice at 0 °C to water at 20 °C first uses heat for', 'Melting ice (latent heat)', ['Raising ice temperature','Raising water temperature','Boiling water']],
+      ['Copper has lower c than water, thus for same heat', 'Copper’s temperature rises more', ['Water’s temp rises more','Equal rise','No relation']],
+      ['If hot metal cools in water', 'Metal loses heat = water gains (neglecting losses)', ['Water loses more','Metal gains more','No exchange']],
+      ['Stirring in calorimetry ensures', 'Uniform temperature (no gradients)', ['More heat loss','More radiation','Change specific heat']],
+      ['Heat capacity C equals', 'm c', ['c/m','m/c','c + m']],
+      ['Graph of temperature vs heat at phase change shows', 'Plateau (constant T during latent heat)', ['Vertical line','Random slope','Negative slope']],
+    ];
+    return items.map(([q,a,wrong])=>({ q, choices: shuffle([a,...wrong]), answer: a }));
+  }
+
+  function blackbodyBank(){
+    const items = [
+      ['Wien’s law states', 'λ_max T ≈ 2.9×10⁻³ m·K', ['λ_max ∝ T²','λ_max/T constant = 5.67×10⁻⁸','P ∝ T³']],
+      ['Hotter objects peak at', 'Shorter wavelengths (bluer)', ['Longer wavelengths (redder)','Same wavelength','Infrared only']],
+      ['A good absorber is also', 'A good emitter (Kirchhoff’s law)', ['A poor emitter','Unrelated','Always reflective']],
+      ['Stars appear redder when', 'Cooler (lower T)', ['Hotter','Larger','Closer']],
+      ['Human body thermal radiation peak is in', 'Infrared', ['Visible green','Ultraviolet','Microwave']],
+      ['Blackbody is an idealized object that', 'Absorbs all incident radiation', ['Reflects all radiation','Transmits all radiation','Emits no radiation']],
+      ['Grey body has emissivity', '0 < ε < 1 (approximately constant)', ['ε = 1 exactly','ε = 0','Negative']],
+      ['Color of an object depends on', 'Wavelengths it reflects/emits', ['Only material density','Only temperature','Only mass']],
+      ['In a cavity with small hole, escaping radiation', 'Approximates blackbody spectrum', ['Is monochromatic','Is polarized','Has gaps only']],
+      ['Radiative heat exchange increases with', 'Area, emissivity and T⁴', ['Area and T only','Emissivity only','T²']],
+    ];
+    return items.map(([q,a,wrong])=>({ q, choices: shuffle([a,...wrong]), answer: a }));
+  }
+
+  function thermometryBank(){
+    const items = [
+      ['Zeroth law underpins', 'Thermometry (temperature measurement)', ['First law','Second law','Third law']],
+      ['Thermocouple measures temperature via', 'Thermoelectric emf', ['Thermal expansion','Optical color','Resistance only']],
+      ['Resistance thermometer (RTD) works on', 'Resistance vs temperature relation', ['Capacitance change','Inductance change','Radiation pressure']],
+      ['Thermistors have', 'Large negative temperature coefficient (NTC) typically', ['Large positive T coefficient always','No dependence','Magnetic response only']],
+      ['Infrared thermometer senses', 'Thermal radiation from object', ['Convection speed','Conduction rate','Sound waves']],
+      ['Liquid-in-glass thermometer liquid commonly', 'Mercury or coloured alcohol', ['Water','Oil only','Liquid helium']],
+      ['Range of mercury thermometer limited by', 'Freezing/boiling points of mercury', ['Tube length only','Color of liquid','Glass type only']],
+      ['Calibration uses', 'Fixed points and interpolation', ['Random guesses','Only room temperature','Single point only']],
+      ['Contact thermometers require', 'Good thermal contact & time to equilibrate', ['No contact','Vacuum','Bright light']],
+      ['Non-contact pyrometry is useful for', 'Very hot or moving objects', ['Cold objects only','Liquids only','Metals only']],
+    ];
+    return items.map(([q,a,wrong])=>({ q, choices: shuffle([a,...wrong]), answer: a }));
+  }
+
+  function numericsBank(){
+    const items = [];
+    // Celsius ↔ Kelvin
+    [[25,298],[0,273],[100,373],[50,323],[-20,253]].forEach(([C,K])=>{
+      items.push({ q:`Convert ${C} °C to Kelvin (approx).`, choices: shuffle([`${K} K`,`$${K+10} K`,`$${K-10} K`,`$${K+1} K`].map(s=>s.replace('$',''))), answer:`${K} K`});
+    });
+    // Fahrenheit → Celsius
+    [[68,20],[32,0],[212,100],[104,40],[14,-10],[86,30]].forEach(([F,C])=>{
+      items.push({ q:`Convert ${F} °F to Celsius (approx).`, choices: shuffle([`${C} °C`,`$${C+5} °C`,`$${C-5} °C`,`$${C+10} °C`].map(s=>s.replace('$',''))), answer:`${C} °C`});
+    });
+    // Q = m c ΔT (use water c ≈ 4200 J/kg·K)
+    [ [1,4200,10,42000], [0.5,4200,20,42000], [2,4200,15,126000], [0.25,4200,40,42000] ].forEach(([m,c,dT,Q])=>{
+      items.push({ q:`Heat to raise ${m} kg water by ${dT} K (c≈4200) is`, choices: shuffle([`${Q} J`,`$${Q+10000} J`,`$${Math.max(0,Q-10000)} J`,`$${Q+5000} J`].map(s=>s.replace('$',''))), answer:`${Q} J`});
+    });
+    // Mixing water (no losses)
+    [ [1,80,1,20,50], [2,60,1,30,50], [1,90,2,30,50] ].forEach(([m1,T1,m2,T2,Tf])=>{
+      items.push({ q:`Mix ${m1} kg water at ${T1} °C with ${m2} kg at ${T2} °C. Final T ≈`, choices: shuffle([`${Tf} °C`,`$${Tf+10} °C`,`$${Tf-10} °C`,`$${Tf+5} °C`].map(s=>s.replace('$',''))), answer:`${Tf} °C`});
+    });
+    // Latent heat — fusion/vaporization of water
+    [ [0.2,334000,66800,'melting ice at 0 °C'], [0.5,334000,167000,'freezing water at 0 °C (released)'], [0.1,2260000,226000,'condensing steam at 100 °C'] ].forEach(([m,L,Q,desc])=>{
+      items.push({ q:`Heat involved in ${desc} for m=${m} kg (approx)`, choices: shuffle([`${Q} J`,`$${Q+20000} J`,`$${Math.max(0,Q-20000)} J`,`$${Q+50000} J`].map(s=>s.replace('$',''))), answer:`${Q} J`});
+    });
+    // Linear expansion ΔL = α L ΔT, steel α≈12×10⁻⁶ K⁻¹
+    [ [1.0,12e-6,50,0.0006], [2.0,12e-6,25,0.0006] ].forEach(([L,a,dT,dL])=>{
+      items.push({ q:`Steel rod L=${L} m, α≈12×10⁻⁶ K⁻¹, ΔT=${dT} K. ΔL ≈`, choices: shuffle([`${dL} m`,`$${(dL+0.0002).toFixed(4)} m`,`$${Math.max(0,(dL-0.0002)).toFixed(4)} m`,`$${(dL+0.0004).toFixed(4)} m`].map(s=>s.replace('$',''))), answer:`${dL} m`});
+    });
+    // Radiative power scaling
+    [ [300,600,16], [400,800,16], [500,1000,16] ].forEach(([T1,T2,ratio])=>{
+      items.push({ q:`Blackbody power at ${T2} K vs ${T1} K is`, choices: shuffle([`${ratio}×`,`4×`,`8×`,`2×`]), answer:`${ratio}×`});
+    });
+    // Gas law (Charles’)
+    [ [2,300,600,4], [1,250,500,2], [3,300,450,4.5] ].forEach(([V1,T1,T2,V2])=>{
+      items.push({ q:`At constant pressure, V∝T(K). If V₁=${V1} L at ${T1} K, then at ${T2} K V₂≈`, choices: shuffle([`${V2} L`,`$${(V2+1)} L`,`$${(V2-1)} L`,`$${(V2+0.5)} L`].map(s=>s.replace('$',''))), answer:`${V2} L`});
+    });
+    // Simple conduction scaling: q ∝ A ΔT / L
+    items.push({ q:'If wall thickness doubles (same k,A,ΔT), steady conduction heat flow becomes', choices: shuffle(['Half','Double','Same','Quarter']), answer:'Half' });
+    items.push({ q:'Doubling area with other factors same makes conduction heat flow', choices: shuffle(['Double','Half','Same','Quarter']), answer:'Double' });
+    return items;
+  }
+
+  function buildBank(){
+    const pool = [
+      ...unitsBank(),
+      ...scalesBank(),
+      ...kineticTheoryBank(),
+      ...transferBank(),
+      ...expansionBank(),
+      ...phaseChangeBank(),
+      ...calorimetryBank(),
+      ...blackbodyBank(),
+      ...thermometryBank(),
+      ...numericsBank(),
+    ];
+    // Ensure uniqueness by text
+    const seen = new Set(); const unique = [];
+    for(const item of pool){ if(!seen.has(item.q)){ seen.add(item.q); unique.push(item); } }
+    // Top up to at least 125 by reordering choices (keeps gameplay varied)
+    while(unique.length < 125){
+      const base = unique[rand(0, unique.length-1)];
+      unique.push({ q: base.q + ' ', choices: shuffle([...base.choices]), answer: base.answer });
+    }
+    return shuffle(unique);
+  }
+
+  // ====== Game Flow ======
+  function startGame(){
+    streak = 0; qIndex = 0; current=null; elStreak.textContent = 0;
+    bank = buildBank();
+    elIntro.classList.add('hide');
+    elSummary.classList.add('hide');
+    elBoard.classList.remove('hide');
+    nextQuestion();
+  }
+
+  function nextQuestion(){
+    if(bank.length === 0) bank = buildBank();
+    current = bank.pop(); qIndex++;
+    elQnum.textContent = qIndex; elQ.innerHTML = current.q; elChoices.innerHTML = '';
+    const letters = ['A','B','C','D'];
+    current.choices.forEach((c, i)=>{
+      const btn = document.createElement('button');
+      btn.className = 'choice'; btn.setAttribute('data-val', c);
+      btn.innerHTML = `<span class="chip">${letters[i]||''}</span>${c}`;
+      btn.addEventListener('click', ()=> choose(btn.getAttribute('data-val')));
+      elChoices.appendChild(btn);
+    });
+    startTimer();
+  }
+
+  function startTimer(){
+    stopTimer(); const start = performance.now(); const total = TIME_PER_Q * 1000;
+    (function tick(){
+      const elapsed = performance.now() - start; const left = Math.max(0, total - elapsed);
+      elTime.textContent = Math.ceil(left/1000);
+      const r = left/total; const bar = Math.max(0, Math.min(1,r));
+      elBar.style.transform = `scaleX(${bar.toFixed(4)})`;
+      elBar.style.background = bar < 0.25 ? `linear-gradient(90deg, var(--danger), #dc2626)` :
+                               bar < 0.5 ? `linear-gradient(90deg, var(--gold), #f59e0b)` :
+                                            `linear-gradient(90deg, var(--accent), var(--accent2))`;
+      if(left <= 0){ stopTimer(); endGame('⏰ Time up!'); }
+      else { ticking = requestAnimationFrame(tick); }
+    })();
+  }
+
+  function stopTimer(){ if(ticking){ cancelAnimationFrame(ticking); ticking=null; } }
+
+  function choose(val){
+    if(String(val) === String(current.answer)){
+      streak++; elStreak.textContent = streak; flash(true); nextQuestion();
+    } else {
+      endGame(`❌ Incorrect. Correct answer: ${current.answer}`);
+    }
+  }
+
+  function flash(ok){
+    elBoard.style.outline = `3px solid ${ok? 'var(--accent2)':'var(--danger)'}`;
+    setTimeout(()=> elBoard.style.outline='none', 140);
+  }
+
+  function endGame(reason){
+    stopTimer(); 
+
+if (typeof sdk !== 'undefined' && sdk.showBanner !== 'undefined') {
+sdk.showBanner();
+}
+
+console.log("Start");
+
+setTimeout(() => {
+  console.log("Waited 5 seconds!");
+}, 5000);
+
+
+
+elBoard.classList.add('hide'); elSummary.classList.remove('hide');
+    elSumTitle.textContent = `Game Over — Streak ${streak}`; elSumReason.textContent = reason || '';
+    last = streak; localStorage.setItem('heat.last', String(last));
+    if(streak > best){ best = streak; localStorage.setItem('heat.best', String(best)); }
+    elBest.textContent = best; elLast.textContent = last;
+  }
+
+  // ====== Events ======
+  document.getElementById('start').addEventListener('click', startGame);
+  document.getElementById('how').addEventListener('click', ()=>{
+    alert('Answer each Heat & Temperature question before the timer ends. One mistake or timeout ends your run. Build the longest streak!');
+  });
+  document.getElementById('again').addEventListener('click', startGame);
+  document.getElementById('back').addEventListener('click', ()=>{ elSummary.classList.add('hide'); elIntro.classList.remove('hide'); });
+
+  // Keyboard: Enter, 1-4
+  window.addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter'){ if(!elBoard.classList.contains('hide')) return; startGame(); }
+    const map = { '1':0, '2':1, '3':2, '4':3 };
+    if(map.hasOwnProperty(e.key) && !elBoard.classList.contains('hide')){
+      const idx = map[e.key]; const btn = elChoices.children[idx]; if(btn) btn.click();
+    }
+  });
+
+  // Focus first answer when rendered
+  const observer = new MutationObserver(()=>{ const first = elChoices.querySelector('button'); if(first) first.focus({preventScroll:true}); });
+  observer.observe(elChoices, {childList:true});
+})();
+</script>
+</body>
+</html>

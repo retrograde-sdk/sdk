@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Mini Dice Chess</title>
+
+<style>
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    min-height: 100dvh;
+    background: #2b1d12;
+    overflow: hidden;
+}
+body {
+    height: var(--app-height, 100dvh);
+}
+#game-container {
+    width: 100vw;
+    height: var(--app-height, 100dvh);
+}
+</style>
+</head>
+<body>
+
+<div id="game-container"></div>
+
+<script type="text/javascript">
+window.SDK_OPTIONS = {
+    gameId: "z2ymyafbvxwonucftx7io0ywt4llngkw",
+    onEvent: function (a) {
+        switch (a.name) {
+            case "SDK_GAME_PAUSE":
+                if (window.GameMonetizeBridge && typeof window.GameMonetizeBridge.pauseGame === "function") {
+                    window.GameMonetizeBridge.pauseGame();
+                }
+                break;
+            case "SDK_GAME_START":
+                if (window.GameMonetizeBridge && typeof window.GameMonetizeBridge.resumeGame === "function") {
+                    window.GameMonetizeBridge.resumeGame();
+                }
+                break;
+            case "SDK_READY":
+                if (window.GameMonetizeBridge && typeof window.GameMonetizeBridge.onReady === "function") {
+                    window.GameMonetizeBridge.onReady();
+                }
+                break;
+        }
+    }
+};
+(function (a, b, c) {
+    var d = a.getElementsByTagName(b)[0];
+    if (!a.getElementById(c)) {
+        a = a.createElement(b);
+        a.id = c;
+        a.src = "https://api.gamemonetize.com/sdk.js";
+        d.parentNode.insertBefore(a, d);
+    }
+})(document, "script", "gamemonetize-sdk");
+</script>
+
+<script src="./phaser.min.js"></script>
+<script src="./main.js"></script>
+</body>
+</html>

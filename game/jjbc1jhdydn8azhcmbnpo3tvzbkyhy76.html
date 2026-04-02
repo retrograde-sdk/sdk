@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0a0a1a">
+    <title>Neon Mini Golf</title>
+    
+    <!-- GameMonetize SDK - MUST BE FIRST -->
+    <script type="text/javascript">
+        window.SDK_OPTIONS = {
+            gameId: "jjbc1jhdydn8azhcmbnpo3tvzbkyhy76",
+            onEvent: function (a) {
+                switch (a.name) {
+                    case "SDK_GAME_PAUSE":
+                        // pause game logic / mute audio
+                        console.log("GameMonetize: SDK_GAME_PAUSE - Ad starting");
+                        if (typeof pauseGameForAd === 'function') {
+                            pauseGameForAd();
+                        }
+                        break;
+                    case "SDK_GAME_START":
+                        // advertisement done, resume game logic and unmute audio
+                        console.log("GameMonetize: SDK_GAME_START - Ad ended");
+                        if (typeof resumeGameFromAd === 'function') {
+                            resumeGameFromAd();
+                        }
+                        break;
+                    case "SDK_READY":
+                        // when sdk is ready
+                        console.log("GameMonetize: SDK_READY");
+                        if (typeof onSDKReady === 'function') {
+                            onSDKReady();
+                        }
+                        break;
+                }
+            }
+        };
+        (function (a, b, c) {
+            var d = a.getElementsByTagName(b)[0];
+            a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+        })(document, "script", "gamemonetize-sdk");
+    </script>
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <canvas id="background-canvas"></canvas>
+
+    <div id="game-wrapper">
+        <div id="game-hud"></div>
+        <div id="game-container">
+            <canvas id="game-canvas"></canvas>
+        </div>
+    </div>
+    
+    <div id="ui-overlay"></div>
+
+    <!-- Audio Elements -->
+    <audio id="music-menu" loop></audio>
+    <audio id="music-gameplay" loop></audio>
+    <audio id="sfx-button"></audio>
+    <audio id="sfx-urto"></audio>
+    <audio id="sfx-bonus"></audio>
+    <audio id="sfx-boom"></audio>
+    <audio id="sfx-wush"></audio>
+    
+    <!-- SCRIPT MUST BE AT THE END OF THE BODY -->
+    <script src="game.js"></script>
+</body>
+</html>

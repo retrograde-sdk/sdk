@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Sudoku</title>
+    
+    
+    <style type="text/css">@font-face {font-family:Fraunces;font-style:normal;font-weight:700;src:url(/cf-fonts/v/fraunces/5.0.18/vietnamese/opsz/normal.woff2);unicode-range:U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB;font-display:swap;}@font-face {font-family:Fraunces;font-style:normal;font-weight:700;src:url(/cf-fonts/v/fraunces/5.0.18/latin-ext/opsz/normal.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:Fraunces;font-style:normal;font-weight:700;src:url(/cf-fonts/v/fraunces/5.0.18/latin/opsz/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Montserrat;font-style:normal;font-weight:400;src:url(/cf-fonts/v/montserrat/5.0.16/cyrillic-ext/wght/normal.woff2);unicode-range:U+0460-052F,U+1C80-1C88,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F;font-display:swap;}@font-face {font-family:Montserrat;font-style:normal;font-weight:400;src:url(/cf-fonts/v/montserrat/5.0.16/vietnamese/wght/normal.woff2);unicode-range:U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB;font-display:swap;}@font-face {font-family:Montserrat;font-style:normal;font-weight:400;src:url(/cf-fonts/v/montserrat/5.0.16/latin-ext/wght/normal.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:Montserrat;font-style:normal;font-weight:400;src:url(/cf-fonts/v/montserrat/5.0.16/cyrillic/wght/normal.woff2);unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap;}@font-face {font-family:Montserrat;font-style:normal;font-weight:400;src:url(/cf-fonts/v/montserrat/5.0.16/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Montserrat;font-style:normal;font-weight:500;src:url(/cf-fonts/v/montserrat/5.0.16/latin-ext/wght/normal.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:Montserrat;font-style:normal;font-weight:500;src:url(/cf-fonts/v/montserrat/5.0.16/vietnamese/wght/normal.woff2);unicode-range:U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB;font-display:swap;}@font-face {font-family:Montserrat;font-style:normal;font-weight:500;src:url(/cf-fonts/v/montserrat/5.0.16/cyrillic/wght/normal.woff2);unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap;}@font-face {font-family:Montserrat;font-style:normal;font-weight:500;src:url(/cf-fonts/v/montserrat/5.0.16/cyrillic-ext/wght/normal.woff2);unicode-range:U+0460-052F,U+1C80-1C88,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F;font-display:swap;}@font-face {font-family:Montserrat;font-style:normal;font-weight:500;src:url(/cf-fonts/v/montserrat/5.0.16/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Montserrat;font-style:normal;font-weight:600;src:url(/cf-fonts/v/montserrat/5.0.16/cyrillic-ext/wght/normal.woff2);unicode-range:U+0460-052F,U+1C80-1C88,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F;font-display:swap;}@font-face {font-family:Montserrat;font-style:normal;font-weight:600;src:url(/cf-fonts/v/montserrat/5.0.16/vietnamese/wght/normal.woff2);unicode-range:U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB;font-display:swap;}@font-face {font-family:Montserrat;font-style:normal;font-weight:600;src:url(/cf-fonts/v/montserrat/5.0.16/latin-ext/wght/normal.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:Montserrat;font-style:normal;font-weight:600;src:url(/cf-fonts/v/montserrat/5.0.16/cyrillic/wght/normal.woff2);unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap;}@font-face {font-family:Montserrat;font-style:normal;font-weight:600;src:url(/cf-fonts/v/montserrat/5.0.16/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Montserrat;font-style:normal;font-weight:700;src:url(/cf-fonts/v/montserrat/5.0.16/cyrillic-ext/wght/normal.woff2);unicode-range:U+0460-052F,U+1C80-1C88,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F;font-display:swap;}@font-face {font-family:Montserrat;font-style:normal;font-weight:700;src:url(/cf-fonts/v/montserrat/5.0.16/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Montserrat;font-style:normal;font-weight:700;src:url(/cf-fonts/v/montserrat/5.0.16/vietnamese/wght/normal.woff2);unicode-range:U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB;font-display:swap;}@font-face {font-family:Montserrat;font-style:normal;font-weight:700;src:url(/cf-fonts/v/montserrat/5.0.16/latin-ext/wght/normal.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:Montserrat;font-style:normal;font-weight:700;src:url(/cf-fonts/v/montserrat/5.0.16/cyrillic/wght/normal.woff2);unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap;}@font-face {font-family:Outfit;font-style:normal;font-weight:300;src:url(/cf-fonts/v/outfit/5.0.11/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Outfit;font-style:normal;font-weight:300;src:url(/cf-fonts/v/outfit/5.0.11/latin-ext/wght/normal.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:Outfit;font-style:normal;font-weight:500;src:url(/cf-fonts/v/outfit/5.0.11/latin-ext/wght/normal.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:Outfit;font-style:normal;font-weight:500;src:url(/cf-fonts/v/outfit/5.0.11/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Outfit;font-style:normal;font-weight:700;src:url(/cf-fonts/v/outfit/5.0.11/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Outfit;font-style:normal;font-weight:700;src:url(/cf-fonts/v/outfit/5.0.11/latin-ext/wght/normal.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}</style>
+    <link rel="shortcut icon" href="./assets/icons/logo.jpg" type="image/x-icon">
+    <link rel="stylesheet" href="./assets/css/style.css" />
+    <style>
+        /* Override for page management */
+        .page-hidden {
+            display: none !important;
+        }
+    </style>
+    <script type="text/javascript">
+        window.SDK_OPTIONS = {
+            gameId: "emtp8idjxf95f5b37mhsn1p7muehu9v8",
+            onEvent: function (a) {
+                switch (a.name) {
+                    case "SDK_READY":
+                        sdkReady = true;
+                        break;
+                    case "SDK_GAME_PAUSE":
+                        // pause game logic / mute audio
+                        if (game && game.game) {
+                            game.game.isPaused = true;
+                        }
+                        break;
+                    case "SDK_GAME_START":
+                        // advertisement done, resume game logic and unmute audio
+                        if (game && game.game) {
+                            game.game.isPaused = false;
+                        }
+                        break;
+                }
+            }
+        };
+        (function (a, b, c) {
+            var d = a.getElementsByTagName(b)[0];
+            a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+        })(document, "script", "gamemonetize-sdk");
+    </script>
+</head>
+
+<body>
+    <div class="home-body" id="homeScreen">
+        <!-- SPLASH SCREEN -->
+        <div class="splash-screen" id="splash">
+            <div class="splash-logo"></div>
+            <div class="splash-text">Sudoku</div>
+        </div>
+
+        <!-- HOME SCREEN -->
+        <!-- HOME SCREEN -->
+        <div class="home-container" >
+            <div class="home-box">
+                <h2 class="game-title">Sudoku</h2>
+                <p class="game-subtitle">Master the Grid</p>
+                
+                <div class="difficulty-selector">
+                    <p class="label">Select Difficulty</p>
+                    <div class="difficulty-buttons">
+                        <button class="diff-btn active" data-level="easy">Easy</button>
+                        <button class="diff-btn" data-level="medium">Medium</button>
+                        <button class="diff-btn" data-level="hard">Hard</button>
+                        <button class="diff-btn" data-level="expert">Expert</button>
+                    </div>
+                </div>
+
+                <div class="home-buttons-group">
+                    <button class="btn primary" id="startBtn">Play Now</button>
+                    <div class="secondary-actions">
+                        <button class="btn secondary" id="rulesBtn">Rules</button>
+                        <button class="btn secondary" id="aboutBtn">About</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RULES POPUP -->
+        <div class="popup-overlay" id="rulesOverlay">
+            <div class="popup">
+                <h3>How to Play</h3>
+                <ul class="rules-list">
+                    <li>Fill the grid so every row, column and 3x3 box contains digits 1-9.</li>
+                    <li>No repeats in any row, column or box.</li>
+                    <li>Use <strong>Notes</strong> to track candidates.</li>
+                    <li>Use <strong>Hint</strong> if you get stuck (adds time penalty).</li>
+                </ul>
+                <button class="close-btn btn primary" data-close="rulesOverlay">Got it</button>
+            </div>
+        </div>
+
+        <!-- ABOUT POPUP -->
+        <div class="popup-overlay" id="aboutOverlay">
+            <div class="popup">
+                <h3>About</h3>
+                <p>A premium Sudoku experience designed for focus and flow.</p>
+                <p>Version 2.0.0</p>
+                <button class="close-btn btn primary" data-close="aboutOverlay">Close</button>
+            </div>
+        </div>
+
+    </div>
+    <!-- GAME SCREEN -->
+    <div class="game-body" id="gameScreen" style="display:none;">
+        <header class="game-header">
+            <button class="icon-btn" onclick="gotoHome()" aria-label="Back">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            </button>
+            <div class="game-info">
+                <span id="difficultyDisplay" class="difficulty-badge">Easy</span>
+                <div class="timer-box">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                    <span id="timer">00:00</span>
+                </div>
+                <div class="mistakes-box">
+                    <span>Errors:</span>
+                    <span id="mistakeCount">0</span>/5
+                </div>
+            </div>
+            <button class="icon-btn" id="settingsBtn" aria-label="Settings">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            </button>
+        </header>
+
+        <div class="container" id="sudoku-board">
+            <!-- JS will inject table here -->
+        </div>
+
+        <div class="controls-area">
+            <div class="action-bar">
+                <button class="action-btn" id="undoBtn" aria-label="Undo">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+                    <span>Undo</span>
+                </button>
+                <button class="action-btn" id="eraseBtn" aria-label="Erase">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 20H7L3 16C1.5 14.5 1.5 12 3 10.5L9 4.5C10.5 3 13 3 14.5 4.5L20 10l.5 1 .5 1 .5 3.5-1.5 3-1.5 1.5z"/></svg>
+                    <span>Erase</span>
+                </button>
+                <button class="action-btn" id="noteBtn" aria-label="Notes">
+                    <div class="badge">OFF</div>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
+                    <span>Notes</span>
+                </button>
+                <button class="action-btn" id="hintBtn" aria-label="Hint">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.1.2-2.2.6-3z"/></svg>
+                    <span>Hint</span>
+                    <span class="badge" id="hintCount">2</span>
+                </button>
+            </div>
+
+            <div id="sudoku-keypad">
+                <div class="keypad-row">
+                    <button class="keypad-btn" data-num="1">1</button>
+                    <button class="keypad-btn" data-num="2">2</button>
+                    <button class="keypad-btn" data-num="3">3</button>
+                    <button class="keypad-btn" data-num="4">4</button>
+                    <button class="keypad-btn" data-num="5">5</button>
+                    <button class="keypad-btn" data-num="6">6</button>
+                    <button class="keypad-btn" data-num="7">7</button>
+                    <button class="keypad-btn" data-num="8">8</button>
+                    <button class="keypad-btn" data-num="9">9</button>
+                </div>
+            </div>
+            
+            <button class="btn primary" id="newGameBtn">New Game</button>
+        </div>
+        
+        <p id="popup-message"></p>
+
+        <!-- Popups -->
+        <div id="solvePopup" class="popup-overlay">
+            <div class="popup-box">
+                <h3>Watch & Solve</h3>
+                <p>Watch a video to solve the puzzle instantly.</p>
+                <div class="popup-buttons">
+                    <button id="confirmSolve" class="btn primary">Yes, Play</button>
+                    <button id="cancelSolve" class="btn">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="gameOverPopUp" class="popup-overlay">
+            <div class="popup-box">
+                <h3>Game Over!</h3>
+                <p>You’ve reached 5 mistakes.</p>
+                <div class="popup-buttons">
+                    <button type="button" class="btn primary" id="restartGame" data-action="restartGame">Restart
+                        Game</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="gameWon" class="popup-overlay">
+            <div class="popup-box">
+                <h3>🎉 Victory!</h3>
+                <p id="gameWonSubmessage">Great Job.</p>
+                <div class="stats-summary">
+                     <p>Time: <span id="winTime">00:00</span></p>
+                </div>
+                <div class="popup-buttons">
+                    <button type="button" class="btn primary" id="restartGameWon" data-action="restartGame">
+                        Next Level
+                    </button>
+                    <button type="button" class="btn secondary" onclick="gotoHome()">Home</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="settingsPopup" class="popup-overlay">
+            <div class="popup-box">
+                <h3 style="margin-bottom: 1rem;">Settings</h3>
+                <div class="popup-buttons column-layout">
+                    <button class="btn primary close-btn" data-close="settingsPopup">Resume</button>
+                    <button class="btn secondary" id="settingsRestart">Restart</button>
+                    <button class="btn secondary" onclick="gotoHome()">Exit to Home</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Combined Script -->
+    <script>
+        let sdkReady = false;
+        let lastAdTime = 0;
+        const AD_COOLDOWN = 30000; // 30 seconds between ads
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const splash = document.getElementById("splash");
+            // Show splash only once per session
+            const showSplash = !sessionStorage.getItem("splashShown");
+            if (showSplash) {
+                sessionStorage.setItem("splashShown", "true");
+                setTimeout(() => splash.classList.add("hide"), 2000);
+            } else splash.style.display = "none";
+        });
+
+        function showAdWithCooldown(context) {
+            const now = Date.now();
+            if (!sdkReady) return;
+            
+            if (typeof sdk !== 'undefined' && sdk.showBanner !== 'undefined') {
+                if (now - lastAdTime >= AD_COOLDOWN) {
+                    try {
+                        sdk.showBanner();
+                        lastAdTime = now;
+                    } catch (error) {
+                        // Silent error handling
+                    }
+                }
+            }
+        }
+
+        function showPauseMessage(msg) {
+            const el = document.createElement("div");
+            el.textContent = msg;
+            el.id = "pausetext";
+            Object.assign(el.style, {
+                position: "fixed",
+                top: "20%",
+                left: "50%",
+                transform: "translateX(-50%)",
+                fontSize: "2rem",
+                fontWeight: "bold",
+                color: "#f39c12",
+                zIndex: "1500",
+                width: "80vw",
+                pointerEvents: "none",
+                textShadow: "2px 2px 4px rgba(0,0,0,0.7)",
+                animation: "powerUpMessage 2s ease-out forwards",
+            });
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 2000);
+        }
+
+        function giveReward() {
+            if (!game) return;
+            if (typeof game.solveDirectly === "function") {
+                game.solveDirectly();
+                showPopupMessage("Puzzle solved! Great job!");
+            }
+        }
+    </script>
+
+    <script src="./assets/js/controls.js"></script>
+    <script src="./assets/js/app.js" type="text/javascript"></script>
+</body>
+
+</html>

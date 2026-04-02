@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Farm Slime</title>
+    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+    <style>
+      html, body { height: 100%; margin: 0; padding: 0; background: #000; overflow: hidden; }
+      #unity-container { position: fixed; inset: 0; display: block; }
+      #unity-canvas { display: block; background: #000; }
+      #unity-loading-bar { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); color: #fff; font-family: Arial, sans-serif; }
+    </style>
+  </head>
+  <body>
+    <div id="unity-container">
+      <div id="unity-loading-bar">Loading...</div>
+      <canvas id="unity-canvas" width=960 height=600 tabindex="-1"></canvas>
+    </div>
+
+    <script src="Build/75da1285a069388b682f8f0a511e4d45.loader.js"></script>
+    <script>
+      (function () {
+        const canvas = document.getElementById('unity-canvas');
+        const container = document.getElementById('unity-container');
+        const loading = document.getElementById('unity-loading-bar');
+        const designWidth = canvas.width || 960;
+        const designHeight = canvas.height || 600;
+
+        let unityInstance = null;
+
+        function resize() {
+          const w = container.clientWidth || window.innerWidth;
+          const h = container.clientHeight || window.innerHeight;
+
+          const scale = Math.min(w / designWidth, h / designHeight);
+          const cssW = Math.max(1, Math.floor(designWidth * scale));
+          const cssH = Math.max(1, Math.floor(designHeight * scale));
+
+          const left = Math.floor((w - cssW) / 2);
+          const top = Math.floor((h - cssH) / 2);
+
+          canvas.style.width = cssW + 'px';
+          canvas.style.height = cssH + 'px';
+          canvas.style.position = 'absolute';
+          canvas.style.left = left + 'px';
+          canvas.style.top = top + 'px';
+
+          if (loading) { loading.style.left = '50%'; loading.style.top = '50%'; }
+
+          if (unityInstance && unityInstance.Module && typeof unityInstance.Module.setCanvasSize === 'function') {
+            const dpr = Math.min(1, window.devicePixelRatio || 1);
+            const bufferW = Math.max(1, Math.floor(cssW * dpr));
+            const bufferH = Math.max(1, Math.floor(cssH * dpr));
+            try { unityInstance.Module.setCanvasSize(bufferW, bufferH, false); } catch(e) {}
+          }
+        }
+
+        if (typeof ResizeObserver !== 'undefined') {
+          const ro = new ResizeObserver(() => resize());
+          ro.observe(container);
+        }
+        window.addEventListener('resize', resize);
+        setTimeout(resize, 0);
+
+        createUnityInstance(canvas, {
+          arguments: [],
+          dataUrl: "Build/b74bde861019b856921593a39cb5cabd.data.unityweb",
+          frameworkUrl: "Build/959f7833990b040398a4db3fc5aaeb95.framework.js.unityweb",
+          codeUrl: "Build/84967beb31c7c90519e49f78fe27d09f.wasm.unityweb",
+          streamingAssetsUrl: "StreamingAssets",
+          companyName: "Qam Games",
+          productName: "Farm Slime",
+          productVersion: "0.1.0",
+          matchWebGLToCanvasSize: false,
+          devicePixelRatio: 1,
+        }).then((instance) => {
+          if (loading) loading.style.display = 'none';
+          unityInstance = instance;
+          window.dispatchEvent(new Event('resize'));
+        }).catch((message) => {
+          alert(message);
+        });
+      })();
+    </script>
+  </body>
+</html>

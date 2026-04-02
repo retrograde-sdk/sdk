@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="./vite.svg" />
+  <!-- PREVENT SCROLL/ZOOM on Mobile is Critical for Hyper-Casual -->
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+
+  <!-- SEO / META -->
+  <title>Hamada Yed7ak - Fun Face Game</title>
+  <meta name="description" content="Fix the celebrity face! A fun hyper-casual puzzle game." />
+
+  <!-- Preconnect to GameMonetize CDN for faster SDK loading -->
+  <link rel="preconnect" href="https://api.gamemonetize.com" crossorigin />
+  <link rel="dns-prefetch" href="https://api.gamemonetize.com" />
+
+  <!-- GameMonetize SDK Configuration -->
+  <script type="text/javascript">
+    // LEGACY: Some environments (like verification tools) look for this global
+    window.gameId = "lchmf6hrx6xqxwv03mr3f8sqwypus9ds";
+
+    // Initialize State Flags (for React to consume)
+    window.__GM_SDK_READY__ = false;
+    window.__GM_SDK_FAILED__ = false;
+
+    window.SDK_OPTIONS = {
+      gameId: "lchmf6hrx6xqxwv03mr3f8sqwypus9ds",
+      onEvent: function (event) {
+        switch (event.name) {
+          case "SDK_GAME_PAUSE":
+            window.dispatchEvent(new CustomEvent('GM_PAUSE'));
+            break;
+          case "SDK_GAME_START":
+            window.dispatchEvent(new CustomEvent('GM_RESUME'));
+            break;
+          case "SDK_READY":
+            window.__GM_SDK_READY__ = true;
+            window.dispatchEvent(new CustomEvent('GM_READY'));
+            break;
+          case "SDK_ERROR":
+            // Do not treat as fatal SDK failure, just resume game
+            window.dispatchEvent(new CustomEvent('GM_RESUME'));
+            break;
+        }
+      }
+    };
+
+    // Standard Async Loader
+    (function (a, b, c) {
+      var d = a.getElementsByTagName(b)[0];
+      var e = a.createElement(b);
+      e.async = true;
+      e.src = c;
+      e.onerror = function () {
+        window.__GM_SDK_FAILED__ = true;
+        window.dispatchEvent(new CustomEvent('GM_SDK_LOAD_ERROR'));
+      };
+      d.parentNode.insertBefore(e, d);
+    })(document, "script", "https://api.gamemonetize.com/sdk.js");
+  </script>
+  <script type="module" crossorigin src="./assets/index-BVWpjEmV.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-uBvAGHJw.css">
+</head>
+
+<body class="bg-black overflow-hidden select-none touch-none">
+  <div id="root"></div>
+</body>
+
+</html>

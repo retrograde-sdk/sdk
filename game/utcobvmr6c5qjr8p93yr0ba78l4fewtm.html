@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Suika Game 2</title>
+    <style type="text/css">@font-face {font-family:Fredoka;font-style:normal;font-weight:400;src:url(/cf-fonts/v/fredoka/5.0.11/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Fredoka;font-style:normal;font-weight:400;src:url(/cf-fonts/v/fredoka/5.0.11/latin-ext/wght/normal.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:Fredoka;font-style:normal;font-weight:400;src:url(/cf-fonts/v/fredoka/5.0.11/hebrew/wght/normal.woff2);unicode-range:U+0590-05FF,U+200C-2010,U+20AA,U+25CC,U+FB1D-FB4F;font-display:swap;}@font-face {font-family:Fredoka;font-style:normal;font-weight:600;src:url(/cf-fonts/v/fredoka/5.0.11/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Fredoka;font-style:normal;font-weight:600;src:url(/cf-fonts/v/fredoka/5.0.11/latin-ext/wght/normal.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:Fredoka;font-style:normal;font-weight:600;src:url(/cf-fonts/v/fredoka/5.0.11/hebrew/wght/normal.woff2);unicode-range:U+0590-05FF,U+200C-2010,U+20AA,U+25CC,U+FB1D-FB4F;font-display:swap;}@font-face {font-family:Fredoka;font-style:normal;font-weight:700;src:url(/cf-fonts/v/fredoka/5.0.11/hebrew/wght/normal.woff2);unicode-range:U+0590-05FF,U+200C-2010,U+20AA,U+25CC,U+FB1D-FB4F;font-display:swap;}@font-face {font-family:Fredoka;font-style:normal;font-weight:700;src:url(/cf-fonts/v/fredoka/5.0.11/latin-ext/wght/normal.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:Fredoka;font-style:normal;font-weight:700;src:url(/cf-fonts/v/fredoka/5.0.11/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}</style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="app-container">
+        
+        <div id="game-canvas-container">
+            <div id="danger-line"><span>Danger Limit</span></div>
+            </div>
+
+        <div id="ui-layer">
+            
+            <div id="hud" class="hidden">
+                <div class="hud-left">
+                    <div class="score-box">
+                        <span class="label">Score</span>
+                        <span id="game-score">0</span>
+                    </div>
+                </div>
+                <div class="hud-right">
+                    <div class="next-fruit-box">
+                        <span class="label">Next</span>
+                        <img loading="eager" id="game-next-fruit" src="./assets/img/circle0.png" alt="Next">
+                    </div>
+                    <button id="btn-pause-game" class="icon-btn"><i class="fa-solid fa-pause"></i></button>
+                </div>
+            </div>
+
+            <div id="menu-main" class="screen active">
+                <div class="logo-area">
+                    <h1>Suika<br>Game 2</h1>
+                </div>
+                <div class="menu-buttons">
+                    <button id="btn-start-game" class="btn-primary">
+                        <i class="fa-solid fa-play"></i> Play Game
+                    </button>
+                    <button id="btn-open-settings" class="btn-secondary">
+                        <i class="fa-solid fa-gear"></i> Settings
+                    </button>
+                    <button id="btn-open-about" class="btn-secondary">
+                        <i class="fa-solid fa-circle-info"></i> About
+                    </button>
+                   <!-- <button id="btn-open-support" class="btn-special">
+                        <i class="fa-solid fa-heart"></i> Support Ukraine
+                    </button> -->
+                </div>
+                <div class="highscore-display">Best: <span id="menu-highscore">0</span></div>
+            </div>
+
+            <div id="menu-settings" class="screen hidden">
+                <div class="modal">
+                    <h2>Settings</h2>
+                    <div class="setting-list">
+                        <div class="setting-row">
+                            <span><i class="fa-solid fa-volume-high"></i> Sound FX</span>
+                            <button id="toggle-sfx" class="btn-toggle on">ON</button>
+                        </div>
+                        <div class="setting-row">
+                            <span><i class="fa-solid fa-music"></i> Music</span>
+                            <button id="toggle-music" class="btn-toggle off">OFF</button>
+                        </div>
+                        <div class="setting-row">
+                            <span><i class="fa-solid fa-eye"></i> Show Guide</span>
+                            <button id="toggle-guide" class="btn-toggle on">ON</button>
+                        </div>
+                    </div>
+                    <button class="btn-back" data-target="menu-main">Back</button>
+                </div>
+            </div>
+
+            <div id="menu-pause" class="screen hidden">
+                <div class="modal">
+                    <h2>Paused</h2>
+                    <button id="btn-resume" class="btn-primary">Resume</button>
+                    <button id="btn-quit" class="btn-secondary">Quit to Menu</button>
+                </div>
+            </div>
+
+            <div id="menu-about" class="screen hidden">
+                <div class="modal">
+                    <h2>About</h2>
+                    <p>Suika Game 2 - Drop fruits to merge them into bigger ones! Combine two Watermelons to win.</p>
+                    <p><strong>Controls:</strong> Mouse/Touch to move, Click/Space to drop.</p>
+                    <p class="version">By Ihor Khodakivskyi - v2.5 Enhanced</p>
+                    <button class="btn-back" data-target="menu-main">Back</button>
+                </div>
+            </div>
+
+            <div id="menu-support" class="screen hidden">
+                <div class="modal support-modal">
+                    <h2><i class="fa-solid fa-flag"></i>Support Ukraine</h2>
+                    <p>Stand with Ukraine in the fight for freedom.</p>
+<a href="https://savelife.in.ua/en/" target="_blank" class="btn-primary btn-link">
+DONATE via Save Life in UA</a>
+<a href="https://www.sternenkofund.org/en/donate" target="_blank" class="btn-primary btn-link">
+DONATE via Sternenko Fund</a>
+                    <button class="btn-back" data-target="menu-main">Back</button>
+                </div>
+            </div>
+
+            <div id="menu-gameover" class="screen hidden">
+                <div class="modal">
+                    <h2>Game Over</h2>
+                    <div class="final-score">
+                        <span>Score</span>
+                        <h3 id="end-score-value">0</h3>
+                    </div>
+                    <div id="new-record-label" class="hidden">New Highscore!</div>
+                    <button id="btn-restart" class="btn-primary">Try Again</button>
+                    <button class="btn-home" data-target="menu-main">Main Menu</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+<script type="text/javascript">
+       window.SDK_OPTIONS = {
+          gameId: "utcobvmr6c5qjr8p93yr0ba78l4fewtm",
+          onEvent: function (a) {
+             // Logic is handled in index.js for better control
+          }
+       };
+    (function (a, b, c) {
+       var d = a.getElementsByTagName(b)[0];
+       a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+    })(document, "script", "gamemonetize-sdk"); 
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.20.0/matter.min.js"></script>
+    <script src="index.js?v=1.33"></script>
+</body>
+</html>

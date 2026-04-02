@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find & Match - Pyramid Puzzle Game</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<script type="text/javascript">
+   window.SDK_OPTIONS = {
+      gameId: "20isw2akjl2dyo0x7i9jlhqdtjyx6met",
+      onEvent: function (a) {
+         switch (a.name) {
+            case "SDK_GAME_PAUSE":
+               // pause game logic / mute audio
+               break;
+            case "SDK_GAME_START":
+               // advertisement done, resume game logic and unmute audio
+               break;
+            case "SDK_READY":
+               // when sdk is ready
+               break;
+         }
+      }
+   };
+(function (a, b, c) {
+   var d = a.getElementsByTagName(b)[0];
+   a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+})(document, "script", "gamemonetize-sdk"); 
+</script>
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-logo">🔍</div>
+        <div class="loading-title">Find & Match</div>
+        <div class="loading-subtitle">Pyramid Puzzle Challenge</div>
+        
+        <div class="loading-bar-container">
+            <div class="loading-bar" id="loadingBar"></div>
+        </div>
+        <div class="loading-text" id="loadingText">Loading game resources...</div>
+        
+        <button class="start-btn" id="startBtn" onclick="startGame(); window.sdk.showBanner();">🎮 START GAME</button>
+        
+        <div class="loading-game-link" onclick="openGames()">
+            <span class="link-icon">🎯</span>
+            <span class="link-text">More Games</span>
+        </div>
+        
+        <div class="loading-tips">
+            💡 Tip: Only surface items can be clicked.<br>
+            Remove top layers to reveal items below.
+        </div>
+    </div>
+
+    <!-- Game Container 800x600 -->
+    <div class="game-container-wrapper" id="gameWrapper">
+        <div class="game-container">
+            <!-- Header -->
+            <div class="header">
+                <h1>🔍 Find & Match</h1>
+                <div class="header-right">
+                    <div class="game-info">
+                        <span>🎯 Lv.<b id="levelNum">1</b></span>
+                        <span>📦 <b id="remaining">0</b></span>
+                        <span>📊 <b id="layerCount">0</b>L</span>
+                    </div>
+                    <div class="timer" id="timer">
+                        <span>⏱️</span>
+                        <span id="timeDisplay">03:00</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Level Select -->
+            <div class="level-select" id="levelSelect">
+                <button class="active" onclick="selectLevel(1)" data-level="1">🌿 Meadow</button>
+                <button class="locked" onclick="selectLevel(2)" data-level="2">🔒 Garden</button>
+                <button class="locked" onclick="selectLevel(3)" data-level="3">🔒 Farm</button>
+                <button class="locked" onclick="selectLevel(4)" data-level="4">🔒 Ocean</button>
+                <button class="locked" onclick="selectLevel(5)" data-level="5">🔒 Market</button>
+                <button class="locked" onclick="selectLevel(6)" data-level="6">🔒 Festival</button>
+            </div>
+
+            <!-- Game Area -->
+            <div class="game-area" id="gameArea">
+                <div class="stats-panel">
+                    <div>✅ <span id="clickable">0</span></div>
+                    <div>🔒 <span id="blocked">0</span></div>
+                </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-text"><span id="progressText">0%</span></div>
+            </div>
+
+            <!-- Basket -->
+            <div class="basket-container">
+                <div class="basket" id="basket">
+                    <div class="basket-slot"></div>
+                    <div class="basket-slot"></div>
+                    <div class="basket-slot"></div>
+                    <div class="basket-slot"></div>
+                    <div class="basket-slot"></div>
+                    <div class="basket-slot"></div>
+                    <div class="basket-slot"></div>
+                </div>
+            </div>
+
+            <!-- Buttons -->
+            <div class="buttons">
+                <button class="btn btn-moveback" onclick="moveBack()" id="btnMoveback">📤 Move Out (<span id="movebackCount">2</span>)</button>
+                <button class="btn btn-restart" onclick="restartGame(); window.sdk.showBanner();">🔄 Restart</button>
+                <button class="btn btn-games" onclick="openGames()">🎮 More Games</button>
+            </div>
+        </div>
+
+        <!-- How to Play - Outside 800x600 -->
+        <div class="how-to-play">
+            <div class="how-to-play-title">📖 How to Play</div>
+            <div class="how-to-play-content">
+                <span>🔹 Click surface items to collect</span>
+                <span>🔹 Match 3 same items to clear</span>
+                <span>🔹 Clear all before time runs out</span>
+                <span>🔹 Don't let basket fill up!</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Message Modal -->
+    <div class="message" id="messageSuccess">
+        <div class="message-box">
+            <div class="icon" id="successIcon">🎉</div>
+            <div class="text" id="successText"></div>
+            <div class="subtext" id="successSubtext"></div>
+            <button onclick="nextLevel()">Next Level</button>
+            <button class="secondary" onclick="restartFromSuccess()">Play Again</button>
+            <div class="game-ads">
+                <div class="ads-label">— Discover More Games —</div>
+                <span class="game-ad" onclick="openGames()">🎮</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fail Message Modal -->
+    <div class="message" id="messageFail">
+        <div class="message-box">
+            <div class="icon" id="failIcon">😢</div>
+            <div class="text" id="failText"></div>
+            <div class="subtext" id="failSubtext"></div>
+            <button onclick="restartFromFail()">Try Again</button>
+            <div class="game-ads">
+                <div class="ads-label">— Discover More Games —</div>
+                <span class="game-ad" onclick="openGames()">🎮</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>

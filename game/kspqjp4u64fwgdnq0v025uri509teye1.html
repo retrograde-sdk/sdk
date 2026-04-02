@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0a0a12">
+    <title>M2 Blocks 2048</title>
+    
+    
+    <style type="text/css">@font-face {font-family:Varela Round;font-style:normal;font-weight:400;src:url(/cf-fonts/s/varela-round/5.0.11/latin-ext/400/normal.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:Varela Round;font-style:normal;font-weight:400;src:url(/cf-fonts/s/varela-round/5.0.11/vietnamese/400/normal.woff2);unicode-range:U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB;font-display:swap;}@font-face {font-family:Varela Round;font-style:normal;font-weight:400;src:url(/cf-fonts/s/varela-round/5.0.11/latin/400/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Varela Round;font-style:normal;font-weight:400;src:url(/cf-fonts/s/varela-round/5.0.11/hebrew/400/normal.woff2);unicode-range:U+0590-05FF,U+200C-2010,U+20AA,U+25CC,U+FB1D-FB4F;font-display:swap;}</style>
+    <link rel="stylesheet" href="style.css">
+    <!-- GameMonetize SDK -->
+    <script type="text/javascript">
+      window.SDK_OPTIONS = {
+        gameId: "kspqjp4u64fwgdnq0v025uri509teye1",
+        onEvent: function (a) {
+          switch (a.name) {
+            case "SDK_GAME_PAUSE":
+              if (window.__gm_pause_game__) window.__gm_pause_game__();
+              break;
+            case "SDK_GAME_START":
+              if (window.__gm_resume_game__) window.__gm_resume_game__();
+              break;
+          }
+        }
+      };
+      (function (a, b, c) {
+        var d = a.getElementsByTagName(b)[0];
+        var e = a.createElement(b);
+        e.id = c;
+        e.src = "https://api.gamemonetize.com/sdk.js";
+        d.parentNode.insertBefore(e, d);
+      })(document, "script", "gamemonetize-sdk");
+    </script>
+</head>
+<body>
+    <div id="app">
+        <!-- MENU SCREEN -->
+        <div id="menuScreen" class="screen">
+            <div class="logo">M2 BLOCKS</div>
+            <div class="subtitle">2048</div>
+            <div class="menu-buttons">
+                <button class="menu-btn" id="playBtn">▶ PLAY</button>
+                <button class="menu-btn" id="howtoBtn">
+                    <svg class="menu-icon" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+                        <path d="M12 16v-4M12 8h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    HOW TO PLAY
+                </button>
+                <button class="menu-btn" id="achievementsBtn">
+                    <svg class="menu-icon" viewBox="0 0 24 24">
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="currentColor"/>
+                    </svg>
+                    ACHIEVEMENTS
+                </button>
+                <button class="menu-btn" id="leaderboardBtn">
+                    <svg class="menu-icon" viewBox="0 0 24 24">
+                        <path d="M16 11V3H8v6H2v12h20V11h-6zm-6-6h4v14h-4V5zM4 11h4v8H4v-8zm16 8h-4v-6h4v6z" fill="currentColor"/>
+                    </svg>
+                    LEADERBOARD
+                </button>
+                <button class="menu-btn" id="settingsBtn">
+                    <svg class="menu-icon" viewBox="0 0 24 24">
+                        <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94L14.4 2.81c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z" fill="currentColor"/>
+                    </svg>
+                    SETTINGS
+                </button>
+            </div>
+            <div class="footer">v1.2 - <span class="mapi-games">MAPI GAMES</span>
+                <div class="more-games-wrap"><a class="more-games-btn" href="https://www.giugames.com/" target="_blank" rel="noopener">MORE GAMES</a></div></div>
+        </div>
+
+        <!-- GAME SCREEN -->
+        <div id="gameScreen" class="screen hidden">
+            <div id="gameHUD">
+                <div class="hud-left">
+                    <div class="gem-display">
+                        <svg class="gem-icon" viewBox="0 0 24 24" width="24" height="24">
+                            <defs>
+                                <linearGradient id="gemGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" style="stop-color:#00FFFF"/>
+                                    <stop offset="50%" style="stop-color:#0088FF"/>
+                                    <stop offset="100%" style="stop-color:#00FFFF"/>
+                                </linearGradient>
+                            </defs>
+                            <polygon points="12,2 22,9 12,22 2,9" fill="url(#gemGrad)" stroke="#fff" stroke-width="1"/>
+                            <polygon points="12,2 17,9 12,14 7,9" fill="rgba(255,255,255,0.3)"/>
+                        </svg>
+                        <span id="gems">0</span>
+                    </div>
+                </div>
+                <div class="hud-center">
+                    <div id="score">0</div>
+                </div>
+                <div class="hud-right">
+                    <div class="best-display">
+                        <svg class="crown-icon" viewBox="0 0 24 24" width="24" height="24">
+                            <defs>
+                                <linearGradient id="crownGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" style="stop-color:#FFD700"/>
+                                    <stop offset="50%" style="stop-color:#FFA500"/>
+                                    <stop offset="100%" style="stop-color:#FFD700"/>
+                                </linearGradient>
+                            </defs>
+                            <path d="M2 17L5 8L9 12L12 4L15 12L19 8L22 17H2Z" fill="url(#crownGrad)" stroke="#FFD700" stroke-width="0.5"/>
+                            <rect x="2" y="17" width="20" height="3" rx="1" fill="url(#crownGrad)"/>
+                            <circle cx="5" cy="8" r="1.5" fill="#FF4444"/>
+                            <circle cx="12" cy="4" r="1.5" fill="#FF4444"/>
+                            <circle cx="19" cy="8" r="1.5" fill="#FF4444"/>
+                        </svg>
+                        <span id="best">0</span>
+                    </div>
+                </div>
+            </div>
+            
+            <canvas id="gameCanvas"></canvas>
+            
+            <div id="shooter">
+                <div class="shooter-wrapper">
+                    <div id="dropTimer">3</div>
+                    <div id="currentBlock" class="block">2</div>
+                    <div id="nextBlock" class="next-block">2</div>
+                </div>
+            </div>
+            
+            <div id="banner">
+                <p id="bannerText">Merge the numbers</p>
+            </div>
+            
+            <button id="pauseBtn" class="icon-btn">
+                <svg viewBox="0 0 24 24" class="icon-svg">
+                    <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+                    <rect x="9" y="7" width="2" height="10" rx="1" fill="currentColor"/>
+                    <rect x="13" y="7" width="2" height="10" rx="1" fill="currentColor"/>
+                </svg>
+            </button>
+            <button id="backBtn" class="icon-btn">
+                <svg viewBox="0 0 24 24" class="icon-svg">
+                    <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+                    <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </div>
+
+        <!-- LEADERBOARD SCREEN -->
+        <div id="leaderboardScreen" class="screen hidden">
+            <h1>LEADERBOARD</h1>
+            <div id="leaderboardList" class="list-container"></div>
+            <button class="menu-btn" id="backFromLeaderboard">← BACK</button>
+        </div>
+
+        <!-- SETTINGS SCREEN -->
+        <div id="settingsScreen" class="screen hidden">
+            <h1>SETTINGS</h1>
+            <div class="settings-container">
+                <div class="setting">
+                    <label>Sound</label>
+                    <button class="toggle-btn" id="soundToggle">ON</button>
+                </div>
+                <div class="setting">
+                    <label>Music</label>
+                    <button class="toggle-btn" id="musicToggle">ON</button>
+                </div>
+                <div class="setting">
+                    <label>Volume</label>
+                    <input type="range" id="volumeSlider" min="0" max="100" value="70">
+                    <span id="volumeLabel">70%</span>
+                </div>
+                <div class="setting" style="margin-top: 3vmin; padding-top: 3vmin; border-top: 1px solid rgba(255,255,255,0.2);">
+                    <label style="color: #FF4444;">Reset All Data</label>
+                    <button class="toggle-btn" id="resetAllBtn" style="background: #FF4444; color: #fff;">RESET</button>
+                </div>
+            </div>
+            <button class="menu-btn" id="backFromSettings">← BACK</button>
+        </div>
+
+        <!-- CUSTOM DIALOG FUTURISTICO -->
+        <div id="customDialog" class="custom-dialog hidden">
+            <div class="dialog-backdrop"></div>
+            <div class="dialog-content">
+                <div class="dialog-icon">⚠️</div>
+                <h2 class="dialog-title">RESET ALL DATA?</h2>
+                <div class="dialog-body">
+                    <p>This will delete:</p>
+                    <ul>
+                        <li>All scores & Leaderboard</li>
+                        <li>ALL Achievements & Milestones</li>
+                        <li>Statistics</li>
+                        <li>Saved name</li>
+                        <li>Settings</li>
+                    </ul>
+                    <p class="dialog-warning">⚡ This cannot be undone! ⚡</p>
+                </div>
+                <div class="dialog-buttons">
+                    <button class="dialog-btn dialog-cancel" id="dialogCancel">CANCEL</button>
+                    <button class="dialog-btn dialog-confirm" id="dialogConfirm">RESET ALL</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- HOW TO PLAY SCREEN -->
+        <div id="howtoScreen" class="screen hidden">
+            <h1>HOW TO PLAY</h1>
+            <div class="howto-container">
+                <div class="howto-section">
+                    <h3><svg class="howto-svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="#FF1493" stroke-width="2"/><circle cx="12" cy="12" r="3" fill="#FF1493"/></svg> GOAL</h3>
+                    <p>Merge blocks with the same number to create higher values. Try to reach 2048 and beyond!</p>
+                </div>
+                
+                <div class="howto-section">
+                    <h3><svg class="howto-svg" viewBox="0 0 24 24"><path d="M12 2L12 16M12 16L7 11M12 16L17 11" fill="none" stroke="#00FFFF" stroke-width="2.5" stroke-linecap="round"/><rect x="6" y="18" width="12" height="3" rx="1" fill="#00FFFF"/></svg> CONTROLS</h3>
+                    <p>Tap or click on a column to drop the current block. The block will fall and stack on top of existing blocks.</p>
+                </div>
+                
+                <div class="howto-section">
+                    <h3><svg class="howto-svg" viewBox="0 0 24 24"><circle cx="8" cy="12" r="5" fill="none" stroke="#FFD700" stroke-width="2"/><circle cx="16" cy="12" r="5" fill="none" stroke="#FFD700" stroke-width="2"/></svg> MERGING</h3>
+                    <p>When two blocks with the same number touch (horizontally or vertically), they merge into one block with double the value!</p>
+                    <div class="howto-blocks">
+                        <div class="howto-block" style="background: #7FFF00;">2</div>
+                        <span class="howto-arrow">+</span>
+                        <div class="howto-block" style="background: #7FFF00;">2</div>
+                        <span class="howto-arrow">=</span>
+                        <div class="howto-block" style="background: #FF1493;">4</div>
+                    </div>
+                </div>
+                
+                <div class="howto-section">
+                    <h3><svg class="howto-svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="#FF4444" stroke-width="2"/><path d="M12 6V12L16 14" fill="none" stroke="#FF4444" stroke-width="2" stroke-linecap="round"/></svg> TIMER</h3>
+                    <p>You have 3 seconds to drop each block. If time runs out, the block drops automatically in a random column!</p>
+                </div>
+                
+                <div class="howto-section">
+                    <h3><svg class="howto-svg" viewBox="0 0 24 24"><path d="M13 2L3 14H12L11 22L21 10H12L13 2Z" fill="#FF8C00" stroke="#FFD700" stroke-width="1"/></svg> COMBOS</h3>
+                    <p>Chain multiple merges in a row to create combos and earn bonus points!</p>
+                </div>
+                
+                <div class="howto-section">
+                    <h3><svg class="howto-svg" viewBox="0 0 24 24"><polygon points="12,2 22,9 12,22 2,9" fill="url(#gemGradHowto)" stroke="#fff" stroke-width="1"/><defs><linearGradient id="gemGradHowto" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#00FFFF"/><stop offset="100%" style="stop-color:#0088FF"/></linearGradient></defs></svg> GEMS</h3>
+                    <p>Earn gems with every merge. The bigger the block, the more gems you get!</p>
+                </div>
+                
+                <div class="howto-section">
+                    <h3><svg class="howto-svg" viewBox="0 0 24 24"><path d="M12 2C12 2 4 8 4 14C4 18.4 7.6 22 12 22C16.4 22 20 18.4 20 14C20 8 12 2 12 2Z" fill="none" stroke="#FF0000" stroke-width="2"/><line x1="8" y1="14" x2="16" y2="14" stroke="#FF0000" stroke-width="2"/><line x1="8" y1="18" x2="16" y2="18" stroke="#FF0000" stroke-width="2"/></svg> GAME OVER</h3>
+                    <p>The game ends when blocks stack up and reach the danger zone at the top!</p>
+                </div>
+            </div>
+            <button class="menu-btn" id="backFromHowto">← BACK</button>
+        </div>
+
+        <!-- PAUSE SCREEN -->
+        <div id="pauseScreen" class="overlay hidden">
+            <div class="panel">
+                <h2>PAUSED</h2>
+                <button class="menu-btn" id="resumeBtn">
+                    <svg class="menu-icon" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z" fill="currentColor"/>
+                    </svg>
+                    RESUME
+                </button>
+                <button class="menu-btn" id="restartBtn">
+                    <svg class="menu-icon" viewBox="0 0 24 24">
+                        <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z" fill="currentColor"/>
+                    </svg>
+                    RESTART
+                </button>
+                <button class="menu-btn" id="quitBtn">
+                    <svg class="menu-icon" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+                        <path d="M15 9l-6 6M9 9l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    MENU
+                </button>
+            </div>
+        </div>
+
+        <!-- GAMEOVER SCREEN -->
+        <div id="gameoverScreen" class="overlay hidden">
+            <div class="panel">
+                <h2>GAME OVER!</h2>
+                <div class="stats">
+                    <p>Score: <span id="finalScore">0</span></p>
+                    <p>Best: <span id="finalBest">0</span></p>
+                </div>
+                <input type="text" id="playerName" placeholder="Your name" maxlength="15">
+                <button class="menu-btn" id="saveScoreBtn">
+                    <svg class="menu-icon" viewBox="0 0 24 24">
+                        <path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z" fill="currentColor"/>
+                    </svg>
+                    SAVE
+                </button>
+                <button class="menu-btn" id="retryBtn">
+                    <svg class="menu-icon" viewBox="0 0 24 24">
+                        <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z" fill="currentColor"/>
+                    </svg>
+                    RETRY
+                </button>
+                <button class="menu-btn" id="menuBtn">
+                    <svg class="menu-icon" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+                        <path d="M15 9l-6 6M9 9l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    MENU
+                </button>
+            </div>
+        </div>
+
+        <!-- ACHIEVEMENTS SCREEN -->
+        <div id="achievementsScreen" class="screen hidden">
+            <h1 style="color: #FFD700; text-shadow: 0 0 2vmin #FFD700;">ACHIEVEMENTS</h1>
+            <div id="achievementsList" class="achievements-container"></div>
+            <div class="stats-summary">
+                <h3 style="color: #00FFFF;">
+                    <svg class="stat-icon-title" viewBox="0 0 24 24" style="width: 4vmin; height: 4vmin; margin-right: 1vmin;">
+                        <path d="M9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4zm2.5 2.1h-15V5h15v14.1zm0-16.1h-15c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h15c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z" fill="currentColor"/>
+                    </svg>
+                    STATISTICS
+                </h3>
+                <p class="stat-line">
+                    <svg class="stat-icon" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+                        <path d="M8 9h2v6H8zm3-3h2v9h-2zm3 6h2v3h-2z" fill="currentColor"/>
+                    </svg>
+                    Games played: <span id="statGames">0</span>
+                </p>
+                <p class="stat-line">
+                    <svg class="stat-icon" viewBox="0 0 24 24">
+                        <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="none" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    Total merges: <span id="statMerges">0</span>
+                </p>
+                <p class="stat-line">
+                    <svg class="stat-icon" viewBox="0 0 24 24">
+                        <path d="M13 3v18M3 13h18" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    Best combo: <span id="statCombo">0</span>
+                </p>
+                <p class="stat-line">
+                    <svg class="stat-icon" viewBox="0 0 24 24">
+                        <path d="M12 2L9.19 8.63L2 9.24L7.46 13.97L5.82 21L12 17.27L18.18 21L16.54 13.97L22 9.24L14.81 8.63L12 2Z" fill="currentColor"/>
+                    </svg>
+                    Total gems: <span id="statGems">0</span>
+                </p>
+                <p class="stat-line">
+                    <svg class="stat-icon" viewBox="0 0 24 24">
+                        <rect x="3" y="3" width="18" height="18" rx="3" fill="none" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    Highest block: <span id="statBlock">0</span>
+                </p>
+            </div>
+            <button class="menu-btn" id="backFromAchievements">← BACK</button>
+        </div>
+    </div>
+    
+    <script src="game.js"></script>
+</body>
+</html>

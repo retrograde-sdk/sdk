@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta charset="UTF-8">
+    <link rel="manifest" href="manifest.json" />
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <meta name="developed-by" content="gamesrishti studio">
+    <meta name="description" content="Enchanted Mahjong Saga is a fast-paced twist on the classic tile-matching game, with unlimited levels to challenge your mind.">
+    <meta name="keywords" content="mahjong, brain training, puzzle, tile matching, fantasy,logic">
+    <meta name="author" content="lofgames.com">
+    <title>Enchanted Mahjong Saga</title>
+    <style>
+      html, body {
+        background-color: white;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      * {
+        -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+        -moz-tap-highlight-color: rgba(0, 0, 0, 0);
+      }
+      loaderset {
+        position: absolute;
+        display: none;
+        width: 10px;
+        height: 10px;
+      }
+      .img1 {
+        cursor: default;
+        position: relative;
+        z-index: 1;
+        left: 0;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        display: none;
+      }
+      .img2 {
+        position: absolute;
+        z-index: 2;
+        top: 10px;
+        left: 10px;
+        width: 5px;
+        height: 11px;
+        display: none;
+      }
+      .loaderPJ {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        z-index: 1;
+        width: 120px;
+        height: 120px;
+        margin: -76px 0 0 -76px;
+        border: 16px solid #f3f3f3;
+        border-radius: 50%;
+        border-top: 16px solid #3498db;
+        -webkit-animation: spin 2s linear infinite;
+        animation: spin 2s linear infinite;
+      }
+      @-webkit-keyframes spin {
+        0% { -webkit-transform: rotate(0deg); }
+        100% { -webkit-transform: rotate(360deg); }
+      }
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      #animation_container {
+        position: absolute;
+        margin: auto;
+        left: 0;
+        right: 0;
+        top: 0;
+        bottom: 0;
+      }      
+    </style>  
+  </head>
+  <body onload="addListner();" style="margin:0px;overflow:hidden;">
+    <div class="loaderPJ" id="loaderPJx"></div>
+    <script type='text/javascript' src='libs/commons.js' ></script>	
+	<script type='text/javascript' src='https://lofgames.com/games/lofgames524.js' ></script>
+<script src="ems.js?1756561624867"></script>
+<script>
+// Global Scripts
+	lg.sdkType = "gm";
+lg.sdkId = "mtlddkkcybrsq23xuuqe0qv4quyiqmck";
+lg.initSDKFunctions();
+const otherFonts = [
+		"Passion One:400",
+		"Noto Color Emoji:400",
+		"Noto Sans JP:700,900",
+		"Noto Sans SC:700,900",
+		"Noto Sans KR:700,900",
+		"Noto Sans Thai:700,900",
+		"Noto Sans Arabic:700,900",
+		"Noto Sans:700,900"
+	];
+	lg.loadGameFonts({
+		f: ["Noto Sans Display"],
+		s: ["600"],
+		b: ["900"]
+	}, otherFonts);</script>
+    <script>
+    var canvas, stage, exportRoot, anim_container, dom_overlay_container, fnStartAnimation;
+    var loadingBar, preloadBG, loadingAnim, preloaderDiv,barBack;
+ 	var loaderScaleFact = Math.min(1, 720/1000);
+    var pcnf = {
+	  gw: 1280,
+	  gh: 720,
+	  bmw: 0,
+	  bmh: 0,
+	  bw: Math.round(300 * loaderScaleFact),
+	  bh: Math.round(15 * loaderScaleFact),
+	  bx: Math.round((1280 - 310 * loaderScaleFact) / 2),
+	  by: Math.round(720 - 80 * loaderScaleFact),
+	  th: Math.round(50 * loaderScaleFact),
+	  tw: Math.round(190 * loaderScaleFact),
+	  tx: Math.round((1280 - 210 * loaderScaleFact) / 2),
+	  ty: Math.round(720 - 150 * loaderScaleFact),
+	  ldp: 0,
+	  bbx: Math.round((1280 - 365 * loaderScaleFact) / 2),
+	  bby: Math.round(720 - 188 * loaderScaleFact),
+	  bbw: Math.round(365 * loaderScaleFact),
+	  bbh: Math.round(149 * loaderScaleFact)
+    };
+    window.addEventListener('resize', resizePreloader);
+    function init() {
+      canvas = document.getElementById("canvas");
+      anim_container = document.getElementById("animation_container");
+      dom_overlay_container = document.getElementById("dom_overlay_container");
+      var key = Object.keys(AdobeAn.compositions)[0];
+      var comp = AdobeAn.getComposition(key);
+      var loader = new createjs.LoadQueue(false, null, true);
+      loader.installPlugin(createjs.Sound);
+      loader.addEventListener("fileload", function(evt) { handleFileLoad(evt, comp) });
+      loader.addEventListener("complete", function(evt) { handleComplete(evt, comp) });
+      loader.addEventListener("progress", handleProgress);
+	var lib=comp.getLibrary();
+	loader.loadManifest(lib.properties.manifest);
+      canvas.style.display = 'none';     
+    }
+    function handleProgress(e) {
+      pcnf.ldp = (e.loaded / e.total) * 0.8;
+      loadingBar.style.width = pcnf.ldp * pcnf.bmw + "px";
+      loadingBar.style.height = pcnf.bmh + "px";
+      resizePreloader();
+    }
+    function completeTheBar() {
+      pcnf.it_id = setInterval(increaseWidth, 100);
+      function increaseWidth() {
+        pcnf.ldp += 0.02;
+        if (lg.allFontLoaded && lg.allFontLoaded != true) {
+          pcnf.ldp -= 0.01;
+          if (pcnf.ldp >= 0.90) {
+            pcnf.ldp = 0.90;
+          }
+        }
+        loadingBar.style.width = pcnf.ldp * pcnf.bmw + "px";
+        if (pcnf.ldp >= 1) {
+          clearInterval(pcnf.it_id);
+          hidePreloader();
+        }
+      }
+    }
+    function hidePreloader() {
+      window.removeEventListener('resize', resizePreloader);
+      var arr = [loadingBar, preloadBG, loadingAnim, preloaderDiv];
+      for (var itm of arr) {
+        caller(100, itm);
+        itm = null;
+      }
+      pcnf = null;
+      canvas.style.display = 'block';
+    }
+    function handleFileLoad(evt, comp) {
+      var images = comp.getImages();
+      if (evt && (evt.item.type == "image")) {
+        images[evt.item.id] = evt.result;
+      }
+    }
+function handleComplete(evt,comp) {
+	var lib=comp.getLibrary();
+	var ss=comp.getSpriteSheet();
+	var queue = evt.target;
+	var ssMetadata = lib.ssMetadata;
+	for(i=0; i<ssMetadata.length; i++) {
+		ss[ssMetadata[i].name] = new createjs.SpriteSheet( {"images": [queue.getResult(ssMetadata[i].name)], "frames": ssMetadata[i].frames} )
+	}
+	exportRoot = new lib.enchanted_mahjong_saga();
+	stage = new lib.Stage(canvas);
+	stage.enableMouseOver();
+    fnStartAnimation = function() {
+		stage.addChild(exportRoot);
+		createjs.Ticker.framerate = lib.properties.fps;
+		createjs.Ticker.addEventListener("tick", stage);
+	}
+	AdobeAn.makeResponsive(true,'both',true,1,[canvas,anim_container,dom_overlay_container]);
+    completeTheBar();
+	AdobeAn.compositionLoaded(lib.properties.id);
+	fnStartAnimation();
+}
+    function resizePreloader(evt) {
+      var iw = window.innerWidth;
+      var ih = window.innerHeight;
+      var hR = ih / pcnf.gh;
+      var wR = iw / pcnf.gw;
+      wR = (hR > wR) ? wR : hR;
+      pcnf.bmw = pcnf.bw * wR;
+      pcnf.bmh = pcnf.bh * wR;
+      makeObjectResponsive(preloadBG, wR, 0, 0, pcnf.gw, pcnf.gh);
+      makeObjectResponsive(loadingAnim, wR, pcnf.tx, pcnf.ty, pcnf.tw, pcnf.th);
+      makeObjectResponsive(loadingBar, wR, pcnf.bx, pcnf.by, pcnf.ldp * pcnf.bw, pcnf.bh);
+	   makeObjectResponsive(barBack, wR, pcnf.bbx, pcnf.bby, pcnf.bbw, pcnf.bbh);
+      showLoadingItems();
+    }
+    function showLoadingItems() {
+      if (loadingBar.style.display === 'block') {
+	    barBack.style.display = 'block';
+        loadingBar.style.display = 'block';
+        loadingAnim.style.display = 'block';
+        preloaderDiv.style.display = 'block';
+      }
+    }
+    function makeObjectResponsive(obj, wR, obx, oby, obWidth, obHeight) {
+      if (obj != null && obj.style.display === 'block') {
+        obj.style.left = ((window.innerWidth - pcnf.gw * wR) / 2 + obx * wR) + 'px';
+        obj.style.top = ((window.innerHeight - pcnf.gh * wR) / 2 + oby * wR) + 'px';
+        obj.style.width = (obWidth * wR) + 'px';
+        obj.style.height = (obHeight * wR) + 'px';
+      }
+    }
+    function addListner() {
+      canvas = document.getElementById("canvas");
+	  barBack = document.getElementById("barBack");
+      loadingBar = document.getElementById("loadingBar");
+      preloadBG = document.getElementById("preloadBG");
+      loadingAnim = document.getElementById("loadingAnim");
+      preloaderDiv = document.getElementById("loaderset");
+      preloadBG.style.display = 'block';
+      loadingBar.style.display = 'block';
+      loadingAnim.style.display = 'block';
+      preloaderDiv.style.display = 'block';
+	  barBack.style.display = 'block';
+      resizePreloader(null);
+      init();           
+    }
+    </script>
+    <div class="loaderset" id="loaderset">
+      <img id="preloadBG" class="img1" src="images/preload_mc.jpg?ems" />
+	  <img id="barBack" class="img2" src="images/bar_back.png?ems" />
+      <img id="loadingBar" class="img2" src="images/bar_mc.png?ems" />
+      <img id="loadingAnim" class="img2" src="images/loader2.gif" />
+    </div>
+    <script>
+      var PG = document.getElementById("loaderPJx");
+      caller(100, PG);
+    </script>
+    <div id="animation_container" style="background-color:rgba(0, 0, 0, 0); width:1280px; height:720px">
+      <canvas id="canvas" width="1280" height="720" style="position: absolute; display: block; background-color:rgba(0, 0, 0, 0);"></canvas>
+      <div id="dom_overlay_container" style="pointer-events:none; overflow:hidden; width:1280px; height:720px; position: absolute; left: 0px; top: 0px; display: block;">
+      </div>
+    </div>
+  </body>
+</html>

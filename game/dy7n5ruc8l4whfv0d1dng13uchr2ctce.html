@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Maths for Standard V — Knockout Mixed Operations</title>
+  <style>
+    :root{
+      --bg:#0b1220;        /* deep slate */
+      --panel:#0f172a;     /* slate-900 */
+      --accent:#22c55e;    /* green-500 */
+      --accent-2:#3b82f6;  /* blue-500 */
+      --danger:#ef4444;    /* red-500 */
+      --text:#e5e7eb;      /* gray-200 */
+      --muted:#9ca3af;     /* gray-400 */
+      --gold:#f59e0b;      /* amber-500 */
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Ubuntu,Arial,sans-serif;
+      background: radial-gradient(1200px 800px at 50% -10%, #172036, var(--bg));
+      color:var(--text);
+      min-height:100dvh; display:grid; place-items:center;
+    }
+    .shell{width:min(980px,92vw);} 
+    .card{
+      background:linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+      border:1px solid rgba(255,255,255,0.08); border-radius:20px; padding:22px; box-shadow:0 10px 30px rgba(0,0,0,.3);
+    }
+    h1{margin:0 0 8px; font-weight:800; letter-spacing:.3px;}
+    .subtitle{color:var(--muted); margin-top:0}
+    .row{display:flex; gap:14px; flex-wrap:wrap; align-items:center; justify-content:space-between}
+    .badge{background:rgba(255,255,255,.06); padding:10px 14px; border-radius:12px; font-weight:600}
+    .gold{color:var(--gold)}
+    .grid{display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:14px}
+    @media (max-width:560px){ .grid{grid-template-columns:1fr} }
+    button{
+      appearance:none; border:0; cursor:pointer; font-weight:700; letter-spacing:.3px;
+      background:var(--accent-2); color:white; padding:14px 18px; border-radius:14px; transition:.15s transform, .2s box-shadow;
+      box-shadow:0 8px 20px rgba(59,130,246,.35);
+    }
+    button:hover{transform:translateY(-1px)}
+    button:active{transform:translateY(0)}
+    .ghost{background:transparent; border:1px solid rgba(255,255,255,.18); box-shadow:none; color:var(--text)}
+    .danger{background:var(--danger); box-shadow:0 8px 20px rgba(239,68,68,.35)}
+    .ok{background:var(--accent); box-shadow:0 8px 20px rgba(34,197,94,.35)}
+
+    .board{ margin-top:16px; padding:20px; border-radius:16px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08)}
+    .question{ font-size:clamp(28px, 5.5vw, 44px); font-weight:900; text-align:center; margin:6px 0 14px}
+
+    .answers{ display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:12px }
+    @media (max-width:520px){ .answers{ grid-template-columns:1fr } }
+    .answers button{ font-size:22px; padding:16px; border-radius:14px }
+
+    .status{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:space-between; margin-top:8px }
+    .timerWrap{flex:1; height:12px; background:rgba(255,255,255,.08); border-radius:999px; overflow:hidden; border:1px solid rgba(255,255,255,.1)}
+    .timerBar{height:100%; width:100%; background:linear-gradient(90deg, var(--accent), var(--accent-2)); transform-origin:left center}
+    .small{font-size:14px; color:var(--muted)}
+
+    .pill{padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.18); font-size:12px; letter-spacing:.3px;}
+
+    .center{display:grid; place-items:center; text-align:center; gap:16px; padding:24px}
+    .big{font-size:clamp(36px, 7vw, 56px); font-weight:900}
+
+    .hide{display:none !important}
+    .pulse{ animation:pulse .9s infinite }
+    @keyframes pulse{ 0%{transform:scale(1)} 50%{transform:scale(1.04)} 100%{transform:scale(1)} }
+  </style>
+</head>
+<body>
+
+
+<script type="text/javascript">
+   window.SDK_OPTIONS = {
+      gameId: "dy7n5ruc8l4whfv0d1dng13uchr2ctce",
+      onEvent: function (a) {
+         switch (a.name) {
+            case "SDK_GAME_PAUSE":
+               // pause game logic / mute audio
+               break;
+            case "SDK_GAME_START":
+               // advertisement done, resume game logic and unmute audio
+               break;
+            case "SDK_READY":
+               // when sdk is ready
+               break;
+         }
+      }
+   };
+(function (a, b, c) {
+   var d = a.getElementsByTagName(b)[0];
+   a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+})(document, "script", "gamemonetize-sdk"); 
+</script>
+
+
+  <div class="shell">
+    <div class="card">
+      <div class="row">
+        <div>
+          <h1>Maths for Standard V</h1>
+          <p class="subtitle">Knockout mixed operations • +, − within 1–100 • ×, ÷ within 1–10 • One mistake ends the run</p>
+        </div>
+        <div class="row">
+          <div class="badge">Best: <span id="bestScore" class="gold">0</span></div>
+          <div class="badge">Streak: <span id="streak">0</span></div>
+          <div class="badge">Last: <span id="lastScore">0</span></div>
+        </div>
+      </div>
+
+      <!-- Intro / controls -->
+      <div id="intro" class="center">
+        <div class="big">Ready?</div>
+        <p class="small">Answer mixed-operation questions (addition, subtraction, multiplication, division). 
+          For +/− we use numbers 1–100; for ×/÷ we use 1–10. Choose the correct answer before time runs out. 
+          <strong>Knockout rule:</strong> one mistake (or a timeout) ends the game.</p>
+        <div class="row" style="justify-content:center; gap:10px">
+          <button id="startBtn" class="pulse">Start</button>
+          <button id="howBtn" class="ghost">How to play</button>
+        </div>
+        <p class="small">Tip: Use keys <strong>1–4</strong> to pick answers, <strong>Enter</strong> to start/restart.</p>
+      </div>
+
+      <!-- Gameplay board -->
+      <div id="board" class="board hide" role="group" aria-label="Question and answers">
+        <div class="status">
+          <div class="badge">Question <span id="qCount">1</span></div>
+          <div class="pill" id="syllabusPill">Mix: + − × ÷</div>
+          <div class="timerWrap" aria-label="Time remaining">
+            <div id="timerBar" class="timerBar"></div>
+          </div>
+          <div class="badge">Time: <span id="timeLeft">0</span>s</div>
+        </div>
+
+        <div id="question" class="question" aria-live="polite">42 − 17 = ?</div>
+        <div class="answers" id="answers"></div>
+      </div>
+
+      <!-- Game over / summary -->
+      <div id="summary" class="center hide">
+        <div class="big" id="summaryTitle">Game Over</div>
+        <p id="summaryReason" class="small"></p>
+        <div class="row" style="justify-content:center; gap:10px">
+          <button id="playAgainBtn">Play Again</button>
+          <button id="backBtn" class="ghost">Back</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (function(){
+    // ======= Config =======
+    const TIME_PER_Q = 12;           // seconds per question
+    const NUM_CHOICES = 4;           // options per question
+    const ADD_MIN = 1, ADD_MAX = 100;// for addition and subtraction
+    const MUL_MIN = 1, MUL_MAX = 10; // for multiplication and division
+
+    // ======= State =======
+    let streak = 0;
+    let best = Number(localStorage.getItem('std5.best')) || 0;
+    let last = Number(localStorage.getItem('std5.last')) || 0;
+    let currentAnswer = null;
+    let qIndex = 0;
+    let ticking = null;
+    let timeLeft = TIME_PER_Q;
+
+    // ======= Elements =======
+    const elBest = document.getElementById('bestScore');
+    const elStreak = document.getElementById('streak');
+    const elLast = document.getElementById('lastScore');
+    const elIntro = document.getElementById('intro');
+    const elBoard = document.getElementById('board');
+    const elSummary = document.getElementById('summary');
+    const elQ = document.getElementById('question');
+    const elAnswers = document.getElementById('answers');
+    const elTimerBar = document.getElementById('timerBar');
+    const elTimeLeft = document.getElementById('timeLeft');
+    const elQCount = document.getElementById('qCount');
+    const elSummaryTitle = document.getElementById('summaryTitle');
+    const elSummaryReason = document.getElementById('summaryReason');
+    const elSyllabus = document.getElementById('syllabusPill');
+
+    // initialize scores
+    elBest.textContent = best;
+    elLast.textContent = last;
+    elStreak.textContent = 0;
+
+    // ======= Helpers =======
+    const rand = (a,b)=> Math.floor(Math.random()*(b-a+1))+a;
+    const choice = arr => arr[rand(0, arr.length-1)];
+
+    function makeAddSub(){
+      const a = rand(ADD_MIN, ADD_MAX);
+      const b = rand(ADD_MIN, ADD_MAX);
+      if(Math.random() < 0.5){
+        // Addition
+        const ans = a + b;
+        return {text:`${a} + ${b} = ?`, ans, range:[2, 200], op:'+'};
+      } else {
+        // Subtraction (non-negative result)
+        const hi = Math.max(a,b), lo = Math.min(a,b);
+        const ans = hi - lo;
+        return {text:`${hi} − ${lo} = ?`, ans, range:[0, 100], op:'−'};
+      }
+    }
+
+    function makeMulDiv(){
+      if(Math.random() < 0.5){
+        // Multiplication
+        const a = rand(MUL_MIN, MUL_MAX);
+        const b = rand(MUL_MIN, MUL_MAX);
+        const ans = a * b;
+        return {text:`${a} × ${b} = ?`, ans, range:[1, 100], op:'×'};
+      } else {
+        // Division — ensure integer result
+        const a = rand(MUL_MIN, MUL_MAX);
+        const b = rand(MUL_MIN, MUL_MAX);
+        const dividend = a * b; // e.g., 6×7 = 42, then 42 ÷ 6 = 7
+        const ans = b;
+        return {text:`${dividend} ÷ ${a} = ?`, ans, range:[1, 10], op:'÷'};
+      }
+    }
+
+    function makeQuestion(){
+      // Mix: 50% add/sub, 50% mul/div
+      const maker = Math.random() < 0.5 ? makeAddSub : makeMulDiv;
+      const q = maker();
+      currentAnswer = q.ans;
+      qIndex++;
+      elQCount.textContent = qIndex;
+      elQ.textContent = q.text;
+      elSyllabus.textContent = `Ops: + − × ÷`;
+
+      // render choices
+      elAnswers.innerHTML = '';
+      uniqueChoices(q.ans, q.range).forEach((val, i) => {
+        const btn = document.createElement('button');
+        btn.textContent = val;
+        btn.addEventListener('click', () => choose(val));
+        elAnswers.appendChild(btn);
+      });
+      // start timer
+      startTimer();
+    }
+
+    function uniqueChoices(correct, [minR, maxR]){
+      const choices = new Set([correct]);
+      const spreadBase = Math.max(2, Math.min(10, Math.round(Math.abs(correct)/4)));
+      while(choices.size < NUM_CHOICES){
+        let d = correct + rand(-spreadBase, spreadBase);
+        if(d === correct) d += (Math.random()<.5? -1: 1) * (spreadBase + 1);
+        d = Math.min(maxR, Math.max(minR, d));
+        // avoid duplicates and ensure positive integers where needed
+        if(Number.isFinite(d)) choices.add(d);
+      }
+      // shuffle
+      const arr = Array.from(choices);
+      for(let i=arr.length-1;i>0;i--){
+        const j=rand(0,i); [arr[i],arr[j]]=[arr[j],arr[i]];
+      }
+      return arr;
+    }
+
+    function startTimer(){
+      stopTimer();
+      timeLeft = TIME_PER_Q;
+      elTimeLeft.textContent = timeLeft;
+      elTimerBar.style.transform = `scaleX(1)`;
+      const start = performance.now();
+      ticking = requestAnimationFrame(function tick(now){
+        const elapsed = (now - start) / 1000;
+        const left = Math.max(0, TIME_PER_Q - elapsed);
+        timeLeft = Math.ceil(left);
+        elTimeLeft.textContent = timeLeft;
+        const ratio = Math.max(0, left / TIME_PER_Q);
+        elTimerBar.style.transform = `scaleX(${ratio.toFixed(4)})`;
+        elTimerBar.style.background = ratio < 0.25 ? `linear-gradient(90deg, var(--danger), #dc2626)` :
+                                       ratio < 0.5 ? `linear-gradient(90deg, var(--gold), #f59e0b)` :
+                                                     `linear-gradient(90deg, var(--accent), var(--accent-2))`;
+        if(left <= 0){
+          stopTimer();
+          endGame('⏰ Time up!');
+        }else{
+          ticking = requestAnimationFrame(tick);
+        }
+      });
+    }
+
+    function stopTimer(){ if(ticking){ cancelAnimationFrame(ticking); ticking=null; } }
+
+    function choose(val){
+      if(val === currentAnswer){
+        streak++;
+        elStreak.textContent = streak;
+        flashBoard(true);
+        makeQuestion();
+      } else {
+
+        endGame(`❌ Incorrect. The answer was ${currentAnswer}.`);
+      }
+    }
+
+    function flashBoard(ok){
+      elBoard.style.outline = `3px solid ${ok? 'var(--accent)':'var(--danger)'}`;
+      setTimeout(()=>{ elBoard.style.outline='none'; }, 140);
+    }
+
+    function startGame(){
+      streak = 0; qIndex = 0; currentAnswer = null; elStreak.textContent = 0;
+      elIntro.classList.add('hide');
+      elSummary.classList.add('hide');
+      elBoard.classList.remove('hide');
+      makeQuestion();
+    }
+
+    function endGame(reason){
+      stopTimer();
+
+if (typeof sdk !== 'undefined' && sdk.showBanner !== 'undefined') {
+		sdk.showBanner();
+		}
+	console.log("Start");
+
+	setTimeout(() => {
+  	console.log("Waited 5 seconds!");
+	}, 5000);
+
+	console.log("End");
+
+
+
+      elBoard.classList.add('hide');
+      elSummary.classList.remove('hide');
+      elSummaryTitle.textContent = `Game Over — Streak ${streak}`;
+      elSummaryReason.textContent = reason || '';
+      // update scores
+      last = streak; localStorage.setItem('std5.last', String(last));
+      if(streak > best){ best = streak; localStorage.setItem('std5.best', String(best)); }
+      elBest.textContent = best; elLast.textContent = last;
+    }
+
+    // ======= Events =======
+    document.getElementById('startBtn').addEventListener('click', startGame);
+    document.getElementById('howBtn').addEventListener('click', ()=>{
+      alert('Pick the correct answer to each mixed-operation question within the time limit. +/− use numbers 1–100; ×/÷ use 1–10 (division always has a whole-number answer). One mistake or timeout ends the game. Build the longest streak you can!');
+    });
+    document.getElementById('playAgainBtn').addEventListener('click', startGame);
+    document.getElementById('backBtn').addEventListener('click', ()=>{
+      elSummary.classList.add('hide');
+      elIntro.classList.remove('hide');
+    });
+
+    // Keyboard support: 1-4 to choose, Enter to start/again
+    window.addEventListener('keydown', (e)=>{
+      if(e.key === 'Enter'){
+        if(!elBoard.classList.contains('hide')) return;
+        startGame();
+      }
+      const map = { '1':0, '2':1, '3':2, '4':3 };
+      if(map.hasOwnProperty(e.key) && !elBoard.classList.contains('hide')){
+        const idx = map[e.key];
+        const btn = elAnswers.children[idx];
+        if(btn) btn.click();
+      }
+    });
+
+    // Accessibility: focus the first answer each question for quick keyboard access
+    const observer = new MutationObserver(()=>{
+      const first = elAnswers.querySelector('button');
+      if(first) first.focus({preventScroll:true});
+    });
+    observer.observe(elAnswers, {childList:true});
+  })();
+  </script>
+</body>
+</html>

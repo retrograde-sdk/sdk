@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Four in a Row - Connect Four by Mapi Games</title>
+    
+    <!-- GameMonetize SDK -->
+    <script src="https://api.gamemonetize.com/sdk.js"></script>
+    <script>
+        window.GD_OPTIONS = {
+            "gameId": "qiqyhqdyht8hiys5n2lhn1jffcxjbvj3",
+            "onEvent": function(event) {
+                switch (event.name) {
+                    case "SDK_GAME_START":
+                        console.log('Game started');
+                        break;
+                    case "SDK_GAME_PAUSE":
+                        console.log('Game paused');
+                        break;
+                    case "SDK_GDPR_TRACKING":
+                        console.log('GDPR tracking');
+                        break;
+                    case "SDK_GDPR_TARGETING":
+                        console.log('GDPR targeting');
+                        break;
+                    case "SDK_GDPR_THIRD_PARTY":
+                        console.log('GDPR third party');
+                        break;
+                }
+            }
+        };
+    </script>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Home Screen -->
+    <div class="screen active" id="homeScreen">
+        <div class="home-screen">
+            <h1>Four in a Row</h1>
+            <p class="subtitle">Connect Four to Win!</p>
+            <button class="play-btn" onclick="startGame()">Play!</button>
+        </div>
+    </div>
+
+    <!-- Game Screen -->
+    <div class="screen" id="gameScreen">
+        <div class="game-screen">
+            <h2>Four in a Row</h2>
+            <div class="scoreboard">
+                Wins: <span id="wins">0</span> | 
+                Losses: <span id="losses">0</span> | 
+                Draws: <span id="draws">0</span>
+            </div>
+            <div class="difficulty-display" id="difficultyDisplay">
+                Difficulty: Easy
+            </div>
+            <div class="current-player" id="currentPlayer">
+                Your Turn - Drop Your Red Piece!
+            </div>
+            <div class="game-board-container">
+                <div class="column-buttons" id="columnButtons">
+                    <button class="column-btn" onclick="dropPiece(0)">↓</button>
+                    <button class="column-btn" onclick="dropPiece(1)">↓</button>
+                    <button class="column-btn" onclick="dropPiece(2)">↓</button>
+                    <button class="column-btn" onclick="dropPiece(3)">↓</button>
+                    <button class="column-btn" onclick="dropPiece(4)">↓</button>
+                    <button class="column-btn" onclick="dropPiece(5)">↓</button>
+                    <button class="column-btn" onclick="dropPiece(6)">↓</button>
+                </div>
+                <div class="game-board" id="gameBoard">
+                    <!-- 6 rows x 7 columns = 42 cells -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div class="screen" id="gameOverScreen">
+        <div class="game-over-screen">
+            <h2 id="gameOverMessage">Game Over!</h2>
+            <div class="result-animation" id="resultAnimation"></div>
+            <button class="restart-btn" onclick="goHome()">Play Again</button>
+        </div>
+    </div>
+
+    <!-- Particle Effects Container -->
+    <div class="particles" id="particles"></div>
+
+    <!-- Mapi Games Logo -->
+    <div class="mapi-logo">
+        Mapi Games
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>

@@ -1,0 +1,310 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brick Breaker Gala</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="chest-opening.css">
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="800" height="1200"></canvas>
+        
+        <!-- Game UI -->
+        <div id="gameUI">
+            <div id="topBar">
+                <div class="currency">
+                    <span class="coins">💰 <span id="coinCount">100</span></span>
+                    <span class="gems">💎 <span id="gemCount">0</span></span>
+                </div>
+                <div class="level-info">
+                    <span id="levelText">Level 1</span>
+                    <div class="lives">
+                        <span id="livesCount">❤️ 5</span>
+                    </div>
+                </div>
+                <div class="stars">
+                    <div class="star-objectives">
+                        <div class="star" data-star="1">⭐</div>
+                        <div class="star" data-star="2">⭐</div>
+                        <div class="star" data-star="3">⭐</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="gameStats">
+                <div class="stat">
+                    <span>Balls: <span id="ballCount">10</span></span>
+                </div>
+                <div class="stat">
+                    <span>Score: <span id="scoreCount">0</span></span>
+                </div>
+                <div class="stat">
+                    <span>Lines: <span id="linesCount">0</span></span>
+                </div>
+            </div>
+            
+            <div id="powerupBar">
+                <div class="powerup-slot" data-type="multiball" title="Shoot multiple balls at once">🔴 <span>0</span></div>
+                <div class="powerup-slot" data-type="fireball" title="Balls deal double damage for a duration">🔥 <span>0</span></div>
+                <div class="powerup-slot" data-type="freeze" title="Stops bricks from moving down for a turn">❄️ <span>0</span></div>
+                <div class="powerup-slot" data-type="laser" title="Destroy a random column of bricks">⚡ <span>0</span></div>
+                <div class="powerup-slot" data-type="bomb" title="Destroy bricks in an area around a random brick">💣 <span>0</span></div>
+            </div>
+        </div>
+        
+        <!-- Main Menu -->
+        <div id="mainMenu" class="menu active">
+            <h1>Brick Breaker Gala</h1>
+            
+            <div class="main-menu-stats">
+                <div class="hearts-display">
+                    <div class="hearts-container" id="heartsContainer">
+                        <!-- Hearts will be populated by JavaScript -->
+                    </div>
+                    <div class="hearts-info">
+                        <div id="heartsText">5/5 Lives</div>
+                        <div class="recharge-timer" id="rechargeTimer"></div>
+                        <button class="btn secondary fade-in-btn" id="refillHeartsBtn" style="margin-top: 10px; padding: 8px 16px; font-size: 14px; min-width: auto;">Refill</button>
+                    </div>
+                </div>
+                
+                <div class="level-map-preview">
+                    <h3>Level Progress</h3>
+                    <div class="next-chest">Next Chest: Level <span id="nextChestLevel">5</span></div>
+                    <div class="chest-progress">
+                        <div class="chest-progress-fill" id="chestProgressFill"></div>
+                    </div>
+                    <button class="btn" id="levelMapBtn">View Level Map</button>
+                </div>
+            </div>
+            
+            <div class="menu-buttons">
+                <button id="playBtn" class="btn primary">Play Level 1</button>
+                <button id="shopBtn" class="btn">Shop</button>
+                <button id="upgradesBtn" class="btn">Upgrades</button>
+                <div class="btn-with-notification">
+                    <button id="summerGalaBtn" class="btn">Summer Gala</button>
+                    <div class="notification-badge" id="summerGalaNotification" style="display: none;">!</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Shop Menu -->
+        <div id="shopMenu" class="menu">
+            <h2>Shop</h2>
+            <div class="currency menu-currency">
+                <span class="coins">💰 <span id="shopCoinCount">0</span></span>
+                <span class="gems">💎 <span id="shopGemCount">0</span></span>
+            </div>
+            <div class="shop-items">
+                <div class="shop-section">
+                    <h3>Powerup Packs</h3>
+                    <div class="powerup-packs">
+                        <div class="pack" data-type="multiball">
+                            <h4>Multiball Pack</h4>
+                            <p>Contains 3-7 multiball powerups</p>
+                            <button class="btn" data-cost="225">Buy - 225 💰</button>
+                        </div>
+                        <div class="pack" data-type="fireball">
+                            <h4>Fireball Pack</h4>
+                            <p>Contains 2-5 fireball powerups</p>
+                            <button class="btn" data-cost="270">Buy - 270 💰</button>
+                        </div>
+                        <div class="pack" data-type="freeze">
+                            <h4>Freeze Pack</h4>
+                            <p>Contains 4-9 freeze powerups</p>
+                            <button class="btn" data-cost="180">Buy - 180 💰</button>
+                        </div>
+                        <div class="pack" data-type="laser">
+                            <h4>Laser Pack</h4>
+                            <p>Contains 1-4 laser powerups</p>
+                            <button class="btn" data-cost="360">Buy - 360 💰</button>
+                        </div>
+                        <div class="pack" data-type="bomb">
+                            <h4>Bomb Pack</h4>
+                            <p>Contains 2-6 bomb powerups</p>
+                            <button class="btn" data-cost="315">Buy - 315 💰</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button class="btn back-btn">Back</button>
+        </div>
+        
+        <!-- Upgrades Menu -->
+        <div id="upgradesMenu" class="menu">
+            <h2>Upgrades</h2>
+            <div class="currency menu-currency">
+                <span class="coins">💰 <span id="upgradesCoinCount">0</span></span>
+                <span class="gems">💎 <span id="upgradesGemCount">0</span></span>
+            </div>
+            <div class="upgrade-tree">
+                <div class="upgrade-section">
+                    <h3>Ball Upgrades</h3>
+                    <div class="upgrade-item">
+                        <h4>Extra Balls</h4>
+                        <p>+1 ball per level</p>
+                        <button class="upgrade-btn" data-upgrade="extraBalls" data-cost="100">
+                            Upgrade - 100 💰 (Level <span class="upgrade-level">0</span>)
+                        </button>
+                    </div>
+                    <div class="upgrade-item">
+                        <h4>Critical Hit</h4>
+                        <p>Chance for double damage</p>
+                        <button class="upgrade-btn" data-upgrade="critChance" data-cost="150">
+                            Upgrade - 150 💎 (Level <span class="upgrade-level">0</span>/5)
+                        </button>
+                    </div>
+                </div>
+                <div class="upgrade-section">
+                    <h3>Powerup Upgrades</h3>
+                    <div class="upgrade-item">
+                        <h4>Multiball Power</h4>
+                        <p>More balls from multiball</p>
+                        <button class="upgrade-btn" data-upgrade="multiballPower" data-cost="80">
+                            Upgrade - 80 💰 (Level <span class="upgrade-level">0</span>/8)
+                        </button>
+                    </div>
+                    <div class="upgrade-item">
+                        <h4>Freeze Duration</h4>
+                        <p>Longer freeze effect</p>
+                        <button class="upgrade-btn" data-upgrade="freezeDuration" data-cost="120">
+                            Upgrade - 120 💰 (Level <span class="upgrade-level">0</span>/6)
+                        </button>
+                    </div>
+                </div>
+                <div class="upgrade-section">
+                    <h3>Life Upgrades</h3>
+                    <div class="upgrade-item">
+                        <h4>Max Lives</h4>
+                        <p>Increase maximum lives</p>
+                        <button class="upgrade-btn" data-upgrade="maxLives" data-cost="200">
+                            Upgrade - 200 💎 (Level <span class="upgrade-level">0</span>/7)
+                        </button>
+                    </div>
+                    <div class="upgrade-item">
+                        <h4>Heart Recovery Speed</h4>
+                        <p>Faster life regeneration</p>
+                        <button class="upgrade-btn" data-upgrade="heartRecovery" data-cost="100">
+                            Upgrade - 100 💎 (Level <span class="upgrade-level">0</span>/10)
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <button class="btn back-btn">Back</button>
+        </div>
+        
+        <!-- Level Map Menu -->
+        <div id="levelMapMenu" class="menu">
+            <h2>Level Map</h2>
+            <div class="currency menu-currency">
+                <span class="coins">💰 <span id="levelMapCoinCount">0</span></span>
+                <span class="gems">💎 <span id="levelMapGemCount">0</span></span>
+            </div>
+            <div class="level-map-container" id="levelMapContainer">
+                <!-- Level map will be populated here -->
+            </div>
+            <button class="btn back-btn">Back</button>
+        </div>
+        
+        <!-- Summer Gala -->
+        <div id="summerGalaMenu" class="menu">
+            <div class="summer-background">
+                <h2>Summer Gala</h2>
+                <p>Complete levels and earn stars to unlock rich rewards</p>
+                <div class="gala-progress">
+                    <div class="stars-count">
+                        <span>⭐ <span id="totalStars">0</span> Stars</span>
+                    </div>
+                    <div class="gala-progress-bar-container">
+                         <div class="gala-progress-bar" id="galaProgressBar"></div>
+                         <div class="gala-progress-text" id="galaProgressText">0 / 0 Stars</div>
+                    </div>
+                    <div class="reward-track">
+                        <div class="track-container">
+                            <div id="rewardTrack" class="reward-items">
+                                <!-- Reward track items will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button class="btn back-btn">Back</button>
+        </div>
+        
+        <!-- Game Over Menu -->
+        <div id="gameOverMenu" class="menu">
+            <h2>Game Over!</h2>
+            <div class="game-over-content">
+                <div class="final-score">
+                    <p>Final Score: <span id="finalScore">0</span></p>
+                    <div class="stars-earned">
+                        <div class="star-display">
+                            <span class="star">⭐</span>
+                            <span class="star">⭐</span>
+                            <span class="star">⭐</span>
+                        </div>
+                    </div>
+                </div>
+                <div id="consolationMessage" class="consolation-message"></div>
+                <div class="game-over-buttons">
+                    <button id="reviveBtn" class="btn primary">Revive - 50 💰</button>
+                    <button id="retryBtn" class="btn">Retry Level</button>
+                    <button id="menuBtn" class="btn">Main Menu</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Level Complete -->
+        <div id="levelCompleteMenu" class="menu">
+            <h2>Level Complete!</h2>
+            <div class="level-complete-content">
+                <div class="score-summary">
+                    <p>Score: <span id="levelScore">0</span></p>
+                    <div class="stars-earned">
+                        <div class="star-display">
+                            <span class="star">⭐</span>
+                            <span class="star">⭐</span>
+                            <span class="star">⭐</span>
+                        </div>
+                    </div>
+                    <div class="rewards">
+                        <p>Coins Earned: <span id="coinsEarned">0</span> 💰</p>
+                    </div>
+                </div>
+                <div class="level-complete-buttons">
+                    <button id="nextLevelBtn" class="btn primary">Next Level</button>
+                    <button id="levelMenuBtn" class="btn">Main Menu</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chest Opening Modal -->
+        <div id="chestModal" class="menu">
+            <div class="chest-opening-container" id="chestOpeningContainer">
+                <div class="chest-animation-wrapper">
+                    <div class="chest-box">
+                        <div class="chest-icon">📦</div>
+                        <div class="click-to-open-text">CLICK TO OPEN</div>
+                    </div>
+                    <div class="chest-rewards">
+                        <div class="chest-rarity" id="chestRarity"></div>
+                        <div class="reward-items-display" id="rewardItemsDisplay">
+                            <!-- Rewards populated here -->
+                        </div>
+                    </div>
+                </div>
+                <button class="btn primary" id="chestCloseBtn">Collect Rewards</button>
+                <canvas id="confettiCanvas"></canvas>
+            </div>
+        </div>
+
+        <!-- Snackbar Element -->
+        <div id="snackbar"></div>
+
+    </div>
+    
+    <script type="module" src="game.js"></script>
+</body>
+</html>

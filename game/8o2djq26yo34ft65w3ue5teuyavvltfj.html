@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script type="text/javascript">
+  window.SDK_OPTIONS = {
+    gameId: "xexudsmos0feuy3fv92lcqclvfx8rlb1",
+    onEvent: function (a) {
+      switch (a.name) {
+        case "SDK_GAME_PAUSE":
+          // Pause music or gameplay if needed
+          break;
+        case "SDK_GAME_START":
+          // Resume music or gameplay
+          break;
+        case "SDK_READY":
+          console.log("✅ GameMonetize SDK is ready.");
+          break;
+        case "SDK_ERROR":
+          console.warn("⚠️ GameMonetize SDK error occurred.");
+          break;
+      }
+    }
+  };
+
+  (function (a, b, c) {
+    var d = a.getElementsByTagName(b)[0];
+    if (!a.getElementById(c)) {
+      var s = a.createElement(b);
+      s.id = c;
+      s.src = "https://api.gamemonetize.com/sdk.js";
+      d.parentNode.insertBefore(s, d);
+    }
+  })(document, "script", "gamemonetize-sdk");
+</script>
+
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Water Sort Legend</title>
+  <link rel="stylesheet" href="style.css" />
+
+
+</head>
+<body>
+<!-- Audio -->
+<audio id="pour-sound" src="Assets/DropWav.wav"></audio>
+<audio id="win-sound" src="Assets/LevelCompleteWav.wav"></audio>
+<audio id="click-sound" src="Assets/MergeWav.wav"></audio>
+
+<!-- Flying Coin -->
+<div id="coin-fly">🪙</div>
+
+<!-- Main Menu -->
+<div id="main-menu" class="screen active">
+  <h1 style="font-size: 2.5em;">💧 Water Sort Legend</h1>
+  <p id="coin-display">🪙 Coins: 0</p>
+  <div style="margin-top: 20px;">
+    <button onclick="startGameMusic()" style="font-size: 1.5em; padding: 12px 24px;">▶️ Play</button>
+    <button onclick="showShop()" style="font-size: 1.5em; padding: 12px 24px;">🛒 Shop</button>
+  </div>
+</div>
+
+<!-- Level Select -->
+<div id="level-select" class="screen hidden">
+  <h2 style="font-size: 2em;">📋 Select Level</h2>
+  <div>
+    <button onclick="loadLevelList('easy')">Easy</button>
+    <button onclick="loadLevelList('medium')">Medium</button>
+    <button onclick="loadLevelList('hard')">Hard</button>
+  </div>
+  <div id="level-list" class="level-buttons"></div>
+  <button onclick="backToMenu()">⬅️ Back</button>
+</div>
+
+<!-- Game Screen -->
+<div id="game-screen" class="screen hidden">
+  <canvas id="gameCanvas" width="400" height="500"></canvas>
+  <p id="stars-earned">⭐ Moves: 0</p>
+  <p id="coin-display-game">🪙 Coins: 0</p>
+  <button onclick="backToMenu()">🏠 Menu</button>
+</div>
+
+<!-- Level Complete -->
+<div id="level-complete" class="screen hidden">
+  <h2>🎉 Level Complete!</h2>
+  <p id="earned-coins">You earned coins!</p>
+  <p id="iq-score">🧠 IQ: </p>
+  <p id="star-score">⭐ Moves: </p>
+  <button onclick="nextLevel()">▶️ Continue</button>
+  <button onclick="showLevelSelect()">📋 Level Select</button>
+</div>
+
+<!-- Shop -->
+<div id="shop" class="screen hidden">
+  <h2>🛒 Upgrade Shop</h2>
+  <p id="coin-display-shop">🪙 Coins: 0</p>
+  <button onclick="buyUpgrade('extraTube')">➕ Extra Tube - 50 Coins</button>
+  <button onclick="buyUpgrade('coinBooster')">💰 Coin Booster - 100 Coins</button>
+  <button onclick="buyUpgrade('colorHelper')">🎨 Color Helper - 150 Coins</button>
+  <button onclick="showLevelSelect()">⬅️ Back</button>
+</div>
+
+<!-- Menu Logic -->
+<script>
+  function startGame() {
+    document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+    document.getElementById('level-select').classList.remove('hidden');
+  }
+
+  function backToMenu() {
+    document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+    document.getElementById('main-menu').classList.remove('hidden');
+  }
+
+  function showShop() {
+    document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+    document.getElementById('shop').classList.remove('hidden');
+  }
+
+  function toggleMusic() {
+    const bgMusic = document.getElementById("bg-music");
+    bgMusic.muted = !bgMusic.muted;
+  }
+</script>
+
+<!-- Game Logic -->
+<script src="game.js"></script>
+</body>
+</html>

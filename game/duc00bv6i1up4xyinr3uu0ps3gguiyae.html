@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <title>Puzzle Master</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" type="image/x-icon" href="images/jigsaw.png">
+    <link rel="stylesheet" href="css/slick.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <!-- Timer Container -->
+    <div class="timer-container" id="timerContainer">
+        <div class="timer-display">
+            <i class="fas fa-clock timer-icon"></i>
+            <span id="timerDisplay">00:00</span>
+        </div>
+    </div>
+    <div class="puzzle-pieces">
+        <div class="floating-piece"></div>
+        <div class="floating-piece"></div>
+        <div class="floating-piece"></div>
+        <div class="floating-piece"></div>
+        <div class="floating-piece"></div>
+        <div class="floating-piece"></div>
+    </div>
+    <!-- Settings Button -->
+    <button class="settings-btn">
+        <i class="fas fa-cog"></i>
+    </button>
+    <div class="preloader">
+        <div class="logo">🧩 Puzzle Master</div>
+        <div class="loading-text">
+            Preparing your puzzle experience
+            <div class="loading-dots">
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+            </div>
+        </div>
+        <div class="progress-container">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text" id="progressText">Loading... 0%</div>
+        </div>
+    </div>
+    <div class="wrapper">
+        <div class="slide" id="slide0"></div>
+    </div>
+    <!-- Picture Selection Menu -->
+    <div class="picture-selector">
+        <div class="selector-content">
+            <h2>Select a Image</h2>
+            <div class="picture-options">
+                <div class="picture-option active" data-image="images/hourse.png">
+                    <img src="images/hourse.png" alt="Jerry">
+                    <div class="checkmark"><i class="fas fa-check"></i></div>
+                </div>
+                <div class="picture-option" data-image="images/monkey.png">
+                    <img src="images/monkey.png" alt="Micky">
+                    <div class="checkmark"><i class="fas fa-check"></i></div>
+                </div>
+                <div class="picture-option" data-image="images/lion.png">
+                    <img src="images/lion.png" alt="Superman">
+                    <div class="checkmark"><i class="fas fa-check"></i></div>
+                </div>
+                <div class="picture-option" data-image="images/elephant.png">
+                    <img src="images/elephant.png" alt="mini">
+                    <div class="checkmark"><i class="fas fa-check"></i></div>
+                </div>
+                <div class="picture-option" data-image="images/cat.jpg">
+                    <img src="images/cat.jpg" alt="cat">
+                    <div class="checkmark"><i class="fas fa-check"></i></div>
+                </div>
+            </div>
+            <button class="start-btn">Start Puzzle</button>
+        </div>
+    </div>
+    <script>
+
+        // Timer functionality
+        let timerInterval;
+        let seconds = 0;
+        const timerContainer = document.getElementById('timerContainer');
+        const timerDisplay = document.getElementById('timerDisplay');
+        timerInterval = setInterval(() => {
+            seconds++;
+            updateTimerDisplay();
+        }, 1000);
+
+        function startTimer() {
+
+            seconds = 0;
+            updateTimerDisplay();
+
+
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                seconds++;
+                updateTimerDisplay();
+            }, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+
+            // Add celebration effect when timer stops
+            timerContainer.style.backgroundColor = '#4CAF50';
+            timerContainer.style.boxShadow = '0 0 20px #4CAF50';
+
+            setTimeout(() => {
+                timerContainer.style.backgroundColor = '';
+                timerContainer.style.boxShadow = '';
+            }, 2000);
+
+            if (typeof sdk !== 'undefined' && sdk.showBanner !== 'undefined') {
+                sdk.showBanner();
+            }
+        }
+
+        function resetTimer() {
+            clearInterval(timerInterval);
+            seconds = 0;
+            updateTimerDisplay();
+            timerContainer.classList.remove('active');
+            if (typeof sdk !== 'undefined' && sdk.showBanner !== 'undefined') {
+                sdk.showBanner();
+            }
+        }
+
+        function updateTimerDisplay() {
+
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+
+        }
+
+
+        let progress = 0;
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        // Store current puzzle settings
+        const puzzleSettings = {
+            currentImage: 'images/hourse.png',
+            gridSize: 3
+        };
+        // Initialize puzzle with selected image
+        function initPuzzle(image) {
+            document.querySelector('#slide0').innerHTML = '';
+            // Start the timer when puzzle begins
+            startTimer();
+            puzzleSettings.currentImage = image;
+            new Jigsaw().init({
+                container: '#slide0',
+                image: image,
+                gridSize: puzzleSettings.gridSize
+            });
+        }
+
+        const loadingMessages = [
+            "Initializing puzzle pieces...",
+            "Loading beautiful images...",
+            "Setting up game board...",
+            "Preparing drag & drop...",
+            "Configuring hint system...",
+            "Optimizing for your device...",
+            "Adding final touches...",
+            "Almost ready to play!"
+        ];
+
+        let messageIndex = 0;
+
+        const interval = setInterval(() => {
+            const increment = Math.random() * 15 + 5;
+            progress = Math.min(progress + increment, 100);
+
+            progressFill.style.width = progress + '%';
+            progressText.textContent = `Loading... ${Math.floor(progress)}%`;
+
+            const newMessageIndex = Math.floor((progress / 100) * loadingMessages.length);
+            if (newMessageIndex !== messageIndex && newMessageIndex < loadingMessages.length) {
+                messageIndex = newMessageIndex;
+                document.querySelector('.loading-text').innerHTML = `
+                    ${loadingMessages[messageIndex]}
+                    <div class="loading-dots">
+                        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+                    </div>
+                `;
+            }
+
+            if (progress >= 100) {
+               
+                clearInterval(interval);
+                progressFill.style.width = '100%';
+                progressText.textContent = 'Loading... 100%';
+
+                document.querySelector('.loading-text').innerHTML = `Ready to play! 🎉
+                                        <div class="loading-dots">
+                                            <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+                                        </div>`;
+
+                setTimeout(() => {
+                    document.querySelector('.preloader').style.display = 'none';
+                    document.querySelector('.wrapper').style.display = 'block';
+                    document.querySelector('.timer-container').style.display = 'block';
+
+                    document.body.style.overflow = 'auto';
+                }, 1000);
+            }
+        }, 150);
+
+        document.querySelector('.logo').addEventListener('mouseenter', function () {
+            this.style.transform = 'scale(1.1)';
+            this.style.textShadow = '0 6px 25px rgba(255,255,255,0.4)';
+        });
+
+        document.querySelector('.logo').addEventListener('mouseleave', function () {
+            this.style.transform = 'scale(1)';
+            this.style.textShadow = '0 4px 20px rgba(0,0,0,0.3)';
+        });
+
+
+        // Show picture selector
+        function showPictureSelector() {
+            document.querySelector('.picture-selector').classList.add('active');
+            if (typeof sdk !== 'undefined' && sdk.showBanner !== 'undefined') {
+                sdk.showBanner();
+            }
+        }
+
+        // Update selected picture
+        document.querySelectorAll('.picture-option').forEach(option => {
+            option.addEventListener('click', function () {
+                document.querySelectorAll('.picture-option').forEach(opt => {
+                    opt.classList.remove('active');
+                });
+                this.classList.add('active');
+            });
+        });
+        // Start puzzle button
+        document.querySelector('.start-btn').addEventListener('click', function () {
+
+            const selectedImage = document.querySelector('.picture-option.active').dataset.image;
+            puzzleSettings.currentImage = selectedImage;
+            document.querySelector('.picture-selector').classList.remove('active');
+
+            initPuzzle(selectedImage);
+        });
+
+        // Settings button
+        document.querySelector('.settings-btn').addEventListener('click', function () {
+            showPictureSelector();
+        });
+        // Start puzzle button
+        document.querySelector('.start-btn').addEventListener('click', function () {
+            const selectedImage = document.querySelector('.picture-option.active').dataset.image;
+            puzzleSettings.currentImage = selectedImage;
+            document.querySelector('.picture-selector').classList.remove('active');
+            initPuzzle(selectedImage);
+        });
+    </script>
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script src="js/slick.min.js"></script>
+    <script src="js/jigsaw.js"></script>
+    <script src="js/script.js"></script>
+    <script type="text/javascript">
+        window.SDK_OPTIONS = {
+            gameId: "duc00bv6i1up4xyinr3uu0ps3gguiyae",
+            onEvent: function (a) {
+                switch (a.name) {
+                    case "SDK_GAME_PAUSE":
+                        // pause game logic / mute audio
+                        break;
+                    case "SDK_GAME_START":
+                        // advertisement done, resume game logic and unmute audio
+                        break;
+                    case "SDK_READY":
+                        // when sdk is ready
+                        break;
+                }
+            }
+        };
+        (function (a, b, c) {
+            var d = a.getElementsByTagName(b)[0];
+            a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+        })(document, "script", "gamemonetize-sdk"); 
+    </script>
+</body>
+
+</html>

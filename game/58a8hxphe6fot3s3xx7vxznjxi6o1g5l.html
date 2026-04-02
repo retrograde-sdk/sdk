@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes, viewport-fit=cover" />
+
+    <title>Guns vs Magic</title>
+    <link rel="icon" href="favicon.ico" />
+
+    <style>
+        :root {
+            --bg: #000000;
+            --text: rgba(255,255,255,.92);
+            --muted: rgba(255,255,255,.65);
+            --accent: #09d8f8;
+            --radius: 16px;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            overflow: hidden;
+            font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Helvetica Neue", sans-serif;
+        }
+
+            body.is-mobile #unity-container {
+                height: calc(var(--vh, 1vh) * 100);
+                width: 100vw;
+            }
+
+            body.is-mobile, body.is-mobile html {
+                overscroll-behavior: none;
+                touch-action: manipulation;
+            }
+
+        #unity-container {
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0,0,0,0);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #unity-canvas {
+            display: block;
+            outline: none;
+            background: var(--bg);
+            width: 100%;
+            height: 100%;
+        }
+
+        #overlay {
+            position: absolute;
+            inset: 0;
+            display: grid;
+            place-items: center;
+            background: rgba(0,0,0,.55);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 1000;
+        }
+
+            #overlay.hiding {
+                opacity: 0;
+            }
+
+            #overlay.force-visible {
+                display: grid !important;
+                opacity: 1 !important;
+            }
+
+        .loader {
+            width: min(520px, 92vw);
+            padding: 18px 18px 16px;
+            border-radius: var(--radius);
+            background: rgba(0,0,0,.55);
+            border: 1px solid rgba(255,255,255,.14);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+            .brand img {
+                width: 52px;
+                height: 52px;
+                object-fit: contain;
+                filter: drop-shadow(0 10px 25px rgba(0,0,0,.55));
+            }
+
+            .brand .title {
+                display: flex;
+                flex-direction: column;
+                line-height: 1.1;
+            }
+
+                .brand .title strong {
+                    font-size: 14px;
+                    letter-spacing: .2px;
+                }
+
+                .brand .title span {
+                    font-size: 12px;
+                    color: var(--muted);
+                }
+
+        .progress {
+            height: 10px;
+            border-radius: 999px;
+            background: rgba(255,255,255,.12);
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,.12);
+        }
+
+        #progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, rgba(9,216,248,.95), rgba(255,38,99,.85));
+            border-radius: 999px;
+            transition: width .2s ease-out;
+        }
+
+        .meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-top: 10px;
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        #status {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 72%;
+            transition: opacity 0.2s ease;
+        }
+
+        #percent {
+            font-variant-numeric: tabular-nums;
+            min-width: 48px;
+            text-align: right;
+        }
+
+        #unity-warning {
+            position: absolute;
+            left: 12px;
+            right: 12px;
+            bottom: 12px;
+            display: none;
+            gap: 8px;
+            flex-direction: column;
+            z-index: 5;
+        }
+
+        .banner {
+            border-radius: 12px;
+            padding: 10px 12px;
+            border: 1px solid rgba(255,255,255,.14);
+            background: rgba(0,0,0,.55);
+            font-size: 13px;
+            line-height: 1.25;
+        }
+
+            .banner.err {
+                border-color: rgba(255, 59, 48, .55);
+            }
+
+        #landscape-warning {
+            position: fixed;
+            inset: 0;
+            display: none;
+            place-items: center;
+            background: var(--bg);
+            z-index: 10000;
+            padding: 0;
+        }
+
+            #landscape-warning.show {
+                display: grid;
+            }
+
+        .landscape-content {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+            .landscape-content img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                transition: none !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="landscape-warning" aria-live="assertive" role="alert">
+        <div class="landscape-content">
+            <img src="portrait.png" alt="Please rotate your device" />
+        </div>
+    </div>
+
+    <div id="unity-container">
+        <canvas id="unity-canvas" width="600" height="960" tabindex="-1"></canvas>
+
+        <div id="overlay" class="force-visible" aria-live="polite" aria-busy="true">
+            <div class="loader" role="status">
+                <div class="brand">
+                    <img id="game-logo" src="TemplateData/webgl-logo.png" alt="Guns vs Magic"
+                         onerror="this.onerror=null; this.src='logo.png'; this.onerror=function(){this.style.display='none';}" />
+                    <div class="title">
+                        <strong>Guns vs Magic</strong>
+                        <span>Loading…</span>
+                    </div>
+                </div>
+
+                <div class="progress" aria-hidden="true">
+                    <div id="progress-bar"></div>
+                </div>
+
+                <div class="meta">
+                    <div id="status">Preparing…</div>
+                    <div id="percent">0%</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="unity-warning" aria-live="assertive"></div>
+    </div>
+
+    <script>
+    function unityShowBanner(msg, type) {
+        const warningBanner = document.querySelector("#unity-warning");
+        warningBanner.style.display = "flex";
+
+        const div = document.createElement("div");
+        div.className = "banner err";
+        div.textContent = String(msg);
+        warningBanner.appendChild(div);
+    }
+
+    const buildUrl = "Build";
+    const loaderUrl = buildUrl + "/7561b7f430ff555f4515e0eff0205020.loader.js";
+    const config = {
+        arguments: [],
+        dataUrl: buildUrl + "/82f36b298e6af0c58d7207c3f2cf46f2.data",
+        frameworkUrl: buildUrl + "/eb9c3f6c9e1e8e9401870eff58db3da1.framework.js",
+        codeUrl: buildUrl + "/3397d3ee7b724dc63fb3f55247e67b41.wasm",
+        streamingAssetsUrl: "StreamingAssets",
+        companyName: "Smokoko",
+        productName: "Guns vs Magic",
+        productVersion: "1.1.8",
+        showBanner: unityShowBanner
+    };
+
+    const canvas = document.querySelector("#unity-canvas");
+    const overlay = document.querySelector("#overlay");
+    const progressBar = document.querySelector("#progress-bar");
+    const percentEl = document.querySelector("#percent");
+    const statusEl = document.querySelector("#status");
+    const landscapeWarning = document.querySelector("#landscape-warning");
+
+    overlay.classList.add('force-visible');
+
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                if (overlay.style.display === 'none' && overlay.classList.contains('force-visible')) {
+                    overlay.style.display = 'grid';
+                }
+            }
+        });
+    });
+
+    observer.observe(overlay, {
+        attributes: true,
+        attributeFilter: ['style', 'class']
+    });
+
+
+    function setStatus(text){
+        statusEl.textContent = text;
+    }
+
+    let gameScriptsStarted = false;
+    let hideTimeout = null;
+
+    window.updateUnityLoadingStatus = function(status, progress) {
+        gameScriptsStarted = true;
+        const p = Math.round(progress * 100);
+        progressBar.style.width = p + "%";
+        percentEl.textContent = p + "%";
+        setStatus(status);
+
+        if (hideTimeout) {
+            clearTimeout(hideTimeout);
+        }
+
+        hideTimeout = setTimeout(function() {
+            window.hideUnityLoader();
+        }, 15000);
+    };
+
+    window.hideUnityLoader = function() {
+        if (hideTimeout) {
+            clearTimeout(hideTimeout);
+            hideTimeout = null;
+        }
+
+        overlay.classList.remove('force-visible');
+        observer.disconnect();
+
+        overlay.classList.add('hiding');
+        setTimeout(function() {
+            overlay.style.display = "none";
+        }, 300);
+    };
+
+    function isMobileDevice() {
+        const ua = navigator.userAgent || navigator.vendor || window.opera;
+        const isMobileUA = /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+        const hasTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0);
+        const isSmallScreen = window.screen.width <= 768 || window.innerWidth <= 768;
+        const hasOrientation = typeof window.orientation !== 'undefined' || 'orientation' in window || 'onorientationchange' in window;
+
+        return isMobileUA || (hasTouch && isSmallScreen) || hasOrientation;
+    }
+
+    function applyMobileViewportFix(){
+        if (!isMobileDevice()) return;
+
+        document.body.classList.add("is-mobile");
+
+        const vv = window.visualViewport;
+
+        function setVh(){
+            const h = vv ? vv.height : window.innerHeight;
+            document.documentElement.style.setProperty("--vh", (h * 0.01) + "px");
+            window.scrollTo(0, 0);
+        }
+
+        setVh();
+
+        window.addEventListener("resize", setVh, { passive: true });
+
+        if (vv){
+            vv.addEventListener("resize", setVh, { passive: true });
+            vv.addEventListener("scroll", setVh, { passive: true });
+        }
+    }
+
+    applyMobileViewportFix();
+
+    setStatus("Downloading…");
+
+    const script = document.createElement("script");
+    script.src = loaderUrl;
+    script.onload = () => {
+        createUnityInstance(canvas, config, (progress) => {
+            const p = Math.round(progress * 80);
+            progressBar.style.width = p + "%";
+            percentEl.textContent = p + "%";
+            setStatus(p < 80 ? "Loading…" : "Initializing game…");
+        }).then((unityInstance) => {
+            overlay.style.display = 'grid';
+            overlay.classList.add('force-visible');
+            progressBar.style.width = "80%";
+            percentEl.textContent = "80%";
+            setStatus("Starting game systems…");
+            window.unityInstance = unityInstance;
+        }).catch((message) => {
+            overlay.style.display = "none";
+            unityShowBanner(message, "error");
+        });
+    };
+    script.onerror = () => {
+        overlay.style.display = "none";
+        unityShowBanner("Failed to load Unity loader script. Check Build folder paths.", "error");
+    };
+    document.body.appendChild(script);
+
+    function resizeCanvas() {
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        
+        canvas.width = Math.round(viewportWidth);
+        canvas.height = Math.round(viewportHeight);
+        canvas.style.width = Math.round(viewportWidth) + 'px';
+        canvas.style.height = Math.round(viewportHeight) + 'px';
+    }
+
+    resizeCanvas();
+
+    window.addEventListener('resize', resizeCanvas, { passive: true });
+
+    </script>
+</body>
+</html>

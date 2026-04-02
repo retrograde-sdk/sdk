@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Easiest Maths — Negatives Practice (Std 3–5)</title>
+<style>
+  :root{
+    --bg:#fffaf0; /* soft cream */
+    --panel:#fff6e6;
+    --text:#0b2140;
+    --muted:#6b7b8c;
+    --primary:#ffb86b; /* warm peach */
+    --accent:#6ed3a9;  /* mint */
+    --accent2:#7cc6ff; /* sky */
+    --danger:#ff6b6b;
+    --card:#ffffff;
+    --shadow: 0 12px 30px rgba(11,33,64,0.08);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:linear-gradient(180deg,var(--bg),#fff6f0); color:var(--text);
+    font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial; display:flex; align-items:center; justify-content:center;
+    min-height:100vh; padding:18px;
+  }
+  .wrap{width:min(980px,96vw)}
+  .card{background:var(--card); border-radius:16px; padding:18px; box-shadow:var(--shadow); border:1px solid rgba(11,33,64,0.04)}
+  header{display:flex; justify-content:space-between; align-items:center; gap:12px}
+  h1{margin:0; font-size:20px; letter-spacing:-0.2px}
+  .muted{color:var(--muted); font-size:13px}
+  .badges{display:flex; gap:8px; align-items:center}
+  .badge{background:linear-gradient(90deg,rgba(11,33,64,0.04),rgba(11,33,64,0.02)); padding:8px 10px; border-radius:10px; font-weight:700; font-size:13px}
+  main{margin-top:14px}
+  .intro{display:grid; gap:10px; justify-items:center; padding:16px 8px}
+  .big-q{font-weight:900; font-size:64px; color:var(--primary); margin:4px}
+  .question{font-weight:800; font-size:22px; text-align:center}
+  .sub{color:var(--muted); font-size:13px; text-align:center}
+  .choices{display:grid; gap:10px; grid-template-columns:repeat(2,1fr); margin-top:12px}
+  @media (max-width:640px){ .choices{grid-template-columns:1fr} .big-q{font-size:56px} }
+  .choice{
+    position:relative; padding:14px 16px; border-radius:12px; cursor:pointer; font-weight:800; font-size:18px;
+    background:linear-gradient(180deg, rgba(110,211,169,0.12), rgba(124,198,255,0.04));
+    border:1px solid rgba(11,33,64,0.06); color:var(--text); display:flex; align-items:center; gap:10px;
+  }
+  .choice:hover{transform:translateY(-3px); box-shadow:0 14px 30px rgba(11,33,64,0.06)}
+  .dot{
+    width:34px; height:34px; border-radius:999px; display:inline-grid; place-items:center;
+    background:linear-gradient(90deg,var(--primary),var(--accent)); color:#052033; font-weight:900;
+  }
+  .status{display:flex; gap:10px; align-items:center; margin-top:10px}
+  .timer{flex:1; height:10px; background:rgba(11,33,64,0.06); border-radius:999px; overflow:hidden}
+  .bar{height:100%; transform-origin:left center; background:linear-gradient(90deg,var(--accent),var(--accent2))}
+  .controls{display:flex; gap:8px; justify-content:center; margin-top:12px}
+  .btn{background:var(--accent); border:0; padding:10px 14px; border-radius:10px; font-weight:800; color:#052033; cursor:pointer}
+  .ghost{background:transparent; border:1px solid rgba(11,33,64,0.06); color:var(--text)}
+  .msg{margin-top:10px; color:var(--muted); text-align:center}
+  footer{margin-top:10px; text-align:center; font-size:12px; color:var(--muted)}
+</style>
+</head>
+<body>
+
+<script type="text/javascript">
+   window.SDK_OPTIONS = {
+      gameId: "qomy2w6xc1qiu1fr9lq4lt5hd3nwue6l",
+      onEvent: function (a) {
+         switch (a.name) {
+            case "SDK_GAME_PAUSE":
+               // pause game logic / mute audio
+               break;
+            case "SDK_GAME_START":
+               // advertisement done, resume game logic and unmute audio
+               break;
+            case "SDK_READY":
+               // when sdk is ready
+               break;
+         }
+      }
+   };
+(function (a, b, c) {
+   var d = a.getElementsByTagName(b)[0];
+   a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+})(document, "script", "gamemonetize-sdk"); 
+</script>
+
+
+
+
+  <div class="wrap">
+    <div class="card" role="application" aria-label="Easiest Maths — Negatives Practice">
+      <header>
+        <div>
+          <h1>Easiest Maths — Negatives Practice</h1>
+          <div class="muted">Addition & subtraction with small negative numbers — friendly practice for ages ~8–11</div>
+        </div>
+        <div class="badges">
+          <div class="badge">Best: <span id="best">0</span></div>
+          <div class="badge">Last: <span id="last">0</span></div>
+          <div class="badge">Streak: <span id="streak">0</span></div>
+        </div>
+      </header>
+
+      <main>
+        <div id="intro" class="intro">
+          <div class="question">Practice adding and subtracting numbers with minus signs. Keep a clean streak!</div>
+          <div class="sub">Each question is quick — you have <strong id="tDisplay">9</strong> seconds. One wrong answer ends the run.</div>
+          <div class="controls"><button id="start" class="btn">Start Game</button><button id="how" class="ghost">How it works</button></div>
+          <div class="muted">Shortcuts: <strong>1–4</strong> to choose an option, <strong>Enter</strong> to start/restart.</div>
+        </div>
+
+        <section id="board" class="hide" aria-live="polite">
+          <div class="status">
+            <div class="badge">Q <span id="qnum">1</span>/100</div>
+            <div class="timer" aria-hidden="true"><div id="bar" class="bar" style="width:100%"></div></div>
+            <div class="badge">Time: <span id="time">9</span>s</div>
+          </div>
+
+          <div style="display:grid; place-items:center; gap:6px; margin-top:14px">
+            <div class="question">Compute:</div>
+            <div id="expr" class="big-q">(+3) + (−2)</div>
+            <div class="choices" id="choices" role="list"></div>
+          </div>
+
+          <div id="message" class="msg"></div>
+        </section>
+
+        <section id="summary" class="hide" style="text-align:center; margin-top:12px">
+          <h2 id="endTitle" style="margin:0;font-size:22px">Game Over</h2>
+          <p id="endReason" class="muted" style="margin:6px 0 12px">—</p>
+          <div class="controls" style="justify-content:center">
+            <button id="again" class="btn">Play Again</button>
+            <button id="back" class="ghost">Back</button>
+          </div>
+        </section>
+      </main>
+
+      <footer>Made for young learners • Small numbers (1 to 7) with + and − signs</footer>
+    </div>
+  </div>
+
+<script>
+(function(){
+  // Settings
+  const TIME_PER_Q = 9;      // seconds per question
+  const TOTAL_Q = 100;      // 100 questions in a run
+  const MIN_ABS = 1, MAX_ABS = 7; // absolute values for operands
+
+  // State
+  let bank = [];
+  let idx = 0;
+  let streak = 0;
+  let ticking = null;
+  let current = null;
+
+  // Elements
+  const elStart = document.getElementById('start');
+  const elHow = document.getElementById('how');
+  const elIntro = document.getElementById('intro');
+  const elBoard = document.getElementById('board');
+  const elSummary = document.getElementById('summary');
+  const elChoices = document.getElementById('choices');
+  const elExpr = document.getElementById('expr');
+  const elQnum = document.getElementById('qnum');
+  const elBar = document.getElementById('bar');
+  const elTime = document.getElementById('time');
+  const elMessage = document.getElementById('message');
+  const elBest = document.getElementById('best');
+  const elLast = document.getElementById('last');
+  const elStreak = document.getElementById('streak');
+  const elAgain = document.getElementById('again');
+  const elBack = document.getElementById('back');
+  const elTdisplay = document.getElementById('tDisplay');
+  const elEndReason = document.getElementById('endReason');
+  const elEndTitle = document.getElementById('endTitle');
+
+  // Load persisted scores
+  let best = Number(localStorage.getItem('easiest.neg.best')||0);
+  let last = Number(localStorage.getItem('easiest.neg.last')||0);
+  elBest.textContent = best;
+  elLast.textContent = last;
+
+  elTdisplay.textContent = TIME_PER_Q;
+
+  // Helpers
+  const rnd = (a,b)=> Math.floor(Math.random()*(b-a+1))+a;
+  function shuffle(arr){ for(let i=arr.length-1;i>0;i--){ const j=rnd(0,i); [arr[i],arr[j]]=[arr[j],arr[i]] } return arr; }
+
+  function makeExpr(){
+    // Create expression using small numbers 1..7 with random sign
+    const a = (rnd(MIN_ABS,MAX_ABS)) * (Math.random()<0.5? 1 : -1);
+    const b = (rnd(MIN_ABS,MAX_ABS)) * (Math.random()<0.5? 1 : -1);
+    const isAdd = Math.random() < 0.5;
+    const answer = isAdd ? a + b : a - b;
+
+    // Format nicely: show (+3) or (−4)
+    const fmt = n => (n>=0? `+${n}` : `${n}`);
+    const exprText = `(${fmt(a)}) ${isAdd? '+' : '−'} (${fmt(b)})`;
+
+    // Generate 4 plausible options (strings). Include:
+    // - correct answer
+    // - sign confusion (forgetting minus)
+    // - flip add/sub
+    // - near miss (±1 or ±2)
+    const opts = new Set([answer]);
+
+    // common mistake: flip operation
+    opts.add(isAdd ? a - b : a + b);
+
+    // sign mistake: drop sign of one operand (use absolute)
+    const signMistake = isAdd ? Math.abs(a) + b : Math.abs(a) - b;
+    opts.add(signMistake);
+
+    // near misses
+    const deltaBase = Math.max(1, Math.floor((Math.abs(a)+Math.abs(b))/3));
+    opts.add(answer + (Math.random()<0.5? deltaBase : -deltaBase));
+    // ensure 4 unique options
+    while(opts.size < 4){
+      opts.add(answer + rnd(-3,3));
+    }
+
+    const choices = shuffle(Array.from(opts)).map(n => String(n));
+    return { exprText, answer: String(answer), choices };
+  }
+
+  function buildBank(){
+    // Build TOTAL_Q expressions ahead of run to ensure consistent run length
+    const arr = [];
+    while(arr.length < TOTAL_Q){
+      arr.push(makeExpr());
+    }
+    return shuffle(arr);
+  }
+
+  // Game control
+  function startGame(){
+    bank = buildBank();
+    idx = 0;
+    streak = 0;
+    elStreak.textContent = streak;
+    elMessage.textContent = '';
+    elIntro.classList.add('hide');
+    elSummary.classList.add('hide');
+    elBoard.classList.remove('hide');
+    nextQ();
+  }
+
+  function nextQ(){
+    if(idx >= bank.length){
+      endGame('Great! You finished all questions!');
+      return;
+    }
+    current = bank[idx++];
+    renderCurrent();
+    startTimer();
+  }
+
+  function renderCurrent(){
+    elQnum.textContent = idx;
+    elExpr.textContent = current.exprText;
+    elChoices.innerHTML = '';
+    current.choices.forEach((c,i)=>{
+      const btn = document.createElement('button');
+      btn.className = 'choice';
+      btn.type = 'button';
+      btn.setAttribute('data-val', c);
+      btn.innerHTML = `<span class="dot">${i+1}</span><span>${c}</span>`;
+      btn.addEventListener('click', ()=> choose(c));
+      elChoices.appendChild(btn);
+    });
+  }
+
+  function startTimer(){
+    stopTimer();
+    const start = performance.now();
+    const total = TIME_PER_Q * 1000;
+    (function tick(){
+      const elapsed = performance.now() - start;
+      const left = Math.max(0, total - elapsed);
+      const frac = left / total;
+      elBar.style.width = (frac*100) + '%';
+      elTime.textContent = Math.ceil(left/1000);
+      if(left <= 0){
+        stopTimer();
+        endGame('⏰ Time up!');
+      } else {
+        ticking = requestAnimationFrame(tick);
+      }
+    })();
+  }
+
+  function stopTimer(){
+    if(ticking){ cancelAnimationFrame(ticking); ticking = null; }
+  }
+
+  function choose(val){
+    if(String(val) === String(current.answer)){
+      // correct
+      streak++;
+      elStreak.textContent = streak;
+      elMessage.textContent = 'Good! Keep going ✨';
+      setTimeout(()=>{ elMessage.textContent = ''; nextQ(); }, 250);
+    } else {
+      endGame(`❌ Oops — the right answer was ${current.answer}`);
+    }
+  }
+
+  function endGame(reason){
+    stopTimer();
+if (typeof sdk !== 'undefined' && sdk.showBanner !== 'undefined') {
+sdk.showBanner();
+}
+    
+
+    elBoard.classList.add('hide');
+    elSummary.classList.remove('hide');
+    elEndReason.textContent = reason;
+    elEndTitle.textContent = `Game Over — Streak ${streak}`;
+    last = streak;
+    localStorage.setItem('easiest.neg.last', String(last));
+    if(streak > best){
+      best = streak;
+      localStorage.setItem('easiest.neg.best', String(best));
+    }
+    elBest.textContent = best;
+    elLast.textContent = last;
+  }
+
+  // Events (buttons & keyboard)
+  elStart.addEventListener('click', startGame);
+  elHow.addEventListener('click', ()=> alert('You will see 100 quick questions. Each shows a small addition or subtraction using numbers from 1 to 7 with + or - signs. Answer within the time. One wrong answer ends the game — try to build a long streak!'));
+  elAgain.addEventListener('click', startGame);
+  elBack.addEventListener('click', ()=>{ elSummary.classList.add('hide'); elIntro.classList.remove('hide'); });
+
+  window.addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter'){
+      if(!elBoard.classList.contains('hide')) return; // if playing, ignore
+      if(!elSummary.classList.contains('hide')) startGame();
+      else if(!elIntro.classList.contains('hide')) startGame();
+    }
+    if(!elBoard.classList.contains('hide')){
+      const map = {'1':0,'2':1,'3':2,'4':3};
+      if(map.hasOwnProperty(e.key)){
+        const idx = map[e.key];
+        const btn = elChoices.children[idx];
+        if(btn) btn.click();
+      }
+    }
+  });
+
+  // Focus first control on load
+  elStart.focus();
+})();
+</script>
+</body>
+</html>
+
+
+

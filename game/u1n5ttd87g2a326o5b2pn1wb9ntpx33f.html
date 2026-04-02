@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<link rel="canonical" href="https://h5games.online/play/Paws-Off-My-Clues">	
+	<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1,minimal-ui=true">
+	
+	<link rel="preload" href="src/system.bundle.js" as="script">
+	<link rel="preload" href="cocos-js/cc.js" as="script">
+	<link rel="preload" href="src/settings.json" as="fetch" crossorigin="anonymous">
+	
+	<!-- JSON конфиги -->
+	<link rel="preload" href="assets/internal/config.4cb79.json" as="fetch" crossorigin="anonymous">
+	<link rel="preload" href="assets/internal/import/08/0846c28f0.0809f.json" as="fetch" crossorigin="anonymous">
+	<link rel="preload" href="assets/resources/config.bc1a1.json" as="fetch" crossorigin="anonymous">
+	<link rel="preload" href="assets/main/config.34a07.json" as="fetch" crossorigin="anonymous">
+
+	<!-- JS библиотеки -->
+	<link rel="preload" href="assets/internal/index.4cb79.js" as="script" crossorigin="anonymous">
+	<link rel="preload" href="src/assets/scripts/coreMgr/NetworkModule/libs/protobuf.254c1.js" as="script" crossorigin="anonymous">
+	<link rel="preload" href="src/assets/scripts/Protos/allprotos.ac769.js" as="script" crossorigin="anonymous">
+	<link rel="preload" href="src/assets/scripts/coreMgr/NetworkModule/libs/long.b35eb.js" as="script" crossorigin="anonymous">
+	<link rel="preload" href="src/chunks/bundle.89acb.js" as="script">
+	<link rel="preload" href="assets/resources/index.bc1a1.js" as="script" crossorigin="anonymous">
+	<link rel="preload" href="assets/main/index.34a07.js" as="script" crossorigin="anonymous">
+
+	<style>
+		html, body {
+			padding: 0;
+			margin: 0;
+			background-color: #000;
+			overflow: hidden;
+			touch-action: none;
+			-webkit-touch-callout: none; /* iOS Safari */
+			-webkit-user-select: none; /* Safari */
+			-khtml-user-select: none; /* Konqueror HTML */
+			-moz-user-select: none; /* Old versions of Firefox */
+			-ms-user-select: none; /* Internet Explorer/Edge */
+            user-select: none; /* Non-prefixed version, currently supported by Chrome, Edge, Opera and Firefox */	
+		}
+		#GameDiv, #Cocos3dGameContainer, #GameCanvas {
+		  width: 100%;
+		  height: 100%;
+		}
+		#GameDiv:focus, #Cocos3dGameContainer:focus, #GameCanvas:focus {
+		  outline: none;
+		}
+	</style>
+</head>
+
+<body>
+	<div id="GameDiv">
+		<div id="Cocos3dGameContainer">
+			<canvas id="GameCanvas" oncontextmenu="event.preventDefault()" tabindex="0"></canvas>
+		</div>
+	</div>
+	<script src="src/system.bundle.js"></script>
+	<script src="src/import-map.json" type="systemjs-importmap"></script>
+	
+	<script>
+	window.SDK_OPTIONS = {
+      gameId: "u1n5ttd87g2a326o5b2pn1wb9ntpx33f",
+      onEvent: function (a) {
+         switch (a.name) {
+            case "SDK_GAME_PAUSE":
+				if (window.__gmGamePause) {
+                    window.__gmGamePause();
+                    window.__gmGamePause = null;
+                }
+				break;
+            case "SDK_GAME_START":
+				if (window.__gmGameStart) {
+                    window.__gmGameStart();
+                    window.__gmGameStart = null;
+                }
+				break;
+            case "SDK_READY":
+               // when sdk is ready
+               break;
+         }
+      }
+	};
+	</script>
+	<script defer src="https://api.gamemonetize.com/sdk.js" id="gamemonetize-sdk"></script>
+	<script>	
+		const __GameLanguage = "en";
+
+		let cc = null;
+		let ccInitialized = false;
+		
+
+		async function loadCocosEngine() {
+			if (!cc) {		
+				cc = await System.import("./cocos-js/cc.js");  
+				console.log("CC инициализирован", cc);
+			}
+			
+			if (!ccInitialized) {		
+				await cc.game.init({
+					debugMode: cc.DebugMode.NONE,
+					settingsPath: "src/settings.json",
+					effectSettingsPath: "",
+					overrideSettings: { profiling: { showFPS: false } },
+				});
+				ccInitialized = true;
+			}
+			
+			return cc;
+		}
+
+		async function applicationStart() {
+			await loadCocosEngine();
+			
+			cc.game.run();
+		}
+
+		const gameCanvas = document.getElementById("GameCanvas");
+		const parentElement = gameCanvas.parentElement;
+		const { width, height } = parentElement.getBoundingClientRect();
+
+		gameCanvas.width = width;
+		gameCanvas.height = height;
+		applicationStart();
+	</script>
+</body>
+
+</html>

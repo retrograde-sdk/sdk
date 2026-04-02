@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>double klondike solitaire</title>
+    <link rel="shortcut icon" href="TemplateData/favicon.ico">
+    
+    <style>
+        /* 1. REGLAGES DE BASE */
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+            background-color: black;
+        }
+        
+        /* 2. LE JEU UNITY */
+        #unity-container {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 0;
+        }
+        
+        #unity-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* 3. GAMEMONETIZE AU PREMIER PLAN */
+        #gamemonetize-video, #gamemonetize {
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            z-index: 2147483647 !important;
+            display: block !important;
+        }
+
+        /* 4. LOADING BAR */
+        #unity-loading-bar {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            color: white;
+            font-family: sans-serif;
+        }
+
+        #unity-footer, #unity-warning { display: none; }
+    </style>
+
+    <!-- GAMEMONETIZE SDK -->
+    <script type="text/javascript">
+         window.SDK_OPTIONS = {
+            gameId: "4z575454556456465465456465", // Pensez à vérifier que c'est votre vrai ID ici
+            onEvent: function (a) {
+               switch (a.name) {
+                  case "SDK_GAME_PAUSE":
+                     if(window.unityInstance) window.unityInstance.SendMessage('GameMonetize', 'PauseGame');
+                     break;
+                  case "SDK_GAME_START":
+                     if(window.unityInstance) window.unityInstance.SendMessage('GameMonetize', 'ResumeGame');
+                     break;
+                  case "SDK_READY":
+                     // console.log("SDK Ready"); // Commenté pour être discret
+                     break;
+               }
+            }
+         };
+    </script>
+    <script async src="https://api.gamemonetize.com/sdk.js"></script>
+    
+
+    <!-- FIREBASE OPTIMISÉ -->
+    <script src='https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js' defer></script>
+    <script src='https://www.gstatic.com/firebasejs/9.22.0/firebase-analytics-compat.js' defer></script>
+    <script defer>
+      window.addEventListener('DOMContentLoaded', function() {
+          const firebaseConfig = {
+            apiKey: 'AIzaSyAUqQYHjzj5LkBSTDMRtMfCxLYPiTC8BW4',
+            authDomain: 'ahmed-casino.firebaseapp.com',
+            projectId: 'ahmed-casino',
+            storageBucket: 'ahmed-casino.firebasestorage.app',
+            messagingSenderId: '503356301346',
+            appId: '1:503356301346:web:c7ca058ecdd4238b676a7b',
+            measurementId: 'G-R1ZXMSK54T'
+          };
+
+          if(typeof firebase !== 'undefined') {
+              firebase.initializeApp(firebaseConfig);
+              window.analytics = firebase.analytics();
+              console.log('>>> Firebase chargé en arrière-plan !');
+          }
+      });
+    </script>
+    <!-- FIREBASE END -->
+            
+
+    <!-- FIREBASE OPTIMISÉ -->
+    <script src='https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js' defer></script>
+    <script src='https://www.gstatic.com/firebasejs/9.22.0/firebase-analytics-compat.js' defer></script>
+    <script defer>
+      window.addEventListener('DOMContentLoaded', function() {
+          const firebaseConfig = {
+            apiKey: 'AIzaSyAUqQYHjzj5LkBSTDMRtMfCxLYPiTC8BW4',
+            authDomain: 'ahmed-casino.firebaseapp.com',
+            projectId: 'ahmed-casino',
+            storageBucket: 'ahmed-casino.firebasestorage.app',
+            messagingSenderId: '503356301346',
+            appId: '1:503356301346:web:c7ca058ecdd4238b676a7b',
+            measurementId: 'G-R1ZXMSK54T'
+          };
+
+          if(typeof firebase !== 'undefined') {
+              firebase.initializeApp(firebaseConfig);
+              window.analytics = firebase.analytics();
+              console.log('>>> Firebase chargé en arrière-plan !');
+          }
+      });
+    </script>
+    <!-- FIREBASE END -->
+            
+
+    <!-- FIREBASE OPTIMISÉ -->
+    <script src='https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js' defer></script>
+    <script src='https://www.gstatic.com/firebasejs/9.22.0/firebase-analytics-compat.js' defer></script>
+    <script defer>
+      window.addEventListener('DOMContentLoaded', function() {
+          const firebaseConfig = {
+            apiKey: 'AIzaSyAUqQYHjzj5LkBSTDMRtMfCxLYPiTC8BW4',
+            authDomain: 'ahmed-casino.firebaseapp.com',
+            projectId: 'ahmed-casino',
+            storageBucket: 'ahmed-casino.firebasestorage.app',
+            messagingSenderId: '503356301346',
+            appId: '1:503356301346:web:c7ca058ecdd4238b676a7b',
+            measurementId: 'G-R1ZXMSK54T'
+          };
+
+          if(typeof firebase !== 'undefined') {
+              firebase.initializeApp(firebaseConfig);
+              window.analytics = firebase.analytics();
+              console.log('>>> Firebase chargé en arrière-plan !');
+          }
+      });
+    </script>
+    <!-- FIREBASE END -->
+            
+
+    <!-- FIREBASE OPTIMISÉ -->
+    <script src='https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js' defer></script>
+    <script src='https://www.gstatic.com/firebasejs/9.22.0/firebase-analytics-compat.js' defer></script>
+    <script defer>
+      window.addEventListener('DOMContentLoaded', function() {
+          const firebaseConfig = {
+            apiKey: 'AIzaSyAUqQYHjzj5LkBSTDMRtMfCxLYPiTC8BW4',
+            authDomain: 'ahmed-casino.firebaseapp.com',
+            projectId: 'ahmed-casino',
+            storageBucket: 'ahmed-casino.firebasestorage.app',
+            messagingSenderId: '503356301346',
+            appId: '1:503356301346:web:c7ca058ecdd4238b676a7b',
+            measurementId: 'G-R1ZXMSK54T'
+          };
+
+          if(typeof firebase !== 'undefined') {
+              firebase.initializeApp(firebaseConfig);
+              window.analytics = firebase.analytics();
+              console.log('>>> Firebase chargé en arrière-plan !');
+          }
+      });
+    </script>
+    <!-- FIREBASE END -->
+            
+</head>
+  <body>
+    <div id="unity-container">
+      <canvas id="unity-canvas" tabindex="-1"></canvas>
+      <div id="unity-loading-bar">
+        <div id="unity-logo">Loading...</div>
+      </div>
+    </div>
+
+    <!-- BUILD VERSION DISPLAY (Nom technique pour cacher le Backlink) -->
+    <div id="static-link-container" style="position: fixed; bottom: 5px; right: 10px; z-index: 2000; pointer-events: auto;">
+        <a href="https://bout.games/redirect-pivot" target="_blank" style="color: #999; text-decoration: none; font-family: monospace; font-size: 11px; opacity: 0.8;">
+            v0.1
+        </a>
+    </div>
+
+    <script>
+      var container = document.querySelector("#unity-container");
+      var canvas = document.querySelector("#unity-canvas");
+      var loadingBar = document.querySelector("#unity-loading-bar");
+
+      var buildUrl = "Build";
+      var loaderUrl = buildUrl + "/double klondike solitaire x1.loader.js";
+      var config = {
+        dataUrl: buildUrl + "/double klondike solitaire x1.data.unityweb",
+        frameworkUrl: buildUrl + "/double klondike solitaire x1.framework.js.unityweb",
+        codeUrl: buildUrl + "/double klondike solitaire x1.wasm.unityweb",
+        streamingAssetsUrl: "StreamingAssets",
+        companyName: "double klondike solitaire",
+        productName: "double klondike solitaire",
+        productVersion: "0.1",
+      };
+
+      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+        var meta = document.createElement('meta');
+        meta.name = 'viewport';
+        meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
+        document.getElementsByTagName('head')[0].appendChild(meta);
+      }
+
+      var script = document.createElement("script");
+      script.src = loaderUrl;
+      script.onload = () => {
+        createUnityInstance(canvas, config, (progress) => {
+          // loading logic
+        }).then((unityInstance) => { window.unityInstance = unityInstance; window.unityInstance = unityInstance; window.unityInstance = unityInstance; window.unityInstance = unityInstance; 
+          // IMPORTANT : On définit l'instance pour que GameMonetize puisse lui parler
+          window.unityInstance = unityInstance; 
+          loadingBar.style.display = "none";
+        }).catch((message) => {
+          alert(message);
+        });
+      };
+      document.body.appendChild(script);
+    </script>
+  </body>
+</html>

@@ -1,0 +1,2486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Snaily Braver</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <style type="text/css">@font-face {font-family:Fredoka One;font-style:normal;font-weight:400;src:url(/cf-fonts/s/fredoka-one/5.0.8/latin/400/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}</style>
+
+    <!-- GameMonetize.com SDK -->
+    <script type="text/javascript">
+        window.SDK_OPTIONS = {
+            gameId: "5vy9blk0bhy14ih2th0sfcco6pf5z3ea",
+            onEvent: function (a) {
+                switch (a.name) {
+                    case "SDK_GAME_PAUSE":
+                        // Pause game logic and mute audio
+                        isPaused = true;
+                        pauseOverlay.style.display = 'flex';
+                        if (Tone && Tone.Master) {
+                            Tone.Master.mute = true;
+                        }
+                        break;
+                    case "SDK_GAME_START":
+                        // Resume game logic and unmute audio
+                        isPaused = false;
+                        pauseOverlay.style.display = 'none';
+                        if (Tone && Tone.Master) {
+                            Tone.Master.mute = false;
+                        }
+                        break;
+                    case "SDK_READY":
+                        // SDK is ready
+                        console.log("GameMonetize SDK is ready.");
+                        break;
+                    case "SDK_ERROR":
+                        // SDK error
+                         console.error("GameMonetize SDK error.");
+                        break;
+                }
+            }
+        };
+        (function (a, b, c) {
+            var d = a.getElementsByTagName(b)[0];
+            a.getElementById(c) || (a = a.createElement(b), a.id = c,
+            a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+        })(document, "script", "gamemonetize-sdk");
+    </script>
+    <!-- End GameMonetize.com SDK -->
+
+    <style>
+        body, html {
+            font-family: 'Fredoka One', cursive;
+            background: #333; /* Dark background for focus */
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0; /* Ensure no extra space */
+            overflow: hidden;
+            color: #3f3f3f;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #game-wrapper {
+            width: 800px;
+            height: 600px;
+            position: relative; /* Set positioning context for controls */
+        }
+        #game-container {
+            background: #87CEEB; 
+            overflow: hidden;
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        canvas {
+            display: block;
+            background: transparent;
+        }
+        #ui-container {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.4);
+            font-size: 24px;
+            z-index: 10;
+        }
+        .ui-element {
+            display: flex;
+            align-items: center;
+            background: rgba(0,0,0,0.2);
+            padding: 8px 16px;
+            border-radius: 12px;
+        }
+        .ui-element span {
+            margin-left: 10px;
+        }
+        .modal {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.9);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            display: none; /* Hidden by default */
+            z-index: 40; /* Increased to be on top of controls */
+            width: auto;
+            max-width: 90vw;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-sizing: border-box;
+        }
+        .modal h2 {
+            font-size: 48px;
+            margin-bottom: 20px;
+            color: #588157;
+        }
+        .modal p {
+            font-size: 24px;
+            margin-bottom: 30px;
+        }
+        
+        /* Welcome Modal Specific Styles */
+        #welcome-modal {
+            padding: 20px;
+        }
+        #welcome-modal h2 {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+         #welcome-modal p {
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+        #intro-controls {
+            font-size: 12px;
+            line-height: 1.4;
+            text-align: left;
+            white-space: pre-wrap;
+            background: rgba(0,0,0,0.05);
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        .modal button, #menu-button {
+            font-family: 'Fredoka One', cursive;
+            font-size: 20px;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            color: white;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .modal button {
+             background: #fca311;
+        }
+        .modal button:hover {
+            background: #e85d04;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0,0,0,0.15);
+        }
+        #touch-controls {
+            position: absolute; /* Position controls over the canvas */
+            bottom: 10px;       /* Add some padding from the bottom edge */
+            left: 0;
+            right: 0;
+            width: 100%;
+            z-index: 30; /* Ensure controls are on top of other elements */
+            display: none; /* Hidden by default, shown on touch devices */
+            justify-content: space-between;
+            padding: 0 25px; /* Horizontal padding */
+            box-sizing: border-box; 
+        }
+        .touch-group {
+            display: flex;
+            gap: 15px; /* Adjusted gap */
+        }
+        .touch-button {
+            width: 75px; /* Made smaller */
+            height: 75px; /* Made smaller */
+            background: rgba(0,0,0,0.4);
+            border: 3px solid rgba(255,255,255,0.5);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 38px; /* Made smaller */
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            user-select: none; /* Prevents text selection */
+        }
+        /* --- NEW: Level Start Display --- */
+        #level-start-display {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 3rem;
+            text-shadow: 3px 3px 8px rgba(0,0,0,0.6);
+            z-index: 50;
+            opacity: 0;
+            pointer-events: none;
+            text-align: center;
+        }
+
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+            15% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            85% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(1.1); }
+        }
+
+        .level-start-animate {
+            animation: fadeInOut 2.5s ease-in-out forwards;
+        }
+
+        /* --- NEW: Media Query for small landscape screens --- */
+        @media (max-height: 500px) and (orientation: landscape) {
+            .modal {
+                padding: 20px;
+                max-height: 95vh;
+            }
+            .modal h2 {
+                font-size: 28px;
+                margin-bottom: 10px;
+            }
+            .modal p {
+                font-size: 16px;
+                margin-bottom: 15px;
+            }
+            .modal button {
+                font-size: 16px;
+                padding: 10px 20px;
+            }
+            #modal-selfie-image {
+                max-height: 120px;
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+
+<div id="game-wrapper">
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+        <div id="pause-overlay" class="absolute inset-0 bg-black bg-opacity-50 text-white text-6xl font-bold items-center justify-center hidden">PAUSED</div>
+        <div id="level-start-display"></div>
+        <div id="ui-container">
+            <!-- Left UI -->
+            <div id="dewdrops-ui" class="ui-element">
+                ⭐<span>0</span>
+            </div>
+
+            <!-- Center UI -->
+            <div class="absolute left-1/2 -translate-x-1/2">
+                <button id="menu-button" class="bg-red-500 hover:bg-red-600 px-6 py-2 rounded-lg text-lg">Menu</button>
+            </div>
+            
+            <!-- Right UI -->
+            <div class="flex items-center gap-4">
+                 <div id="level-ui" class="ui-element">
+                    Level: <span>1</span>
+                </div>
+                <button id="pause-button" class="bg-yellow-500 hover:bg-yellow-600 w-12 h-12 rounded-full flex items-center justify-center text-2xl text-white hidden">||</button>
+            </div>
+        </div>
+    </div>
+    <div id="touch-controls">
+        <div class="touch-group">
+            <div id="touch-left" class="touch-button">◀</div>
+            <div id="touch-right" class="touch-button">▶</div>
+        </div>
+        <div class="touch-group">
+            <div id="touch-dash" class="touch-button">⚡</div>
+            <div id="touch-jump" class="touch-button">▲</div>
+        </div>
+    </div>
+    <!-- Win/Lose Modal -->
+    <div id="message-modal" class="modal">
+        <h2 id="modal-title">You Won!</h2>
+        <img id="modal-selfie-image" src="" alt="Snaily's Selfie" class="hidden mx-auto mb-4 rounded-lg shadow-md max-w-[80%] max-h-[200px] object-cover">
+        <p id="modal-message">You've saved the Sunny Meadow!</p>
+        <div class="flex justify-center gap-4">
+            <button id="restart-button">Play Again</button>
+            <button id="next-level-button">Next Level</button>
+        </div>
+    </div>
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal flex-col gap-6">
+        <h2 id="settings-title" class="text-blue-600">Settings</h2>
+        
+        <div class="ui-element flex-col gap-2">
+            <span>Select Level</span>
+            <div id="level-selector-settings" class="flex gap-2 flex-wrap justify-center">
+                <!-- Buttons will be generated here by JS -->
+            </div>
+        </div>
+
+        <button id="close-settings-button">Close</button>
+    </div>
+    
+    <!-- Welcome Modal -->
+    <div id="welcome-modal" class="modal">
+        <img id="welcome-cover-image" src="CoverImage.png" alt="Snaily Braver" class="mx-auto mb-2 rounded-lg" style="max-height: 90px;">
+        <h2>Welcome to Snaily Braver!</h2>
+        <p>Join Snaily on an adventure across Europe! Help him collect all the stars and take a selfie at each famous landmark.</p>
+        <div id="intro-controls" class="mb-4"></div>
+        <button id="play-button">PLAY</button>
+    </div>
+
+</div>
+
+
+
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const gameContainer = document.getElementById('game-container');
+    const touchControls = document.getElementById('touch-controls');
+
+    // --- NEW: Image Loading for Player ---
+    const playerImage = new Image();
+    // IMPORTANT: Replace this with the actual path to your PNG file.
+    playerImage.src = 'Snaily80x78.png'; 
+    let isImageLoaded = false;
+    playerImage.onload = () => {
+        isImageLoaded = true;
+    };
+    // --- END NEW ---
+
+    // --- Image Loading for Scenery ---
+    const eiffelTowerImage = new Image();
+    eiffelTowerImage.src = 'Efeltower.png';
+    let isEiffelTowerImageLoaded = false;
+    eiffelTowerImage.onload = () => {
+        console.log("Eiffel Tower image has loaded successfully!");
+        isEiffelTowerImageLoaded = true;
+    };
+    eiffelTowerImage.onerror = () => {
+        console.error("Error loading Efeltower.png. Make sure the file is in the same directory as the HTML file and the name matches exactly.");
+    };
+
+    const sagradaFamiliaImage = new Image();
+    sagradaFamiliaImage.src = 'sagradafamilia.png';
+    let isSagradaFamiliaImageLoaded = false;
+    sagradaFamiliaImage.onload = () => {
+        console.log("Sagrada Familia image has loaded successfully!");
+        isSagradaFamiliaImageLoaded = true;
+    };
+    sagradaFamiliaImage.onerror = () => {
+        console.error("Error loading sagradafamilia.png. Make sure the file name is correct.");
+    };
+
+    const amsterdamStationImage = new Image();
+    amsterdamStationImage.src = 'amsterdam_central_station.png';
+    let isAmsterdamStationImageLoaded = false;
+    amsterdamStationImage.onload = () => {
+        console.log("Amsterdam Station image has loaded successfully!");
+        isAmsterdamStationImageLoaded = true;
+    };
+    amsterdamStationImage.onerror = () => {
+        console.error("Error loading amsterdam_central_station.png. Make sure the file is in the same directory and the name matches exactly.");
+    };
+
+    const westminsterImage = new Image();
+    westminsterImage.src = 'westminster.png';
+    let isWestminsterImageLoaded = false;
+    westminsterImage.onload = () => {
+        console.log("Westminster image has loaded successfully!");
+        isWestminsterImageLoaded = true;
+    };
+    westminsterImage.onerror = () => {
+        console.error("Error loading westminster.png. Make sure the file is in the same directory and the name matches exactly.");
+    };
+
+    const londonEyeImage = new Image();
+    londonEyeImage.src = 'londoneye.png';
+    let isLondonEyeImageLoaded = false;
+    londonEyeImage.onload = () => {
+        console.log("London Eye image has loaded successfully!");
+        isLondonEyeImageLoaded = true;
+    };
+    londonEyeImage.onerror = () => {
+        console.error("Error loading londoneye.png. Make sure the file is in the same directory and the name matches exactly.");
+    };
+
+    // --- NEW BUCKINGHAM PALACE ---
+    const buckinghamPalaceImage = new Image();
+    buckinghamPalaceImage.src = 'bukinghampalace.png';
+    let isBuckinghamPalaceImageLoaded = false;
+    buckinghamPalaceImage.onload = () => {
+        console.log("Buckingham Palace image has loaded successfully!");
+        isBuckinghamPalaceImageLoaded = true;
+    };
+    buckinghamPalaceImage.onerror = () => {
+        console.error("Error loading bukinghampalace.png.");
+    };
+    // --- END NEW BUCKINGHAM PALACE ---
+
+    // --- NEW TOWER BRIDGE ---
+    const towerBridgeImage = new Image();
+    towerBridgeImage.src = 'towerbridge.png';
+    let isTowerBridgeImageLoaded = false;
+    towerBridgeImage.onload = () => {
+        console.log("Tower Bridge image has loaded successfully!");
+        isTowerBridgeImageLoaded = true;
+    };
+    towerBridgeImage.onerror = () => {
+        console.error("Error loading towerbridge.png.");
+    };
+    // --- END NEW TOWER BRIDGE ---
+    
+    // --- NEW COVER IMAGE ---
+    const coverImage = new Image();
+    coverImage.src = 'CoverImage.png';
+    let isCoverImageLoaded = false;
+    coverImage.onload = () => {
+        console.log("Cover image has loaded successfully!");
+        isCoverImageLoaded = true;
+    };
+    coverImage.onerror = () => {
+        console.error("Error loading CoverImage.png.");
+    };
+    // --- END NEW COVER IMAGE ---
+
+    const photoCameraImage = new Image();
+    photoCameraImage.src = 'photocamera.png';
+    let isPhotoCameraImageLoaded = false;
+    photoCameraImage.onload = () => {
+        console.log("Photo camera image has loaded successfully!");
+        isPhotoCameraImageLoaded = true;
+    };
+    photoCameraImage.onerror = () => {
+        console.error("Error loading photocamera.png. Make sure the file is in the same directory and the name matches exactly.");
+    };
+
+    const millImage = new Image();
+    millImage.src = 'mill.png';
+    let isMillImageLoaded = false;
+    millImage.onload = () => {
+        console.log("Mill image has loaded successfully!");
+        isMillImageLoaded = true;
+    };
+    millImage.onerror = () => {
+        console.error("Error loading mill.png. Make sure the file is in the same directory and the name matches exactly.");
+    };
+
+    const louvreImage = new Image();
+    louvreImage.src = 'luvre.png';
+    let isLouvreImageLoaded = false;
+    louvreImage.onload = () => {
+        console.log("Louvre image has loaded successfully!");
+        isLouvreImageLoaded = true;
+    };
+    louvreImage.onerror = () => {
+        console.error("Error loading luvre.png. Make sure the file is in the same directory and the name matches exactly.");
+    };
+
+    const tree2Image = new Image();
+    tree2Image.src = 'tree2.png';
+    let isTree2ImageLoaded = false;
+    tree2Image.onload = () => {
+        console.log("Tree2 image has loaded successfully!");
+        isTree2ImageLoaded = true;
+    };
+    tree2Image.onerror = () => {
+        console.error("Error loading tree2.png. Make sure the file is in the same directory and the name matches exactly.");
+    };
+
+    const doublehouse1Image = new Image();
+    doublehouse1Image.src = 'doublehouse1.png';
+    let isDoublehouse1ImageLoaded = false;
+    doublehouse1Image.onload = () => {
+        console.log("Doublehouse1 image has loaded successfully!");
+        isDoublehouse1ImageLoaded = true;
+    };
+    doublehouse1Image.onerror = () => {
+        console.error("Error loading doublehouse1.png. Make sure the file is in the same directory and the name matches exactly.");
+    };
+
+    // --- NEW HOUSES ---
+    const singlehouse1Image = new Image();
+    singlehouse1Image.src = 'singlehouse1.png';
+    let isSinglehouse1ImageLoaded = false;
+    singlehouse1Image.onload = () => {
+        console.log("Singlehouse1 image has loaded successfully!");
+        isSinglehouse1ImageLoaded = true;
+    };
+    singlehouse1Image.onerror = () => {
+        console.error("Error loading singlehouse1.png.");
+    };
+
+    const singlehouse2Image = new Image();
+    singlehouse2Image.src = 'singlehouse2.png';
+    let isSinglehouse2ImageLoaded = false;
+    singlehouse2Image.onload = () => {
+        console.log("Singlehouse2 image has loaded successfully!");
+        isSinglehouse2ImageLoaded = true;
+    };
+    singlehouse2Image.onerror = () => {
+        console.error("Error loading singlehouse2.png.");
+    };
+    // --- END NEW HOUSES ---
+
+    // --- NEW BOAT ---
+    const boatImage = new Image();
+    boatImage.src = 'boat.png';
+    let isBoatImageLoaded = false;
+    boatImage.onload = () => {
+        console.log("Boat image has loaded successfully!");
+        isBoatImageLoaded = true;
+    };
+    boatImage.onerror = () => {
+        console.error("Error loading boat.png.");
+    };
+    // --- END NEW BOAT ---
+
+
+    const treeImage = new Image();
+    treeImage.src = 'tree1.png';
+    let isTreeImageLoaded = false;
+    treeImage.onload = () => {
+        console.log("Tree image has loaded successfully!");
+        isTreeImageLoaded = true;
+    };
+    treeImage.onerror = () => {
+        console.error("Error loading tree1.png. Make sure the file is in the same directory and the name matches exactly.");
+    };
+
+    const fogpoliceImage = new Image();
+    fogpoliceImage.src = 'fogpolice.png';
+    let isFogpoliceImageLoaded = false;
+    fogpoliceImage.onload = () => {
+        console.log("Fogpolice image has loaded successfully!");
+        isFogpoliceImageLoaded = true;
+    };
+    fogpoliceImage.onerror = () => {
+        console.error("Error loading fogpolice.png. Make sure the file is in the same directory and the name matches exactly.");
+    };
+
+    const fogpoliceFrontImage = new Image();
+    fogpoliceFrontImage.src = 'fogpolicefront.png';
+    let isFogpoliceFrontImageLoaded = false;
+    fogpoliceFrontImage.onload = () => {
+        console.log("Fogpolice front image has loaded successfully!");
+        isFogpoliceFrontImageLoaded = true;
+    };
+    fogpoliceFrontImage.onerror = () => {
+        console.error("Error loading fogpolicefront.png. Make sure the file is in the same directory and the name matches exactly.");
+    };
+
+    const fogpoliceFallImage = new Image();
+    fogpoliceFallImage.src = 'fogpolicefall.png';
+    let isFogpoliceFallImageLoaded = false;
+    fogpoliceFallImage.onload = () => {
+        console.log("Fogpolice fall image has loaded successfully!");
+        isFogpoliceFallImageLoaded = true;
+    };
+    fogpoliceFallImage.onerror = () => {
+        console.error("Error loading fogpolicefall.png. Make sure the file is in the same directory and the name matches exactly.");
+    };
+
+    const crowWingsUpImage = new Image();
+    crowWingsUpImage.src = 'birdsidleftflight.png';
+    let isCrowWingsUpImageLoaded = false;
+    crowWingsUpImage.onload = () => {
+        console.log("Crow wings up image loaded!");
+        isCrowWingsUpImageLoaded = true;
+    };
+    crowWingsUpImage.onerror = () => { console.error("Error loading birdsidleftflight.png"); };
+
+    const crowWingsDownImage = new Image();
+    crowWingsDownImage.src = 'birdsideleft.png';
+    let isCrowWingsDownImageLoaded = false;
+    crowWingsDownImage.onload = () => {
+        console.log("Crow wings down image loaded!");
+        isCrowWingsDownImageLoaded = true;
+    };
+    crowWingsDownImage.onerror = () => { console.error("Error loading birdsideleft.png"); };
+
+    const crowDeadImage = new Image();
+    crowDeadImage.src = 'birdsideleftdead.png';
+    let isCrowDeadImageLoaded = false;
+    crowDeadImage.onload = () => {
+        console.log("Crow dead image loaded!");
+        isCrowDeadImageLoaded = true;
+    };
+    crowDeadImage.onerror = () => { console.error("Error loading birdsideleftdead.png"); };
+    // --- END ---
+
+    // --- NEW: Selfie Image Loading ---
+    const selfieImages = {
+        1: { src: 'paris_selfie.png', image: new Image(), loaded: false },
+        2: { src: 'amsterdam_selfie.png', image: new Image(), loaded: false },
+        3: { src: 'london_selfie.png', image: new Image(), loaded: false },
+        4: { src: 'Barcelonaselfie.png', image: new Image(), loaded: false },
+    };
+
+    Object.keys(selfieImages).forEach(key => {
+        const selfie = selfieImages[key];
+        selfie.image.src = selfie.src;
+        selfie.image.onload = () => {
+            selfie.loaded = true;
+            console.log(`Selfie for level ${key} loaded successfully!`);
+        };
+        selfie.image.onerror = () => {
+            console.error(`Error loading selfie for level ${key}: ${selfie.src}`);
+        };
+    });
+    // --- END NEW ---
+
+    let jumpSynth = null;
+    let rewardSynth = null;
+    let damageSynth = null;
+    let enemyDefeatSynth = null;
+    let winSynth = null;
+    let spitSynth = null;
+    let splashSynth = null;
+
+
+    const modal = document.getElementById('message-modal');
+    const modalTitle = document.getElementById('modal-title');
+    const modalMessage = document.getElementById('modal-message');
+    const restartButton = document.getElementById('restart-button');
+    const nextLevelButton = document.getElementById('next-level-button');
+    const levelStartDisplay = document.getElementById('level-start-display');
+    const modalSelfieImage = document.getElementById('modal-selfie-image');
+    const pauseOverlay = document.getElementById('pause-overlay');
+    const pauseButton = document.getElementById('pause-button');
+    
+    // Menu elements
+    const menuButton = document.getElementById('menu-button');
+    const settingsModal = document.getElementById('settings-modal');
+    const closeSettingsButton = document.getElementById('close-settings-button');
+    const levelSelectorSettings = document.getElementById('level-selector-settings');
+
+    // --- NEW: Welcome Modal Elements ---
+    const welcomeModal = document.getElementById('welcome-modal');
+    const introControls = document.getElementById('intro-controls');
+    const playButton = document.getElementById('play-button');
+
+
+    let gameWidth, gameHeight, worldWidth;
+    let camera = { x: 0, y: 0 };
+
+
+    const gravity = 0.4;
+    const keys = { right: false, left: false, up: false, shift: false };
+
+
+    let player, platforms, enemies, stars, clouds, scenery, water, spitballs, pooProjectiles, boats;
+    let score = 0;
+    let isGameOver = false;
+    let isPaused = false; // For SDK control
+    let level = 1;
+
+
+    // --- LEVEL DATA ---
+    const levelData = {
+        1: {
+            name: "Paris",
+            selfieSrc: 'paris_selfie.png',
+            worldWidth: 8400,
+            platforms: (h) => [
+                // Platforms made wider for easier gameplay
+                { x: 0, y: h - 50, width: 1800, height: 50 },
+                { x: 2800, y: h - 50, width: 1400, height: 50 },
+                { x: 800, y: h - 130, width: 250, height: 20 },
+                { x: 1100, y: h - 220, width: 300, height: 20 },
+                { x: 1500, y: h - 180, width: 200, height: 20 },
+                { x: 1700, y: h - 280, width: 200, height: 20 },
+                { x: 1900, y: h - 180, width: 200, height: 20 },
+                { x: 2200, y: h - 130, width: 450, height: 20 },
+                { x: 2350, y: h - 250, width: 150, height: 20 },
+                { x: 2750, y: h - 130, width: 150, height: 20 },
+                { x: 2950, y: h - 200, width: 150, height: 20 },
+                { x: 3150, y: h - 270, width: 150, height: 20 },
+                { x: 3350, y: h - 200, width: 200, height: 20 },
+                { x: 3600, y: h - 150, width: 200, height: 20 },
+                { x: 3800, y: h - 250, width: 150, height: 20 },
+                { x: 4000, y: h - 350, width: 150, height: 20 },
+                { x: 3950, y: h - 420, width: 150, height: 20 },
+                { x: 4200, y: h - 50, width: 4200, height: 50 },
+                { x: 4400, y: h - 180, width: 200, height: 20 },
+                { x: 4650, y: h - 250, width: 250, height: 20 },
+                { x: 4900, y: h - 150, width: 150, height: 20 },
+                { x: 5200, y: h - 220, width: 350, height: 20 },
+                { x: 5600, y: h - 300, width: 200, height: 20 },
+                { x: 5800, y: h - 200, width: 200, height: 20 },
+                { x: 6100, y: h - 140, width: 300, height: 20 },
+                { x: 6400, y: h - 240, width: 150, height: 20 },
+                { x: 6600, y: h - 340, width: 150, height: 20 },
+                { x: 6900, y: h - 280, width: 250, height: 20 },
+                { x: 7200, y: h - 180, width: 200, height: 20 },
+                { x: 7500, y: h - 250, width: 150, height: 20 },
+                { x: 7750, y: h - 350, width: 150, height: 20 },
+                { x: 8000, y: h - 430, width: 150, height: 20 },
+                { x: 8150, y: h - 420, width: 150, height: 20 },
+            ],
+            movingPlatforms: (h) => [
+                { x: 2750, y: h - 180, width: 150, height: 20, endX: 3050, speed: 0.55 },
+                { x: 6400, y: h - 180, width: 200, height: 20, endX: 6700, speed: 0.55 }
+            ],
+            enemies: (h) => [
+                { type: 'fogpolice', x: 400, y: h - 50, platformIndex: 0 },
+                { type: 'fogpolice', x: 1150, y: h - 220, platformIndex: 3 },
+                { type: 'fogpolice', x: 1750, y: h - 280, platformIndex: 5 },
+                { type: 'fogpolice', x: 2400, y: h - 130, platformIndex: 7 },
+                { type: 'fogpolice', x: 3000, y: h - 50, platformIndex: 1 },
+                { type: 'fogpolice', x: 4700, y: h - 250, platformIndex: 19 },
+                { type: 'fogpolice', x: 5300, y: h - 220, platformIndex: 21 },
+                { type: 'fogpolice', x: 6150, y: h - 140, platformIndex: 24 },
+                { type: 'fogpolice', x: 6950, y: h - 280, platformIndex: 27 },
+                { type: 'fogpolice', x: 7300, y: h - 50, platformIndex: 17 },
+            ],
+            stars: (h) => [
+                { x: 850, y: h - 180 }, { x: 1150, y: h - 270 },
+                { x: 1550, y: h - 230 }, { x: 1750, y: h - 330 },
+                { x: 1950, y: h - 230 }, { x: 2250, y: h - 180 },
+                { x: 2400, y: h - 300 }, { x: 2600, y: h - 180 },
+                { x: 3000, y: h - 250 }, { x: 3200, y: h - 320 },
+                { x: 4450, y: h - 230 }, { x: 4700, y: h - 300 },
+                { x: 5250, y: h - 270 }, { x: 5650, y: h - 350 },
+                { x: 6150, y: h - 190 }, { x: 6450, y: h - 290 },
+                { x: 6650, y: h - 390 }, { x: 7250, y: h - 230 },
+                { x: 7850, y: h - 400 }, { x: 8050, y: h - 500 },
+            ],
+            clouds: [
+                { x: 200, y: 100, size: 30 }, { x: 500, y: 150, size: 40 }, 
+                { x: 900, y: 80, size: 25 }, { x: 1300, y: 120, size: 35 }, 
+                { x: 2200, y: 100, size: 45 }, { x: 2600, y: 140, size: 28 },
+                { x: 4500, y: 100, size: 30 }, { x: 5100, y: 150, size: 40 },
+                { x: 6300, y: 80, size: 25 }, { x: 7500, y: 120, size: 35 },
+            ],
+            scenery: (h) => [
+                { x: 500, y: h - 50, width: 250, height: 200, type: 'doublehouse' },
+                { x: 900, y: h - 50, width: 136, height: 100, type: 'tree2' },
+                { x: 1200, y: h - 50, width: 163, height: 150, type: 'tree' },
+                { x: 2800, y: h - 50, width: 250, height: 200, type: 'doublehouse' },
+                { x: 3200, y: h - 50, width: 136, height: 100, type: 'tree2' },
+                { x: 3500, y: h - 50, width: 152, height: 140, type: 'tree' },
+                { x: 3580, y: h - 50, width: 174, height: 160, type: 'tree' },
+                { x: 5500, y: h - 50, width: 136, height: 100, type: 'tree2' },
+                { x: 6000, y: h - 50, width: 163, height: 150, type: 'tree' },
+                { x: 7500, y: h - 50, width: 136, height: 100, type: 'tree2' },
+                { x: 8100, y: h - 50, width: 200, height: 400, type: 'eiffelTower' },
+                { x: 8170, y: h - 470, width: 60, height: 46, type: 'selfieSpot' }
+            ],
+            water: (h) => [
+                { x: 1800, y: h - 45, width: 1000, height: 45 }
+            ],
+            boats: (h) => [
+                { x: 1800, y: h - 165, width: 167, height: 150, endX: 2600, speed: 0.385 }
+            ]
+        },
+        2: {
+            name: "Amsterdam",
+            selfieSrc: 'amsterdam_selfie.png',
+            worldWidth: 7400,
+            platforms: (h) => [
+                // Platforms made wider for easier gameplay
+                { x: 0, y: h - 50, width: 1000, height: 50 },
+                { x: 1100, y: h - 150, width: 150, height: 20 },
+                { x: 1250, y: h - 250, width: 300, height: 20 },
+                { x: 1650, y: h - 180, width: 150, height: 20 },
+                { x: 1850, y: h - 240, width: 150, height: 20 },
+                { x: 2050, y: h - 300, width: 150, height: 20 },
+                { x: 2180, y: h - 280, width: 100, height: 20 },
+                { x: 2240, y: h - 250, width: 100, height: 20 },
+                { x: 2300, y: h - 220, width: 350, height: 20 },
+                { x: 2700, y: h - 50, width: 1000, height: 50 },
+                { x: 2850, y: h - 180, width: 200, height: 20 },
+                { x: 3000, y: h - 280, width: 200, height: 20},
+                { x: 3250, y: h - 350, width: 150, height: 20},
+                { x: 3700, y: h - 50, width: 800, height: 50 },
+                { x: 3800, y: h - 200, width: 200, height: 20 },
+                { x: 4000, y: h - 300, width: 200, height: 20 },
+                { x: 4200, y: h - 250, width: 250, height: 20 },
+                { x: 4500, y: h - 180, width: 150, height: 20 }, 
+                { x: 4700, y: h - 200, width: 150, height: 20 }, 
+                { x: 4900, y: h - 180, width: 150, height: 20 }, 
+                { x: 5250, y: h - 160, width: 150, height: 20 }, 
+                { x: 5500, y: h - 150, width: 250, height: 20 },
+                { x: 5800, y: h - 250, width: 250, height: 20 },
+                { x: 6100, y: h - 350, width: 250, height: 20 },
+                { x: 6400, y: h - 50, width: 1000, height: 50 },
+                { x: 6500, y: h - 200, width: 150, height: 20 },
+                { x: 6700, y: h - 300, width: 150, height: 20 },
+                { x: 6850, y: h - 380, width: 150, height: 20 },
+            ],
+            movingPlatforms: (h) => [
+                { x: 1300, y: h - 150, width: 200, height: 20, endX: 1600, speed: 0.55 },
+                { x: 5200, y: h - 150, width: 200, height: 20, endX: 5450, speed: -0.55 }
+            ],
+            enemies: (h) => [
+                { type: 'fogpolice', x: 1300, y: h - 250, platformIndex: 2 },
+                { type: 'fogpolice', x: 2400, y: h - 220, platformIndex: 8 }, 
+                { type: 'fogpolice', x: 2800, y: h - 50, platformIndex: 9 }, 
+                { type: 'fogpolice', x: 4250, y: h - 250, platformIndex: 16 }, 
+                { type: 'fogpolice', x: 5850, y: h - 250, platformIndex: 22 }, 
+                { type: 'fogpolice', x: 6500, y: h - 50, platformIndex: 24 },
+                { type: 'crow', x: 1500, y: h - 400, range: 500 },
+                { type: 'crow', x: 5000, y: h - 350, range: 400 }
+            ],
+            stars: (h) => [
+                { x: 1150, y: h - 200 }, { x: 1300, y: h - 300 },
+                { x: 1700, y: h - 230 }, { x: 1900, y: h - 290 },
+                { x: 2100, y: h - 350 }, { x: 2350, y: h - 270 },
+                { x: 2550, y: h - 270 }, { x: 2750, y: h - 100 },
+                { x: 3850, y: h - 250 }, { x: 4050, y: h - 350 },
+                { x: 4250, y: h - 300 }, { x: 5550, y: h - 200 },
+                { x: 5850, y: h - 300 }, { x: 6150, y: h - 400 },
+                { x: 6750, y: h - 350 }, { x: 6900, y: h - 430 },
+            ],
+            clouds: [
+                { x: 150, y: 120, size: 35 }, { x: 450, y: 180, size: 45 },
+                { x: 800, y: 100, size: 30 }, { x: 1200, y: 150, size: 40 },
+                { x: 1700, y: 180, size: 25 }, { x: 2100, y: 120, size: 35 },
+                { x: 2500, y: 160, size: 40 }, { x: 4800, y: 120, size: 35 },
+                { x: 5500, y: 160, size: 40 }, { x: 6500, y: 100, size: 30 },
+            ],
+            scenery: (h) => [
+                { x: 300, y: h - 50, width: 400, height: 250, type: 'amsterdamStation' },
+                { x: 500, y: h - 50, width: 163, height: 150, type: 'tree' },
+                { x: 800, y: h - 50, width: 136, height: 100, type: 'tree2' },
+                { x: 2800, y: h - 50, width: 184, height: 170, type: 'tree' },
+                { x: 3100, y: h - 50, width: 136, height: 100, type: 'tree2' },
+                { x: 4000, y: h - 50, width: 163, height: 150, type: 'tree' },
+                { x: 4090, y: h - 50, width: 152, height: 140, type: 'tree' },
+                { x: 4170, y: h - 50, width: 174, height: 160, type: 'tree' },
+                { x: 6600, y: h - 50, width: 136, height: 100, type: 'tree2' },
+                { x: 6900, y: h - 50, width: 224, height: 344, type: 'mill' },
+                { x: 6982, y: h - 400, width: 60, height: 46, type: 'selfieSpot' }
+            ],
+            water: (h) => [
+                { x: 1000, y: h - 45, width: 1700, height: 45 },
+                { x: 4500, y: h - 45, width: 1900, height: 45 }
+            ],
+            boats: (h) => [
+                { x: 2500, y: h - 165, width: 167, height: 150, endX: 1000, speed: -0.385 },
+                { x: 4500, y: h - 165, width: 167, height: 150, endX: 6200, speed: -0.385 }
+            ]
+        },
+        3: {
+            name: "London",
+            selfieSrc: 'london_selfie.png',
+            worldWidth: 8400,
+            platforms: (h) => [
+                // Platforms made wider for easier gameplay
+                { x: 0, y: h - 50, width: 674, height: 50 }, // Ground for Palace
+                { x: 1912, y: h - 50, width: 1088, height: 50 }, // Ground after bridge
+                { x: 450, y: h - 150, width: 200, height: 20 },
+                { x: 700, y: h - 220, width: 200, height: 20 },
+                { x: 950, y: h - 180, width: 150, height: 20 },
+                { x: 1100, y: h - 280, width: 150, height: 20 }, 
+                { x: 1600, y: h - 350, width: 150, height: 20 }, 
+                { x: 2800, y: h - 320, width: 150, height: 20 }, 
+                { x: 3000, y: h - 50, width: 2200, height: 50 },
+                { x: 3200, y: h - 150, width: 200, height: 20 },
+                { x: 3400, y: h - 250, width: 200, height: 20 },
+                { x: 3600, y: h - 350, width: 200, height: 20 },
+                { x: 3850, y: h - 250, width: 150, height: 20 },
+                { x: 4300, y: h - 180, width: 200, height: 20 },
+                { x: 4500, y: h - 280, width: 200, height: 20 },
+                { x: 4700, y: h - 380, width: 200, height: 20 },
+                { x: 5050, y: h - 120, width: 200, height: 20 },
+                { x: 6200, y: h - 50, width: 2200, height: 50 },
+                { x: 6300, y: h - 150, width: 150, height: 20 },
+                { x: 6500, y: h - 250, width: 150, height: 20 },
+                { x: 6700, y: h - 350, width: 150, height: 20 },
+                { x: 7000, y: h - 280, width: 250, height: 20 },
+                { x: 7300, y: h - 180, width: 250, height: 20 },
+                { x: 7600, y: h - 250, width: 200, height: 20 },
+                { x: 7900, y: h - 350, width: 150, height: 20 },
+                { x: 8100, y: h - 300, width: 150, height: 20 },
+            ],
+             movingPlatforms: (h) => [
+                // Platforms made wider and slower
+                { x: 1350, y: h - 120, width: 250, height: 20, endY: h - 320, speed: 0.44 }, 
+                { x: 1800, y: h - 180, width: 200, height: 20, endX: 2100, speed: 0.55 }, 
+                { x: 2250, y: h - 240, width: 200, height: 20, endX: 2550, speed: -0.55 }, 
+                { x: 2600, y: h - 180, width: 250, height: 20, endX: 2950, speed: 0.55 }, 
+                { x: 4000, y: h - 150, width: 150, height: 20, endY: h - 300, speed: 0.44 },
+                { x: 4150, y: h - 300, width: 150, height: 20, endY: h - 150, speed: 0.44 },
+                { x: 5250, y: h - 150, width: 250, height: 20, endX: 5550, speed: 0.55 }, 
+                // Corrected the last platform to move in the opposite direction
+                { x: 6000, y: h - 200, width: 200, height: 20, endX: 5700, speed: -0.55 }, 
+            ],
+            enemies: (h) => [
+                 { type: 'crow', x: 1000, y: h - 400, range: 400 },
+                { type: 'crow', x: 2600, y: h - 300, range: 300 },
+                { type: 'crow', x: 5000, y: h - 450, range: 500 },
+                { type: 'crow', x: 7500, y: h - 400, range: 300 },
+                { type: 'fogpolice', x: 720, y: h - 220, platformIndex: 2 },
+                { type: 'fogpolice', x: 3100, y: h - 50, platformIndex: 7 },
+                { type: 'fogpolice', x: 3420, y: h - 250, platformIndex: 9 },
+                { type: 'fogpolice', x: 4520, y: h - 280, platformIndex: 13 },
+                { type: 'fogpolice', x: 6400, y: h - 50, platformIndex: 16 },
+                { type: 'fogpolice', x: 7050, y: h - 280, platformIndex: 20 },
+                { type: 'staticCrow', x: 480, y: h - 150, platformIndex: 1 },
+                { type: 'staticCrow', x: 3220, y: h - 150, platformIndex: 8 },
+                { type: 'staticCrow', x: 6320, y: h - 150, platformIndex: 17 }
+            ],
+            stars: (h) => [
+                { x: 480, y: h - 200 }, { x: 730, y: h - 270 },
+                { x: 980, y: h - 230 }, { x: 1350, y: h - 330 },
+                { x: 1630, y: h - 400 }, { x: 1880, y: h - 300 },
+                { x: 2080, y: h - 230 }, { x: 2400, y: h - 290 }, 
+                { x: 2630, y: h - 270 }, { x: 2830, y: h - 370 },
+                { x: 4350, y: h - 230 }, { x: 4550, y: h - 330 },
+                { x: 4750, y: h - 430 }, { x: 5550, y: h - 270 },
+                { x: 6350, y: h - 200 }, { x: 6550, y: h - 300 },
+                { x: 6750, y: h - 400 }, { x: 7350, y: h - 230 },
+                { x: 7950, y: h - 400 }, { x: 8150, y: h - 350 },
+            ],
+            clouds: [
+                { x: 250, y: 150, size: 30 }, { x: 600, y: 100, size: 40 },
+                { x: 1000, y: 180, size: 25 }, { x: 1500, y: 130, size: 35 },
+                { x: 2000, y: 160, size: 30 }, { x: 2500, y: 110, size: 45 },
+                { x: 2900, y: 190, size: 28 }, { x: 4800, y: 150, size: 30 },
+                { x: 5900, y: 100, size: 40 }, { x: 7200, y: 180, size: 25 },
+            ],
+            scenery: (h) => [
+                 // --- NEW: Added Buckingham Palace ---
+                 { x: 0, y: h-50, width: 674, height: 300, type: 'buckinghamPalace' },
+                 { x: 8000, y: h - 50, width: 313, height: 209, type: 'bigBen' },
+                 { x: 50, y: h - 50, width: 163, height: 150, type: 'tree' },
+                 { x: 130, y: h - 50, width: 136, height: 100, type: 'tree2' },
+                 // --- NEW: Added Tower Bridge ---
+                 { x: 674, y: h - 45, width: 1238, height: 350, type: 'towerBridge' },
+                 { x: 5600, y: h - 45, width: 167, height: 169, type: 'londonEye' },
+                 { x: 3600, y: h - 50, width: 136, height: 100, type: 'tree2' },
+                 { x: 4000, y: h - 50, width: 163, height: 150, type: 'tree' },
+                 { x: 4900, y: h - 50, width: 136, height: 100, type: 'tree2' },
+                 { x: 6500, y: h - 50, width: 152, height: 140, type: 'tree' },
+                 { x: 6580, y: h - 50, width: 184, height: 170, type: 'tree' },
+                 { x: 7000, y: h - 50, width: 136, height: 100, type: 'tree2' },
+                 { x: 8125, y: h - 305, width: 60, height: 46, type: 'selfieSpot' }
+            ],
+            water: (h) => [
+                { x: 674, y: h - 45, width: 1238, height: 45 },
+                { x: 5200, y: h - 45, width: 1000, height: 45 }
+            ],
+            boats: (h) => [
+                { x: 674, y: h - 165, width: 167, height: 150, endX: 1727, speed: 0.385 },
+                { x: 5200, y: h - 165, width: 167, height: 150, endX: 6000, speed: -0.385 }
+            ]
+        },
+        4: {
+            name: "Barcelona",
+            selfieSrc: 'Barcelonaselfie.png',
+            worldWidth: 9000,
+            platforms: (h) => [
+                // Section 1: Easy Start
+                { x: 0, y: h - 50, width: 2000, height: 50 }, // Very long starting platform
+                { x: 600, y: h - 120, width: 300, height: 20 },
+                { x: 1200, y: h - 150, width: 400, height: 20 },
+
+                // Section 2: The Climb
+                { x: 2200, y: h - 50, width: 800, height: 50 },
+                { x: 2300, y: h - 140, width: 250, height: 20 },
+                { x: 2650, y: h - 230, width: 250, height: 20 },
+                { x: 3000, y: h - 320, width: 250, height: 20 },
+
+                // Section 3: High Ground & Water Fun
+                { x: 3800, y: h - 50, width: 2200, height: 50 },
+                { x: 4000, y: h - 350, width: 500, height: 20 },
+                { x: 4800, y: h - 350, width: 500, height: 20 },
+
+                // Section 4: Gentle Descent
+                { x: 6200, y: h - 50, width: 2800, height: 50 },
+                { x: 6500, y: h - 200, width: 400, height: 20 },
+                { x: 7200, y: h - 180, width: 400, height: 20 },
+                { x: 7900, y: h - 250, width: 300, height: 20 },
+                // --- NEW BRIDGE PLATFORM ---
+                { x: 8350, y: h - 430, width: 300, height: 20 },
+                // --- REMOVED staircase, replaced by new lifts ---
+                { x: 8650, y: h - 430, width: 150, height: 20 },
+            ],
+            movingPlatforms: (h) => [
+                // A fun elevator to the high ground
+                { x: 3400, y: h - 80, width: 200, height: 20, endY: h - 350, speed: 0.44 },
+                // Easy bridge over the water - NOW A LIFT!
+                { x: 4550, y: h - 100, width: 200, height: 20, endY: h - 350, speed: 0.44 },
+                // Another fun ride - now a vertical lift!
+                { x: 6900, y: h - 100, width: 150, height: 20, endY: h - 280, speed: 0.44 },
+                // --- NEW: Platforms added over every water body ---
+                { x: 2025, y: h - 100, width: 150, height: 20, endX: 2175, speed: 0.55 },
+                { x: 3200, y: h - 100, width: 200, height: 20, endX: 3500, speed: 0.55 },
+                { x: 6025, y: h - 100, width: 150, height: 20, endX: 6175, speed: -0.55 },
+                // --- NEW: Lifts for the final climb ---
+                { x: 6300, y: h - 80, width: 150, height: 20, endY: h - 200, speed: 0.44 }, // <-- ADDED THIS NEW LIFT
+                { x: 7650, y: h - 180, width: 150, height: 20, endY: h - 250, speed: 0.44 },
+                { x: 8200, y: h - 250, width: 150, height: 20, endY: h - 430, speed: 0.44 }
+            ],
+            enemies: (h) => [
+                { type: 'fogpolice', x: 800, y: h-50, platformIndex: 0 },
+                { type: 'fogpolice', x: 1500, y: h-50, platformIndex: 0 },
+                { type: 'staticCrow', x: 3050, y: h-320, platformIndex: 6 },
+                { type: 'crow', x: 4800, y: h-500, range: 800 },
+                { type: 'fogpolice', x: 6800, y: h-50, platformIndex: 10 },
+                { type: 'fogpolice', x: 7500, y: h-50, platformIndex: 10 },
+            ],
+            stars: (h) => [
+                { x: 650, y: h - 170 }, { x: 700, y: h - 170 }, { x: 750, y: h - 170 },
+                { x: 1300, y: h - 200 }, { x: 1350, y: h - 210 }, { x: 1400, y: h - 200 },
+                { x: 2350, y: h - 190 }, { x: 2700, y: h - 280 }, { x: 3050, y: h - 370 },
+                { x: 4100, y: h - 400 }, { x: 4200, y: h - 410 }, { x: 4300, y: h - 400 },
+                { x: 4900, y: h - 400 }, { x: 5000, y: h - 410 }, { x: 5100, y: h - 400 },
+                { x: 6600, y: h - 250 }, { x: 6700, y: h - 250 },
+                { x: 7400, y: h - 230 },
+                { x: 8000, y: h - 300 },
+                { x: 8500, y: h - 480 },
+            ],
+            clouds: [
+                { x: 300, y: 120, size: 30 }, { x: 800, y: 150, size: 40 },
+                { x: 1500, y: 100, size: 25 }, { x: 2500, y: 180, size: 35 },
+                { x: 4000, y: 130, size: 45 }, { x: 5500, y: 160, size: 30 },
+                { x: 7000, y: 110, size: 40 }, { x: 8500, y: 190, size: 28 },
+            ],
+            scenery: (h) => [
+                { x: 200, y: h - 50, width: 163, height: 150, type: 'tree' },
+                { x: 800, y: h - 50, width: 126, height: 200, type: 'singlehouse1' }, // Changed
+                { x: 1600, y: h - 50, width: 136, height: 100, type: 'tree2' },
+                { x: 2500, y: h - 50, width: 128, height: 200, type: 'singlehouse2' }, // Changed
+                { x: 3800, y: h - 50, width: 174, height: 160, type: 'tree' },
+                { x: 5000, y: h - 50, width: 250, height: 200, type: 'doublehouse' }, // Kept as is
+                { x: 7000, y: h - 50, width: 163, height: 150, type: 'tree' },
+                { x: 8700, y: h - 50, width: 300, height: 350, type: 'sagradaFamilia' }, // Moved building
+                { x: 8700, y: h - 470, width: 60, height: 46, type: 'selfieSpot' } // Moved selfie spot to the new platform
+            ],
+            water: (h) => [
+                { x: 2000, y: h-45, width: 200, height: 45 },
+                { x: 3000, y: h-45, width: 800, height: 45 },
+                { x: 6000, y: h-45, width: 200, height: 45 },
+            ],
+            boats: (h) => []
+        }
+    };
+
+    // --- UTILITY FUNCTIONS ---
+    function vibrate(pattern) {
+        if ('vibrate' in navigator) {
+            try {
+                navigator.vibrate(pattern);
+            } catch (e) {
+                console.log("Vibration failed", e);
+            }
+        }
+    }
+
+    function resizeCanvas() {
+        const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        if (isTouchDevice) {
+            touchControls.style.display = 'flex';
+        } else {
+            touchControls.style.display = 'none';
+        }
+
+        // --- NEW: Set a fixed game size ---
+        gameWidth = 800;
+        gameHeight = 600;
+        
+        gameContainer.style.width = `${gameWidth}px`;
+        gameContainer.style.height = `${gameHeight}px`;
+        canvas.width = gameWidth;
+        canvas.height = gameHeight;
+        
+        if (player) {
+            // Re-initialize to adjust elements to the new fixed size, but don't restart the level
+            loadLevel(level);
+        }
+    }
+    
+    // --- CLASSES ---
+
+    class Scenery {
+        constructor(x, y, width, height, type) {
+            this.x = x;
+            this.y = y;
+            this.width = width;
+            this.height = height;
+            this.type = type;
+        }
+
+        draw() {
+            if (this.type === 'sagradaFamilia') {
+                if (isSagradaFamiliaImageLoaded) {
+                    ctx.drawImage(sagradaFamiliaImage, this.x, this.y - this.height, this.width, this.height);
+                } else {
+                    ctx.fillStyle = '#D2B48C';
+                    ctx.fillRect(this.x, this.y - this.height, this.width, this.height);
+                }
+            } else if (this.type === 'buckinghamPalace') {
+                if (isBuckinghamPalaceImageLoaded) {
+                    ctx.drawImage(buckinghamPalaceImage, this.x, this.y - this.height, this.width, this.height);
+                } else {
+                    // Fallback drawing
+                    ctx.fillStyle = '#CFB997';
+                    ctx.fillRect(this.x, this.y - this.height, this.width, this.height);
+                }
+            } else if (this.type === 'towerBridge') {
+                if (isTowerBridgeImageLoaded) {
+                    ctx.drawImage(towerBridgeImage, this.x, this.y - this.height, this.width, this.height);
+                } else {
+                    // Fallback drawing
+                    ctx.fillStyle = 'grey';
+                    ctx.fillRect(this.x, this.y - this.height, this.width, this.height);
+                }
+            } else if (this.type === 'eiffelTower') {
+                if (isEiffelTowerImageLoaded) {
+                    ctx.drawImage(eiffelTowerImage, this.x, this.y - this.height, this.width, this.height);
+                } else {
+                    const towerColor = 'rgba(0, 0, 0, 0.25)';
+                    ctx.fillStyle = towerColor;
+                    ctx.beginPath();
+                    ctx.moveTo(this.x, this.y);
+                    ctx.lineTo(this.x + this.width, this.y);
+                    ctx.lineTo(this.x + this.width * 0.8, this.y - this.height * 0.4);
+                    ctx.lineTo(this.x + this.width * 0.2, this.y - this.height * 0.4);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.moveTo(this.x + this.width * 0.25, this.y - this.height * 0.4);
+                    ctx.lineTo(this.x + this.width * 0.75, this.y - this.height * 0.4);
+                    ctx.lineTo(this.x + this.width * 0.65, this.y - this.height * 0.7);
+                    ctx.lineTo(this.x + this.width * 0.35, this.y - this.height * 0.7);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.moveTo(this.x + this.width * 0.4, this.y - this.height * 0.7);
+                    ctx.lineTo(this.x + this.width * 0.6, this.y - this.height * 0.7);
+                    ctx.lineTo(this.x + this.width * 0.55, this.y - this.height * 0.95);
+                    ctx.lineTo(this.x + this.width * 0.45, this.y - this.height * 0.95);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.fillRect(this.x + this.width * 0.48, this.y - this.height, this.width * 0.04, this.height * 0.05);
+                }
+            } else if (this.type === 'louvre') {
+                 if (isLouvreImageLoaded) {
+                    ctx.drawImage(louvreImage, this.x, this.y - this.height, this.width, this.height);
+                } else {
+                    // Fallback drawing
+                    ctx.fillStyle = 'rgba(220, 220, 220, 0.8)'; // Light grey color
+                    ctx.fillRect(this.x, this.y - this.height, this.width, this.height);
+                }
+            } else if (this.type === 'amsterdamStation') {
+                 if (isAmsterdamStationImageLoaded) {
+                    ctx.drawImage(amsterdamStationImage, this.x, this.y - this.height, this.width, this.height);
+                } else {
+                    // Fallback drawing
+                    ctx.fillStyle = 'rgba(139, 69, 19, 0.8)'; // Dark brown color
+                    ctx.fillRect(this.x, this.y - this.height, this.width, this.height);
+                }
+            } else if (this.type === 'mill') {
+                 if (isMillImageLoaded) {
+                    ctx.drawImage(millImage, this.x, this.y - this.height, this.width, this.height);
+                } else {
+                    ctx.fillStyle = 'saddlebrown';
+                    ctx.fillRect(this.x, this.y - this.height, this.width, this.height);
+                    ctx.fillStyle = 'grey';
+                    ctx.fillRect(this.x - 10, this.y - this.height * 0.6, this.width + 20, 10);
+                }
+            } else if (this.type === 'bigBen') {
+                if (isWestminsterImageLoaded) {
+                    ctx.drawImage(westminsterImage, this.x, this.y - this.height, this.width, this.height);
+                } else {
+                    const towerColor = 'rgba(0, 0, 0, 0.2)';
+                    const roofColor = 'rgba(0, 0, 0, 0.25)';
+                    ctx.fillStyle = towerColor;
+                    ctx.fillRect(this.x, this.y - this.height, this.width, this.height);
+                    const clockTop = this.y - this.height * 0.9;
+                    ctx.fillRect(this.x - 10, clockTop, this.width + 20, 60);
+                    ctx.fillStyle = roofColor;
+                    ctx.beginPath();
+                    ctx.moveTo(this.x - 20, clockTop);
+                    ctx.lineTo(this.x + this.width + 20, clockTop);
+                    ctx.lineTo(this.x + this.width / 2, clockTop - 50);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+            } else if (this.type === 'londonEye') {
+                if (isLondonEyeImageLoaded) {
+                    ctx.drawImage(londonEyeImage, this.x, this.y - this.height, this.width, this.height);
+                } else {
+                    // Fallback drawing for London Eye
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+                    ctx.beginPath();
+                    ctx.arc(this.x + this.width / 2, this.y - this.height / 2, this.width / 2, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+                    ctx.lineWidth = 5;
+                    ctx.stroke();
+                }
+            } else if (this.type === 'tree2') {
+                if (isTree2ImageLoaded) {
+                    ctx.drawImage(tree2Image, this.x, this.y - this.height, this.width, this.height);
+                } else {
+                    // Fallback drawing
+                    ctx.fillStyle = 'darkgreen';
+                    ctx.fillRect(this.x + this.width * 0.4, this.y - this.height, this.width * 0.2, this.height);
+                    ctx.fillRect(this.x + this.width * 0.2, this.y - this.height * 0.6, this.width * 0.6, this.width * 0.2);
+                }
+            } else if (this.type === 'doublehouse') {
+                if (isDoublehouse1ImageLoaded) {
+                    ctx.drawImage(doublehouse1Image, this.x, this.y - this.height, this.width, this.height);
+                } else {
+                    // Fallback drawing
+                    ctx.fillStyle = 'brown';
+                    ctx.fillRect(this.x, this.y - this.height, this.width, this.height);
+                }
+            } else if (this.type === 'singlehouse1') {
+                if (isSinglehouse1ImageLoaded) {
+                    ctx.drawImage(singlehouse1Image, this.x, this.y - this.height, this.width, this.height);
+                } else {
+                    ctx.fillStyle = '#C2B280'; // Sand color
+                    ctx.fillRect(this.x, this.y - this.height, this.width, this.height);
+                }
+            } else if (this.type === 'singlehouse2') {
+                if (isSinglehouse2ImageLoaded) {
+                    ctx.drawImage(singlehouse2Image, this.x, this.y - this.height, this.width, this.height);
+                } else {
+                    ctx.fillStyle = '#808080'; // Grey color
+                    ctx.fillRect(this.x, this.y - this.height, this.width, this.height);
+                }
+            } else if (this.type === 'tree') {
+                if (isTreeImageLoaded) {
+                    ctx.drawImage(treeImage, this.x, this.y - this.height, this.width, this.height);
+                } else {
+                    // Fallback drawing
+                    ctx.fillStyle = 'sienna'; // Trunk
+                    ctx.fillRect(this.x + this.width * 0.4, this.y - this.height * 0.6, this.width * 0.2, this.height * 0.6);
+                    ctx.fillStyle = 'green'; // Leaves
+                    ctx.beginPath();
+                    ctx.arc(this.x + this.width / 2, this.y - this.height * 0.6, this.width / 2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            } else if (this.type === 'selfieSpot') {
+                if (isPhotoCameraImageLoaded) {
+                    ctx.drawImage(photoCameraImage, this.x, this.y, this.width, this.height);
+                } else {
+                    // Fallback drawing for camera
+                    ctx.fillStyle = 'grey';
+                    ctx.fillRect(this.x, this.y, this.width, this.height);
+                    ctx.strokeStyle = 'black';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(this.x, this.y, this.width, this.height);
+                    ctx.beginPath();
+                    ctx.arc(this.x + this.width / 2, this.y + this.height/2, this.width/4, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+            }
+        }
+    }
+
+    class Player {
+        constructor() {
+            this.width = 40;
+            this.height = 39;
+            this.x = 100;
+            this.y = gameHeight - this.height - 100;
+            this.velocityX = 0;
+            this.velocityY = 0;
+            this.maxSpeed = 3;
+            this.acceleration = 0.24;
+            this.friction = 0.9;
+            this.jumpPower = -12;
+            this.onGround = false;
+            this.shootCooldown = 0;
+            this.invincible = 0;
+            this.direction = 1; 
+        }
+
+        draw() {
+            // This function is completely replaced to draw the PNG image
+            if (!isImageLoaded) { // Simple fallback rectangle if image is slow to load
+                ctx.fillStyle = 'rgba(252, 163, 17, 0.5)';
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+                return;
+            }
+
+            // Define visual dimensions, can be different from collision hitbox
+            const visualWidth = 80; 
+            const visualHeight = 78;
+
+            ctx.save();
+            
+            // Apply flashing effect when invincible
+            if (this.invincible > 0 && Math.floor(this.invincible / 5) % 2 === 0) {
+                ctx.globalAlpha = 0.5;
+            }
+
+            // Translate context to the center of the player for scaling (flipping direction)
+            ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
+            
+            if (this.direction === -1) {
+                ctx.scale(-1, 1); // Flip horizontally
+            }
+
+            // Draw the image centered on the player's hitbox
+            ctx.drawImage(
+                playerImage,
+                -visualWidth / 2, 
+                -visualHeight / 2,
+                visualWidth,
+                visualHeight
+            );
+
+            ctx.restore();
+        }
+
+        update() {
+            // Horizontal Movement with Acceleration and Friction
+            if (keys.right) {
+                this.velocityX += this.acceleration;
+                this.direction = 1;
+            } else if (keys.left) {
+                this.velocityX -= this.acceleration;
+                this.direction = -1;
+            } else {
+                this.velocityX *= this.friction;
+            }
+
+            // Clamp speed to maxSpeed
+            if (this.velocityX > this.maxSpeed) {
+                this.velocityX = this.maxSpeed;
+            }
+            if (this.velocityX < -this.maxSpeed) {
+                this.velocityX = -this.maxSpeed;
+            }
+
+            // Stop movement if velocity is very low
+            if (Math.abs(this.velocityX) < 0.1) {
+                this.velocityX = 0;
+            }
+
+            if (keys.shift && this.shootCooldown <= 0) {
+                this.shoot();
+                this.shootCooldown = 30; // 0.5 second cooldown
+            }
+            if (this.shootCooldown > 0) this.shootCooldown--;
+
+            this.x += this.velocityX;
+            this.velocityY += gravity;
+            this.y += this.velocityY;
+            this.onGround = false;
+
+            if (this.x < 0) this.x = 0;
+            if (this.x + this.width > worldWidth) this.x = worldWidth - this.width;
+
+            if(this.invincible > 0) this.invincible--;
+            if (this.y > gameHeight) {
+                this.takeDamage(true); // Treat falling off map as water damage
+            }
+        }
+        
+        shoot() {
+            if (!spitSynth) {
+                spitSynth = new Tone.NoiseSynth({
+                    noise: { type: 'white' },
+                    envelope: { attack: 0.001, decay: 0.05, sustain: 0 }
+                }).toDestination();
+            }
+            if (Tone.context.state !== 'running') Tone.context.resume();
+            spitSynth.triggerAttackRelease("8n");
+
+            const spitX = this.direction === 1 ? this.x + this.width : this.x;
+            const spitY = this.y + (this.height / 2) - 5;
+            spitballs.push(new Spit(spitX, spitY, this.direction));
+        }
+
+        jump() {
+            if (this.onGround) {
+                vibrate(50);
+                if (!jumpSynth) {
+                    jumpSynth = new Tone.Synth({
+                        oscillator: { type: 'sine' },
+                        envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.4 },
+                        volume: -10
+                    }).toDestination();
+                }
+                if (Tone.context.state !== 'running') Tone.context.resume();
+                jumpSynth.triggerAttack("C4");
+                jumpSynth.frequency.rampTo("A4", 0.2);
+                jumpSynth.triggerRelease("+0.2");
+                this.velocityY = this.jumpPower;
+            }
+        }
+
+        takeDamage(isWaterDamage = false) {
+             if (this.invincible > 0) return;
+
+             if (!isWaterDamage) {
+                vibrate([200, 50, 200]);
+                if (!damageSynth) {
+                    damageSynth = new Tone.Synth({
+                        oscillator: { type: 'square' },
+                        envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.5 }
+                    }).toDestination();
+                }
+                if (Tone.context.state !== 'running') Tone.context.resume();
+                damageSynth.triggerAttackRelease("G2", "8n");
+             }
+
+             this.x = 100;
+             this.y = gameHeight - 200;
+             this.velocityY = 0;
+             this.invincible = 120;
+        }
+    }
+
+    class Platform {
+        constructor(x, y, width, height) {
+            this.x = x;
+            this.y = y;
+            this.width = width;
+            this.height = height;
+        }
+
+        draw() {
+            const groundGreen = '#76c76b';
+            const groundBrown = '#8c5a3e';
+            const groundDarkGreen = '#5a9b51';
+
+            if (this.width >= worldWidth) {
+                var ground = ctx.createLinearGradient(this.x, this.y, this.x, this.y + this.height);
+                ground.addColorStop(0, groundGreen);
+                ground.addColorStop(1, groundDarkGreen);
+                ctx.fillStyle = ground;
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+            } else {
+                ctx.fillStyle = groundBrown;
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+                ctx.fillStyle = groundGreen;
+                ctx.fillRect(this.x, this.y, this.width, 10);
+            }
+        }
+    }
+
+    class MovingPlatform {
+        constructor(x, y, width, height, { endX, endY, speed = 1 }) {
+            this.x = x;
+            this.y = y;
+            this.width = width;
+            this.height = height;
+            this.startX = x;
+            this.startY = y;
+            this.endX = endX ?? x;
+            this.endY = endY ?? y;
+            this.speed = speed;
+            
+            this.isVertical = this.startY !== this.endY;
+        }
+
+        update() {
+            if (this.isVertical) {
+                this.y += this.speed;
+                const top_boundary = Math.min(this.startY, this.endY);
+                const bottom_boundary = Math.max(this.startY, this.endY);
+                if (this.y >= bottom_boundary) {
+                    this.y = bottom_boundary;
+                    this.speed *= -1;
+                } else if (this.y <= top_boundary) {
+                    this.y = top_boundary;
+                    this.speed *= -1;
+                }
+            } else { // Horizontal
+                this.x += this.speed;
+                const left_boundary = Math.min(this.startX, this.endX);
+                const right_boundary = Math.max(this.startX, this.endX);
+                if (this.x >= right_boundary) {
+                    this.x = right_boundary;
+                    this.speed *= -1;
+                } else if (this.x <= left_boundary) {
+                    this.x = left_boundary;
+                    this.speed *= -1;
+                }
+            }
+        }
+
+        draw() {
+            // Slightly different color for moving platforms
+            ctx.fillStyle = '#a56a48'; // Lighter brown
+            ctx.fillRect(this.x, this.y, this.width, this.height);
+            ctx.fillStyle = '#8bd182'; // Lighter green
+            ctx.fillRect(this.x, this.y, this.width, 10);
+        }
+    }
+
+    // --- NEW: BOAT CLASS ---
+    class Boat {
+        constructor(x, y, width, height, { endX, speed = 1 }) {
+            this.x = x;
+            this.y = y;
+            this.width = width;
+            this.height = height;
+            this.startX = x;
+            this.endX = endX;
+            this.speed = speed;
+        }
+
+        update() {
+            this.x += this.speed;
+            const left_boundary = Math.min(this.startX, this.endX);
+            const right_boundary = Math.max(this.startX, this.endX);
+            if (this.x >= right_boundary) {
+                this.x = right_boundary;
+                this.speed *= -1;
+            } else if (this.x <= left_boundary) {
+                this.x = left_boundary;
+                this.speed *= -1;
+            }
+        }
+
+        draw() {
+            if (isBoatImageLoaded) {
+                ctx.save();
+                ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
+                if (this.speed < 0) { // Moving left
+                    ctx.scale(-1, 1); // Flip horizontally
+                }
+                ctx.drawImage(boatImage, -this.width / 2, -this.height / 2, this.width, this.height);
+                ctx.restore();
+            } else {
+                // Fallback
+                ctx.fillStyle = '#A0522D'; // Sienna
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+            }
+        }
+    }
+
+    class Enemy {
+        constructor(x, y, platform, type = 'fogpolice') {
+            this.type = type;
+            this.platform = platform;
+            
+            if (this.type === 'staticCrow') {
+                this.width = 60;
+                this.height = 40;
+                this.speed = 0;
+            } else { // fogpolice
+                this.width = 30;
+                this.height = 60;
+                this.speed = 0.55;
+            }
+
+            this.x = x;
+            this.y = y - this.height;
+            this.relativeX = this.platform ? x - this.platform.x : 0; // Position relative to platform
+            this.defeatState = 'none'; // 'none', 'stunned', 'falling'
+            this.defeatTimer = 0;
+            this.velocityY = 0;
+        }
+
+        draw() {
+             if (this.type === 'staticCrow') {
+                let currentImage;
+                if (this.defeatState === 'falling' && isCrowDeadImageLoaded) {
+                    currentImage = crowDeadImage;
+                } else {
+                    currentImage = crowWingsDownImage;
+                }
+
+                if (currentImage) {
+                    ctx.drawImage(currentImage, this.x, this.y, this.width, this.height);
+                } else {
+                    // Fallback
+                    ctx.fillStyle = '#333333';
+                    ctx.fillRect(this.x, this.y, this.width, this.height);
+                }
+                return; 
+            }
+
+            // --- Fogpolice drawing logic ---
+            if (this.defeatState === 'falling' && isFogpoliceFallImageLoaded) {
+                ctx.drawImage(fogpoliceFallImage, this.x, this.y, this.width, this.height);
+            } else if (this.defeatState === 'stunned' && isFogpoliceFrontImageLoaded) {
+                ctx.drawImage(fogpoliceFrontImage, this.x, this.y, this.width, this.height);
+            } else if (isFogpoliceImageLoaded && isFogpoliceFrontImageLoaded) {
+                if (this.speed === 0 && this.defeatState === 'none') {
+                    ctx.drawImage(fogpoliceFrontImage, this.x, this.y, this.width, this.height);
+                } else {
+                    ctx.save();
+                    ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
+                    if (this.speed > 0) {
+                        ctx.scale(-1, 1);
+                    }
+                    ctx.drawImage(fogpoliceImage, -this.width / 2, -this.height / 2, this.width, this.height);
+                    ctx.restore();
+                }
+            } else {
+                // Fallback drawing for fogpolice
+                ctx.fillStyle = '#8B0000';
+                ctx.beginPath();
+                ctx.ellipse(this.x + this.width / 2, this.y + this.height / 2, this.width / 2, this.height / 2, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.arc(this.x + 8, this.y + 10, 4, 0, Math.PI * 2);
+                ctx.arc(this.x + this.width - 8, this.y + 10, 4, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = 'black';
+                 ctx.beginPath();
+                ctx.arc(this.x + 8, this.y + 11, 2, 0, Math.PI * 2);
+                ctx.arc(this.x + this.width - 8, this.y + 11, 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        update() {
+            if (this.defeatState === 'stunned') {
+                this.defeatTimer--;
+                if (this.defeatTimer <= 0) {
+                    this.defeatState = 'falling';
+                    this.velocityY = -4; // Pop up
+                    // Pump up animation
+                    this.x -= 5; 
+                    this.y -= 5;
+                    this.width *= 1.2;
+                    this.height *= 1.2;
+                }
+            } else if (this.defeatState === 'falling') {
+                this.velocityY += gravity;
+                this.y += this.velocityY;
+            } else {
+                if(this.platform) {
+                    // Patrol logic is now based on a position relative to the platform
+                    this.relativeX += this.speed;
+
+                    // Boundary checks are now against the platform's width, not world coordinates
+                    if (this.relativeX < 0) {
+                        this.relativeX = 0;
+                        this.speed *= -1;
+                    } else if (this.relativeX + this.width > this.platform.width) {
+                        this.relativeX = this.platform.width - this.width;
+                        this.speed *= -1;
+                    }
+
+                    // The enemy's final world position is calculated from the platform's current position
+                    this.x = this.platform.x + this.relativeX;
+                    this.y = this.platform.y - this.height;
+                }
+            }
+        }
+    }
+
+    class Crow {
+        constructor(x, y, range) {
+            this.width = 60;
+            this.height = 40;
+            this.x = x;
+            this.y = y;
+            this.startX = x;
+            this.startY = y;
+            this.range = range;
+            this.speed = -0.6; // Start moving left
+            this.defeatState = 'none'; // 'none', 'stunned', 'falling'
+            this.defeatTimer = 0;
+            this.velocityY = 0;
+
+            // Animation properties
+            this.animationTimer = 0;
+            this.animationSpeed = 15; // Flap every 15 frames
+            this.currentFrame = 0; // 0 for wings down, 1 for wings up
+
+            // Vertical movement properties
+            this.verticalAngle = Math.random() * Math.PI * 2;
+            this.verticalRange = Math.random() * 40 + 20; // Fly up/down by 20-60 pixels
+
+            // Poo dropping properties
+            this.pooCooldown = Math.random() * 120 + 60; // Random initial cooldown
+        }
+
+        draw() {
+            let currentImage;
+
+            if (this.defeatState === 'falling' && isCrowDeadImageLoaded) {
+                currentImage = crowDeadImage;
+            } else if (this.defeatState === 'stunned' && isCrowWingsDownImageLoaded) {
+                currentImage = crowWingsDownImage;
+            } else {
+                if (this.currentFrame === 0 && isCrowWingsDownImageLoaded) {
+                    currentImage = crowWingsDownImage;
+                } else if (this.currentFrame === 1 && isCrowWingsUpImageLoaded) {
+                    currentImage = crowWingsUpImage;
+                }
+            }
+            
+            if (currentImage) {
+                ctx.save();
+                ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
+                if (this.speed > 0) { // Moving right, flip the image
+                    ctx.scale(-1, 1);
+                }
+                ctx.drawImage(currentImage, -this.width / 2, -this.height / 2, this.width, this.height);
+                ctx.restore();
+            } else {
+                // Fallback drawing
+                ctx.fillStyle = '#222222';
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+            }
+        }
+
+        update() {
+            if (this.defeatState === 'stunned') {
+                this.defeatTimer--;
+                if (this.defeatTimer <= 0) {
+                    this.defeatState = 'falling';
+                    this.velocityY = -4; // Pop up
+                    this.x -= 5;
+                    this.y -= 5;
+                    this.width *= 1.2;
+                    this.height *= 1.2;
+                }
+            } else if (this.defeatState === 'falling') {
+                this.velocityY += gravity;
+                this.y += this.velocityY;
+            } else {
+                // --- Flying logic ---
+                // Horizontal movement
+                this.x += this.speed;
+                if (this.x < this.startX || this.x > this.startX + this.range) {
+                    this.speed *= -1;
+                }
+                
+                // Vertical bobbing motion
+                this.verticalAngle += 0.04;
+                this.y = this.startY + Math.sin(this.verticalAngle) * this.verticalRange;
+
+                // --- Poo Dropping Logic ---
+                this.pooCooldown--;
+                if (this.pooCooldown <= 0 && 
+                    player.x + player.width > this.x && 
+                    player.x < this.x + this.width) { // Check if player is below
+                    
+                    pooProjectiles.push(new Poo(this.x + this.width / 2, this.y + this.height));
+                    this.pooCooldown = 120; // 2-second cooldown
+                }
+
+
+                // --- Animation logic ---
+                this.animationTimer++;
+                if (this.animationTimer >= this.animationSpeed) {
+                    this.animationTimer = 0;
+                    this.currentFrame = (this.currentFrame + 1) % 2; // alternate between 0 and 1
+                }
+            }
+        }
+    }
+
+     class Poo {
+        constructor(x, y) {
+            this.x = x - 5; // Center it
+            this.y = y;
+            this.width = 10;
+            this.height = 15;
+            this.velocityY = 2; // Starts moving down
+        }
+
+        draw() {
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            // Simple teardrop shape for the poo
+            ctx.moveTo(this.x + this.width / 2, this.y);
+            ctx.quadraticCurveTo(this.x, this.y + this.height / 2, this.x + this.width / 2, this.y + this.height);
+            ctx.quadraticCurveTo(this.x + this.width, this.y + this.height / 2, this.x + this.width / 2, this.y);
+            ctx.fill();
+        }
+
+        update() {
+            this.velocityY += gravity * 0.2; // Less affected by gravity than the player
+            this.y += this.velocityY;
+        }
+    }
+
+    class Star {
+        constructor(x, y) {
+            this.x = x;
+            this.y = y;
+            this.width = 44;
+            this.height = 44;
+            this.initialY = y;
+            this.angle = Math.random() * Math.PI * 2;
+            this.shineAngle = Math.random() * Math.PI * 2; // For shine animation
+        }
+        
+        draw() {
+            const centerX = this.x + this.width / 2;
+            const centerY = this.y + this.height / 2;
+            const radius = this.width / 2;
+
+            ctx.save();
+            ctx.translate(centerX, centerY);
+
+            // --- Draw the dynamic shine ---
+            const shineSize = radius * (1.2 + Math.sin(this.shineAngle) * 0.3); // Made shine a bit bigger
+            const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, shineSize);
+            gradient.addColorStop(0, 'rgba(255, 255, 150, 0.8)');
+            gradient.addColorStop(1, 'rgba(255, 215, 0, 0)');
+            
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(0, 0, shineSize, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Rotate the star
+            ctx.rotate(this.angle);
+
+            // --- Draw the emoji star ---
+            // We set the font size to match the star's dimensions
+            ctx.font = `${this.width}px 'Fredoka One'`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('⭐', 0, 0);
+            
+            ctx.restore();
+        }
+
+        update(){
+            this.angle += 0.02;
+            this.y = this.initialY + Math.sin(this.angle * 2) * 4;
+            this.shineAngle += 0.05; // Animate the shine
+        }
+    }
+    
+    class Cloud {
+        constructor(x, y, size) {
+            this.x = x;
+            this.y = y;
+            this.size = size;
+        }
+        draw() {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size * 0.6, 0, Math.PI * 2);
+            ctx.arc(this.x + this.size, this.y, this.size, 0, Math.PI * 2);
+            ctx.arc(this.x + this.size * 2, this.y, this.size * 0.8, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    class Spit {
+        constructor(x, y, direction) {
+            this.x = x;
+            this.y = y;
+            this.width = 10;
+            this.height = 10;
+            this.velocityX = 10 * direction;
+            this.velocityY = -2; // Give it a slight upward arc initially
+        }
+
+        draw() {
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.arc(this.x + this.width / 2, this.y + this.height / 2, this.width / 2, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        update() {
+            this.x += this.velocityX;
+            this.velocityY += gravity * 0.5; // Apply some gravity
+            this.y += this.velocityY;
+        }
+    }
+
+    class Water {
+        constructor(x, y, width, height) {
+            this.x = x;
+            this.y = y;
+            this.width = width;
+            this.height = height;
+            this.waveOffset = Math.random() * Math.PI * 2;
+        }
+
+        draw() {
+            const waterBlue = 'rgba(64, 164, 224, 0.7)';
+            const waterHighlight = 'rgba(255, 255, 255, 0.5)';
+            ctx.fillStyle = waterBlue;
+            ctx.fillRect(this.x, this.y, this.width, this.height);
+
+            // Wavy top
+            ctx.beginPath();
+            ctx.moveTo(this.x, this.y);
+            for (let i = 0; i < this.width; i++) {
+                const waveY = this.y + Math.sin((i + this.waveOffset) * 0.05) * 2;
+                ctx.lineTo(this.x + i, waveY);
+            }
+            ctx.lineTo(this.x + this.width, this.y);
+            ctx.lineTo(this.x + this.width, this.y + 5); 
+            ctx.lineTo(this.x, this.y + 5);
+            ctx.closePath();
+
+            ctx.fillStyle = waterHighlight;
+            ctx.fill();
+        }
+
+        update() {
+            this.waveOffset += 0.05;
+        }
+    }
+
+    // --- GAME LOGIC ---
+
+    function loadLevel(levelNum) {
+        const currentLevelData = levelData[levelNum];
+        if (!currentLevelData) {
+            console.error("Level data not found for level:", levelNum);
+            return;
+        }
+        worldWidth = currentLevelData.worldWidth;
+
+        const rawPlatforms = currentLevelData.platforms(gameHeight);
+        platforms = rawPlatforms.map(p => new Platform(p.x, p.y, p.width, p.height));
+        
+        if (currentLevelData.movingPlatforms) {
+            const rawMoving = currentLevelData.movingPlatforms(gameHeight);
+            rawMoving.forEach(p => {
+                platforms.push(new MovingPlatform(p.x, p.y, p.width, p.height, { endX: p.endX, endY: p.endY, speed: p.speed }));
+            });
+        }
+        
+        const rawEnemies = currentLevelData.enemies(gameHeight);
+        enemies = rawEnemies.map(e => {
+            if (e.type === 'crow') {
+                return new Crow(e.x, e.y, e.range);
+            } else { // Handles 'fogpolice' and 'staticCrow'
+                return new Enemy(e.x, e.y, platforms[e.platformIndex], e.type);
+            }
+        });
+        
+        const rawStars = currentLevelData.stars(gameHeight);
+        stars = rawStars.map(s => new Star(s.x, s.y));
+
+        clouds = currentLevelData.clouds.map(c => new Cloud(c.x, c.y, c.size));
+
+        const rawScenery = currentLevelData.scenery(gameHeight);
+        scenery = rawScenery.map(s => new Scenery(s.x, s.y, s.width, s.height, s.type));
+        
+        water = []; // Reset water
+        if (currentLevelData.water) {
+            // Create a single body of water that spans the entire level width
+            // This prevents visual gaps on the sides of the screen. The ground platforms
+            // will be drawn over this layer, creating the appearance of land.
+            water.push(new Water(0, gameHeight - 45, worldWidth, 45));
+        }
+
+        if (currentLevelData.boats) {
+            const rawBoats = currentLevelData.boats(gameHeight);
+            boats = rawBoats.map(b => new Boat(b.x, b.y, b.width, b.height, { endX: b.endX, speed: b.speed }));
+        } else {
+            boats = [];
+        }
+        
+        spitballs = [];
+        pooProjectiles = [];
+        player.x = 100;
+        player.y = gameHeight - 200;
+        player.velocityY = 0;
+        camera.x = 0;
+    }
+
+    function startGame(levelNum) {
+        // --- NEW: Centralized Ad Call ---
+        // Show an ad at the start of any level load.
+        if (window.sdk && typeof sdk.showBanner === 'function') {
+            sdk.showBanner();
+        }
+        
+        level = levelNum;
+        score = 0;
+        isGameOver = false;
+        if (!player) player = new Player();
+        
+        // Hide all modals
+        welcomeModal.style.display = 'none';
+        settingsModal.style.display = 'none';
+        modal.style.display = 'none';
+
+        loadLevel(level);
+        updateUI();
+        showLevelStartMessage(level);
+
+        isPaused = false;
+        // The game loop is already running, so we don't need to start a new one.
+    }
+
+    function firstTimeInit() {
+        resizeCanvas();
+        
+        isPaused = true;
+        // Populate and show the welcome modal instead of starting the game
+        setupLevelSelector(levelSelectorSettings);
+        
+        const controlsText = 
+`Keyboard:
+  • Left Arrow (◀): Move Left
+  • Right Arrow (▶): Move Right
+  • Up Arrow (▲): Jump
+  • Spacebar: Spit
+
+Touchscreen:
+  • Use on-screen buttons`;
+        introControls.textContent = controlsText;
+        welcomeModal.style.display = 'block';
+
+        // --- Event Listeners ---
+        menuButton.addEventListener('click', () => {
+            isPaused = true;
+            settingsModal.style.display = 'flex';
+        });
+
+        closeSettingsButton.addEventListener('click', () => {
+            settingsModal.style.display = 'none';
+            if(!isGameOver) {
+                isPaused = false;
+            }
+        });
+
+        playButton.addEventListener('click', () => {
+            startGame(1); // Always start level 1
+        });
+
+        pauseButton.addEventListener('click', () => {
+            // Request an ad. The SDK will handle pausing and resuming via events.
+            if (window.sdk && typeof sdk.showBanner === 'function') {
+                sdk.showBanner();
+            }
+        });
+
+        // Start the single, master game loop.
+        requestAnimationFrame(gameLoop);
+    }
+    
+    function drawBackground() {
+        var sky = ctx.createLinearGradient(0, 0, 0, gameHeight);
+        sky.addColorStop(0, '#65bfff');
+        sky.addColorStop(1, '#a1dffb'); 
+        ctx.fillStyle = sky;
+        ctx.fillRect(0, 0, gameWidth, gameHeight);
+    }
+
+    function checkCollisions() {
+        // --- Spitball Collision ---
+        for (let i = spitballs.length - 1; i >= 0; i--) {
+            const spitball = spitballs[i];
+            
+            if (spitball.x > camera.x + gameWidth || spitball.x + spitball.width < camera.x || spitball.y > gameHeight) {
+                spitballs.splice(i, 1);
+                continue;
+            }
+
+            let hitPlatform = false;
+            for (const platform of platforms) {
+                if (spitball.x < platform.x + platform.width &&
+                    spitball.x + spitball.width > platform.x &&
+                    spitball.y < platform.y + platform.height &&
+                    spitball.y + spitball.height > platform.y) {
+                    
+                    spitballs.splice(i, 1);
+                    hitPlatform = true;
+                    break; 
+                }
+            }
+            if(hitPlatform) continue;
+
+            for (let j = enemies.length - 1; j >= 0; j--) {
+                const enemy = enemies[j];
+                if (enemy.defeatState === 'none' &&
+                    spitball.x < enemy.x + enemy.width &&
+                    spitball.x + spitball.width > enemy.x &&
+                    spitball.y < enemy.y + enemy.height &&
+                    spitball.y + spitball.height > enemy.y) {
+                    
+                    vibrate(100);
+                    if (!enemyDefeatSynth) {
+                       enemyDefeatSynth = new Tone.NoiseSynth({ noise: { type: 'white' }, envelope: { attack: 0.005, decay: 0.15, sustain: 0 } }).toDestination();
+                    }
+                    if (Tone.context.state !== 'running') Tone.context.resume();
+                    enemyDefeatSynth.triggerAttackRelease("16n");
+                    
+                    enemy.defeatState = 'stunned';
+                    enemy.defeatTimer = 20;
+                    enemy.speed = 0;
+                    
+                    spitballs.splice(i, 1);
+                    break;
+                }
+            }
+        }
+
+        // --- Poo Collision ---
+        for (let i = pooProjectiles.length - 1; i >= 0; i--) {
+            const poo = pooProjectiles[i];
+
+            if (player.x < poo.x + poo.width &&
+                player.x + player.width > poo.x &&
+                player.y < poo.y + poo.height &&
+                player.y + player.height > poo.y) {
+                
+                player.takeDamage();
+                pooProjectiles.splice(i, 1);
+                continue;
+            }
+
+            let hitPlatform = false;
+            for (const platform of platforms) {
+                if (poo.x < platform.x + poo.width &&
+                    poo.x + poo.width > platform.x &&
+                    poo.y < platform.y + platform.height &&
+                    poo.y + poo.height > platform.y) {
+                    
+                    pooProjectiles.splice(i, 1);
+                    hitPlatform = true;
+                    break; 
+                }
+            }
+            if(hitPlatform) continue;
+
+            if (poo.y > gameHeight + 100) {
+                 pooProjectiles.splice(i, 1);
+            }
+        }
+
+        // --- Player and Environment Collision ---
+        player.onGround = false;
+        platforms.forEach(platform => {
+            if (player.x < platform.x + platform.width &&
+                player.x + player.width > platform.x &&
+                player.y + player.height > platform.y &&
+                player.y + player.height < platform.y + platform.height + player.velocityY) {
+                
+                player.velocityY = 0;
+                player.y = platform.y - player.height;
+                player.onGround = true;
+
+                if (platform.update) {
+                    if (!platform.isVertical) {
+                        player.x += platform.speed;
+                    }
+                }
+            }
+        });
+
+        boats.forEach(boat => {
+            // Simplified collision: If the player touches any part of the boat while moving downwards,
+            // they will be placed safely on the deck. This is more forgiving for the player.
+            if (player.x < boat.x + boat.width &&
+                player.x + player.width > boat.x &&
+                player.y < boat.y + boat.height &&
+                player.y + player.height > boat.y &&
+                player.velocityY >= 0) {
+
+                // Snap player to the deck position
+                const deckY = boat.y + 45; 
+                player.velocityY = 0;
+                player.y = deckY - player.height;
+                player.onGround = true;
+
+                // Move player with the boat
+                player.x += boat.speed;
+            }
+        });
+
+        enemies.forEach((enemy, index) => {
+            if (enemy.defeatState !== 'none') return;
+
+            if (player.x < enemy.x + enemy.width &&
+                player.x + player.width > enemy.x &&
+                player.y < enemy.y + enemy.height &&
+                player.y + player.height > enemy.y) {
+                
+                const isStomping = player.velocityY > 0 && player.y + player.height < enemy.y + 20;
+
+                if (isStomping) {
+                     vibrate(100);
+                     if (!enemyDefeatSynth) {
+                        enemyDefeatSynth = new Tone.NoiseSynth({ noise: { type: 'white' }, envelope: { attack: 0.005, decay: 0.15, sustain: 0 } }).toDestination();
+                     }
+                     if (Tone.context.state !== 'running') Tone.context.resume();
+                     enemyDefeatSynth.triggerAttackRelease("16n");
+
+                     enemy.defeatState = 'stunned';
+                     enemy.defeatTimer = 20;
+                     enemy.speed = 0;
+
+                     player.velocityY = -8;
+                } else {
+                    player.takeDamage();
+                }
+            }
+        });
+
+        stars.forEach((star, index) => {
+            if (player.x < star.x + star.width &&
+                player.x + player.width > star.x &&
+                player.y < star.y + star.height &&
+                player.y + player.height > star.y) {
+                
+                vibrate(75);
+                stars.splice(index, 1);
+                score++;
+
+                if (!rewardSynth) {
+                    rewardSynth = new Tone.Synth({
+                        oscillator: { type: 'triangle8' },
+                        envelope: { attack: 0.01, decay: 0.2, sustain: 0.2, release: 0.2 },
+                        volume: -8
+                    }).toDestination();
+                }
+                 if (Tone.context.state !== 'running') Tone.context.resume();
+                const now = Tone.now();
+                rewardSynth.triggerAttackRelease("C5", "16n", now);
+                rewardSynth.triggerAttackRelease("E5", "16n", now + 0.1);
+                rewardSynth.triggerAttackRelease("G5", "16n", now + 0.2);
+                
+                updateUI();
+            }
+        });
+
+        water.forEach(w => {
+            if (player.x + player.width > w.x &&
+                player.x < w.x + w.width &&
+                player.y + player.height > w.y) {
+                
+                if (!splashSynth) {
+                    splashSynth = new Tone.NoiseSynth({
+                        noise: { type: 'white' },
+                        envelope: { attack: 0.005, decay: 0.2, sustain: 0 }
+                    }).toDestination();
+                }
+                if (Tone.context.state !== 'running') Tone.context.resume();
+                splashSynth.triggerAttackRelease("8n");
+                
+                player.takeDamage(true);
+            }
+        });
+        
+        scenery.forEach(s => {
+            if (s.type === 'selfieSpot') {
+                if (player.x < s.x + s.width &&
+                    player.x + player.width > s.x &&
+                    player.y < s.y + s.height &&
+                    player.y + player.height > s.y) {
+                    winGame();
+                }
+            }
+        });
+    }
+    
+    function updateCamera() {
+        let targetX = player.x - gameWidth / 3;
+        camera.x += (targetX - camera.x) * 0.1;
+
+        // --- NEW: Vertical Camera Movement ---
+        let targetY = player.y - gameHeight / 2;
+        camera.y += (targetY - camera.y) * 0.1;
+        // --- END NEW ---
+
+        if (camera.x < 0) camera.x = 0;
+        if (camera.x > worldWidth - gameWidth) camera.x = worldWidth - gameWidth;
+        
+        // --- NEW: Clamp Vertical Camera ---
+        // Prevent camera from moving down past the starting ground level
+        if (camera.y > 0) camera.y = 0;
+        // --- END NEW ---
+    }
+
+    function updateUI() {
+        document.querySelector('#dewdrops-ui span').textContent = score;
+        document.querySelector('#level-ui span').textContent = level;
+    }
+    
+    function showModal(title, message, showNextLevel, showRestart, selfieSrc) {
+        modalTitle.textContent = title;
+        modalMessage.textContent = message;
+        nextLevelButton.style.display = showNextLevel ? 'inline-block' : 'none';
+        restartButton.style.display = showRestart ? 'inline-block' : 'none';
+        
+        if (selfieSrc && selfieImages[level] && selfieImages[level].loaded) {
+            modalSelfieImage.src = selfieSrc;
+            modalSelfieImage.classList.remove('hidden');
+        } else {
+            modalSelfieImage.classList.add('hidden');
+            modalSelfieImage.src = '';
+        }
+
+        modal.style.display = 'block';
+    }
+
+    function showLevelStartMessage(levelNum) {
+        const levelInfo = levelData[levelNum];
+        if (!levelInfo) return;
+        
+        levelStartDisplay.textContent = `Level ${levelNum}: ${levelInfo.name}`;
+        
+        levelStartDisplay.classList.remove('level-start-animate');
+        void levelStartDisplay.offsetWidth; 
+        levelStartDisplay.classList.add('level-start-animate');
+    }
+
+    function setupLevelSelector(container) {
+        container.innerHTML = '';
+        Object.keys(levelData).forEach(levelNum => {
+            const button = document.createElement('button');
+            button.textContent = levelData[levelNum].name;
+            button.className = 'bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors px-4 py-2';
+            button.addEventListener('click', () => {
+                startGame(parseInt(levelNum));
+            });
+            container.appendChild(button);
+        });
+    }
+    
+    function winGame() {
+        if(isGameOver) return; // Prevent multiple calls
+        
+        if (!winSynth) {
+             const feedbackDelay = new Tone.FeedbackDelay("8n", 0.5).toDestination();
+             winSynth = new Tone.FMSynth({
+                harmonicity: 2,
+                modulationIndex: 10,
+                envelope: { attack: 0.01, decay: 0.3, sustain: 0.1, release: 0.4 },
+                volume: -10
+            }).connect(feedbackDelay);
+        }
+        if (Tone.context.state !== 'running') Tone.context.resume();
+        const now = Tone.now();
+        winSynth.triggerAttackRelease("C5", "16n", now);
+        winSynth.triggerAttackRelease("E5", "16n", now + 0.1);
+        winSynth.triggerAttackRelease("G5", "16n", now + 0.2);
+        winSynth.triggerAttackRelease("C6", "8n", now + 0.3);
+
+        vibrate([100, 100, 100, 100, 100]);
+        isGameOver = true;
+        const totalLevels = Object.keys(levelData).length;
+        const currentLevelInfo = levelData[level];
+
+        if (level < totalLevels) {
+            showModal(`Level Complete!`, `You've conquered ${currentLevelInfo.name}!`, true, true, currentLevelInfo.selfieSrc);
+        } else {
+            showModal('You Win!', `You finished the adventure with ${score} stars!`, false, true, currentLevelInfo.selfieSrc);
+        }
+    }
+
+    function gameLoop() {
+        // Always request the next frame to keep the loop alive.
+        requestAnimationFrame(gameLoop);
+
+        // But only run the game logic if not paused or game over.
+        if (isPaused || isGameOver) {
+            return;
+        }
+        
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawBackground();
+        
+        player.update();
+        updateCamera();
+        
+        ctx.save();
+        ctx.translate(-camera.x * 0.5, -camera.y * 0.5); 
+        clouds.forEach(c => c.draw());
+        ctx.restore();
+        
+        ctx.save();
+        ctx.translate(-camera.x, -camera.y);
+
+        scenery.forEach(s => s.draw());
+
+        water.forEach(w => w.update());
+        water.forEach(w => w.draw());
+
+        boats.forEach(b => b.update());
+        boats.forEach(b => b.draw());
+
+        platforms.forEach(p => {
+            if (p.update) {
+                p.update();
+            }
+        });
+        platforms.forEach(p => p.draw());
+        stars.forEach(d => d.update());
+        stars.forEach(d => d.draw());
+
+        spitballs.forEach(s => s.update());
+        spitballs.forEach(s => s.draw());
+
+        pooProjectiles.forEach(p => p.update());
+        pooProjectiles.forEach(p => p.draw());
+
+        for (let i = enemies.length - 1; i >= 0; i--) {
+            const enemy = enemies[i];
+            enemy.update();
+            if (enemy.y > gameHeight + 50) { // Add a buffer
+                enemies.splice(i, 1);
+            }
+        }
+        enemies.forEach(e => e.draw());
+        player.draw();
+
+        ctx.restore();
+
+        checkCollisions();
+    }
+
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === 'd') keys.right = true;
+        if (e.key === 'ArrowLeft' || e.key === 'a') keys.left = true;
+        if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            player.jump();
+        };
+        if (e.key === ' ') {
+            e.preventDefault();
+            keys.shift = true;
+        }
+    });
+
+    window.addEventListener('keyup', (e) => {
+        if (e.key === 'ArrowRight' || e.key === 'd') keys.right = false;
+        if (e.key === 'ArrowLeft' || e.key === 'a') keys.left = false;
+        if (e.key === ' ') keys.shift = false;
+    });
+    
+    // --- REFACTORED TOUCH CONTROLS ---
+    const touchLeft = document.getElementById('touch-left');
+    const touchRight = document.getElementById('touch-right');
+    const touchJump = document.getElementById('touch-jump');
+    const touchDash = document.getElementById('touch-dash');
+
+    // Left Button
+    touchLeft.addEventListener('touchstart', e => { e.preventDefault(); keys.left = true; }, { passive: false });
+    touchLeft.addEventListener('touchend', e => { e.preventDefault(); keys.left = false; }, { passive: false });
+    touchLeft.addEventListener('touchcancel', e => { e.preventDefault(); keys.left = false; }, { passive: false });
+
+    // Right Button
+    touchRight.addEventListener('touchstart', e => { e.preventDefault(); keys.right = true; }, { passive: false });
+    touchRight.addEventListener('touchend', e => { e.preventDefault(); keys.right = false; }, { passive: false });
+    touchRight.addEventListener('touchcancel', e => { e.preventDefault(); keys.right = false; }, { passive: false });
+
+    // Dash Button
+    touchDash.addEventListener('touchstart', e => { e.preventDefault(); keys.shift = true; }, { passive: false });
+    touchDash.addEventListener('touchend', e => { e.preventDefault(); keys.shift = false; }, { passive: false });
+    touchDash.addEventListener('touchcancel', e => { e.preventDefault(); keys.shift = false; }, { passive: false });
+
+    // Jump Button (only needs touchstart as it's a single action)
+    touchJump.addEventListener('touchstart', e => { e.preventDefault(); player.jump(); }, { passive: false });
+    
+    // --- END REFACTORED CONTROLS ---
+
+    nextLevelButton.addEventListener('click', () => {
+        level++;
+        startGame(level);
+    });
+
+    restartButton.addEventListener('click', () => {
+        score = 0;
+        startGame(level);
+    });
+    window.addEventListener('resize', resizeCanvas);
+    
+    firstTimeInit();
+
+</script>
+</body>
+</html>
+

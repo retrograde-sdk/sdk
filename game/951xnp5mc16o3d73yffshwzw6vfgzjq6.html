@@ -1,0 +1,2042 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Educational Car Adventure</title>
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚗</text></svg>">
+    <meta name="description"
+        content="Play while learning with 3D cars that teach traffic signs, math, and general knowledge. Perfect for kids!">
+    <meta name="keywords"
+        content="3D cars, education, traffic signs, mathematics, general knowledge, educational games, children's games, interactive learning, fun learning, car game, quiz game">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/loaders/FBXLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fflate@latest/umd/index.min.js"></script>
+    <script type="text/javascript">
+        window.SDK_OPTIONS = {
+            gameId: "951xnp5mc16o3d73yffshwzw6vfgzjq6",
+            onEvent: function (a) {
+                switch (a.name) {
+                    case "SDK_GAME_PAUSE":
+                        // pause game logic / mute audio
+                        break;
+                    case "SDK_GAME_START":
+                        // advertisement done, resume game logic and unmute audio
+                        break;
+                    case "SDK_READY":
+                        // when sdk is ready
+                        console.error('SDK_READY', "Game SDK is ready to use.");
+                        break;
+                }
+            }
+        };
+        (function (a, b, c) {
+            var d = a.getElementsByTagName(b)[0];
+            a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+        })(document, "script", "gamemonetize-sdk"); 
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+        }
+
+        body {
+            overflow: hidden;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            user-select: none;
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #gameCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Ini adalah bagian terpenting */
+        #banner-container {
+            position: absolute;
+            /* Mengeluarkannya dari alur normal agar bisa diposisikan */
+            top: 10px;
+            /* Jarak 10px dari bawah layar */
+            left: 50%;
+            /* Posisikan 50% dari kiri */
+            transform: translateX(-50%);
+            /* Geser ke kiri sebesar 50% dari lebarnya sendiri untuk membuatnya pas di tengah */
+            z-index: 10;
+            /* Beri z-index tinggi agar PASTI di atas canvas dan elemen lain */
+
+            /* SDK akan mengatur width dan height, tapi kita bisa beri ukuran minimal/maksimal jika perlu */
+            min-width: 300px;
+            /* Contoh */
+            max-width: 970px;
+            /* Contoh */
+            width: 90%;
+            /* Contoh, agar lebih responsif */
+        }
+
+        .ui-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .ui-element {
+            pointer-events: auto;
+        }
+
+        .glassmorphism {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 20px;
+            border-radius: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .controls {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .control-btn {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            border: none;
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .control-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 10px 30px rgba(255, 255, 255, 0.3);
+        }
+
+        .control-btn:active {
+            transform: scale(0.95);
+        }
+
+        .arrow-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 15px;
+            width: 200px;
+            height: 200px;
+        }
+
+        .arrow-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 15px;
+            border: none;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .arrow-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 25px rgba(255, 255, 255, 0.3);
+        }
+
+        .arrow-btn:active {
+            transform: scale(0.9);
+            background: rgba(255, 255, 255, 0.3) !important;
+        }
+
+        .arrow-up {
+            grid-column: 2;
+            grid-row: 1;
+        }
+
+        .arrow-left {
+            grid-column: 1;
+            grid-row: 2;
+        }
+
+        .arrow-right {
+            grid-column: 3;
+            grid-row: 2;
+        }
+
+        .arrow-down {
+            grid-column: 2;
+            grid-row: 3;
+        }
+
+        .menu-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+        }
+
+        .menu-content {
+            padding: 50px;
+            border-radius: 30px;
+            text-align: center;
+            color: white;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .menu-title {
+            font-size: 36px;
+            margin-bottom: 25px;
+            font-weight: bold;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5);
+        }
+
+        .menu-btn {
+            border: none;
+            color: white;
+            padding: 18px 35px;
+            margin: 12px;
+            border-radius: 30px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 140px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .menu-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(255, 255, 255, 0.3);
+        }
+
+        .menu-btn:disabled {
+            background: rgba(100, 100, 100, 0.3) !important;
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .ad-btn {
+            background: linear-gradient(45deg, #FFD700, #FFA500) !important;
+            animation: shake 0.5s infinite;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.8) !important;
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0) translateY(-3px);
+            }
+
+            25% {
+                transform: translateX(-3px) translateY(-3px);
+            }
+
+            75% {
+                transform: translateX(3px) translateY(-3px);
+            }
+        }
+
+        .pause-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 250;
+        }
+
+        .pause-content {
+            padding: 50px;
+            border-radius: 30px;
+            text-align: center;
+            color: white;
+            max-width: 450px;
+            width: 90%;
+        }
+
+        .quiz-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(15px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 300;
+        }
+
+        .quiz-content {
+            padding: 50px;
+            border-radius: 30px;
+            text-align: center;
+            color: white;
+            max-width: 550px;
+            width: 90%;
+        }
+
+        .quiz-question {
+            font-size: 28px;
+            margin-bottom: 35px;
+            font-weight: bold;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5);
+        }
+
+        .quiz-option {
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 20px 30px;
+            margin: 15px;
+            border-radius: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: block;
+            width: 100%;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .quiz-option:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(255, 255, 255, 0.3);
+        }
+
+        .quiz-option.correct {
+            background: #4CAF50 !important;
+            animation: correctShake 0.5s infinite;
+            box-shadow: 0 0 30px rgba(76, 175, 80, 0.8) !important;
+        }
+
+        @keyframes correctShake {
+
+            0%,
+            100% {
+                transform: scale(1.05);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        .progress-bar {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 220px;
+            height: 12px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #FFD93D, #6BCF7F);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .level-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+            gap: 15px;
+            max-height: 350px;
+            overflow-y: auto;
+            padding: 25px 0;
+        }
+
+        .level-btn {
+            width: 70px;
+            height: 70px;
+            border: none;
+            border-radius: 15px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .level-btn.unlocked {
+            background: rgba(76, 175, 80, 0.3);
+            border: 2px solid rgba(76, 175, 80, 0.5);
+        }
+
+        .level-btn.locked {
+            background: rgba(100, 100, 100, 0.2);
+            border: 2px solid rgba(100, 100, 100, 0.3);
+            cursor: not-allowed;
+        }
+
+        .level-btn.unlocked:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 25px rgba(76, 175, 80, 0.5);
+            background: rgba(76, 175, 80, 0.4);
+        }
+
+        .lock-icon {
+            font-size: 28px;
+        }
+
+        .message-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(8px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 400;
+        }
+
+        .message-content {
+            padding: 40px 50px;
+            border-radius: 25px;
+            text-align: center;
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5);
+            animation: messageSlide 0.5s ease-out;
+        }
+
+        @keyframes messageSlide {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .message-correct {
+            background: rgba(76, 175, 80, 0.2);
+            border: 2px solid rgba(76, 175, 80, 0.5);
+        }
+
+        .message-wrong {
+            background: rgba(244, 67, 54, 0.2);
+            border: 2px solid rgba(244, 67, 54, 0.5);
+        }
+
+        .fireworks {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 450;
+        }
+
+        .firework {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            animation: fireworkExplode 2s ease-out forwards;
+        }
+
+        @keyframes fireworkExplode {
+            0% {
+                transform: scale(0);
+                opacity: 1;
+            }
+
+            50% {
+                transform: scale(1);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(1.5);
+                opacity: 0;
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @media (max-width: 768px) {
+            .hud {
+                font-size: 16px;
+                padding: 15px;
+            }
+
+            .controls {
+                bottom: 220px;
+            }
+
+            .arrow-controls {
+                width: 170px;
+                height: 170px;
+            }
+
+            .arrow-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+            }
+
+            .menu-content {
+                padding: 30px;
+            }
+
+            .menu-title {
+                font-size: 28px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="gameContainer">
+        <div id="banner-container" style="width: 320px; height: 50px"></div>
+        <canvas id="gameCanvas"></canvas>
+
+        <div class="ui-overlay">
+            <div class="hud ui-element glassmorphism">
+                <div>Level: <span id="levelNum">1</span></div>
+                <div>Score: <span id="score">0</span></div>
+                <div>Coin: <span id="coins">0</span></div>
+                <div>Star: <span id="stars">0</span></div>
+            </div>
+
+            <div class="progress-bar ui-element glassmorphism">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+
+            <div class="controls ui-element">
+                <button class="control-btn glassmorphism" id="pauseBtn">⏸</button>
+                <button class="control-btn glassmorphism" id="soundBtn">🔊</button>
+            </div>
+
+            <div class="arrow-controls ui-element">
+                <button class="arrow-btn glassmorphism arrow-up" id="upBtn">↑</button>
+                <button class="arrow-btn glassmorphism arrow-left" id="leftBtn">←</button>
+                <button class="arrow-btn glassmorphism arrow-right" id="rightBtn">→</button>
+                <button class="arrow-btn glassmorphism arrow-down" id="downBtn">↓</button>
+            </div>
+        </div>
+
+        <div class="menu-overlay ui-element" id="mainMenu">
+            <div class="menu-content glassmorphism">
+                <h1 class="menu-title">🚗 Educational Car Adventure</h1>
+                <p style="margin-bottom: 25px; font-weight: bold;">Learn while playing</p>
+                <button class="menu-btn glassmorphism" id="playBtn">Start Playing</button>
+                <button class="menu-btn glassmorphism" id="levelSelectBtn">Select Levels</button>
+                <button class="menu-btn glassmorphism" id="settingsBtn">Setting</button>
+            </div>
+        </div>
+
+        <div class="pause-overlay ui-element hidden" id="pauseOverlay">
+            <div class="pause-content glassmorphism">
+                <h2 style="margin-bottom: 25px; font-weight: bold;">⏸ Game Paused</h2>
+                <button class="menu-btn glassmorphism" id="resumeBtn">Continue</button>
+                <button class="menu-btn glassmorphism" id="mainMenuBtn">Return to Main Menu</button>
+                <button class="menu-btn glassmorphism" id="pauseSettingsBtn">Setting</button>
+                <!--<button class="menu-btn ad-btn" id="watchAdBtn">🎥 View Ad +50 Coins</button>
+            -->
+            </div>
+        </div>
+
+        <div class="quiz-overlay ui-element hidden" id="quizOverlay">
+            <div class="quiz-content glassmorphism">
+                <h2 style="font-weight: bold;">🎓 Educational Quiz</h2>
+                <p class="quiz-question" id="quizQuestion">What does the STOP sign mean?</p>
+                <button class="quiz-option glassmorphism" data-answer="0">Full stop</button>
+                <button class="quiz-option glassmorphism" data-answer="1">Just slowly</button>
+                <button class="quiz-option glassmorphism" data-answer="2">Straight ahead</button>
+            </div>
+        </div>
+
+        <div class="message-overlay ui-element hidden" id="messageOverlay">
+            <div class="message-content glassmorphism" id="messageContent">
+                Your answer is correct! 🎉
+            </div>
+        </div>
+
+        <div class="fireworks hidden" id="fireworksContainer"></div>
+    </div>
+
+    <script>
+        // Game State Management
+        class GameState {
+            constructor() {
+                this.currentLevel = this.loadProgress().level || 1;
+                this.score = 0;
+                this.coins = 0;
+                this.stars = 0;
+                this.totalLevels = 250;
+                this.soundEnabled = true;
+                this.isPaused = false;
+                this.gameMode = 'menu'; // menu, playing, quiz, paused
+                this.carSpeed = 0.15;
+                this.carPosition = { x: 0, y: 0, z: 0 };
+                this.collectibles = [];
+                this.trafficSigns = [];
+                this.quizData = this.initQuizData();
+            }
+
+            saveProgress() {
+                const progress = {
+                    level: this.currentLevel,
+                    score: this.score,
+                    coins: this.coins,
+                    stars: this.stars
+                };
+                localStorage.setItem('carGameProgress', JSON.stringify(progress));
+            }
+
+            loadProgress() {
+                const saved = localStorage.getItem('carGameProgress');
+                return saved ? JSON.parse(saved) : {};
+            }
+
+            initQuizData() {
+                return [
+                    {
+                        question: "What is the meaning of a STOP sign?",
+                        options: ["Stop completely", "Slow down", "Keep going"],
+                        correct: 0
+                    },
+                    {
+                        question: "What is the usual color of a warning sign?",
+                        options: ["Red", "Yellow", "Green"],
+                        correct: 1
+                    },
+                    {
+                        question: "How many wheels does a car usually have?",
+                        options: ["2", "4", "6"],
+                        correct: 1
+                    },
+                    {
+                        question: "What is the function of a red light?",
+                        options: ["Go", "Be careful", "Stop"],
+                        correct: 2
+                    },
+                    {
+                        question: "Where should we cross the road?",
+                        options: ["Anywhere", "Zebra cross", "In the middle of the road"],
+                        correct: 1
+                    },
+                    // 45 Additional Questions
+                    {
+                        question: "What animal is called the 'King of the Jungle'?",
+                        options: ["Tiger", "Elephant", "Lion"],
+                        correct: 2
+                    },
+                    {
+                        question: "What are the colors of the Indonesian flag?",
+                        options: ["Red and White", "Blue and White", "Green and Yellow"],
+                        correct: 0
+                    },
+                    {
+                        question: "How many days are there in a week?",
+                        options: ["5 days", "7 days", "10 days"],
+                        correct: 1
+                    },
+                    {
+                        question: "Which of the following is a fruit?",
+                        options: ["Carrot", "Apple", "Spinach"],
+                        correct: 1
+                    },
+                    {
+                        question: "The sound of a rooster in the morning is...",
+                        options: ["Meow", "Moo", "Cock-a-doodle-doo"],
+                        correct: 2
+                    },
+                    {
+                        question: "To see, we use our...",
+                        options: ["Ears", "Nose", "Eyes"],
+                        correct: 2
+                    },
+                    {
+                        question: "What is the capital city of Indonesia?",
+                        options: ["Bandung", "Surabaya", "Jakarta"],
+                        correct: 2
+                    },
+                    {
+                        question: "What is the result of 2 + 3?",
+                        options: ["4", "5", "6"],
+                        correct: 1
+                    },
+                    {
+                        question: "Which animal can fly?",
+                        options: ["Fish", "Bird", "Cat"],
+                        correct: 1
+                    },
+                    {
+                        question: "The color of a healthy leaf is generally...",
+                        options: ["Red", "Brown", "Green"],
+                        correct: 2
+                    },
+                    {
+                        question: "When riding a motorcycle, we must wear a...",
+                        options: ["Hat", "Helmet", "Umbrella"],
+                        correct: 1
+                    },
+                    {
+                        question: "The planet we live on is...",
+                        options: ["Mars", "Earth", "Venus"],
+                        correct: 1
+                    },
+                    {
+                        question: "How many fingers are on one hand?",
+                        options: ["4", "5", "6"],
+                        correct: 1
+                    },
+                    {
+                        question: "To keep our teeth clean, we should...",
+                        options: ["Brush teeth", "Eat candy", "Drink soda"],
+                        correct: 0
+                    },
+                    {
+                        question: "Rice comes from the ... plant.",
+                        options: ["Wheat", "Corn", "Rice (Paddy)"],
+                        correct: 2
+                    },
+                    {
+                        question: "A shape that has no corners is a...",
+                        options: ["Square", "Triangle", "Circle"],
+                        correct: 2
+                    },
+                    {
+                        question: "Water freezes into ice at a ... temperature.",
+                        options: ["Hot", "Warm", "Cold"],
+                        correct: 2
+                    },
+                    {
+                        question: "The animal that produces honey is a...",
+                        options: ["Bee", "Butterfly", "Fly"],
+                        correct: 0
+                    },
+                    {
+                        question: "What is the function of a green light in traffic?",
+                        options: ["Stop", "Be careful", "Go"],
+                        correct: 2
+                    },
+                    {
+                        question: "Before eating, we should...",
+                        options: ["Play", "Wash our hands", "Sleep"],
+                        correct: 1
+                    },
+                    {
+                        question: "Which of the following is a writing tool?",
+                        options: ["Spoon", "Pencil", "Plate"],
+                        correct: 1
+                    },
+                    {
+                        question: "The sun rises in the...",
+                        options: ["West", "East", "North"],
+                        correct: 1
+                    },
+                    {
+                        question: "How many months are in a year?",
+                        options: ["10", "11", "12"],
+                        correct: 2
+                    },
+                    {
+                        question: "What is the result of 5 - 2?",
+                        options: ["2", "3", "4"],
+                        correct: 1
+                    },
+                    {
+                        question: "Which is heavier, 1 kg of cotton or 1 kg of iron?",
+                        options: ["1 kg of iron", "1 kg of cotton", "They weigh the same"],
+                        correct: 2
+                    },
+                    {
+                        question: "The part of a plant that absorbs water from the soil is the...",
+                        options: ["Leaf", "Flower", "Root"],
+                        correct: 2
+                    },
+                    {
+                        question: "Which food is good for eye health?",
+                        options: ["Candy", "Carrot", "Chips"],
+                        correct: 1
+                    },
+                    {
+                        question: "If we feel sick, we should go to the...",
+                        options: ["Market", "School", "Doctor"],
+                        correct: 2
+                    },
+                    {
+                        question: "Fire feels...",
+                        options: ["Cold", "Hot", "Cool"],
+                        correct: 1
+                    },
+                    {
+                        question: "How many sides does a triangle have?",
+                        options: ["3", "4", "5"],
+                        correct: 0
+                    },
+                    {
+                        question: "The sense used for hearing is the...",
+                        options: ["Eye", "Nose", "Ear"],
+                        correct: 2
+                    },
+                    {
+                        question: "The day after Saturday is...",
+                        options: ["Friday", "Sunday", "Monday"],
+                        correct: 1
+                    },
+                    {
+                        question: "What is the name of Earth's natural satellite?",
+                        options: ["Star", "Sun", "Moon"],
+                        correct: 2
+                    },
+                    {
+                        question: "Fish breathe with...",
+                        options: ["Lungs", "Gills", "Skin"],
+                        correct: 1
+                    },
+                    {
+                        question: "The shape of a bicycle wheel is a...",
+                        options: ["Square", "Circle", "Triangle"],
+                        correct: 1
+                    },
+                    {
+                        question: "To cut paper, we use...",
+                        options: ["Glue", "Ruler", "Scissors"],
+                        correct: 2
+                    },
+                    {
+                        question: "A trash can is used for...",
+                        options: ["Storing toys", "Throwing away trash", "Placing books"],
+                        correct: 1
+                    },
+                    {
+                        question: "The first president of Indonesia was...",
+                        options: ["Soeharto", "Soekarno", "Joko Widodo"],
+                        correct: 1
+                    },
+                    {
+                        question: "What animal has a long trunk?",
+                        options: ["Giraffe", "Elephant", "Snake"],
+                        correct: 1
+                    },
+                    {
+                        question: "When we are thirsty, we need...",
+                        options: ["Food", "A drink", "A toy"],
+                        correct: 1
+                    },
+                    {
+                        question: "Clouds that are about to rain are usually colored...",
+                        options: ["Bright white", "Blue", "Dark gray"],
+                        correct: 2
+                    },
+                    {
+                        question: "Who teaches students at school?",
+                        options: ["Doctor", "Police officer", "Teacher"],
+                        correct: 2
+                    },
+                    {
+                        question: "A mode of transportation that flies in the air is an...",
+                        options: ["Ship", "Train", "Airplane"],
+                        correct: 2
+                    },
+                    {
+                        question: "If our body is tired, we need to...",
+                        options: ["Play", "Rest", "Keep studying"],
+                        correct: 1
+                    },
+                    {
+                        question: "A rainbow appears after...",
+                        options: ["Rain", "Nighttime", "Sunset"],
+                        correct: 0
+                    }
+                ];
+            }
+        }
+
+        // Sound Manager
+        class SoundManager {
+            constructor(gameState) {
+                this.gameState = gameState;
+                this.sounds = {};
+                this.backgroundMusic = null;
+                this.initSounds();
+            }
+
+            initSounds() {
+                // Background Music
+                this.backgroundMusic = new Audio('https://assets.mixkit.co/music/846/846.mp3');
+                this.backgroundMusic.loop = true;
+                this.backgroundMusic.volume = 1;
+                this.backgroundMusic.preload = 'auto';
+                const soundUrls = {
+                    engine: 'https://assets.mixkit.co/active_storage/sfx/1561/1561.wav',
+                    coin: 'https://assets.mixkit.co/active_storage/sfx/269/269.wav',
+                    click: 'https://assets.mixkit.co/active_storage/sfx/1117/1117.wav',
+                    success: 'https://assets.mixkit.co/active_storage/sfx/902/902.wav'
+                };
+
+                Object.keys(soundUrls).forEach(key => {
+                    this.sounds[key] = new Audio(soundUrls[key]);
+                    this.sounds[key].preload = 'auto';
+                    if (key === 'engine') {
+                        this.sounds[key].loop = true;
+                        this.sounds[key].volume = 0.3;
+                    }
+                });
+            }
+            playBackgroundMusic() {
+                if (this.gameState.soundEnabled) {
+                    this.backgroundMusic.play().catch(e => console.log('Music play failed:', e));
+                }
+            }
+
+            stopBackgroundMusic() {
+                this.backgroundMusic.pause();
+                this.backgroundMusic.currentTime = 0;
+            }
+
+            play(soundName) {
+                if (this.gameState.soundEnabled && this.sounds[soundName]) {
+                    this.sounds[soundName].currentTime = 0;
+                    this.sounds[soundName].play().catch(e => console.log('Sound play failed:', e));
+                }
+            }
+
+            stop(soundName) {
+                if (this.sounds[soundName]) {
+                    this.sounds[soundName].pause();
+                    this.sounds[soundName].currentTime = 0;
+                }
+            }
+        }
+
+        // Fireworks Effect
+        class FireworksEffect {
+            static create() {
+                const container = document.getElementById('fireworksContainer');
+                container.classList.remove('hidden');
+
+                // Create multiple fireworks
+                for (let i = 0; i < 5; i++) {
+                    setTimeout(() => {
+                        this.createSingleFirework(container);
+                    }, i * 300);
+                }
+
+                // Hide container after animation
+                setTimeout(() => {
+                    container.classList.add('hidden');
+                    container.innerHTML = '';
+                }, 3000);
+            }
+
+            static createSingleFirework(container) {
+                const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8'];
+                const centerX = Math.random() * window.innerWidth;
+                const centerY = Math.random() * window.innerHeight * 0.6 + window.innerHeight * 0.2;
+
+                // Create particles
+                for (let i = 0; i < 12; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'firework';
+
+                    const angle = (i / 12) * Math.PI * 2;
+                    const distance = 50 + Math.random() * 100;
+                    const endX = centerX + Math.cos(angle) * distance;
+                    const endY = centerY + Math.sin(angle) * distance;
+
+                    particle.style.left = centerX + 'px';
+                    particle.style.top = centerY + 'px';
+                    particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    particle.style.boxShadow = `0 0 10px ${colors[Math.floor(Math.random() * colors.length)]}`;
+
+                    // Animate to end position
+                    particle.style.setProperty('--end-x', endX + 'px');
+                    particle.style.setProperty('--end-y', endY + 'px');
+                    particle.style.animation = `fireworkMove 1.5s ease-out forwards, fireworkExplode 1.5s ease-out forwards`;
+
+                    container.appendChild(particle);
+
+                    // Remove particle after animation
+                    setTimeout(() => {
+                        if (particle.parentNode) {
+                            particle.parentNode.removeChild(particle);
+                        }
+                    }, 2000);
+                }
+            }
+        }
+
+        // Add firework movement animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fireworkMove {
+                to {
+                    left: var(--end-x);
+                    top: var(--end-y);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // 3D Game Engine
+        class Game3D {
+            constructor(gameState, soundManager) {
+                this.gameState = gameState;
+                this.soundManager = soundManager;
+                this.scene = new THREE.Scene();
+                this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                this.renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('gameCanvas'), antialias: true });
+                this.car = null;
+                this.world = null;
+                this.collectibleMeshes = [];
+                this.signMeshes = [];
+                this.keys = {};
+                this.init();
+            }
+
+            init() {
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                this.renderer.outputEncoding = THREE.sRGBEncoding;
+                this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+                this.renderer.toneMappingExposure = 1.25; // Anda bisa sesuaikan nilai ini (misal 1.0, 1.5, dll)
+                this.scene.background = new THREE.Color(0x87CEEB); // Gunakan ini untuk warna latar
+                this.renderer.shadowMap.enabled = true;
+                this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+
+
+                this.setupLighting();
+                this.createWorld();
+                this.createCar();
+                this.setupCamera();
+                this.setupEventListeners();
+                this.generateLevel();
+                this.animate();
+            }
+
+            // Di dalam kelas Game3D
+
+            setupLighting() {
+                // Gunakan HemisphereLight untuk simulasi cahaya langit dan tanah (lebih baik dari AmbientLight)
+                const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1.5); // Cahaya dari atas putih, dari bawah abu-abu
+                hemisphereLight.position.set(0, 20, 0);
+                this.scene.add(hemisphereLight);
+
+                // Jadikan DirectionalLight sebagai Matahari yang Kuat
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 2.5); // Tingkatkan intensitas menjadi 2.5 atau lebih tinggi
+                directionalLight.position.set(50, 50, 25); // Posisikan sedikit dari samping
+                directionalLight.castShadow = true;
+
+                // Tingkatkan kualitas bayangan
+                directionalLight.shadow.mapSize.width = 2048;
+                directionalLight.shadow.mapSize.height = 2048;
+                directionalLight.shadow.camera.near = 0.5;
+                directionalLight.shadow.camera.far = 500;
+                directionalLight.shadow.camera.left = -100;
+                directionalLight.shadow.camera.right = 100;
+                directionalLight.shadow.camera.top = 100;
+                directionalLight.shadow.camera.bottom = -100;
+
+                this.scene.add(directionalLight);
+
+                // Anda tidak perlu AmbientLight lagi jika sudah memakai HemisphereLight
+                // const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+                // this.scene.add(ambientLight);
+            }
+
+            createWorld() {
+                // Ground
+                const groundGeometry = new THREE.PlaneGeometry(100, 100);
+                const groundMaterial = new THREE.MeshLambertMaterial({ color: 0x90EE90 });
+                const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+                ground.rotation.x = -Math.PI / 2;
+                ground.receiveShadow = true;
+                this.scene.add(ground);
+
+                // Road
+                const roadGeometry = new THREE.PlaneGeometry(6, 100);
+                const roadMaterial = new THREE.MeshLambertMaterial({ color: 0x404040 });
+                const road = new THREE.Mesh(roadGeometry, roadMaterial);
+                road.rotation.x = -Math.PI / 2;
+                road.position.y = 0.01;
+                this.scene.add(road);
+
+                // Road markings
+                for (let i = -45; i < 50; i += 5) {
+                    const markingGeometry = new THREE.PlaneGeometry(0.3, 2);
+                    const markingMaterial = new THREE.MeshLambertMaterial({ color: 0xFFFFFF });
+                    const marking = new THREE.Mesh(markingGeometry, markingMaterial);
+                    marking.rotation.x = -Math.PI / 2;
+                    marking.position.set(0, 0.02, i);
+                    this.scene.add(marking);
+                }
+
+                // Trees
+                this.createTrees();
+            }
+
+            createTrees() {
+                for (let i = 0; i < 20; i++) {
+                    const tree = this.createTree();
+                    const x = (Math.random() - 0.5) * 80;
+                    const z = (Math.random() - 0.5) * 80;
+                    if (Math.abs(x) > 5) { // Don't place on road
+                        tree.position.set(x, 0, z);
+                        this.scene.add(tree);
+                    }
+                }
+            }
+
+            createTree() {
+                const tree = new THREE.Group();
+
+                // Trunk
+                const trunkGeometry = new THREE.CylinderGeometry(0.3, 0.5, 3);
+                const trunkMaterial = new THREE.MeshLambertMaterial({ color: 0x8B4513 });
+                const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
+                trunk.position.y = 1.5;
+                trunk.castShadow = true;
+                tree.add(trunk);
+
+                // Leaves
+                const leavesGeometry = new THREE.SphereGeometry(2);
+                const leavesMaterial = new THREE.MeshLambertMaterial({ color: 0x228B22 });
+                const leaves = new THREE.Mesh(leavesGeometry, leavesMaterial);
+                leaves.position.y = 4;
+                leaves.castShadow = true;
+                tree.add(leaves);
+
+                return tree;
+            }
+
+            createCar() {
+                // Karena FBXLoader sudah dimuat di tag <head> HTML,
+                // kita bisa langsung menggunakannya di sini tanpa perlu memuat ulang.
+                const loader = new THREE.FBXLoader();
+
+                // Pastikan path './assets/car.fbx' sudah benar dan Anda menjalankan
+                // kode ini melalui local server (misal: VS Code Live Server).
+                loader.load('./assets/car.fbx', (fbx) => {
+                    this.car = fbx;
+
+                    // Pemeriksaan ini bagus untuk memastikan objek berhasil dimuat
+                    if (this.car) {
+                        this.car.scale.setScalar(0.01);
+                        this.car.position.set(0, 0, -40);
+
+                        this.car.traverse((child) => {
+                            if (child.isMesh) {
+                                child.material = new THREE.MeshPhysicalMaterial({
+                                    color: 0xFFD700, // Warna emas
+                                    metalness: 0.95,   // Sangat metalik
+                                    roughness: 0.05,   // Sangat halus/mengkilap, kurangi nilai ini agar lebih memantul
+                                    clearcoat: 1.0,    // Lapisan pernis
+                                    clearcoatRoughness: 0.1 // Tingkat kekasaran pernis
+                                });
+                                child.castShadow = true;
+                                child.receiveShadow = true;
+                            }
+                        });
+
+                        this.car.rotation.y = Math.PI;
+                        this.scene.add(this.car);
+                    }
+                },
+                    (progress) => {
+                        console.log('Loading progress:', (progress.loaded / progress.total * 100) + '%');
+                    },
+                    (error) => {
+                        // Error handler ini sekarang HANYA akan berjalan jika file 'car.fbx'
+                        // itu sendiri yang gagal dimuat (misalnya, file tidak ada).
+                        console.error('Error loading FBX model (car.fbx):', error);
+                        this.createBasicCar();
+                    });
+            }
+
+            createBasicCar() {
+                this.car = new THREE.Group();
+
+                const bodyGeometry = new THREE.BoxGeometry(4.5, 0.8, 9);
+                const bodyMaterial = new THREE.MeshPhysicalMaterial({
+                    color: 0xFFD700,
+                    metalness: 0.9,
+                    roughness: 0.1
+                });
+                const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+                body.position.y = 0.4;
+                body.castShadow = true;
+                this.car.add(body);
+
+                this.car.position.set(0, 0, -40);
+                this.scene.add(this.car);
+            }
+
+            updateCar() {
+                if (this.car && this.car.rotation) {
+                    // Your car update logic here
+                    this.car.position.z += this.speed;
+                }
+            }
+
+            createBasicCar() {
+                this.car = new THREE.Group();
+
+                const bodyGeometry = new THREE.BoxGeometry(4.5, 0.8, 9);
+                const bodyMaterial = new THREE.MeshPhysicalMaterial({
+                    color: 0xFFD700,
+                    metalness: 0.9,
+                    roughness: 0.1
+                });
+                const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+                body.position.y = 0.4;
+                body.castShadow = true;
+                this.car.add(body);
+
+                this.car.position.set(0, 0, -40);
+                this.scene.add(this.car);
+            }
+
+
+            setupCamera() {
+                this.camera.position.set(0, 8, -35);
+                this.camera.lookAt(0, 0, -40);
+            }
+
+            setupEventListeners() {
+                window.addEventListener('keydown', (e) => {
+                    this.keys[e.code] = true;
+                });
+
+                window.addEventListener('keyup', (e) => {
+                    this.keys[e.code] = false;
+                });
+
+                window.addEventListener('resize', () => {
+                    this.camera.aspect = window.innerWidth / window.innerHeight;
+                    this.camera.updateProjectionMatrix();
+                    this.renderer.setSize(window.innerWidth, window.innerHeight);
+                });
+            }
+
+            generateLevel() {
+                // Clear existing collectibles and signs
+                this.collectibleMeshes.forEach(mesh => this.scene.remove(mesh));
+                this.signMeshes.forEach(mesh => this.scene.remove(mesh));
+                this.collectibleMeshes = [];
+                this.signMeshes = [];
+
+                // Generate collectibles
+                for (let i = 0; i < 10; i++) {
+                    const coin = this.createCoin();
+                    const x = (Math.random() - 0.5) * 4;
+                    const z = Math.random() * 40 - 20;
+                    coin.position.set(x, 1, z);
+                    this.scene.add(coin);
+                    this.collectibleMeshes.push(coin);
+                }
+
+                // Generate traffic signs
+                for (let i = 0; i < 3; i++) {
+                    const sign = this.createTrafficSign();
+                    const x = (Math.random() > 0.5 ? 1 : -1) * (6 + Math.random() * 3);
+                    const z = Math.random() * 30 - 15;
+                    sign.position.set(x, 0, z);
+                    this.scene.add(sign);
+                    this.signMeshes.push(sign);
+                }
+            }
+
+            createCoin() {
+                const coinGeometry = new THREE.CylinderGeometry(0.5, 0.5, 0.1);
+                const coinMaterial = new THREE.MeshLambertMaterial({ color: 0xFFC000 });
+                const coin = new THREE.Mesh(coinGeometry, coinMaterial);
+                coin.userData = { type: 'coin', collected: false };
+                return coin;
+            }
+
+            createTrafficSign() {
+                const sign = new THREE.Group();
+
+                // Post
+                const postGeometry = new THREE.CylinderGeometry(0.1, 0.1, 3);
+                const postMaterial = new THREE.MeshLambertMaterial({ color: 0x888888 });
+                const post = new THREE.Mesh(postGeometry, postMaterial);
+                post.position.y = 1.5;
+                sign.add(post);
+
+                // Sign board
+                const signGeometry = new THREE.PlaneGeometry(1.5, 1.5);
+                const signMaterial = new THREE.MeshLambertMaterial({ color: 0xFF0000 });
+                const signBoard = new THREE.Mesh(signGeometry, signMaterial);
+                signBoard.position.set(0, 3, 0);
+                sign.add(signBoard);
+
+                // STOP text
+                const textGeometry = new THREE.PlaneGeometry(1, 0.3);
+                const textMaterial = new THREE.MeshLambertMaterial({ color: 0xFFFFFF });
+                const text = new THREE.Mesh(textGeometry, textMaterial);
+                text.position.set(0, 3, 0.01);
+                sign.add(text);
+
+                sign.userData = { type: 'sign' };
+                return sign;
+            }
+
+            updateCar() {
+                if (this.gameState.gameMode !== 'playing') return;
+
+                let moved = false;
+                const speed = this.gameState.carSpeed;
+                let wheelRotation = 0;
+
+                if (this.keys['ArrowUp'] || this.keys['KeyW']) {
+                    this.car.position.z += speed;
+                    moved = true;
+                    wheelRotation += speed * 3;
+                }
+                if (this.keys['ArrowDown'] || this.keys['KeyS']) {
+                    this.car.position.z -= speed * 0.5;
+                    moved = true;
+                    wheelRotation -= speed;
+                }
+                if (this.keys['ArrowLeft'] || this.keys['KeyA']) {
+                    if (this.car.position.x < 2.5) {
+                        this.car.position.x += speed * 0.8;
+                        this.car.rotation.y = 0.15;
+                        moved = true;
+                    }
+
+                }
+                if (this.keys['ArrowRight'] || this.keys['KeyD']) {
+                    if (this.car.position.x > -2.5) {
+                        this.car.position.x -= speed * 0.8;
+                        this.car.rotation.y = -0.15;
+                        moved = true;
+                    }
+                }
+
+                if (!this.keys['ArrowLeft'] && !this.keys['ArrowRight'] && !this.keys['KeyA'] && !this.keys['KeyD']) {
+                    this.car.rotation.y *= 0.9;
+                }
+
+                // Rotate wheels
+                if (moved && this.wheels) {
+                    this.wheels.forEach(wheel => {
+                        wheel.rotation.x += wheelRotation;
+                    });
+                }
+
+                // Camera follow
+                this.camera.position.z = this.car.position.z - 5;
+                this.camera.lookAt(this.car.position.x, this.car.position.y, this.car.position.z + 5);
+
+                // Check collisions
+                this.checkCollisions();
+
+                // Auto forward movement
+                this.car.position.z += speed * 0.3;
+
+                // Check level completion
+                if (this.car.position.z > 40) {
+                    this.completeLevel();
+                }
+            }
+
+            checkCollisions() {
+                this.collectibleMeshes.forEach((coin, index) => {
+                    if (!coin.userData.collected) {
+                        const distance = this.car.position.distanceTo(coin.position);
+                        if (distance < 1.5) {
+                            coin.userData.collected = true;
+                            coin.visible = false;
+                            this.gameState.coins++;
+                            this.gameState.score += 100;
+                            this.soundManager.play('coin');
+                            this.updateHUD();
+                        }
+                    }
+                });
+            }
+
+            completeLevel() {
+                this.gameState.currentLevel++;
+                this.gameState.stars += Math.floor(this.gameState.coins / 5);
+                this.soundManager.play('success');
+                this.gameState.saveProgress();
+
+                this.showQuiz();
+
+            }
+
+            nextLevel() {
+                this.car.position.set(0, 0, -40);
+                this.generateLevel();
+                this.updateHUD();
+                this.updateProgressBar();
+            }
+
+            showQuiz() {
+                this.gameState.gameMode = 'quiz';
+                const quizOverlay = document.getElementById('quizOverlay');
+                const quizData = this.gameState.quizData[Math.floor(Math.random() * this.gameState.quizData.length)];
+
+                document.getElementById('quizQuestion').textContent = quizData.question;
+                const options = quizOverlay.querySelectorAll('.quiz-option');
+                options.forEach((option, index) => {
+                    option.textContent = quizData.options[index];
+                    option.setAttribute('data-answer', index);
+                    option.classList.remove('correct');
+                    option.style.animation = '';
+                    option.onclick = () => this.answerQuiz(index === quizData.correct, quizData.correct);
+                });
+
+                quizOverlay.classList.remove('hidden');
+            }
+
+            answerQuiz(correct, correctIndex) {
+                const options = document.querySelectorAll('.quiz-option');
+
+                if (correct) {
+                    this.gameState.score += 500;
+                    this.gameState.stars += 2;
+                    this.soundManager.play('success');
+                    this.showMessage('Your answer is correct! 🎉', 'correct');
+                    FireworksEffect.create();
+                } else {
+                    this.soundManager.play('click');
+                    const correctAnswerText = options[correctIndex].textContent;
+                    this.showMessage(`Your answer is wrong! 😔. correct answer: ${correctAnswerText}`, 'wrong');
+
+                    // Highlight correct answer
+                    options[correctIndex].classList.add('correct');
+                }
+
+                setTimeout(() => {
+                    document.getElementById('quizOverlay').classList.add('hidden');
+                    this.gameState.gameMode = 'playing';
+                    this.nextLevel();
+                }, 5555);
+            }
+
+            showMessage(text, type) {
+                const messageOverlay = document.getElementById('messageOverlay');
+                const messageContent = document.getElementById('messageContent');
+
+                messageContent.textContent = text;
+                messageContent.className = `message-content glassmorphism message-${type}`;
+                messageOverlay.classList.remove('hidden');
+
+                setTimeout(() => {
+                    messageOverlay.classList.add('hidden');
+                }, 5555);
+            }
+
+            updateHUD() {
+                document.getElementById('levelNum').textContent = this.gameState.currentLevel;
+                document.getElementById('score').textContent = this.gameState.score;
+                document.getElementById('coins').textContent = this.gameState.coins;
+                document.getElementById('stars').textContent = this.gameState.stars;
+            }
+
+            updateProgressBar() {
+                const progress = (this.gameState.currentLevel / this.gameState.totalLevels) * 100;
+                document.getElementById('progressFill').style.width = progress + '%';
+            }
+
+            animate() {
+                requestAnimationFrame(() => this.animate());
+
+                if (this.gameState.gameMode === 'playing') {
+                    this.updateCar();
+
+                    // Animate collectibles
+                    this.collectibleMeshes.forEach(coin => {
+                        coin.rotation.y += 0.05;
+                        coin.position.y = 1 + Math.sin(Date.now() * 0.005 + coin.position.x) * 0.2;
+                    });
+                }
+
+                this.renderer.render(this.scene, this.camera);
+            }
+        }
+
+        // UI Manager
+        class UIManager {
+            constructor(gameState, soundManager, game3D) {
+                this.gameState = gameState;
+                this.soundManager = soundManager;
+                this.game3D = game3D;
+                this.setupEventListeners();
+            }
+
+            setupEventListeners() {
+                // Menu buttons
+                document.getElementById('playBtn').addEventListener('click', () => {
+                    if (typeof sdk !== 'undefined' && sdk.showBanner !== 'undefined') {
+                        sdk.showBanner();
+                    }
+                    this.soundManager.play('click');
+                    this.startGame();
+                });
+
+                document.getElementById('levelSelectBtn').addEventListener('click', () => {
+                    this.soundManager.play('click');
+                    this.showLevelSelect();
+                });
+
+                document.getElementById('settingsBtn').addEventListener('click', () => {
+                    this.soundManager.play('click');
+                    this.showSettings();
+                });
+
+                // Control buttons
+                document.getElementById('pauseBtn').addEventListener('click', () => {
+                    this.soundManager.play('click');
+                    this.showPauseMenu();
+                });
+
+                document.getElementById('soundBtn').addEventListener('click', () => {
+                    this.toggleSound();
+                });
+
+                // Pause menu buttons
+                document.getElementById('resumeBtn').addEventListener('click', () => {
+                    this.soundManager.play('click');
+                    this.resumeGame();
+                });
+
+                document.getElementById('mainMenuBtn').addEventListener('click', () => {
+                    this.soundManager.play('click');
+                    this.backToMainMenu();
+                });
+
+                document.getElementById('pauseSettingsBtn').addEventListener('click', () => {
+                    this.soundManager.play('click');
+                    this.showSettingsFromPause();
+                });
+
+                document.getElementById('watchAdBtn').addEventListener('click', () => {
+                    this.soundManager.play('click');
+                    this.watchAd();
+                });
+
+                // Arrow controls with improved feedback
+                const arrowButtons = {
+                    'upBtn': 'ArrowUp',
+                    'downBtn': 'ArrowDown',
+                    'leftBtn': 'ArrowLeft',
+                    'rightBtn': 'ArrowRight'
+                };
+
+
+                Object.keys(arrowButtons).forEach(buttonId => {
+                    const button = document.getElementById(buttonId);
+                    const key = arrowButtons[buttonId];
+
+                    // Touch events
+                    button.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        this.game3D.keys[key] = true;
+                        button.style.transform = 'scale(0.9)';
+                        button.style.background = 'rgba(255, 255, 255, 0.3)';
+                    });
+
+                    button.addEventListener('touchend', (e) => {
+                        e.preventDefault();
+                        this.game3D.keys[key] = false;
+                        button.style.transform = 'scale(1)';
+                        button.style.background = '';
+                    });
+
+                    // Mouse events
+                    button.addEventListener('mousedown', (e) => {
+                        e.preventDefault();
+                        this.game3D.keys[key] = true;
+                        button.style.transform = 'scale(0.9)';
+                        button.style.background = 'rgba(255, 255, 255, 0.3)';
+                    });
+
+                    button.addEventListener('mouseup', (e) => {
+                        e.preventDefault();
+                        this.game3D.keys[key] = false;
+                        button.style.transform = 'scale(1)';
+                        button.style.background = '';
+                    });
+
+                    button.addEventListener('mouseleave', (e) => {
+                        this.game3D.keys[key] = false;
+                        button.style.transform = 'scale(1)';
+                        button.style.background = '';
+                    });
+                });
+
+                // Prevent context menu on mobile
+                document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+                // Handle touch swipe controls
+                this.setupTouchControls();
+            }
+
+            setupTouchControls() {
+                let touchStartX = 0;
+                let touchStartY = 0;
+                let isSwiping = false;
+
+                document.addEventListener('touchstart', (e) => {
+                    if (e.target.classList.contains('arrow-btn')) return;
+                    touchStartX = e.touches[0].clientX;
+                    touchStartY = e.touches[0].clientY;
+                    isSwiping = false;
+                });
+
+                document.addEventListener('touchmove', (e) => {
+                    if (e.target.classList.contains('arrow-btn')) return;
+                    if (this.gameState.gameMode !== 'playing') return;
+
+                    e.preventDefault();
+
+                    const touchX = e.touches[0].clientX;
+                    const touchY = e.touches[0].clientY;
+                    const deltaX = touchX - touchStartX;
+                    const deltaY = touchY - touchStartY;
+
+                    if (Math.abs(deltaX) > 50 || Math.abs(deltaY) > 50) {
+                        isSwiping = true;
+
+                        // Reset all keys first
+                        Object.keys(this.game3D.keys).forEach(key => {
+                            if (key.startsWith('Arrow')) {
+                                this.game3D.keys[key] = false;
+                            }
+                        });
+
+                        if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                            if (deltaX > 50) {
+                                this.game3D.keys['ArrowRight'] = true;
+                            } else if (deltaX < -50) {
+                                this.game3D.keys['ArrowLeft'] = true;
+                            }
+                        } else {
+                            if (deltaY > 50) {
+                                this.game3D.keys['ArrowDown'] = true;
+                            } else if (deltaY < -50) {
+                                this.game3D.keys['ArrowUp'] = true;
+                            }
+                        }
+                    }
+                });
+
+                document.addEventListener('touchend', (e) => {
+                    if (isSwiping) {
+                        Object.keys(this.game3D.keys).forEach(key => {
+                            if (key.startsWith('Arrow')) {
+                                this.game3D.keys[key] = false;
+                            }
+                        });
+                    }
+                    isSwiping = false;
+                });
+            }
+
+            startGame() {
+                document.getElementById('mainMenu').classList.add('hidden');
+                this.gameState.gameMode = 'playing';
+                this.game3D.updateHUD();
+                this.game3D.updateProgressBar();
+                this.soundManager.play('engine');
+                this.soundManager.playBackgroundMusic();
+            }
+
+            showPauseMenu() {
+                if (this.gameState.gameMode === 'playing') {
+                    this.gameState.gameMode = 'paused';
+                    this.gameState.isPaused = true;
+                    document.getElementById('pauseBtn').textContent = '▶';
+                    document.getElementById('pauseOverlay').classList.remove('hidden');
+                    this.soundManager.stop('engine');
+                    this.soundManager.stopBackgroundMusic();
+                }
+            }
+
+            resumeGame() {
+                this.gameState.gameMode = 'playing';
+                this.gameState.isPaused = false;
+                document.getElementById('pauseBtn').textContent = '⏸';
+                document.getElementById('pauseOverlay').classList.add('hidden');
+                this.soundManager.play('engine');
+                this.soundManager.playBackgroundMusic();
+            }
+
+            backToMainMenu() {
+                this.gameState.gameMode = 'menu';
+                this.gameState.isPaused = false;
+                document.getElementById('pauseBtn').textContent = '⏸';
+                document.getElementById('pauseOverlay').classList.add('hidden');
+                document.getElementById('mainMenu').classList.remove('hidden');
+                this.soundManager.stop('engine');
+                this.soundManager.stopBackgroundMusic();
+                this.showMainMenu();
+            }
+
+            showSettingsFromPause() {
+                document.getElementById('pauseOverlay').classList.add('hidden');
+                document.getElementById('mainMenu').classList.remove('hidden');
+                this.showSettings();
+            }
+
+            watchAd() {
+                // Simulate watching ad
+                this.gameState.coins += 50;
+                this.gameState.score += 200;
+                this.game3D.updateHUD();
+                this.soundManager.play('success');
+
+                const callbacks = {
+                    adFinished: () => console.log("End rewarded ad"),
+                    adError: (error) => console.log("Error rewarded ad", error),
+                    adStarted: () => console.log("Start rewarded ad"),
+                };
+
+                // Show confirmation
+                const adBtn = document.getElementById('watchAdBtn');
+                const originalText = adBtn.textContent;
+                adBtn.textContent = '✓ +50 Coins Received!';
+                adBtn.style.background = 'rgba(76, 175, 80, 0.3)';
+                adBtn.style.animation = 'none';
+
+                setTimeout(() => {
+                    adBtn.textContent = originalText;
+                    adBtn.style.background = 'linear-gradient(45deg, #FFD700, #FFA500)';
+                    adBtn.style.animation = 'shake 0.5s infinite';
+                }, 3333);
+            }
+
+            showLevelSelect() {
+                const menuContent = document.querySelector('.menu-content');
+                menuContent.innerHTML = `
+                    <h1 class="menu-title">Select Levels</h1>
+                    <button class="menu-btn glassmorphism" onclick="gameManager.ui.showMainMenu()">Back</button>
+                    <div class="level-grid">
+                        ${this.generateLevelButtons()}
+                    </div>
+                    
+                `;
+            }
+
+            generateLevelButtons() {
+                let buttons = '';
+                const maxUnlockedLevel = this.gameState.currentLevel;
+
+                for (let i = 1; i <= Math.min(250, this.gameState.totalLevels); i++) {
+                    const unlocked = i <= maxUnlockedLevel;
+                    const buttonClass = unlocked ? 'level-btn unlocked glassmorphism' : 'level-btn locked glassmorphism';
+                    const onclick = unlocked ? `onclick="gameManager.ui.selectLevel(${i})"` : '';
+                    const content = unlocked ? i : '<span class="lock-icon">🔒</span>';
+
+                    buttons += `<button class="${buttonClass}" ${onclick}>${content}</button>`;
+                }
+
+                return buttons;
+            }
+
+            selectLevel(level) {
+                this.gameState.currentLevel = level;
+                this.soundManager.play('click');
+                this.startGame();
+            }
+
+            showSettings() {
+                const menuContent = document.querySelector('.menu-content');
+                const soundText = this.gameState.soundEnabled ? 'Turn Off Sound' : 'Turn on Sound';
+
+                menuContent.innerHTML = `
+                    <h1 class="menu-title">Setting</h1>
+                    <button class="menu-btn glassmorphism" onclick="gameManager.ui.toggleSoundSetting()">${soundText}</button>
+                    <button class="menu-btn glassmorphism" onclick="gameManager.ui.resetProgress()">Reset Progress</button>
+                    <button class="menu-btn glassmorphism" onclick="gameManager.ui.showControls()">How to Play</button>
+                    <button class="menu-btn glassmorphism" onclick="gameManager.ui.showMainMenu()">Back</button>
+                `;
+            }
+
+            showControls() {
+                const menuContent = document.querySelector('.menu-content');
+                menuContent.innerHTML = `
+                    <h1 class="menu-title">How to Play</h1>
+                    <div style="text-align: left; font-size: 18px; line-height: 1.8; font-weight: bold;">
+                        <p><strong>Controls:</strong></p>
+                        <p>• Use the keyboard arrows or on-screen buttons</p>
+                        <p>• ↑ = Forward, ↓ = Backward</p>
+                        <p>• ← = Turn left, → = Turn right</p>
+                        <p>• Swipe on the screen for quick controls</p>
+                        <p><strong>Objective:</strong></p>
+                        <p>• Collect the gold coins</p>
+                        <p>• Learn the traffic signs</p>
+                        <p>• Answer a quiz every 5 levels</p>
+                        <p>• Reach the finish line!</p>
+                    </div>
+                    <button class="menu-btn glassmorphism" onclick="gameManager.ui.showSettings()">Back</button>
+                `;
+            }
+
+            showMainMenu() {
+                const menuContent = document.querySelector('.menu-content');
+                menuContent.innerHTML = `
+                    <h1 class="menu-title">🚗 Educational Car Adventure</h1>
+                    <p style="margin-bottom: 25px; font-weight: bold;">Learn while playing!</p>
+                    <button class="menu-btn glassmorphism" onclick="gameManager.ui.startGame()">Start Playing</button>
+                    <button class="menu-btn glassmorphism" onclick="gameManager.ui.showLevelSelect()">Select Levels</button>
+                    <button class="menu-btn glassmorphism" onclick="gameManager.ui.showSettings()">Setting</button>
+                `;
+            }
+
+            toggleSound() {
+                this.gameState.soundEnabled = !this.gameState.soundEnabled;
+                document.getElementById('soundBtn').textContent = this.gameState.soundEnabled ? '🔊' : '🔇';
+
+                if (!this.gameState.soundEnabled) {
+                    Object.keys(this.soundManager.sounds).forEach(key => {
+                        this.soundManager.stop(key);
+                    });
+                    this.soundManager.stopBackgroundMusic();
+                } else if (this.gameState.gameMode === 'playing') {
+                    this.soundManager.play('engine');
+                    this.soundManager.playBackgroundMusic();
+                }
+            }
+
+            toggleSoundSetting() {
+                this.toggleSound();
+                this.showSettings();
+            }
+
+            resetProgress() {
+                if (confirm('Are you sure you want to delete all progress?')) {
+                    localStorage.removeItem('carGameProgress');
+                    this.gameState.currentLevel = 1;
+                    this.gameState.score = 0;
+                    this.gameState.coins = 0;
+                    this.gameState.stars = 0;
+                    this.soundManager.play('click');
+                    this.showMainMenu();
+                }
+            }
+        }
+
+        // Game Manager - Main Controller
+        class GameManager {
+            constructor() {
+                this.gameState = new GameState();
+                this.soundManager = new SoundManager(this.gameState);
+                this.game3D = new Game3D(this.gameState, this.soundManager);
+                this.ui = new UIManager(this.gameState, this.soundManager, this.game3D);
+
+                // Make UI methods globally accessible for onclick handlers
+                window.gameManager = this;
+
+                this.init();
+
+            }
+
+
+            init() {
+
+                // Initialize game
+                console.log('🚗 3D Educational Car Adventure - Game Started!');
+                console.log('Level:', this.gameState.currentLevel);
+
+                // Auto-start background music after user interaction
+                document.addEventListener('click', () => {
+                    if (this.gameState.soundEnabled) {
+                        this.soundManager.play('click');
+                    }
+                }, { once: true });
+
+                // Handle visibility change (pause when tab not active)
+                document.addEventListener('visibilitychange', () => {
+                    if (document.hidden && this.gameState.gameMode === 'playing') {
+                        this.ui.showPauseMenu();
+                    }
+                });
+
+                // Performance monitoring
+                this.setupPerformanceMonitoring();
+
+
+            }
+
+            setupPerformanceMonitoring() {
+                let lastTime = performance.now();
+                let frameCount = 0;
+                let fps = 60;
+
+                const updateFPS = () => {
+                    frameCount++;
+                    const currentTime = performance.now();
+
+                    if (currentTime - lastTime >= 1000) {
+                        fps = Math.round((frameCount * 1000) / (currentTime - lastTime));
+                        frameCount = 0;
+                        lastTime = currentTime;
+
+                        // Adjust quality based on performance
+                        if (fps < 30) {
+                            this.game3D.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1));
+                        } else if (fps > 50) {
+                            this.game3D.renderer.setPixelRatio(window.devicePixelRatio);
+                        }
+                    }
+
+                    requestAnimationFrame(updateFPS);
+                };
+
+                updateFPS();
+            }
+        }
+
+        // Initialize game when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new GameManager();
+        });
+
+        // Global helper functions for UI
+        function showMainMenu() {
+            gameManager.ui.showMainMenu();
+        }
+
+        function selectLevel(level) {
+            gameManager.ui.selectLevel(level);
+        }
+
+        function toggleSoundSetting() {
+            gameManager.ui.toggleSoundSetting();
+        }
+
+        function resetProgress() {
+            gameManager.ui.resetProgress();
+        }
+
+        function showControls() {
+            gameManager.ui.showControls();
+        }
+
+        function showSettings() {
+            gameManager.ui.showSettings();
+        }
+
+        // PWA Support
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                // Service worker registration would go here
+                console.log('PWA support detected');
+            });
+        }
+
+
+        // Analytics (simple implementation)
+        class Analytics {
+            static trackEvent(eventName, parameters = {}) {
+                const event = {
+                    event: eventName,
+                    timestamp: Date.now(),
+                    ...parameters
+                };
+
+                // Store in localStorage for simple analytics
+                const events = JSON.parse(localStorage.getItem('gameAnalytics') || '[]');
+                events.push(event);
+
+                // Keep only last 100 events
+                if (events.length > 100) {
+                    events.splice(0, events.length - 100);
+                }
+
+                localStorage.setItem('gameAnalytics', JSON.stringify(events));
+                console.log('Analytics:', event);
+            }
+
+            static getSessionStats() {
+                const events = JSON.parse(localStorage.getItem('gameAnalytics') || '[]');
+                return {
+                    totalEvents: events.length,
+                    levelsCompleted: events.filter(e => e.event === 'level_complete').length,
+                    coinsCollected: events.filter(e => e.event === 'coin_collected').length,
+                    quizzesAnswered: events.filter(e => e.event === 'quiz_answered').length
+                };
+            }
+        }
+
+        // Export Analytics for external use
+        window.GameAnalytics = Analytics;
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Color Switch Dash</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #0a0a0a;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            touch-action: none;
+        }
+        
+        #gameContainer {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        #gameCanvas {
+            background: linear-gradient(180deg, #0a0a0a 0%, #1a1a2e 100%);
+        }
+        
+        #ui {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            color: #fff;
+            z-index: 10;
+            pointer-events: none;
+        }
+        
+        #currentScore {
+            font-size: 48px;
+            font-weight: bold;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+        }
+        
+        #bestScore {
+            font-size: 16px;
+            color: #888;
+            margin-top: 5px;
+        }
+        
+        #startScreen, #gameOverScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(10, 10, 10, 0.95);
+            z-index: 20;
+        }
+        
+        #gameOverScreen {
+            display: none;
+        }
+        
+        .title {
+            font-size: 42px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            background: linear-gradient(90deg, #ff0080, #00ff80, #00ffff, #ff0080);
+            background-size: 300% 100%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient 3s ease infinite;
+        }
+        
+        @keyframes gradient {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        
+        .subtitle {
+            font-size: 18px;
+            color: #888;
+            margin-bottom: 40px;
+        }
+        
+        .btn {
+            padding: 15px 50px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #fff;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 30px rgba(102, 126, 234, 0.5);
+        }
+        
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 50px rgba(102, 126, 234, 0.8);
+        }
+        
+        #finalScore {
+            font-size: 64px;
+            font-weight: bold;
+            color: #fff;
+            margin: 20px 0;
+            text-shadow: 0 0 30px rgba(255, 255, 255, 0.5);
+        }
+        
+        #newBest {
+            font-size: 24px;
+            color: #ffd700;
+            margin-bottom: 20px;
+            display: none;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+        }
+        
+        .instructions {
+            color: #666;
+            font-size: 14px;
+            margin-top: 30px;
+        }
+        
+        .difficulty-container {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .difficulty-btn {
+            padding: 12px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #fff;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .difficulty-btn.easy {
+            background: linear-gradient(135deg, #00c853 0%, #00e676 100%);
+            box-shadow: 0 0 20px rgba(0, 200, 83, 0.5);
+        }
+        
+        .difficulty-btn.easy:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 35px rgba(0, 200, 83, 0.8);
+        }
+        
+        .difficulty-btn.medium {
+            background: linear-gradient(135deg, #ff9800 0%, #ffc107 100%);
+            box-shadow: 0 0 20px rgba(255, 152, 0, 0.5);
+        }
+        
+        .difficulty-btn.medium:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 35px rgba(255, 152, 0, 0.8);
+        }
+        
+        .difficulty-btn.hard {
+            background: linear-gradient(135deg, #f44336 0%, #ff5722 100%);
+            box-shadow: 0 0 20px rgba(244, 67, 54, 0.5);
+        }
+        
+        .difficulty-btn.hard:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 35px rgba(244, 67, 54, 0.8);
+        }
+        
+        .select-mode-text {
+            color: #aaa;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+        
+        #pauseIndicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 32px;
+            color: #fff;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px 40px;
+            border-radius: 10px;
+            display: none;
+            z-index: 15;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+        
+        <div id="ui">
+            <div id="currentScore">0</div>
+            <div id="bestScore">BEST: 0</div>
+        </div>
+        
+        <div id="pauseIndicator">PAUSED</div>
+        
+        <div id="startScreen">
+            <div class="title">COLOR SWITCH DASH</div>
+            <div class="subtitle">Match colors to pass obstacles</div>
+            <div class="select-mode-text">Select Difficulty</div>
+            <div class="difficulty-container">
+                <button class="difficulty-btn easy" id="easyBtn">EASY</button>
+                <button class="difficulty-btn medium" id="mediumBtn">MEDIUM</button>
+                <button class="difficulty-btn hard" id="hardBtn">HARD</button>
+            </div>
+            <div class="instructions">Click or Tap to change color</div>
+        </div>
+        
+        <div id="gameOverScreen">
+            <div class="title">GAME OVER</div>
+            <div id="finalScore">0</div>
+            <div id="newBest">NEW BEST!</div>
+            <button class="btn" id="restartBtn">PLAY AGAIN</button>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        window.SDK_OPTIONS = {
+            gameId: "amnpg3qf18rjprac8lygop6syizmtlvu",
+            onEvent: function (a) {
+                switch (a.name) {
+                    case "SDK_GAME_PAUSE":
+                        gamePaused = true;
+                        muteAudio();
+                        break;
+                    case "SDK_GAME_START":
+                        gamePaused = false;
+                        unmuteAudio();
+                        break;
+                    case "SDK_READY":
+                        console.log("SDK Ready");
+                        break;
+                }
+            }
+        };
+        (function (a, b, c) {
+            var d = a.getElementsByTagName(b)[0];
+            a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+        })(document, "script", "gamemonetize-sdk");
+    </script>
+
+    <script>
+        function showAd() {
+            if (typeof sdk !== 'undefined' && sdk.showBanner !== 'undefined') {
+                sdk.showBanner();
+            }
+        }
+
+        var AdTime = 3;
+        // Audio Context
+        let audioContext = null;
+        let isMuted = false;
+        let gamePaused = false;
+        
+        // Game variables
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Colors
+        const COLORS = [
+            { name: 'pink', hex: '#ff0080', glow: 'rgba(255, 0, 128, 0.6)' },
+            { name: 'cyan', hex: '#00ffff', glow: 'rgba(0, 255, 255, 0.6)' },
+            { name: 'yellow', hex: '#ffff00', glow: 'rgba(255, 255, 0, 0.6)' },
+            { name: 'green', hex: '#00ff80', glow: 'rgba(0, 255, 128, 0.6)' }
+        ];
+        
+        // Difficulty settings - all modes made easier
+        const DIFFICULTY = {
+            easy: {
+                baseSpeed: 1.5,
+                circleRotation: { base: 0.002, random: 0.002 },
+                squareRotation: { base: 0.0015, random: 0.0015 },
+                barSpeed: { base: 0.5, random: 0.5 },
+                maxSpeed: 2.5,
+                collisionTolerance: 8 // extra pixels of tolerance
+            },
+            medium: {
+                baseSpeed: 2.5,
+                circleRotation: { base: 0.004, random: 0.004 },
+                squareRotation: { base: 0.003, random: 0.003 },
+                barSpeed: { base: 1, random: 1 },
+                maxSpeed: 4,
+                collisionTolerance: 5
+            },
+            hard: {
+                baseSpeed: 3.5,
+                circleRotation: { base: 0.007, random: 0.007 },
+                squareRotation: { base: 0.005, random: 0.005 },
+                barSpeed: { base: 1.5, random: 1.5 },
+                maxSpeed: 5.5,
+                collisionTolerance: 3
+            }
+        };
+        
+        let currentDifficulty = 'medium';
+        
+        // Game state
+        let gameState = 'start';
+        let score = 0;
+        let bestScore = parseInt(localStorage.getItem('colorSwitchBest')) || 0;
+        let gameSpeed = 1;
+        let baseSpeed = 4;
+        let lastTime = 0;
+        let deltaTime = 0;
+        let scoreTimer = 0;
+        let adTimer = 0;
+        let nextAdTime = 60000 + Math.random() * 30000;
+        let tabVisible = true;
+        
+        // Player
+        let player = {
+            x: 0,
+            y: 0,
+            radius: 15,
+            colorIndex: 0,
+            velocity: 0
+        };
+        
+        // Obstacles
+        let obstacles = [];
+        let colorSwitchers = [];
+        
+        // Particles
+        let particles = [];
+        
+        // Audio nodes
+        let bgmOscillators = [];
+        let bgmGainNode = null;
+        let masterGain = null;
+        
+        // Canvas sizing
+        function resizeCanvas() {
+            const container = document.getElementById('gameContainer');
+            canvas.width = Math.min(400, window.innerWidth);
+            canvas.height = window.innerHeight;
+            player.x = canvas.width / 2;
+            player.y = canvas.height * 0.7;
+        }
+        
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        
+        // Initialize audio
+        function initAudio() {
+            if (audioContext) return;
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            masterGain = audioContext.createGain();
+            masterGain.connect(audioContext.destination);
+            masterGain.gain.value = 0.3;
+        }
+        
+        // Background music
+        function startBGM() {
+            if (!audioContext || bgmOscillators.length > 0) return;
+            
+            bgmGainNode = audioContext.createGain();
+            bgmGainNode.gain.value = 0.1;
+            bgmGainNode.connect(masterGain);
+            
+            const bassFreqs = [65.41, 82.41, 73.42, 87.31];
+            let noteIndex = 0;
+            
+            function playBassNote() {
+                if (gameState !== 'playing' || gamePaused || !tabVisible) return;
+                
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+                
+                osc.type = 'sine';
+                osc.frequency.value = bassFreqs[noteIndex % bassFreqs.length];
+                
+                gain.gain.setValueAtTime(0.15, audioContext.currentTime);
+                gain.gain.exponentialDecayTo = 0.01;
+                gain.gain.setTargetAtTime(0.01, audioContext.currentTime, 0.3);
+                
+                osc.connect(gain);
+                gain.connect(bgmGainNode);
+                
+                osc.start();
+                osc.stop(audioContext.currentTime + 0.5);
+                
+                noteIndex++;
+                if (gameState === 'playing' && !gamePaused && tabVisible) {
+                    setTimeout(playBassNote, 500);
+                }
+            }
+            
+            playBassNote();
+        }
+        
+        function stopBGM() {
+            bgmOscillators.forEach(osc => {
+                try { osc.stop(); } catch(e) {}
+            });
+            bgmOscillators = [];
+        }
+        
+        // Sound effects
+        function playColorSwitch() {
+            if (!audioContext || isMuted || gamePaused) return;
+            
+            const osc = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+            
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(800, audioContext.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1200, audioContext.currentTime + 0.1);
+            
+            gain.gain.setValueAtTime(0.2, audioContext.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+            
+            osc.connect(gain);
+            gain.connect(masterGain);
+            
+            osc.start();
+            osc.stop(audioContext.currentTime + 0.1);
+        }
+        
+        function playPassObstacle() {
+            if (!audioContext || isMuted || gamePaused) return;
+            
+            const osc = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+            
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(523.25, audioContext.currentTime);
+            osc.frequency.setValueAtTime(659.25, audioContext.currentTime + 0.05);
+            osc.frequency.setValueAtTime(783.99, audioContext.currentTime + 0.1);
+            
+            gain.gain.setValueAtTime(0.15, audioContext.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+            
+            osc.connect(gain);
+            gain.connect(masterGain);
+            
+            osc.start();
+            osc.stop(audioContext.currentTime + 0.2);
+        }
+        
+        function playGameOver() {
+            if (!audioContext || isMuted) return;
+            
+            const osc = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+            
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(400, audioContext.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(100, audioContext.currentTime + 0.5);
+            
+            gain.gain.setValueAtTime(0.2, audioContext.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+            
+            osc.connect(gain);
+            gain.connect(masterGain);
+            
+            osc.start();
+            osc.stop(audioContext.currentTime + 0.5);
+        }
+        
+        function muteAudio() {
+            isMuted = true;
+            if (masterGain) masterGain.gain.value = 0;
+        }
+        
+        function unmuteAudio() {
+            isMuted = false;
+            if (masterGain) masterGain.gain.value = 0.3;
+        }
+        
+        // Obstacle types
+        function createCircleObstacle(y) {
+            const diff = DIFFICULTY[currentDifficulty];
+            return {
+                type: 'circle',
+                x: canvas.width / 2,
+                y: y,
+                radius: 80,
+                thickness: 15,
+                rotation: 0,
+                rotationSpeed: diff.circleRotation.base + Math.random() * diff.circleRotation.random,
+                passed: false
+            };
+        }
+        
+        function createBarObstacle(y) {
+            const diff = DIFFICULTY[currentDifficulty];
+            const direction = Math.random() > 0.5 ? 1 : -1;
+            return {
+                type: 'bar',
+                x: direction > 0 ? -100 : canvas.width + 100,
+                y: y,
+                width: canvas.width + 50,
+                height: 25,
+                direction: direction,
+                speed: diff.barSpeed.base + Math.random() * diff.barSpeed.random,
+                passed: false
+            };
+        }
+        
+        function createSquareObstacle(y) {
+            const diff = DIFFICULTY[currentDifficulty];
+            return {
+                type: 'square',
+                x: canvas.width / 2,
+                y: y,
+                size: 120,
+                thickness: 15,
+                rotation: 0,
+                rotationSpeed: diff.squareRotation.base + Math.random() * diff.squareRotation.random,
+                passed: false
+            };
+        }
+        
+        function createColorSwitcher(y) {
+            return {
+                x: canvas.width / 2,
+                y: y,
+                radius: 12,
+                collected: false
+            };
+        }
+        
+        // Spawn obstacles
+        function spawnObstacle() {
+            const types = ['circle', 'bar', 'square'];
+            const difficulty = Math.min(score / 500, 1);
+            const type = types[Math.floor(Math.random() * (2 + difficulty))];
+            
+            let y = -150;
+            if (obstacles.length > 0) {
+                y = Math.min(...obstacles.map(o => o.y)) - 300 - Math.random() * 100;
+            }
+            
+            let obstacle;
+            switch(type) {
+                case 'circle':
+                    obstacle = createCircleObstacle(y);
+                    break;
+                case 'bar':
+                    obstacle = createBarObstacle(y);
+                    break;
+                case 'square':
+                    obstacle = createSquareObstacle(y);
+                    break;
+            }
+            
+            obstacles.push(obstacle);
+            // Place color switcher further away from obstacle (between obstacles, not right next to them)
+            colorSwitchers.push(createColorSwitcher(y - 200 - Math.random() * 50));
+        }
+        
+        // Initialize game
+        function initGame() {
+            const diff = DIFFICULTY[currentDifficulty];
+            baseSpeed = diff.baseSpeed;
+            
+            player.x = canvas.width / 2;
+            player.y = canvas.height * 0.7;
+            player.colorIndex = Math.floor(Math.random() * COLORS.length);
+            player.velocity = 0;
+            
+            obstacles = [];
+            colorSwitchers = [];
+            particles = [];
+            
+            score = 0;
+            gameSpeed = baseSpeed;
+            scoreTimer = 0;
+            adTimer = 0;
+            nextAdTime = 60000 + Math.random() * 30000;
+            
+            // Spawn initial obstacles
+            for (let i = 0; i < 3; i++) {
+                spawnObstacle();
+            }
+            
+            updateUI();
+        }
+        
+        // Update UI
+        function updateUI() {
+            document.getElementById('currentScore').textContent = Math.floor(score);
+            document.getElementById('bestScore').textContent = 'BEST: ' + bestScore;
+        }
+        
+        // Change color
+        function changeColor() {
+            player.colorIndex = (player.colorIndex + 1) % COLORS.length;
+            playColorSwitch();
+            
+            // Create particles
+            for (let i = 0; i < 10; i++) {
+                particles.push({
+                    x: player.x,
+                    y: player.y,
+                    vx: (Math.random() - 0.5) * 8,
+                    vy: (Math.random() - 0.5) * 8,
+                    radius: Math.random() * 4 + 2,
+                    color: COLORS[player.colorIndex].hex,
+                    life: 1
+                });
+            }
+        }
+        
+        // Draw functions
+        function drawPlayer() {
+            const color = COLORS[player.colorIndex];
+            
+            // Glow
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = color.glow;
+            
+            ctx.beginPath();
+            ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
+            ctx.fillStyle = color.hex;
+            ctx.fill();
+            
+            // Inner highlight
+            ctx.beginPath();
+            ctx.arc(player.x - 3, player.y - 3, player.radius * 0.4, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+            ctx.fill();
+            
+            ctx.shadowBlur = 0;
+        }
+        
+        function drawCircleObstacle(obs) {
+            const segments = 4;
+            const segmentAngle = (Math.PI * 2) / segments;
+            
+            for (let i = 0; i < segments; i++) {
+                const startAngle = obs.rotation + i * segmentAngle;
+                const endAngle = startAngle + segmentAngle - 0.05;
+                
+                ctx.beginPath();
+                ctx.arc(obs.x, obs.y, obs.radius, startAngle, endAngle);
+                ctx.lineWidth = obs.thickness;
+                ctx.strokeStyle = COLORS[i].hex;
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = COLORS[i].glow;
+                ctx.stroke();
+            }
+            ctx.shadowBlur = 0;
+        }
+        
+        function drawBarObstacle(obs) {
+            const segmentWidth = obs.width / 4;
+            
+            for (let i = 0; i < 4; i++) {
+                ctx.fillStyle = COLORS[i].hex;
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = COLORS[i].glow;
+                ctx.fillRect(obs.x + i * segmentWidth, obs.y - obs.height / 2, segmentWidth, obs.height);
+            }
+            ctx.shadowBlur = 0;
+        }
+        
+        function drawSquareObstacle(obs) {
+            ctx.save();
+            ctx.translate(obs.x, obs.y);
+            ctx.rotate(obs.rotation);
+            
+            const halfSize = obs.size / 2;
+            const corners = [
+                [-halfSize, -halfSize],
+                [halfSize, -halfSize],
+                [halfSize, halfSize],
+                [-halfSize, halfSize]
+            ];
+            
+            for (let i = 0; i < 4; i++) {
+                const start = corners[i];
+                const end = corners[(i + 1) % 4];
+                
+                ctx.beginPath();
+                ctx.moveTo(start[0], start[1]);
+                ctx.lineTo(end[0], end[1]);
+                ctx.lineWidth = obs.thickness;
+                ctx.strokeStyle = COLORS[i].hex;
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = COLORS[i].glow;
+                ctx.stroke();
+            }
+            
+            ctx.restore();
+            ctx.shadowBlur = 0;
+        }
+        
+        function drawColorSwitcher(cs) {
+            if (cs.collected) return;
+            
+            // Rainbow effect
+            const gradient = ctx.createRadialGradient(cs.x, cs.y, 0, cs.x, cs.y, cs.radius);
+            gradient.addColorStop(0, '#fff');
+            gradient.addColorStop(0.5, '#ff0080');
+            gradient.addColorStop(1, '#00ffff');
+            
+            ctx.beginPath();
+            ctx.arc(cs.x, cs.y, cs.radius, 0, Math.PI * 2);
+            ctx.fillStyle = gradient;
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        }
+        
+        function drawParticles() {
+            particles.forEach(p => {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius * p.life, 0, Math.PI * 2);
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = p.life;
+                ctx.fill();
+            });
+            ctx.globalAlpha = 1;
+        }
+        
+        // Collision detection
+        function checkCircleCollision(obs) {
+            const diff = DIFFICULTY[currentDifficulty];
+            const tolerance = diff.collisionTolerance || 5;
+            
+            const dx = player.x - obs.x;
+            const dy = player.y - obs.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            
+            // Calculate the actual ring boundaries
+            const ringInnerEdge = obs.radius - obs.thickness / 2;
+            const ringOuterEdge = obs.radius + obs.thickness / 2;
+            
+            // SAFE ZONE: If player is completely inside the hollow center, no collision
+            // This allows the player to pass through without getting hit when exiting
+            if (dist + player.radius < ringInnerEdge + tolerance) {
+                return false; // Player is safely inside the hollow center
+            }
+            
+            // SAFE ZONE: If player is completely outside the ring, no collision
+            if (dist - player.radius > ringOuterEdge - tolerance) {
+                return false; // Player is safely outside
+            }
+            
+            // Player is touching the ring - check color match
+            // Calculate the angle of the player relative to the obstacle center
+            let angle = Math.atan2(dy, dx);
+            
+            // Adjust for obstacle rotation
+            angle = angle - obs.rotation;
+            
+            // Normalize angle to 0 to 2*PI
+            while (angle < 0) angle += Math.PI * 2;
+            while (angle >= Math.PI * 2) angle -= Math.PI * 2;
+            
+            // Determine which segment (0-3) the player is in
+            const segmentAngle = Math.PI / 2;
+            const segmentIndex = Math.floor(angle / segmentAngle) % 4;
+            
+            // Add tolerance at segment boundaries (near the gaps between colors)
+            const angleInSegment = angle % segmentAngle;
+            const boundaryTolerance = 0.15; // ~8.5 degrees tolerance at boundaries
+            const isNearBoundary = angleInSegment < boundaryTolerance || angleInSegment > segmentAngle - boundaryTolerance;
+            
+            // If near segment boundary, be lenient (this is the gap area)
+            if (isNearBoundary) {
+                return false;
+            }
+            
+            // Only collision if wrong color
+            if (segmentIndex !== player.colorIndex) {
+                return true;
+            }
+            
+            return false;
+        }
+        
+        function checkBarCollision(obs) {
+            const diff = DIFFICULTY[currentDifficulty];
+            const tolerance = diff.collisionTolerance || 5;
+            
+            // Reduce vertical collision area
+            const halfHeight = obs.height / 2 - tolerance;
+            
+            if (player.y + player.radius > obs.y - halfHeight &&
+                player.y - player.radius < obs.y + halfHeight) {
+                
+                const relativeX = player.x - obs.x;
+                if (relativeX >= 0 && relativeX < obs.width) {
+                    const segmentWidth = obs.width / 4;
+                    const segmentIndex = Math.floor(relativeX / segmentWidth);
+                    
+                    // Add horizontal tolerance at segment boundaries
+                    const posInSegment = relativeX % segmentWidth;
+                    const isNearBoundary = posInSegment < tolerance || posInSegment > segmentWidth - tolerance;
+                    
+                    // If near boundary, be more lenient
+                    if (isNearBoundary) {
+                        return false;
+                    }
+                    
+                    if (segmentIndex !== player.colorIndex && segmentIndex >= 0 && segmentIndex < 4) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+        
+        function checkSquareCollision(obs) {
+            const diff = DIFFICULTY[currentDifficulty];
+            const tolerance = diff.collisionTolerance || 5;
+            
+            const dx = player.x - obs.x;
+            const dy = player.y - obs.y;
+            
+            const cos = Math.cos(-obs.rotation);
+            const sin = Math.sin(-obs.rotation);
+            const localX = dx * cos - dy * sin;
+            const localY = dx * sin + dy * cos;
+            
+            const halfSize = obs.size / 2;
+            const halfThick = obs.thickness / 2;
+            
+            // SAFE ZONE: If player is completely inside the hollow center, no collision
+            const innerSafeZone = halfSize - halfThick - tolerance;
+            if (Math.abs(localX) < innerSafeZone - player.radius && 
+                Math.abs(localY) < innerSafeZone - player.radius) {
+                return false; // Player is safely inside the hollow center
+            }
+            
+            // SAFE ZONE: If player is completely outside the square, no collision
+            const outerBound = halfSize + halfThick + tolerance;
+            if (Math.abs(localX) > outerBound + player.radius || 
+                Math.abs(localY) > outerBound + player.radius) {
+                return false; // Player is safely outside
+            }
+            
+            // Reduced collision thickness for more forgiving gameplay
+            const collisionThick = halfThick - tolerance;
+            
+            // Check each side with reduced collision area
+            const sides = [
+                { minX: -halfSize + tolerance, maxX: halfSize - tolerance, minY: -halfSize - collisionThick, maxY: -halfSize + collisionThick, color: 0 },
+                { minX: halfSize - collisionThick, maxX: halfSize + collisionThick, minY: -halfSize + tolerance, maxY: halfSize - tolerance, color: 1 },
+                { minX: -halfSize + tolerance, maxX: halfSize - tolerance, minY: halfSize - collisionThick, maxY: halfSize + collisionThick, color: 2 },
+                { minX: -halfSize - collisionThick, maxX: -halfSize + collisionThick, minY: -halfSize + tolerance, maxY: halfSize - tolerance, color: 3 }
+            ];
+            
+            for (const side of sides) {
+                if (localX + player.radius > side.minX && localX - player.radius < side.maxX &&
+                    localY + player.radius > side.minY && localY - player.radius < side.maxY) {
+                    if (side.color !== player.colorIndex) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+        
+        // Game over
+        function gameOver() {
+            gameState = 'gameover';
+            playGameOver();
+            stopBGM();
+            
+            if (score > bestScore) {
+                bestScore = Math.floor(score);
+                localStorage.setItem('colorSwitchBest', bestScore);
+                document.getElementById('newBest').style.display = 'block';
+            } else {
+                document.getElementById('newBest').style.display = 'none';
+            }
+            
+            document.getElementById('finalScore').textContent = Math.floor(score);
+            document.getElementById('gameOverScreen').style.display = 'flex';
+            
+            // Show ad on game over
+            AdTime+=1;
+            if (AdTime>2)
+            {
+                showAd();
+                AdTime=0;
+            }
+            
+        }
+        
+        // Update game
+        function update(dt) {
+            if (gameState !== 'playing' || gamePaused || !tabVisible) return;
+            
+            // Score timer
+            scoreTimer += dt;
+            if (scoreTimer >= 100) {
+                score += 1;
+                scoreTimer = 0;
+                updateUI();
+            }
+            
+            // Ad timer
+            adTimer += dt;
+            if (adTimer >= nextAdTime) {
+                showAd();
+                adTimer = 0;
+                nextAdTime = 60000 + Math.random() * 30000;
+            }
+            
+            // Increase difficulty
+            const diff = DIFFICULTY[currentDifficulty];
+            gameSpeed = baseSpeed + (score / 200) * 0.5;
+            gameSpeed = Math.min(gameSpeed, diff.maxSpeed);
+            
+            // Move world down (player stays, obstacles come down)
+            const worldMove = gameSpeed * (dt / 16);
+            
+            // Update obstacles
+            obstacles.forEach(obs => {
+                obs.y += worldMove;
+                
+                if (obs.type === 'circle' || obs.type === 'square') {
+                    obs.rotation += obs.rotationSpeed;
+                }
+                
+                if (obs.type === 'bar') {
+                    obs.x += obs.direction * obs.speed;
+                    if (obs.x > canvas.width + 100 || obs.x < -obs.width - 100) {
+                        obs.x = obs.direction > 0 ? -obs.width : canvas.width + 100;
+                    }
+                }
+                
+                // Check if passed
+                if (!obs.passed && obs.y > player.y + 50) {
+                    obs.passed = true;
+                    score += 10;
+                    playPassObstacle();
+                    updateUI();
+                }
+            });
+            
+            // Update color switchers
+            colorSwitchers.forEach(cs => {
+                cs.y += worldMove;
+                
+                if (!cs.collected) {
+                    const dx = player.x - cs.x;
+                    const dy = player.y - cs.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (dist < player.radius + cs.radius) {
+                        cs.collected = true;
+                        changeColor();
+                    }
+                }
+            });
+            
+            // Remove off-screen obstacles
+            obstacles = obstacles.filter(obs => obs.y < canvas.height + 200);
+            colorSwitchers = colorSwitchers.filter(cs => cs.y < canvas.height + 100);
+            
+            // Spawn new obstacles
+            if (obstacles.length < 5) {
+                spawnObstacle();
+            }
+            
+            // Check collisions
+            for (const obs of obstacles) {
+                let collision = false;
+                
+                switch(obs.type) {
+                    case 'circle':
+                        collision = checkCircleCollision(obs);
+                        break;
+                    case 'bar':
+                        collision = checkBarCollision(obs);
+                        break;
+                    case 'square':
+                        collision = checkSquareCollision(obs);
+                        break;
+                }
+                
+                if (collision) {
+                    gameOver();
+                    return;
+                }
+            }
+            
+            // Update particles
+            particles.forEach(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life -= 0.02;
+            });
+            particles = particles.filter(p => p.life > 0);
+        }
+        
+        // Render
+        function render() {
+            // Clear
+            ctx.fillStyle = '#0a0a0a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw grid lines for effect
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < canvas.height; i += 50) {
+                ctx.beginPath();
+                ctx.moveTo(0, i);
+                ctx.lineTo(canvas.width, i);
+                ctx.stroke();
+            }
+            
+            // Draw obstacles
+            obstacles.forEach(obs => {
+                switch(obs.type) {
+                    case 'circle':
+                        drawCircleObstacle(obs);
+                        break;
+                    case 'bar':
+                        drawBarObstacle(obs);
+                        break;
+                    case 'square':
+                        drawSquareObstacle(obs);
+                        break;
+                }
+            });
+            
+            // Draw color switchers
+            colorSwitchers.forEach(drawColorSwitcher);
+            
+            // Draw particles
+            drawParticles();
+            
+            // Draw player
+            drawPlayer();
+        }
+        
+        // Game loop
+        function gameLoop(timestamp) {
+            if (!lastTime) lastTime = timestamp;
+            deltaTime = timestamp - lastTime;
+            lastTime = timestamp;
+            
+            // Cap delta time
+            if (deltaTime > 100) deltaTime = 16;
+            
+            if (!gamePaused && tabVisible) {
+                update(deltaTime);
+                render();
+            }
+            
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Input handling
+        function handleInput(e) {
+            e.preventDefault();
+            
+            if (gameState === 'playing' && !gamePaused && tabVisible) {
+                changeColor();
+            }
+        }
+        
+        canvas.addEventListener('click', handleInput);
+        canvas.addEventListener('touchstart', handleInput);
+        
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' || e.code === 'ArrowUp') {
+                e.preventDefault();
+                if (gameState === 'playing' && !gamePaused && tabVisible) {
+                    changeColor();
+                }
+            }
+        });
+        
+        // Start game with difficulty
+        function startGameWithDifficulty(difficulty) {
+            currentDifficulty = difficulty;
+            
+            initAudio();
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+            
+            // Show ad when selecting difficulty
+            showAd();
+            
+            document.getElementById('startScreen').style.display = 'none';
+            gameState = 'playing';
+            initGame();
+            startBGM();
+        }
+        
+        // Difficulty buttons
+        document.getElementById('easyBtn').addEventListener('click', () => {
+            startGameWithDifficulty('easy');
+        });
+        
+        document.getElementById('mediumBtn').addEventListener('click', () => {
+            startGameWithDifficulty('medium');
+        });
+        
+        document.getElementById('hardBtn').addEventListener('click', () => {
+            startGameWithDifficulty('hard');
+        });
+        
+        // Restart button
+        document.getElementById('restartBtn').addEventListener('click', () => {
+            document.getElementById('gameOverScreen').style.display = 'none';
+            gameState = 'playing';
+            initGame();
+            startBGM();
+        });
+        
+        // Visibility handling
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                tabVisible = false;
+                gamePaused = true;
+                muteAudio();
+                if (gameState === 'playing') {
+                    document.getElementById('pauseIndicator').style.display = 'block';
+                }
+            } else {
+                tabVisible = true;
+                gamePaused = false;
+                unmuteAudio();
+                document.getElementById('pauseIndicator').style.display = 'none';
+                lastTime = 0;
+            }
+        });
+        
+        window.addEventListener('blur', () => {
+            tabVisible = false;
+            gamePaused = true;
+            muteAudio();
+            if (gameState === 'playing') {
+                document.getElementById('pauseIndicator').style.display = 'block';
+            }
+        });
+        
+        window.addEventListener('focus', () => {
+            tabVisible = true;
+            gamePaused = false;
+            unmuteAudio();
+            document.getElementById('pauseIndicator').style.display = 'none';
+            lastTime = 0;
+        });
+        
+        // Initialize
+        updateUI();
+        requestAnimationFrame(gameLoop);
+    </script>
+</body>
+</html>

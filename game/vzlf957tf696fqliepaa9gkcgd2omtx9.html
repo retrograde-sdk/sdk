@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Tower Breaker</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background: #1a1a1a;
+        touch-action: none;
+      }
+      canvas {
+        display: block;
+      }
+    </style>
+    <script type="module" crossorigin src="./assets/index-B5ntWHkD.js"></script>
+  </head>
+
+  <body>
+
+    <!-- 🟡 GameMonetize SDK -->
+    <script>
+      window.SDK_OPTIONS = {
+        gameId: "vzlf957tf696fqliepaa9gkcgd2omtx9",
+
+        onEvent: function (event) {
+          console.log("SDK Event:", event.name);
+
+          // ⭐ Pauznout hru + zvuk
+          if (event.name === "SDK_GAME_PAUSE") {
+            window.dispatchEvent(new CustomEvent("ad-pause"));
+          }
+
+          // ⭐ Spustit hru + obnovit zvuk + případná odměna
+          if (event.name === "SDK_GAME_START") {
+            window.dispatchEvent(new CustomEvent("ad-resume"));
+
+            // reward systém
+            if (typeof window.gmPendingReward === "function") {
+              try {
+                window.gmPendingReward();
+              } finally {
+                window.gmPendingReward = null;
+              }
+            }
+
+            // ⭐⭐⭐ LEVEL START
+            if (typeof window.gmPendingStart === "function") {
+              try {
+                window.gmPendingStart();
+              } finally {
+                window.gmPendingStart = null;
+              }
+            }
+          }
+
+          if (event.name === "SDK_READY") {
+            console.log("GameMonetize READY");
+          }
+        },
+      };
+
+      (function (a, b, c) {
+        var d = a.getElementsByTagName(b)[0];
+        if (!a.getElementById(c)) {
+          var e = a.createElement(b);
+          e.id = c;
+          e.src = "https://api.gamemonetize.com/sdk.js";
+          d.parentNode.insertBefore(e, d);
+        }
+      })(document, "script", "gamemonetize-sdk");
+    </script>
+  </body>
+</html>

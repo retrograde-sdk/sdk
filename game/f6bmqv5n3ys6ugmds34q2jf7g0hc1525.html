@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AquaSort: Color Puzzle</title>
+    <meta name="description" content="Play Water Sort online, a relaxing color sorting puzzle game. Sort colorful liquids in bottles and challenge your brain!">
+
+<style type="text/css">@font-face {font-family:Montserrat;font-style:normal;font-weight:400;src:url(/cf-fonts/v/montserrat/5.0.16/cyrillic/wght/normal.woff2);unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap;}@font-face {font-family:Montserrat;font-style:normal;font-weight:400;src:url(/cf-fonts/v/montserrat/5.0.16/latin-ext/wght/normal.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:Montserrat;font-style:normal;font-weight:400;src:url(/cf-fonts/v/montserrat/5.0.16/cyrillic-ext/wght/normal.woff2);unicode-range:U+0460-052F,U+1C80-1C88,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F;font-display:swap;}@font-face {font-family:Montserrat;font-style:normal;font-weight:400;src:url(/cf-fonts/v/montserrat/5.0.16/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Montserrat;font-style:normal;font-weight:400;src:url(/cf-fonts/v/montserrat/5.0.16/vietnamese/wght/normal.woff2);unicode-range:U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB;font-display:swap;}@font-face {font-family:Montserrat;font-style:normal;font-weight:600;src:url(/cf-fonts/v/montserrat/5.0.16/vietnamese/wght/normal.woff2);unicode-range:U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB;font-display:swap;}@font-face {font-family:Montserrat;font-style:normal;font-weight:600;src:url(/cf-fonts/v/montserrat/5.0.16/cyrillic-ext/wght/normal.woff2);unicode-range:U+0460-052F,U+1C80-1C88,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F;font-display:swap;}@font-face {font-family:Montserrat;font-style:normal;font-weight:600;src:url(/cf-fonts/v/montserrat/5.0.16/latin-ext/wght/normal.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:Montserrat;font-style:normal;font-weight:600;src:url(/cf-fonts/v/montserrat/5.0.16/cyrillic/wght/normal.woff2);unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap;}@font-face {font-family:Montserrat;font-style:normal;font-weight:600;src:url(/cf-fonts/v/montserrat/5.0.16/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Montserrat;font-style:normal;font-weight:700;src:url(/cf-fonts/v/montserrat/5.0.16/cyrillic-ext/wght/normal.woff2);unicode-range:U+0460-052F,U+1C80-1C88,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F;font-display:swap;}@font-face {font-family:Montserrat;font-style:normal;font-weight:700;src:url(/cf-fonts/v/montserrat/5.0.16/vietnamese/wght/normal.woff2);unicode-range:U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB;font-display:swap;}@font-face {font-family:Montserrat;font-style:normal;font-weight:700;src:url(/cf-fonts/v/montserrat/5.0.16/cyrillic/wght/normal.woff2);unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap;}@font-face {font-family:Montserrat;font-style:normal;font-weight:700;src:url(/cf-fonts/v/montserrat/5.0.16/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Montserrat;font-style:normal;font-weight:700;src:url(/cf-fonts/v/montserrat/5.0.16/latin-ext/wght/normal.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}</style>
+<style>
+/* Reset and Variables (Modern Aesthetic) */
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+    --bg-primary:#f0f4f8;
+    --bg-secondary:#ffffff;
+    --text-primary:#2c3e50;
+    --text-secondary:#7f8c8d;
+    --accent-main:#4a90e2; /* Blue */
+    --accent-hover:#357abd;
+    --accent-alt:#38c772; /* Green */
+    --bottle-border:#bdc3c7;
+    --shadow-light:0 4px 12px #0000001a;
+    --shadow-heavy:0 10px 30px #0000002a;
+    --success:#27ae60;
+    --danger:#e74c3c;
+    --ukraine-blue:#0057b7;
+    --ukraine-yellow:#ffd700;
+}
+[data-theme="dark"]{
+    --bg-primary:#1a202c;
+    --bg-secondary:#2d3748;
+    --text-primary:#e2e8f0;
+    --text-secondary:#a0aec0;
+    --accent-main:#4299e1;
+    --accent-hover:#3182ce;
+    --bottle-border:#4a5568;
+    --shadow-light:0 4px 12px #0000004d;
+    --shadow-heavy:0 10px 30px #0000006d;
+}
+
+/* Base Styles */
+body{
+    font-family:'Montserrat',sans-serif;
+    background-color:var(--bg-primary);
+    color:var(--text-primary);
+    min-height:100vh;
+    transition:background-color .3s ease,color .3s ease;
+    overflow-x:hidden;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+}
+.container{
+    max-width:1200px;
+    width:100%;
+    margin:0 auto;
+    padding:1rem;
+    flex-grow:1;
+    position:relative;
+}
+
+/* Buttons and Controls */
+.btn{
+    padding:.75rem 1.5rem;
+    border:none;
+    border-radius:10px;
+    background:var(--accent-main);
+    color:#fff;
+    cursor:pointer;
+    font-size:.95rem;
+    font-weight:600;
+    transition:all .3s ease;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:.5rem;
+    box-shadow:var(--shadow-light);
+    min-width:120px;
+}
+.btn:hover:not(:disabled){
+    background:var(--accent-hover);
+    transform:translateY(-2px);
+    box-shadow:var(--shadow-heavy);
+}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-secondary{
+    background:var(--bg-secondary);
+    color:var(--accent-main);
+    border:2px solid var(--accent-main);
+    box-shadow:none;
+}
+.btn-secondary:hover:not(:disabled){
+    background:var(--accent-main);
+    color:var(--bg-secondary);
+    box-shadow:var(--shadow-heavy);
+}
+.btn-icon{
+    padding:.6rem;
+    width:45px;
+    height:45px;
+    min-width:45px;
+    font-size:1.2rem;
+}
+.btn-ukraine{
+    background:var(--ukraine-blue);
+    color:var(--ukraine-yellow);
+    font-weight:700;
+    border:2px solid var(--ukraine-yellow);
+    min-width:180px;
+}
+.btn-ukraine:hover{
+    transform:scale(1.05);
+}
+.donate-links {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+.donate-btn {
+    text-decoration: none;
+    width: 100%;
+    text-align: center;
+}
+.save-life { background-color: #e74c3c; color: white; }
+.sternenko { background-color: #f39c12; color: white; }
+
+
+/* Header and UI */
+header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:1rem 0;
+}
+.logo{font-size:1.8rem;font-weight:700;color:var(--accent-main);display:flex;align-items:center;gap:.5rem}
+.controls{display:flex;gap:.75rem;flex-wrap:wrap}
+.game-info{
+    text-align:center;
+    margin-bottom:1.5rem;
+    min-height:50px;
+}
+.level-display{font-size:2.2rem;font-weight:700;color:var(--accent-main);margin-bottom:.5rem}
+.message{font-size:1.1rem;min-height:1.5rem;color:var(--text-secondary);transition:all .3s ease}
+.message.success{color:var(--success);font-weight:700}
+
+/* Game Board */
+.game-board{
+    display:flex;
+    justify-content:center;
+    align-items:flex-end;
+    flex-wrap:wrap;
+    gap:2rem;
+    padding:2rem 0;
+    min-height:400px;
+}
+.game-board.compact-board { /* New class for very large levels */
+    gap: 1rem;
+    padding: 1rem 0;
+}
+.bottle{
+    width:65px;
+    height:220px;
+    position:relative;
+    cursor:pointer;
+    transition:all .3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.bottle-container{
+    width:100%;
+    height:100%;
+    border:4px solid var(--bottle-border);
+    border-top:none;
+    border-radius:0 0 25px 25px;
+    position:relative;
+    overflow:hidden;
+    background:#ffffff10;
+    display:flex;
+    flex-direction:column-reverse;
+    transition:border-color .3s ease;
+}
+.bottle.capped .bottle-container{border-top:4px solid var(--bottle-border)}
+.bottle.selected{
+    transform:translateY(-20px) scale(1.05);
+    filter:drop-shadow(0 10px 20px var(--accent-main));
+}
+.bottle:hover:not(.capped){transform:translateY(-8px)}
+.bottle-cap{
+    position:absolute;
+    top:-30px;
+    left:50%;
+    transform:translateX(-50%);
+    font-size:2.5rem;
+    opacity:0;
+    transition:opacity .5s ease;
+}
+.bottle.capped .bottle-cap{opacity:1}
+.water-layer{
+    width:100%;
+    transition:height .3s ease, background-color .3s ease;
+}
+
+/* Modals */
+.modal{
+    display:none;
+    position:absolute;
+    top:0;left:0;
+    width:100%;height:100%;
+    background:#00000080;
+    z-index:1000;
+    align-items:center;
+    justify-content:center;
+}
+.modal.active{display:flex}
+.modal-content{
+    background:var(--bg-secondary);
+    padding:2rem;
+    border-radius:20px;
+    
+    /* Оновлена ширина і висота для адаптивності */
+    max-width:550px;
+    width:calc(100% - 2rem); /* Займає 100% ширини мінус 1rem з кожного боку */
+    
+    max-height:90vh; /* Максимум 90% висоти viewport */
+    overflow-y:auto; /* Дозволяє скролл, якщо вміст не поміщається */
+    
+    box-shadow:var(--shadow-heavy);
+    transform:scale(0.95);
+    opacity:0;
+    transition:all .3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.modal.active .modal-content{
+    transform:scale(1);
+    opacity:1;
+}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem}
+.modal-header h2{color:var(--accent-main);font-size:1.8rem}
+.close-btn{
+    background:var(--danger);
+    border:none;
+    font-size:1.5rem;
+    cursor:pointer;
+    color:#fff;
+    padding:0;
+    width:35px;
+    height:35px;
+    border-radius:50%;
+    line-height:1;
+    transition:background .3s ease;
+}
+.close-btn:hover{background:#c0392b}
+
+/* Settings/Form Fix */
+.setting-item{margin-bottom:1.5rem}
+.setting-item label{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    font-weight:600;
+    padding:.75rem 0;
+    border-bottom:1px solid var(--bottle-border);
+}
+/* Specific fix for difficulty select layout */
+.setting-item .select-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding:.75rem 0;
+    border-bottom:1px solid var(--bottle-border);
+}
+.setting-item label:last-child{border-bottom:none;}
+
+.setting-item input[type="number"], .setting-item select{
+    width:120px;
+    padding:.6rem;
+    border:2px solid var(--accent-main);
+    border-radius:8px;
+    background:var(--bg-primary);
+    color:var(--text-primary);
+    font-size:1rem;
+    text-align:center;
+    margin-left:1rem;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    cursor:pointer;
+}
+
+/* Toggle Switch (Unchanged) */
+.toggle{position:relative;width:50px;height:26px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:#ccc;transition:.3s;border-radius:26px}
+.toggle-slider:before{position:absolute;content:"";height:20px;width:20px;left:3px;bottom:3px;background-color:#fff;transition:.3s;border-radius:50%}
+.toggle input:checked + .toggle-slider{background-color:var(--accent-main)}
+.toggle input:checked + .toggle-slider:before{transform:translateX(24px)}
+
+/* Victory/Next Level */
+.victory-overlay{
+    display:none;
+    position:fixed;
+    top:0;left:0;
+    width:100%;height:100%;
+    background:#000000b3;
+    z-index:999;
+    align-items:center;
+    justify-content:center;
+}
+.victory-overlay.active{display:flex}
+.victory-content{
+    background:var(--bg-secondary);
+    padding:3rem;
+    border-radius:20px;
+    text-align:center;
+    box-shadow:var(--shadow-heavy);
+    animation: bounceIn .6s ease-out;
+}
+.victory-content h2{font-size:2.8rem;color:var(--success);margin-bottom:1rem}
+.victory-actions{
+    display:flex;
+    gap:1rem;
+    margin-top:2rem;
+    justify-content:center;
+}
+
+/* Main Menu & Screen Switch Fix */
+#mainMenuScreen, #gameScreen{
+    position:absolute;
+    top:0;left:0;
+    width:100%;
+    min-height:100%;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    padding: 1rem;
+    transition:transform .5s ease-in-out, opacity .5s ease-in-out;
+}
+#gameScreen{
+    transform:translateX(100%);
+    opacity:0;
+    pointer-events: none;
+}
+#mainMenuScreen:not(.active) {
+    transform:translateX(-100%);
+    opacity:0;
+    pointer-events: none;
+}
+#mainMenuScreen.active{
+    transform:translateX(0);
+    opacity:1;
+    pointer-events: all;
+}
+#gameScreen.active{
+    transform:translateX(0);
+    opacity:1;
+    pointer-events: all;
+}
+.menu-card{
+    background:var(--bg-secondary);
+    padding:3rem 2rem;
+    border-radius:20px;
+    box-shadow:var(--shadow-heavy);
+    text-align:center;
+    max-width:400px;
+    width:100%;
+}
+.menu-card h1{
+    font-size:3rem;
+    color:var(--accent-main);
+    margin-bottom:2rem;
+}
+.menu-actions{
+    display:flex;
+    flex-direction:column;
+    gap:1rem;
+}
+.menu-actions .btn{
+    width:100%;
+    min-width: unset;
+}
+
+/* About/Support Modal Specifics */
+.about-content p, .support-content p{
+    text-align:left;
+    margin-bottom:1rem;
+    line-height:1.6;
+}
+.about-content h3, .support-content h3{
+    color:var(--accent-main);
+    margin-top:1.5rem;
+    margin-bottom:0.5rem;
+    border-bottom:1px solid var(--bottle-border);
+    padding-bottom:5px;
+}
+.support-content .donate-links {
+    margin-top: 1rem;
+}
+
+
+/* Keyframes */
+@keyframes bounceIn {
+    0%, 20%, 40%, 60%, 80%, 100% {
+        -webkit-transition-timing-function: cubic-bezier(0.215, 0.610, 0.355, 1.000);
+        transition-timing-function: cubic-bezier(0.215, 0.610, 0.355, 1.000);
+    }
+    0% {opacity: 0;-webkit-transform: scale3d(.3, .3, .3);transform: scale3d(.3, .3, .3);}
+    60% {opacity: 1;-webkit-transform: scale3d(1.03, 1.03, 1.03);transform: scale3d(1.03, 1.03, 1.03);}
+    100% {opacity: 1;-webkit-transform: scale3d(1, 1, 1);transform: scale3d(1, 1, 1);}
+}
+
+/* Media Queries (Unchanged but adapted to new size/styles) */
+@media (max-width: 768px) {
+    .logo{font-size:1.4rem}
+    .btn{padding:.6rem 1rem;font-size:.9rem;min-width:100px;}
+    .level-display{font-size:1.8rem}
+    .game-board{gap:1.5rem}
+    .bottle{width:55px;height:180px}
+    .victory-content h2{font-size:2rem;}
+    .modal-content{
+        padding:1.5rem; /* Трохи менший відступ на маленьких екранах */
+        width:95%;     /* Трохи більше місця, якщо попередній calc недостатній */
+    }
+    /* Додатковий фікс для маленьких екранів при великій кількості пляшок */
+    .game-board.compact-board .bottle {
+        width: 45px;
+        height: 150px;
+    }
+
+}
+@media (max-width: 480px) {
+    .controls{width:100%;justify-content:space-around;margin-top:1rem;}
+    header{flex-direction:column; align-items:flex-start;}
+    .bottle{width:45px;height:150px}
+    .game-board{gap:1rem;padding:1rem 0;}
+    .menu-card{padding:2rem 1.5rem;}
+    .menu-card h1{font-size:2.5rem;}
+    /* Додатковий фікс для найменших екранів */
+    .game-board.compact-board .bottle {
+        width: 35px;
+        height: 120px;
+    }
+}
+</style>
+</head>
+<body>
+    
+    <div class="container">
+        <div id="mainMenuScreen" class="active">
+            <div class="menu-card">
+                <h1>💧AquaSort2</h1>
+                <div class="menu-actions">
+                    <button class="btn" id="playGameBtn">▶️ Play Game</button>
+                    <button class="btn btn-secondary" id="openAboutBtn">ℹ️ About</button>
+                <!-- <button class="btn btn-secondary" id="openSupportModalBtn">🇺🇦 Support Ukraine</button> -->
+                    <button class="btn btn-secondary" id="openSettingsMenuBtn">⚙️ Settings</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="gameScreen">
+            <header>
+                <div class="logo">
+                   
+                    <span>💧AquaSort2</span>
+                </div>
+                <div class="controls">
+                    <button class="btn btn-icon" id="menuBtn" title="Main Menu">🏠</button>
+                    <button class="btn btn-icon" id="undoBtn" title="Undo" disabled>↶</button>
+                    <button class="btn btn-icon" id="resetBtn" title="Reset">↻</button>
+                    <button class="btn btn-icon" id="settingsBtn" title="Settings">⚙</button>
+                </div>
+            </header>
+    
+            <div class="game-info">
+                <div class="level-display" id="levelDisplay">Level 1</div>
+                <div class="message" id="message">Sort the colors!</div>
+            </div>
+    
+            <div class="game-board" id="gameBoard"></div>
+        </div>
+    </div>
+
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Game Settings</h2>
+                <button class="close-btn" id="closeModal">×</button>
+            </div>
+            
+            <div class="setting-item">
+                <label>
+                    <span>Dark Mode</span>
+                    <label class="toggle">
+                        <input type="checkbox" id="darkMode">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </label>
+                <label>
+                    <span>Animations</span>
+                    <label class="toggle">
+                        <input type="checkbox" id="animations" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </label>
+                <label>
+                    <span>Rainbow Cap Icon</span>
+                    <label class="toggle">
+                        <input type="checkbox" id="rainbowMode" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </label>
+                <label>
+                    <span>Auto Advance Level</span>
+                    <label class="toggle">
+                        <input type="checkbox" id="autoAdvance" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </label>
+            </div>
+
+            <div class="setting-item">
+                <label for="levelInput">
+                    <span>Current Level</span>
+                    <input type="number" id="levelInput" min="1" value="1">
+                </label>
+            </div>
+
+            <div class="setting-item">
+                <div class="select-wrapper">
+                    <span>Difficulty</span>
+                    <select id="difficultySelect">
+                        <option value="easy">Easy</option>
+                        <option value="normal" selected>Normal</option>
+                        <option value="hard">Hard</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="aboutModal">
+        <div class="modal-content about-content">
+            <div class="modal-header">
+                <h2>About AquaSort</h2>
+                <button class="close-btn" id="closeAboutModal">×</button>
+            </div>
+            <p>AquaSort 2 is a relaxing color sorting puzzle game. The goal is simple: sort the colored liquids into bottles so that each bottle contains only one color.</p>
+            <h3>How to Play</h3>
+            <p>Tap a bottle to select the top layer of color, then tap another bottle to pour the color into it. You can only pour into an empty bottle or on top of the same color, and only if there's enough space.</p>
+            <p>Developed by Ihor Khodakivskyi with love & a splash of color! We hope you enjoy the game.</p>
+        </div>
+    </div>
+
+    <div class="modal" id="supportUkraineModal">
+        <div class="modal-content support-content">
+            <div class="modal-header">
+                <h2>🇺🇦 Support Ukraine</h2>
+                <button class="close-btn" id="closeSupportModal">×</button>
+            </div>
+            <p><strong>Stand with Ukraine</strong> - Support those defending freedom, democracy, and sovereignty. Every contribution makes a real difference.</p>
+            
+            <h3>💙 How You Can Help</h3>
+            <div class="donate-links">
+                <a href="https://savelife.in.ua/en/donate-en/" target="_blank" rel="noopener noreferrer" class="btn donate-btn save-life">Donate via Save Life in UA</a>
+                <a href="https://www.sternenkofund.org/en/donate" target="_blank" rel="noopener noreferrer" class="btn donate-btn sternenko">Donate via Sternenko Fund</a>
+            </div>
+            <p style="margin-top: 1.5rem; font-style: italic; color: var(--text-secondary);">
+                Together we stand for peace, freedom, and human dignity. 🕊️
+            </p>
+        </div>
+    </div>
+
+    <div class="victory-overlay" id="victoryOverlay">
+        <div class="victory-content">
+            <h2 id="victoryMessage">Victory! 🎉</h2>
+            <div class="victory-actions">
+                <button class="btn" id="nextLevelBtn">Next Level &gt;</button>
+                <button class="btn btn-secondary" id="exitToMenuBtn">🏠 Main Menu</button>
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript">
+        window.SDK_OPTIONS = {
+            gameId: "f6bmqv5n3ys6ugmds34q2jf7g0hc1525", // <<< IMPORTANT: Replace with your actual Game ID
+            onEvent: function (a) {
+                switch (a.name) {
+                    case "SDK_GAME_PAUSE":
+                        // Pause game logic / mute audio
+                        if (typeof pauseGame === 'function') {
+                      //      pauseGame();
+                        }
+                        break;
+                    case "SDK_GAME_START":
+                        // Advertisement done, resume game logic and unmute audio
+                        if (typeof resumeGame === 'function') {
+                      //      resumeGame();
+                        }
+                        break;
+                    case "SDK_READY":
+                        // When sdk is ready
+                        console.log("GameMonetize SDK Ready");
+                        break;
+                }
+            }
+        };
+        (function (a, b, c) {
+            var d = a.getElementsByTagName(b)[0];
+            a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+        })(document, "script", "gamemonetize-sdk");
+    </script>
+    <script src="game.js?v=2.03"></script>
+</body>
+</html>

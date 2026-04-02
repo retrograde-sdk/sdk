@@ -1,0 +1,1408 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Last Train Escape - Pro Edition</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:linear-gradient(135deg,#1a0500,#330a00);display:flex;justify-content:center;align-items:center;min-height:100vh;font-family:Impact,sans-serif;overflow:hidden;touch-action:none}
+#gameContainer{position:relative;width:100%;max-width:1200px;aspect-ratio:16/9}
+#gameCanvas{width:100%;height:100%;display:block;border-radius:15px;box-shadow:0 0 120px rgba(255,80,0,.9),0 0 180px rgba(255,40,0,.5),0 20px 60px rgba(0,0,0,.8)}
+#ui{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
+#ui>*{pointer-events:auto}
+.menu{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;background:linear-gradient(135deg,#1a0800,#4d1500 20%,#ff5522 60%,#ffaa33)}
+.menu h1{font-size:clamp(3.5rem,11vw,7rem);color:#fff;text-shadow:6px 6px 0 #000,-3px -3px 0 #000,3px -3px 0 #000,-3px 3px 0 #000,0 0 40px #ff3300,0 0 80px #ff5500;margin-bottom:8px;text-transform:uppercase;letter-spacing:8px;font-weight:900}
+.menu h1 .escape{color:#ff3300;display:block;font-size:.72em;margin-top:-18px;letter-spacing:10px}
+.menu h2{font-size:clamp(1.3rem,3.5vw,2rem);background:linear-gradient(90deg,#ffdd66,#ffaa33,#ff7722);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:40px;font-weight:900;letter-spacing:5px}
+.difficulty-btn{width:340px;padding:22px 50px;margin:14px;font-size:1.6rem;font-weight:900;border:6px solid #000;border-radius:18px;cursor:pointer;text-transform:uppercase;letter-spacing:5px;box-shadow:0 10px 0 #000,0 15px 40px rgba(0,0,0,.8);transition:all .12s}
+.difficulty-btn:hover{transform:translateY(-6px);box-shadow:0 16px 0 #000,0 22px 50px rgba(0,0,0,.9)}
+.difficulty-btn.easy{background:linear-gradient(180deg,#66ff88,#44ee66 40%,#22dd44);color:#fff;text-shadow:4px 4px 0 #006622}
+.difficulty-btn.normal{background:linear-gradient(180deg,#ffcc55,#ffaa33 40%,#ff7711);color:#fff;text-shadow:4px 4px 0 #944}
+.difficulty-btn.hard{background:linear-gradient(180deg,#f66,#f33 40%,#e11);color:#fff;text-shadow:4px 4px 0 #900}
+.best-score{margin-top:40px;font-size:1.7rem;background:linear-gradient(90deg,#ff6,#fd4,#fa2);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:900}
+#hud{position:absolute;top:30px;left:30px;right:30px;display:none;justify-content:space-between}
+.hud-item{background:linear-gradient(180deg,#3a3a3a,#1a1a1a);padding:18px 35px;border-radius:15px;border:6px solid #000;color:#fff;font-size:1.7rem;font-weight:900;box-shadow:0 6px 0 #000,0 10px 30px rgba(0,0,0,.7)}
+.hud-item span{background:linear-gradient(90deg,#fc4,#f82);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+#pauseBtn{position:absolute;top:30px;right:30px;width:70px;height:70px;background:linear-gradient(180deg,#fa4,#f72);border:6px solid #000;border-radius:15px;color:#fff;font-size:2rem;cursor:pointer;display:none;font-weight:900;box-shadow:0 6px 0 #000,0 10px 30px rgba(0,0,0,.7)}
+#gameOverScreen,#pauseScreen{display:none}
+.game-over-content{text-align:center}
+.game-over-content h2{font-size:clamp(4rem,11vw,8rem);color:#f33;text-shadow:6px 6px 0 #000,0 0 50px #f00;margin-bottom:35px;font-weight:900;letter-spacing:12px}
+.final-score{font-size:clamp(2.2rem,7vw,4rem);background:linear-gradient(90deg,#ff7,#fd5,#fb3);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:25px;font-weight:900}
+.new-best{font-size:2rem;color:#5fa;animation:pulse .5s infinite;margin-bottom:35px;text-shadow:4px 4px 0 #000;font-weight:900}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
+.retry-btn{padding:20px 60px;font-size:1.7rem;background:linear-gradient(180deg,#6f9,#4e7 40%,#2d5);color:#fff;border:6px solid #000;border-radius:18px;cursor:pointer;margin-top:30px;text-transform:uppercase;letter-spacing:5px;font-weight:900;text-shadow:4px 4px 0 #073;box-shadow:0 10px 0 #000,0 15px 40px rgba(0,0,0,.8)}
+.pause-content h2{font-size:5.5rem;background:linear-gradient(90deg,#fb5,#f82);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:45px;font-weight:900;letter-spacing:10px}
+.resume-btn{padding:20px 60px;font-size:1.7rem;background:linear-gradient(180deg,#6f9,#4e7 40%,#2d5);color:#fff;border:6px solid #000;border-radius:18px;cursor:pointer;text-transform:uppercase;letter-spacing:5px;font-weight:900;text-shadow:4px 4px 0 #073;box-shadow:0 10px 0 #000,0 15px 40px rgba(0,0,0,.8)}
+#mobileControls{position:absolute;bottom:35px;left:0;right:0;display:none;justify-content:space-around;padding:0 50px}
+.mobile-btn{width:120px;height:120px;background:linear-gradient(180deg,#fc5,#fa3 40%,#f71);border:7px solid #000;border-radius:50%;color:#fff;font-size:3.5rem;display:flex;justify-content:center;align-items:center;cursor:pointer;user-select:none;font-weight:900;box-shadow:0 10px 0 #000,0 15px 40px rgba(0,0,0,.8);text-shadow:4px 4px 0 #950}
+</style>
+</head>
+<body>
+<div id="gameContainer">
+<canvas id="gameCanvas"></canvas>
+<div id="ui">
+<div id="mainMenu" class="menu">
+<h1>LAST TRAIN <span class="escape">ESCAPE</span></h1>
+<h2>⚡ SELECT DIFFICULTY ⚡</h2>
+<button class="difficulty-btn easy" data-difficulty="easy">🟢 EASY</button>
+<button class="difficulty-btn normal" data-difficulty="normal">🟡 NORMAL</button>
+<button class="difficulty-btn hard" data-difficulty="hard">🔴 HARD</button>
+<div class="best-score">🏆 BEST: <span id="menuBestScore">0</span></div>
+</div>
+<div id="hud">
+<div class="hud-item">SCORE: <span id="scoreDisplay">0</span></div>
+<div class="hud-item">BEST: <span id="bestScoreDisplay">0</span></div>
+</div>
+<button id="pauseBtn">❚❚</button>
+<div id="gameOverScreen" class="menu">
+<div class="game-over-content">
+<h2>GAME OVER</h2>
+<div class="final-score">SCORE: <span id="finalScore">0</span></div>
+<div class="new-best" id="newBestLabel" style="display:none">🏆 NEW BEST! 🏆</div>
+<button class="retry-btn" id="retryBtn">🔄 PLAY AGAIN</button>
+<button class="difficulty-btn normal" id="menuBtn" style="margin-top:20px">📋 MENU</button>
+</div>
+</div>
+<div id="pauseScreen" class="menu">
+<div class="pause-content">
+<h2>⏸️ PAUSED</h2>
+<button class="resume-btn" id="resumeBtn">▶️ RESUME</button>
+</div>
+</div>
+<div id="mobileControls">
+<button class="mobile-btn" id="slideBtn">↓</button>
+<button class="mobile-btn" id="jumpBtn">↑</button>
+</div>
+</div>
+</div>    
+<script type="text/javascript">
+    window.SDK_OPTIONS = {
+        gameId: "394l69zq5i3mhgqbzul176beyfx4lx5a",
+        onEvent: function (a) {
+            switch (a.name) {
+                case "SDK_GAME_PAUSE":
+                // pause game logic / mute audio
+                break;
+                case "SDK_GAME_START":
+                // advertisement done, resume game logic and unmute audio
+                break;
+                case "SDK_READY":
+                // when sdk is ready
+                break;
+            }
+        }
+    };
+    (function (a, b, c) {
+    var d = a.getElementsByTagName(b)[0];
+    a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+    })(document, "script", "gamemonetize-sdk"); 
+</script>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const CANVAS_WIDTH = 1200;
+const CANVAS_HEIGHT = 675;
+
+let gameState = 'menu';
+let difficulty = 'normal';
+let score = 0;
+let bestScore = parseInt(localStorage.getItem('LTE_best')) || 0;
+let gameTime = 0;
+let isPaused = false;
+
+const player = {
+    x: 200, y: 400, w: 75, h: 105,
+    vy: 0, jumping: false, sliding: false, slideTimer: 0,
+    jumpForce: -21, gravity: 0.95, anim: 0, armSwing: 0
+};
+
+let trainCars = [], enemies = [], particles = [], sparks = [], muzzleFlashes = [];
+let clouds = [], sunRays = [], helicopters = [], mountains = [], speedLines = [], birds = [];
+
+const trainW = 400, trainH = 160, trainY = 480;
+let baseSpeed = 7, currentSpeed = 7, scrollOffset = 0;
+
+const diffSettings = {
+    easy: { speed: 5, enemyRate: 0.008, gapRate: 0.007 },
+    normal: { speed: 7, enemyRate: 0.014, gapRate: 0.011 },
+    hard: { speed: 10, enemyRate: 0.022, gapRate: 0.017 }
+};
+
+canvas.width = CANVAS_WIDTH;
+canvas.height = CANVAS_HEIGHT;
+
+document.getElementById('menuBestScore').textContent = Math.floor(bestScore);
+document.getElementById('bestScoreDisplay').textContent = Math.floor(bestScore);
+
+// Initialize mountains
+for (let i = 0; i < 6; i++) {
+    mountains.push({
+        x: i * 420 + Math.random() * 100,
+        baseHeight: 220 + Math.random() * 160,
+        peaks: [
+            { offset: 0, height: 1 },
+            { offset: 0.25, height: 0.6 + Math.random() * 0.25 },
+            { offset: 0.5, height: 0.75 + Math.random() * 0.2 },
+            { offset: 0.75, height: 0.55 + Math.random() * 0.3 },
+            { offset: 1, height: 0.8 + Math.random() * 0.15 }
+        ],
+        layer: i % 2
+    });
+}
+
+// Initialize clouds
+for (let i = 0; i < 12; i++) {
+    clouds.push({
+        x: Math.random() * CANVAS_WIDTH * 3,
+        y: 35 + Math.random() * 130,
+        w: 150 + Math.random() * 280,
+        h: 55 + Math.random() * 90,
+        speed: 0.12 + Math.random() * 0.28
+    });
+}
+
+// Sun rays
+for (let i = 0; i < 32; i++) {
+    sunRays.push({
+        angle: (i / 32) * Math.PI * 2,
+        len: 850 + Math.random() * 450,
+        width: 0.09 + Math.random() * 0.09,
+        intensity: 0.4 + Math.random() * 0.45
+    });
+}
+
+// Helicopters
+helicopters.push({
+    x: CANVAS_WIDTH * 0.7, y: 68, baseY: 68,
+    rotorAngle: 0, speed: 0.11, wobble: 0, scale: 1.2
+});
+helicopters.push({
+    x: CANVAS_WIDTH * 0.22, y: 100, baseY: 100,
+    rotorAngle: Math.PI, speed: 0.085, wobble: Math.PI / 2, scale: 1.05
+});
+
+// Birds
+for (let i = 0; i < 8; i++) {
+    birds.push({
+        x: Math.random() * CANVAS_WIDTH * 2,
+        y: 80 + Math.random() * 150,
+        speed: 0.6 + Math.random() * 1.2,
+        wingPhase: Math.random() * Math.PI * 2,
+        scale: 0.7 + Math.random() * 0.5
+    });
+}
+
+// Speed lines
+for (let i = 0; i < 45; i++) {
+    speedLines.push({
+        y: Math.random() * CANVAS_HEIGHT,
+        len: 95 + Math.random() * 240,
+        speed: 10 + Math.random() * 20,
+        opacity: 0.14 + Math.random() * 0.24,
+        thickness: 2 + Math.random() * 4
+    });
+}
+
+function resetGame() {
+    player.x = 200; player.y = 400; player.vy = 0;
+    player.jumping = false; player.sliding = false;
+    player.slideTimer = 0; player.anim = 0; player.armSwing = 0;
+    score = 0; gameTime = 0; scrollOffset = 0;
+    const s = diffSettings[difficulty];
+    baseSpeed = s.speed; currentSpeed = baseSpeed;
+    trainCars = []; enemies = []; particles = []; sparks = []; muzzleFlashes = [];
+    for (let i = 0; i < 12; i++) trainCars.push({ x: i * trainW, hasGap: false });
+}
+
+function startGame(diff) {
+    difficulty = diff;
+    resetGame();
+    gameState = 'playing';
+    document.getElementById('mainMenu').style.display = 'none';
+    document.getElementById('hud').style.display = 'flex';
+    document.getElementById('pauseBtn').style.display = 'block';
+    document.getElementById('gameOverScreen').style.display = 'none';
+}
+
+function gameOver() {
+    gameState = 'gameover';
+    const isNewBest = score > bestScore;
+    if (isNewBest) {
+        bestScore = score;
+        localStorage.setItem('LTE_best', bestScore);
+        document.getElementById('menuBestScore').textContent = Math.floor(bestScore);
+        document.getElementById('bestScoreDisplay').textContent = Math.floor(bestScore);
+    }
+    document.getElementById('finalScore').textContent = Math.floor(score);
+    document.getElementById('newBestLabel').style.display = isNewBest ? 'block' : 'none';
+    document.getElementById('gameOverScreen').style.display = 'flex';
+    document.getElementById('hud').style.display = 'none';
+    document.getElementById('pauseBtn').style.display = 'none';
+    showAd();
+}
+
+function jump() {
+    if (player.jumping || player.sliding) return;
+    player.vy = player.jumpForce;
+    player.jumping = true;
+    for (let i = 0; i < 28; i++) {
+        particles.push({
+            x: player.x + player.w / 2 + (Math.random() - 0.5) * 38,
+            y: player.y + player.h,
+            vx: (Math.random() - 0.5) * 12,
+            vy: Math.random() * 9,
+            life: 48,
+            color: `hsl(${30 + Math.random() * 30}, 100%, ${62 + Math.random() * 23}%)`,
+            size: 5 + Math.random() * 8
+        });
+    }
+}
+
+function slide() {
+    if (player.jumping || player.sliding) return;
+    player.sliding = true;
+    player.slideTimer = 52;
+    for (let i = 0; i < 24; i++) {
+        sparks.push({
+            x: player.x + player.w,
+            y: player.y + player.h - 8,
+            vx: 6 + Math.random() * 9,
+            vy: -3 - Math.random() * 6,
+            life: 35 + Math.random() * 26,
+            color: `hsl(${35 + Math.random() * 25}, 100%, ${72 + Math.random() * 23}%)`,
+            size: 4 + Math.random() * 6
+        });
+    }
+}
+
+function showAd() {
+            if (typeof sdk !== 'undefined' && sdk.showBanner !== 'undefined') {
+                sdk.showBanner();
+            }
+}
+
+
+        window.onload = function () {
+            showAd();
+        };
+function updatePlayer() {
+    player.vy += player.gravity;
+    player.y += player.vy;
+    player.anim += 0.3;
+    player.armSwing += 0.35;
+    
+    let onGround = false, groundLevel = CANVAS_HEIGHT + 100;
+    for (const car of trainCars) {
+        if (!car.hasGap) {
+            const carLeft = car.x - scrollOffset, carRight = carLeft + trainW;
+            if (player.x + player.w > carLeft + 45 && player.x < carRight - 45) {
+                groundLevel = trainY - trainH - player.h + 35;
+                if (player.y >= groundLevel) onGround = true;
+                break;
+            }
+        }
+    }
+    
+    if (player.y >= groundLevel && onGround) {
+        player.y = groundLevel;
+        player.vy = 0;
+        player.jumping = false;
+    }
+    if (player.y > CANVAS_HEIGHT + 50) { gameOver(); return; }
+    if (player.sliding) {
+        player.slideTimer--;
+        if (player.slideTimer <= 0) player.sliding = false;
+    }
+}
+
+function generateObstacles() {
+    const s = diffSettings[difficulty], speedMult = 1 + gameTime / 60000 * 0.55;
+    if (Math.random() < s.enemyRate * speedMult) {
+        enemies.push({
+            x: CANVAS_WIDTH + scrollOffset + 200,
+            y: trainY - trainH - 92,
+            w: 65, h: 95,
+            anim: Math.random() * Math.PI * 2,
+            defeated: false,
+            shootTimer: 60 + Math.random() * 120
+        });
+    }
+    const lastCar = trainCars[trainCars.length - 1];
+    if (lastCar && lastCar.x - scrollOffset < CANVAS_WIDTH) {
+        trainCars.push({
+            x: lastCar.x + trainW,
+            hasGap: Math.random() < s.gapRate && trainCars.length > 4
+        });
+    }
+}
+
+function checkCollisions() {
+    const pRect = {
+        x: player.x + 16,
+        y: player.y + (player.sliding ? 60 : 12),
+        w: player.w - 32,
+        h: player.sliding ? player.h - 64 : player.h - 24
+    };
+    
+    for (const enemy of enemies) {
+        const eRect = {
+            x: enemy.x - scrollOffset + 14,
+            y: enemy.y + 14,
+            w: enemy.w - 28,
+            h: enemy.h - 28
+        };
+        if (pRect.x < eRect.x + eRect.w && pRect.x + pRect.w > eRect.x &&
+            pRect.y < eRect.y + eRect.h && pRect.y + pRect.h > eRect.y) {
+            if (player.vy > 0 && player.y + player.h < enemy.y + 45) {
+                enemy.defeated = true;
+                player.vy = player.jumpForce * 0.75;
+                score += 250;
+                for (let i = 0; i < 40; i++) {
+                    particles.push({
+                        x: enemy.x - scrollOffset + enemy.w / 2,
+                        y: enemy.y + enemy.h / 2,
+                        vx: (Math.random() - 0.5) * 22,
+                        vy: (Math.random() - 0.5) * 22,
+                        life: 60,
+                        color: `hsl(${Math.random() * 90}, 100%, ${58 + Math.random() * 32}%)`,
+                        size: 6 + Math.random() * 9
+                    });
+                }
+            } else if (!enemy.defeated) {
+                gameOver();
+                return;
+            }
+        }
+    }
+    enemies = enemies.filter(e => !e.defeated);
+}
+
+function update() {
+    if (gameState !== 'playing' || isPaused) return;
+    gameTime += 16;
+    score += 16 * 0.015 * (diffSettings[difficulty].speed / 5);
+    currentSpeed = baseSpeed * (1 + gameTime / 100000);
+    scrollOffset += currentSpeed;
+    
+    updatePlayer();
+    generateObstacles();
+    
+    enemies = enemies.filter(e => e.x - scrollOffset > -280);
+    trainCars = trainCars.filter(c => c.x - scrollOffset > -trainW - 180);
+    
+    for (const e of enemies) {
+        e.anim += 0.2;
+        e.shootTimer--;
+        if (e.shootTimer <= 0 && !e.defeated) {
+            e.shootTimer = 80 + Math.random() * 100;
+            muzzleFlashes.push({
+                x: e.x - scrollOffset + e.w - 5,
+                y: e.y + 65,
+                life: 8,
+                size: 12 + Math.random() * 8
+            });
+        }
+    }
+    
+    checkCollisions();
+    
+    for (const p of particles) {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.42;
+        p.life--;
+    }
+    particles = particles.filter(p => p.life > 0);
+    
+    for (const s of sparks) {
+        s.x += s.vx - currentSpeed * 0.8;
+        s.y += s.vy;
+        s.vy += 0.3;
+        s.life--;
+    }
+    sparks = sparks.filter(s => s.life > 0);
+    
+    for (const mf of muzzleFlashes) mf.life--;
+    muzzleFlashes = muzzleFlashes.filter(mf => mf.life > 0);
+    
+    for (const c of clouds) {
+        c.x -= c.speed + currentSpeed * 0.048;
+        if (c.x + c.w < -140) c.x = CANVAS_WIDTH + c.w + Math.random() * 350;
+    }
+    
+    for (const m of mountains) {
+        m.x -= currentSpeed * 0.02 * (m.layer + 1);
+        if (m.x < -750) m.x = CANVAS_WIDTH + 650;
+    }
+    
+    for (const h of helicopters) {
+        h.rotorAngle += 0.85;
+        h.y = h.baseY + Math.sin(gameTime * 0.004 + h.wobble) * 22;
+        h.x -= currentSpeed * h.speed;
+        if (h.x < -260) h.x = CANVAS_WIDTH + 320;
+    }
+    
+    for (const b of birds) {
+        b.x -= b.speed + currentSpeed * 0.15;
+        b.wingPhase += 0.25;
+        if (b.x < -80) {
+            b.x = CANVAS_WIDTH + 80;
+            b.y = 80 + Math.random() * 150;
+        }
+    }
+    
+    for (const line of speedLines) {
+        line.x = (line.x || CANVAS_WIDTH) - line.speed - currentSpeed * 1.6;
+        if (line.x < -line.len) {
+            line.x = CANVAS_WIDTH;
+            line.y = Math.random() * CANVAS_HEIGHT;
+        }
+    }
+}
+
+function drawPlayer(px, py, pw, ph, slideY) {
+    const runCycle = Math.sin(player.anim) * (player.jumping ? 0 : 1);
+    const legSwing = runCycle * 18;
+    const armSwing = Math.sin(player.armSwing) * (player.jumping ? 0.3 : 1) * 14;
+
+    // Shadow
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.42)';
+    ctx.beginPath();
+    ctx.ellipse(px + pw / 2, py + player.h + 13, player.sliding ? 56 : 35, 15, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Outline
+    ctx.strokeStyle = '#FFD580';
+    ctx.lineWidth = 7;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+
+    if (!player.sliding) {
+        // Legs outline
+        ctx.beginPath();
+        ctx.moveTo(px + pw / 2 - 11 + legSwing, py + slideY + ph - 35);
+        ctx.lineTo(px + pw / 2 - 11 + legSwing, py + slideY + ph);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(px + pw / 2 + 11 - legSwing, py + slideY + ph - 35);
+        ctx.lineTo(px + pw / 2 + 11 - legSwing, py + slideY + ph);
+        ctx.stroke();
+    }
+
+    // Body outline
+    ctx.strokeRect(px + 14, py + slideY + 40, pw - 28, ph - 70);
+
+    // Arms outline
+    if (!player.sliding) {
+        ctx.beginPath();
+        ctx.moveTo(px + 9 - armSwing / 2, py + slideY + 42);
+        ctx.lineTo(px + 9 - armSwing / 2, py + slideY + 74);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(px + pw - 9 + armSwing / 2, py + slideY + 42);
+        ctx.lineTo(px + pw - 9 + armSwing / 2, py + slideY + 74);
+        ctx.stroke();
+    }
+
+    // Head outline
+    ctx.beginPath();
+    ctx.arc(px + pw / 2, py + slideY + 26, 25, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.lineWidth = 0;
+
+    // Legs
+    if (!player.sliding) {
+        let leftLegGrad = ctx.createLinearGradient(px + pw / 2 - 11, py + ph - 35, px + pw / 2 - 11, py + ph);
+        leftLegGrad.addColorStop(0, '#3E4E58');
+        leftLegGrad.addColorStop(0.5, '#32424C');
+        leftLegGrad.addColorStop(1, '#26353E');
+        ctx.fillStyle = leftLegGrad;
+        ctx.fillRect(px + pw / 2 - 17 + legSwing, py + slideY + ph - 35, 14, 35);
+
+        let rightLegGrad = ctx.createLinearGradient(px + pw / 2 + 11, py + ph - 35, px + pw / 2 + 11, py + ph);
+        rightLegGrad.addColorStop(0, '#3E4E58');
+        rightLegGrad.addColorStop(0.5, '#32424C');
+        rightLegGrad.addColorStop(1, '#26353E');
+        ctx.fillStyle = rightLegGrad;
+        ctx.fillRect(px + pw / 2 + 3 - legSwing, py + slideY + ph - 35, 14, 35);
+
+        // Boots
+        ctx.fillStyle = '#1C262E';
+        ctx.fillRect(px + pw / 2 - 20 + legSwing, py + slideY + ph - 11, 18, 11);
+        ctx.fillRect(px + pw / 2 + 2 - legSwing, py + slideY + ph - 11, 18, 11);
+        
+        // Boot details
+        ctx.fillStyle = '#0E1418';
+        ctx.fillRect(px + pw / 2 - 20 + legSwing, py + slideY + ph - 6, 18, 3);
+        ctx.fillRect(px + pw / 2 + 2 - legSwing, py + slideY + ph - 6, 18, 3);
+    }
+
+    // Torso/Armor
+    let torsoGrad = ctx.createLinearGradient(px, py + slideY + 42, px + pw, py + slideY + 42);
+    torsoGrad.addColorStop(0, '#404F5E');
+    torsoGrad.addColorStop(0.2, '#4A5A6A');
+    torsoGrad.addColorStop(0.5, '#556678');
+    torsoGrad.addColorStop(0.8, '#4A5A6A');
+    torsoGrad.addColorStop(1, '#404F5E');
+    ctx.fillStyle = torsoGrad;
+    ctx.fillRect(px + 14, py + slideY + 40, pw - 28, ph - 70);
+
+    // Armor plates
+    ctx.fillStyle = '#2E3A46';
+    ctx.fillRect(px + 20, py + slideY + 46, 10, 28);
+    ctx.fillRect(px + pw - 30, py + slideY + 46, 10, 28);
+
+    // Belt
+    let beltGrad = ctx.createLinearGradient(px + 14, py + slideY + ph - 38, px + pw - 14, py + slideY + ph - 38);
+    beltGrad.addColorStop(0, '#2A2A2A');
+    beltGrad.addColorStop(0.5, '#3A3A3A');
+    beltGrad.addColorStop(1, '#2A2A2A');
+    ctx.fillStyle = beltGrad;
+    ctx.fillRect(px + 14, py + slideY + ph - 40, pw - 28, 8);
+
+    // Belt buckle
+    ctx.fillStyle = '#8A8A8A';
+    ctx.fillRect(px + pw / 2 - 6, py + slideY + ph - 40, 12, 8);
+
+    // Chest plate
+    let chestGrad = ctx.createRadialGradient(px + pw / 2, py + slideY + 50, 0, px + pw / 2, py + slideY + 58, 28);
+    chestGrad.addColorStop(0, '#5E7080');
+    chestGrad.addColorStop(0.5, '#526474');
+    chestGrad.addColorStop(1, '#465968');
+    ctx.fillStyle = chestGrad;
+    ctx.beginPath();
+    ctx.arc(px + pw / 2, py + slideY + 58, 24, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Chest detail lines
+    ctx.strokeStyle = '#3A4A56';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(px + pw / 2 - 15, py + slideY + 50);
+    ctx.lineTo(px + pw / 2 - 5, py + slideY + 58);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(px + pw / 2 + 15, py + slideY + 50);
+    ctx.lineTo(px + pw / 2 + 5, py + slideY + 58);
+    ctx.stroke();
+
+    // Arms
+    if (!player.sliding) {
+        let leftArmGrad = ctx.createLinearGradient(px + 9, py + slideY + 42, px + 9, py + slideY + 74);
+        leftArmGrad.addColorStop(0, '#4A5A68');
+        leftArmGrad.addColorStop(0.5, '#3E4E5C');
+        leftArmGrad.addColorStop(1, '#344250');
+        ctx.fillStyle = leftArmGrad;
+        ctx.fillRect(px + 6 - armSwing / 2, py + slideY + 42, 11, 34);
+
+        // Left shoulder pad
+        ctx.fillStyle = '#526474';
+        ctx.beginPath();
+        ctx.arc(px + 11 - armSwing / 2, py + slideY + 44, 8, 0, Math.PI * 2);
+        ctx.fill();
+
+        let rightArmGrad = ctx.createLinearGradient(px + pw - 15, py + slideY + 42, px + pw - 15, py + slideY + 74);
+        rightArmGrad.addColorStop(0, '#4A5A68');
+        rightArmGrad.addColorStop(0.5, '#3E4E5C');
+        rightArmGrad.addColorStop(1, '#344250');
+        ctx.fillStyle = rightArmGrad;
+        ctx.fillRect(px + pw - 17 + armSwing / 2, py + slideY + 42, 11, 34);
+
+        // Right shoulder pad
+        ctx.fillStyle = '#526474';
+        ctx.beginPath();
+        ctx.arc(px + pw - 11 + armSwing / 2, py + slideY + 44, 8, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Hands
+        ctx.fillStyle = '#ECC4A4';
+        ctx.beginPath();
+        ctx.arc(px + 11 - armSwing / 2, py + slideY + 78, 7, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(px + pw - 11 + armSwing / 2, py + slideY + 78, 7, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Gun (right hand)
+        let gunGrad = ctx.createLinearGradient(px + pw - 9, py + slideY + 72, px + pw + 10, py + slideY + 72);
+        gunGrad.addColorStop(0, '#2E2E2E');
+        gunGrad.addColorStop(0.5, '#3E3E3E');
+        gunGrad.addColorStop(1, '#2E2E2E');
+        ctx.fillStyle = gunGrad;
+        ctx.fillRect(px + pw - 9 + armSwing / 2, py + slideY + 72, 24, 7);
+        
+        // Gun barrel
+        ctx.fillStyle = '#1E1E1E';
+        ctx.fillRect(px + pw + 11 + armSwing / 2, py + slideY + 73, 14, 5);
+        
+        // Gun details
+        ctx.fillStyle = '#6A6A6A';
+        ctx.fillRect(px + pw - 6 + armSwing / 2, py + slideY + 74, 6, 3);
+    }
+
+    // Head
+    let headGrad = ctx.createRadialGradient(px + pw / 2 - 9, py + slideY + 22, 0, px + pw / 2, py + slideY + 26, 25);
+    headGrad.addColorStop(0, '#F4CCA8');
+    headGrad.addColorStop(0.5, '#ECBCA0');
+    headGrad.addColorStop(1, '#DCAC90');
+    ctx.fillStyle = headGrad;
+    ctx.beginPath();
+    ctx.arc(px + pw / 2, py + slideY + 26, 23, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Hair (spiky)
+    ctx.fillStyle = '#2E1E14';
+    ctx.beginPath();
+    ctx.moveTo(px + pw / 2 - 20, py + slideY + 14);
+    ctx.lineTo(px + pw / 2 - 14, py + slideY + 3);
+    ctx.lineTo(px + pw / 2 - 8, py + slideY + 10);
+    ctx.lineTo(px + pw / 2 - 2, py + slideY + 1);
+    ctx.lineTo(px + pw / 2 + 4, py + slideY + 8);
+    ctx.lineTo(px + pw / 2 + 10, py + slideY + 2);
+    ctx.lineTo(px + pw / 2 + 16, py + slideY + 12);
+    ctx.lineTo(px + pw / 2 + 20, py + slideY + 5);
+    ctx.lineTo(px + pw / 2 + 12, py + slideY + 16);
+    ctx.lineTo(px + pw / 2 - 12, py + slideY + 16);
+    ctx.closePath();
+    ctx.fill();
+
+    // Hair highlights
+    ctx.fillStyle = '#4A3A2A';
+    ctx.beginPath();
+    ctx.moveTo(px + pw / 2 - 10, py + slideY + 10);
+    ctx.lineTo(px + pw / 2 - 6, py + slideY + 6);
+    ctx.lineTo(px + pw / 2 - 4, py + slideY + 12);
+    ctx.fill();
+
+    // Eyes
+    ctx.fillStyle = '#1E1E1E';
+    ctx.fillRect(px + pw / 2 - 10, py + slideY + 26, 5, 3);
+    ctx.fillRect(px + pw / 2 + 5, py + slideY + 26, 5, 3);
+    
+    // Eye shine
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(px + pw / 2 - 9, py + slideY + 26, 2, 1);
+    ctx.fillRect(px + pw / 2 + 6, py + slideY + 26, 2, 1);
+
+    // Nose
+    ctx.fillStyle = '#D4A48C';
+    ctx.beginPath();
+    ctx.moveTo(px + pw / 2, py + slideY + 32);
+    ctx.lineTo(px + pw / 2 - 2, py + slideY + 30);
+    ctx.lineTo(px + pw / 2 + 2, py + slideY + 33);
+    ctx.fill();
+
+    // Mouth
+    ctx.strokeStyle = '#1E1E1E';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(px + pw / 2, py + slideY + 37, 5, 0, Math.PI);
+    ctx.stroke();
+
+    // Facial details (jaw line)
+    ctx.strokeStyle = '#D4A48C';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(px + pw / 2, py + slideY + 26, 20, Math.PI * 0.2, Math.PI * 0.8);
+    ctx.stroke();
+}
+
+function draw() {
+    ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+    // Sky gradient
+    let sky = ctx.createLinearGradient(0, 0, 0, CANVAS_HEIGHT * 0.78);
+    sky.addColorStop(0, '#A81200');
+    sky.addColorStop(0.12, '#C42410');
+    sky.addColorStop(0.28, '#E83E1E');
+    sky.addColorStop(0.45, '#FF5828');
+    sky.addColorStop(0.62, '#FF7838');
+    sky.addColorStop(0.78, '#FFA050');
+    sky.addColorStop(0.92, '#FFC070');
+    sky.addColorStop(1, '#FFD890');
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+    // Sun rays
+    const sunX = CANVAS_WIDTH - 125, sunY = 85;
+    for (let i = 0; i < sunRays.length; i++) {
+        const ray = sunRays[i], angle = ray.angle + gameTime * 0.00014;
+        let grad = ctx.createLinearGradient(
+            sunX, sunY,
+            sunX + Math.cos(angle) * ray.len,
+            sunY + Math.sin(angle) * ray.len
+        );
+        grad.addColorStop(0, `rgba(255, ${80 + i % 50}, ${10 + i % 40}, ${0.58 * ray.intensity})`);
+        grad.addColorStop(0.48, `rgba(255, ${120 + i % 50}, ${40 + i % 50}, ${0.35 * ray.intensity})`);
+        grad.addColorStop(1, 'rgba(255, 170, 90, 0)');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.moveTo(sunX, sunY);
+        ctx.lineTo(
+            sunX + Math.cos(angle - ray.width) * ray.len,
+            sunY + Math.sin(angle - ray.width) * ray.len
+        );
+        ctx.lineTo(
+            sunX + Math.cos(angle + ray.width) * ray.len,
+            sunY + Math.sin(angle + ray.width) * ray.len
+        );
+        ctx.closePath();
+        ctx.fill();
+    }
+
+    // Sun core
+    let sunGlow = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, 175);
+    sunGlow.addColorStop(0, '#FFFFFF');
+    sunGlow.addColorStop(0.15, '#FFFEF8');
+    sunGlow.addColorStop(0.28, '#FFFFDD');
+    sunGlow.addColorStop(0.42, '#FFEEAA');
+    sunGlow.addColorStop(0.58, '#FFDD77');
+    sunGlow.addColorStop(0.75, '#FFCC55');
+    sunGlow.addColorStop(0.9, '#FFB833');
+    sunGlow.addColorStop(1, 'rgba(255, 190, 80, 0)');
+    ctx.fillStyle = sunGlow;
+    ctx.beginPath();
+    ctx.arc(sunX, sunY, 175, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Mountains
+    for (const mtn of mountains) {
+        if (mtn.x < -800 || mtn.x > CANVAS_WIDTH + 140) continue;
+        ctx.save();
+        ctx.globalAlpha = mtn.layer === 0 ? 0.5 : 0.38;
+        const baseY = CANVAS_HEIGHT - 125;
+        let mtnGrad = ctx.createLinearGradient(mtn.x, baseY - mtn.baseHeight, mtn.x + 450, baseY);
+        if (mtn.layer === 0) {
+            mtnGrad.addColorStop(0, '#6E3C1C');
+            mtnGrad.addColorStop(0.35, '#7F4D2C');
+            mtnGrad.addColorStop(0.65, '#905E3C');
+            mtnGrad.addColorStop(1, '#A16F4C');
+        } else {
+            mtnGrad.addColorStop(0, '#5D2C0C');
+            mtnGrad.addColorStop(0.35, '#6E3C1C');
+            mtnGrad.addColorStop(0.65, '#7F4D2C');
+            mtnGrad.addColorStop(1, '#905E3C');
+        }
+        ctx.fillStyle = mtnGrad;
+        ctx.beginPath();
+        ctx.moveTo(mtn.x, baseY);
+        for (let p of mtn.peaks) {
+            const px = mtn.x + p.offset * 450;
+            const py = baseY - mtn.baseHeight * p.height;
+            ctx.lineTo(px, py);
+        }
+        ctx.lineTo(mtn.x + 450, baseY);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+    }
+
+    // Clouds
+    for (const cloud of clouds) {
+        if (cloud.x < -cloud.w - 70 || cloud.x > CANVAS_WIDTH + 70) continue;
+        let cloudGrad = ctx.createRadialGradient(
+            cloud.x + cloud.w * 0.38, cloud.y, 0,
+            cloud.x + cloud.w * 0.48, cloud.y + cloud.h * 0.35, cloud.w * 0.68
+        );
+        cloudGrad.addColorStop(0, 'rgba(255, 215, 155, 0.92)');
+        cloudGrad.addColorStop(0.48, 'rgba(255, 195, 135, 0.82)');
+        cloudGrad.addColorStop(1, 'rgba(255, 175, 115, 0.55)');
+        ctx.fillStyle = cloudGrad;
+        ctx.beginPath();
+        ctx.arc(cloud.x, cloud.y, cloud.h * 0.62, 0, Math.PI * 2);
+        ctx.arc(cloud.x + cloud.w * 0.28, cloud.y - cloud.h * 0.22, cloud.h * 0.72, 0, Math.PI * 2);
+        ctx.arc(cloud.x + cloud.w * 0.52, cloud.y - cloud.h * 0.12, cloud.h * 0.78, 0, Math.PI * 2);
+        ctx.arc(cloud.x + cloud.w * 0.72, cloud.y, cloud.h * 0.67, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    // Birds
+    for (const bird of birds) {
+        if (bird.x < -100 || bird.x > CANVAS_WIDTH + 100) continue;
+        ctx.save();
+        ctx.translate(bird.x, bird.y);
+        ctx.scale(bird.scale, bird.scale);
+        
+        const wingAngle = Math.sin(bird.wingPhase) * 0.6;
+        
+        // Bird body
+        ctx.fillStyle = 'rgba(40, 30, 20, 0.85)';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 8, 5, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Wings
+        ctx.strokeStyle = 'rgba(40, 30, 20, 0.85)';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(-3, 0);
+        ctx.quadraticCurveTo(-12, -8 - wingAngle * 12, -18, -4 - wingAngle * 15);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(3, 0);
+        ctx.quadraticCurveTo(12, -8 - wingAngle * 12, 18, -4 - wingAngle * 15);
+        ctx.stroke();
+        
+        ctx.restore();
+    }
+
+    // Helicopters
+    for (const heli of helicopters) {
+        if (heli.x < -280 || heli.x > CANVAS_WIDTH + 70) continue;
+        ctx.save();
+        ctx.translate(heli.x, heli.y);
+        ctx.scale(heli.scale, heli.scale);
+
+        // Shadow
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.38)';
+        ctx.beginPath();
+        ctx.ellipse(38, 460 - heli.y, 78, 24, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Tail
+        let tailGrad = ctx.createLinearGradient(48, -7, 135, 0);
+        tailGrad.addColorStop(0, '#4C5C6C');
+        tailGrad.addColorStop(0.5, '#3C4C5C');
+        tailGrad.addColorStop(1, '#2C3C4C');
+        ctx.fillStyle = tailGrad;
+        ctx.fillRect(48, -9, 95, 18);
+
+        // Tail fin
+        ctx.fillStyle = '#3C4C5C';
+        ctx.fillRect(135, -16, 7, 32);
+
+        // Main body
+        let bodyGrad = ctx.createRadialGradient(-20, -18, 0, 0, 0, 72);
+        bodyGrad.addColorStop(0, '#6C7C8C');
+        bodyGrad.addColorStop(0.28, '#5C6C7C');
+        bodyGrad.addColorStop(0.62, '#4C5C6C');
+        bodyGrad.addColorStop(1, '#3C4C5C');
+        ctx.fillStyle = bodyGrad;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 66, 32, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Window
+        let windowGrad = ctx.createRadialGradient(-38, -10, 0, -32, -6, 35);
+        windowGrad.addColorStop(0, 'rgba(225, 248, 255, 0.88)');
+        windowGrad.addColorStop(0.48, 'rgba(185, 225, 248, 0.68)');
+        windowGrad.addColorStop(1, 'rgba(135, 195, 235, 0.38)');
+        ctx.fillStyle = windowGrad;
+        ctx.beginPath();
+        ctx.ellipse(-34, -7, 28, 24, -0.38, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Skids
+        ctx.fillStyle = '#2C3C4C';
+        ctx.fillRect(-28, 20, 17, 5);
+        ctx.fillRect(11, 20, 17, 5);
+        ctx.fillRect(-24, 14, 3, 11);
+        ctx.fillRect(22, 14, 3, 11);
+
+        // Rotor blur
+        ctx.globalAlpha = 0.52;
+        let rotorGrad = ctx.createRadialGradient(0, -34, 0, 0, -34, 98);
+        rotorGrad.addColorStop(0, 'rgba(135, 145, 155, 0.88)');
+        rotorGrad.addColorStop(0.3, 'rgba(115, 125, 135, 0.68)');
+        rotorGrad.addColorStop(0.62, 'rgba(95, 105, 115, 0.42)');
+        rotorGrad.addColorStop(1, 'rgba(75, 85, 95, 0)');
+        ctx.fillStyle = rotorGrad;
+        ctx.beginPath();
+        ctx.arc(0, -34, 96, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+
+        // Rotor blades
+        ctx.strokeStyle = 'rgba(85, 95, 105, 0.92)';
+        ctx.lineWidth = 9;
+        for (let i = 0; i < 4; i++) {
+            const angle = heli.rotorAngle + i * Math.PI / 2;
+            ctx.beginPath();
+            ctx.moveTo(0, -34);
+            ctx.lineTo(Math.cos(angle) * 92, -34 + Math.sin(angle) * 18);
+            ctx.stroke();
+        }
+
+        // Rotor hub
+        let hubGrad = ctx.createRadialGradient(-5, -38, 0, 0, -34, 14);
+        hubGrad.addColorStop(0, '#6C7C8C');
+        hubGrad.addColorStop(0.5, '#5C6C7C');
+        hubGrad.addColorStop(1, '#4C5C6C');
+        ctx.fillStyle = hubGrad;
+        ctx.beginPath();
+        ctx.arc(0, -34, 13, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+    }
+
+    // Train cars
+    for (const car of trainCars) {
+        const carX = car.x - scrollOffset;
+        if (carX > CANVAS_WIDTH + 260 || carX < -trainW - 260) continue;
+        if (car.hasGap) continue;
+
+        // Shadow
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.48)';
+        ctx.beginPath();
+        ctx.ellipse(carX + trainW / 2, trainY + 95, trainW * 0.44, 30, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Main body
+        let bodyGrad = ctx.createLinearGradient(carX, trainY - trainH, carX + trainW, trainY - trainH);
+        bodyGrad.addColorStop(0, '#444444');
+        bodyGrad.addColorStop(0.15, '#545454');
+        bodyGrad.addColorStop(0.35, '#606060');
+        bodyGrad.addColorStop(0.5, '#646464');
+        bodyGrad.addColorStop(0.65, '#5C5C5C');
+        bodyGrad.addColorStop(0.85, '#505050');
+        bodyGrad.addColorStop(1, '#444444');
+        ctx.fillStyle = bodyGrad;
+        ctx.fillRect(carX, trainY - trainH, trainW, trainH);
+
+        // Roof
+        let roofGrad = ctx.createLinearGradient(carX, trainY - trainH, carX, trainY - trainH + 30);
+        roofGrad.addColorStop(0, '#505050');
+        roofGrad.addColorStop(0.5, '#585858');
+        roofGrad.addColorStop(1, '#4C4C4C');
+        ctx.fillStyle = roofGrad;
+        ctx.fillRect(carX + 14, trainY - trainH, trainW - 28, 28);
+
+        // Side panels
+        let panelGrad = ctx.createLinearGradient(carX, trainY - trainH + 35, carX, trainY - 48);
+        panelGrad.addColorStop(0, '#444444');
+        panelGrad.addColorStop(0.32, '#4C4C4C');
+        panelGrad.addColorStop(0.72, '#484848');
+        panelGrad.addColorStop(1, '#404040');
+        ctx.fillStyle = panelGrad;
+        ctx.fillRect(carX + 12, trainY - trainH + 35, trainW - 24, trainH - 82);
+
+        // Windows
+        for (let i = 0; i < 3; i++) {
+            const wx = carX + 85 + i * 125, wy = trainY - trainH + 45;
+
+            // Outer glow
+            let glowOuter = ctx.createRadialGradient(wx + 40, wy + 34, 0, wx + 40, wy + 34, 100);
+            glowOuter.addColorStop(0, 'rgba(255, 185, 105, 0.52)');
+            glowOuter.addColorStop(0.35, 'rgba(255, 160, 85, 0.35)');
+            glowOuter.addColorStop(0.68, 'rgba(255, 135, 65, 0.2)');
+            glowOuter.addColorStop(1, 'rgba(255, 115, 45, 0)');
+            ctx.fillStyle = glowOuter;
+            ctx.fillRect(wx - 40, wy - 40, 160, 148);
+
+            // Window frame
+            ctx.fillStyle = '#303030';
+            ctx.fillRect(wx - 6, wy - 6, 82, 66);
+
+            // Window interior
+            let winInt = ctx.createLinearGradient(wx, wy, wx, wy + 54);
+            winInt.addColorStop(0, '#FFAC68');
+            winInt.addColorStop(0.25, '#FF9B57');
+            winInt.addColorStop(0.52, '#FF8A46');
+            winInt.addColorStop(0.78, '#EE7935');
+            winInt.addColorStop(1, '#DD6824');
+            ctx.fillStyle = winInt;
+            ctx.fillRect(wx, wy, 72, 54);
+
+            // Window reflection
+            ctx.fillStyle = 'rgba(255, 235, 195, 0.42)';
+            ctx.fillRect(wx + 4, wy + 4, 36, 24);
+
+            // Silhouettes
+            if (i === 1) {
+                ctx.fillStyle = 'rgba(85, 45, 25, 0.65)';
+                ctx.fillRect(wx + 14, wy + 20, 20, 30);
+                ctx.beginPath();
+                ctx.arc(wx + 24, wy + 17, 9, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // Wheels
+        for (let wi = 0; wi < 4; wi++) {
+            const wx = carX + 90 + wi * 95, wy = trainY + 30;
+
+            // Wheel shadow
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.52)';
+            ctx.beginPath();
+            ctx.ellipse(wx + 14, wy + 20, 48, 21, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Wheel base
+            let wheelGrad = ctx.createRadialGradient(wx - 14, wy - 14, 0, wx, wy, 45);
+            wheelGrad.addColorStop(0, '#ACACAC');
+            wheelGrad.addColorStop(0.2, '#929292');
+            wheelGrad.addColorStop(0.45, '#747474');
+            wheelGrad.addColorStop(0.7, '#565656');
+            wheelGrad.addColorStop(0.88, '#3E3E3E');
+            wheelGrad.addColorStop(1, '#303030');
+            ctx.fillStyle = wheelGrad;
+            ctx.beginPath();
+            ctx.arc(wx, wy, 43, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Wheel hub
+            let hubGrad = ctx.createRadialGradient(wx - 10, wy - 10, 0, wx, wy, 24);
+            hubGrad.addColorStop(0, '#888888');
+            hubGrad.addColorStop(0.42, '#686868');
+            hubGrad.addColorStop(0.75, '#484848');
+            hubGrad.addColorStop(1, '#343434');
+            ctx.fillStyle = hubGrad;
+            ctx.beginPath();
+            ctx.arc(wx, wy, 23, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Spokes
+            ctx.strokeStyle = '#585858';
+            ctx.lineWidth = 4.5;
+            for (let s = 0; s < 6; s++) {
+                const angle = (s / 6) * Math.PI * 2 + gameTime * 0.014;
+                ctx.beginPath();
+                ctx.moveTo(wx + Math.cos(angle) * 11, wy + Math.sin(angle) * 11);
+                ctx.lineTo(wx + Math.cos(angle) * 38, wy + Math.sin(angle) * 38);
+                ctx.stroke();
+            }
+
+            // Center bolt
+            ctx.fillStyle = '#404040';
+            ctx.beginPath();
+            ctx.arc(wx, wy, 8, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Rim
+            ctx.strokeStyle = '#6C6C6C';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(wx, wy, 34, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+
+        // Undercarriage
+        let underGrad = ctx.createLinearGradient(carX, trainY - 20, carX, trainY + 42);
+        underGrad.addColorStop(0, '#343434');
+        underGrad.addColorStop(0.5, '#404040');
+        underGrad.addColorStop(1, '#303030');
+        ctx.fillStyle = underGrad;
+        ctx.fillRect(carX + 28, trainY - 18, trainW - 56, 54);
+
+        // Couplings
+        ctx.fillStyle = '#3C3C3C';
+        ctx.fillRect(carX - 12, trainY + 12, 24, 26);
+        ctx.fillRect(carX + trainW - 12, trainY + 12, 24, 26);
+
+        // Rivets
+        ctx.fillStyle = '#ACACAC';
+        for (let r = 0; r < 6; r++) {
+            for (let c = 0; c < 9; c++) {
+                ctx.beginPath();
+                ctx.arc(carX + 48 + c * 48, trainY - trainH + 54 + r * 18, 3.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+    }
+
+    // Track and rails
+    let trackGrad = ctx.createLinearGradient(0, trainY + 68, 0, trainY + 125);
+    trackGrad.addColorStop(0, '#2E2E2E');
+    trackGrad.addColorStop(0.32, '#343434');
+    trackGrad.addColorStop(0.72, '#303030');
+    trackGrad.addColorStop(1, '#242424');
+    ctx.fillStyle = trackGrad;
+    ctx.fillRect(0, trainY + 68, CANVAS_WIDTH, 58);
+
+    // Railroad ties
+    ctx.fillStyle = '#444444';
+    for (let t = 0; t < 34; t++) {
+        const tx = (t * 58 - scrollOffset % 58);
+        ctx.fillRect(tx, trainY + 73, 45, 55);
+    }
+
+    // Rails
+    for (let r = 0; r < 2; r++) {
+        const ry = trainY + 75 + r * 28;
+        let railGrad = ctx.createLinearGradient(0, ry, 0, ry + 13);
+        railGrad.addColorStop(0, '#CACACA');
+        railGrad.addColorStop(0.15, '#B4B4B4');
+        railGrad.addColorStop(0.35, '#949494');
+        railGrad.addColorStop(0.62, '#747474');
+        railGrad.addColorStop(0.82, '#585858');
+        railGrad.addColorStop(1, '#4A4A4A');
+        ctx.fillStyle = railGrad;
+        ctx.fillRect(0, ry, CANVAS_WIDTH, 12);
+
+        // Rail shine
+        ctx.fillStyle = 'rgba(215, 215, 215, 0.3)';
+        ctx.fillRect(0, ry + 2, CANVAS_WIDTH, 2.5);
+    }
+
+    // Player
+    const px = player.x, py = player.y, pw = player.w;
+    const ph = player.sliding ? player.h * 0.6 : player.h;
+    const slideY = player.sliding ? player.h * 0.4 : 0;
+    drawPlayer(px, py, pw, ph, slideY);
+
+    // Enemies
+    for (const enemy of enemies) {
+        if (enemy.defeated) continue;
+        const ex = enemy.x - scrollOffset;
+        if (ex > CANVAS_WIDTH + 260 || ex < -260) continue;
+        const bounce = Math.sin(enemy.anim) * 8;
+
+        // Shadow
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.42)';
+        ctx.beginPath();
+        ctx.ellipse(ex + enemy.w / 2, enemy.y + enemy.h + 20, 32, 14, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Outline
+        ctx.strokeStyle = '#FFD580';
+        ctx.lineWidth = 7;
+        ctx.lineJoin = 'round';
+        ctx.lineCap = 'round';
+
+        const legBounce = Math.sin(enemy.anim * 2) * 11;
+        
+        // Legs outline
+        ctx.beginPath();
+        ctx.moveTo(ex + 18 - legBounce / 2, enemy.y + bounce + enemy.h - 35);
+        ctx.lineTo(ex + 18 - legBounce / 2, enemy.y + bounce + enemy.h);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(ex + 47 + legBounce / 2, enemy.y + bounce + enemy.h - 35);
+        ctx.lineTo(ex + 47 + legBounce / 2, enemy.y + bounce + enemy.h);
+        ctx.stroke();
+
+        // Body outline
+        ctx.strokeRect(ex + 16, enemy.y + 35 + bounce, enemy.w - 32, enemy.h - 68);
+
+        // Arms outline
+        ctx.beginPath();
+        ctx.moveTo(ex + 12, enemy.y + 38 + bounce);
+        ctx.lineTo(ex + 12, enemy.y + 68 + bounce);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(ex + enemy.w - 12, enemy.y + 38 + bounce);
+        ctx.lineTo(ex + enemy.w - 12, enemy.y + 68 + bounce);
+        ctx.stroke();
+
+        // Head outline
+        ctx.beginPath();
+        ctx.arc(ex + enemy.w / 2, enemy.y + 24 + bounce, 24, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.lineWidth = 0;
+
+        // Legs
+        ctx.fillStyle = '#BD1313';
+        ctx.fillRect(ex + 14 - legBounce / 2, enemy.y + bounce + enemy.h - 35, 11, 35);
+        ctx.fillRect(ex + 40 + legBounce / 2, enemy.y + bounce + enemy.h - 35, 11, 35);
+
+        // Body
+        let enemyBodyGrad = ctx.createLinearGradient(ex, enemy.y + 38, ex + enemy.w, enemy.y + 38);
+        enemyBodyGrad.addColorStop(0, '#DF2424');
+        enemyBodyGrad.addColorStop(0.25, '#EF3535');
+        enemyBodyGrad.addColorStop(0.5, '#FF4646');
+        enemyBodyGrad.addColorStop(0.75, '#EF3535');
+        enemyBodyGrad.addColorStop(1, '#CE1313');
+        ctx.fillStyle = enemyBodyGrad;
+        ctx.fillRect(ex + 16, enemy.y + 35 + bounce, enemy.w - 32, enemy.h - 68);
+
+        // Armor plates
+        ctx.fillStyle = ('#BD1313');
+        ctx.fillRect(ex + 20, enemy.y + 40 + bounce, 9, 24);
+        ctx.fillRect(ex + enemy.w - 29, enemy.y + 40 + bounce, 9, 24);
+
+        // Chest plate
+        let armorGrad = ctx.createRadialGradient(ex + enemy.w / 2, enemy.y + 50 + bounce, 0, ex + enemy.w / 2, enemy.y + 52 + bounce, 22);
+        armorGrad.addColorStop(0, '#FF5757');
+        armorGrad.addColorStop(0.5, '#EF4646');
+        armorGrad.addColorStop(1, '#DF3535');
+        ctx.fillStyle = armorGrad;
+        ctx.beginPath();
+        ctx.arc(ex + enemy.w / 2, enemy.y + 52 + bounce, 20, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Arms
+        ctx.fillStyle = '#CE2424';
+        ctx.fillRect(ex + 8, enemy.y + 38 + bounce, 11, 32);
+        ctx.fillRect(ex + enemy.w - 19, enemy.y + 38 + bounce, 11, 32);
+
+        // Hands
+        ctx.fillStyle = '#ECC4A4';
+        ctx.beginPath();
+        ctx.arc(ex + 13, enemy.y + 72 + bounce, 7, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(ex + enemy.w - 13, enemy.y + 72 + bounce, 7, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Gun
+        ctx.fillStyle = '#2E2E2E';
+        ctx.fillRect(ex + enemy.w - 12, enemy.y + 65 + bounce, 20, 7);
+        ctx.fillStyle = '#1E1E1E';
+        ctx.fillRect(ex + enemy.w + 6, enemy.y + 66 + bounce, 12, 5);
+
+        // Head
+        let enemyHeadGrad = ctx.createRadialGradient(ex + enemy.w / 2 - 9, enemy.y + 20 + bounce, 0, ex + enemy.w / 2, enemy.y + 24 + bounce, 24);
+        enemyHeadGrad.addColorStop(0, '#F4CCA8');
+        enemyHeadGrad.addColorStop(0.5, '#ECBCA0');
+        enemyHeadGrad.addColorStop(1, '#DCAC90');
+        ctx.fillStyle = enemyHeadGrad;
+        ctx.beginPath();
+        ctx.arc(ex + enemy.w / 2, enemy.y + 24 + bounce, 22, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Helmet
+        ctx.fillStyle = '#303030';
+        ctx.beginPath();
+        ctx.ellipse(ex + enemy.w / 2, enemy.y + 17 + bounce, 20, 11, 0, 0, Math.PI);
+        ctx.fill();
+
+        // Face mask
+        ctx.fillStyle = '#202020';
+        ctx.fillRect(ex + enemy.w / 2 - 16, enemy.y + 22 + bounce, 32, 14);
+
+        // Eyes (glowing)
+        ctx.fillStyle = '#FF3535';
+        ctx.fillRect(ex + enemy.w / 2 - 12, enemy.y + 26 + bounce, 8, 4);
+        ctx.fillRect(ex + enemy.w / 2 + 4, enemy.y + 26 + bounce, 8, 4);
+    }
+
+    // Muzzle flashes
+    for (const mf of muzzleFlashes) {
+        ctx.save();
+        ctx.globalAlpha = mf.life / 8;
+        let mfGrad = ctx.createRadialGradient(mf.x, mf.y, 0, mf.x, mf.y, mf.size);
+        mfGrad.addColorStop(0, '#FFFFFF');
+        mfGrad.addColorStop(0.3, '#FFE680');
+        mfGrad.addColorStop(0.6, '#FFB840');
+        mfGrad.addColorStop(1, 'rgba(255, 140, 20, 0)');
+        ctx.fillStyle = mfGrad;
+        ctx.beginPath();
+        ctx.arc(mf.x, mf.y, mf.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
+
+    // Particles
+    for (const p of particles) {
+        ctx.save();
+        ctx.globalAlpha = Math.min(1, p.life / 48);
+        let particleGrad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
+        particleGrad.addColorStop(0, p.color);
+        particleGrad.addColorStop(0.48, p.color.replace(/[\d.]+\)$/, '0.78)'));
+        particleGrad.addColorStop(1, p.color.replace(/[\d.]+\)$/, '0)'));
+        ctx.fillStyle = particleGrad;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
+
+    // Sparks
+    for (const s of sparks) {
+        ctx.save();
+        ctx.globalAlpha = Math.min(1, s.life / 40);
+        let sparkGrad = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.size);
+        sparkGrad.addColorStop(0, '#FFFFFF');
+        sparkGrad.addColorStop(0.32, s.color);
+        sparkGrad.addColorStop(0.72, s.color.replace(/[\d.]+\)$/, '0.68)'));
+        sparkGrad.addColorStop(1, s.color.replace(/[\d.]+\)$/, '0)'));
+        ctx.fillStyle = sparkGrad;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
+
+    // Speed lines
+    for (const line of speedLines) {
+        let lineGrad = ctx.createLinearGradient(line.x || CANVAS_WIDTH, line.y, (line.x || CANVAS_WIDTH) - line.len, line.y);
+        lineGrad.addColorStop(0, `rgba(255, 240, 150, ${line.opacity})`);
+        lineGrad.addColorStop(0.35, `rgba(255, 220, 130, ${line.opacity * 0.85})`);
+        lineGrad.addColorStop(0.7, `rgba(255, 195, 105, ${line.opacity * 0.55})`);
+        lineGrad.addColorStop(1, 'rgba(255, 170, 80, 0)');
+        ctx.strokeStyle = lineGrad;
+        ctx.lineWidth = line.thickness;
+        ctx.beginPath();
+        ctx.moveTo(line.x || CANVAS_WIDTH, line.y);
+        ctx.lineTo((line.x || CANVAS_WIDTH) - line.len, line.y);
+        ctx.stroke();
+    }
+
+    // HUD
+    if (gameState === 'playing') {
+        document.getElementById('scoreDisplay').textContent = Math.floor(score);
+    }
+}
+
+let lastTime = 0;
+function gameLoop(t = 0) {
+    const dt = Math.min(t - lastTime, 33.33);
+    lastTime = t;
+    if (gameState === 'playing' && !isPaused) update();
+    draw();
+    requestAnimationFrame(gameLoop);
+}
+
+document.querySelectorAll('.difficulty-btn[data-difficulty]').forEach(btn => {
+    btn.addEventListener('click', () => startGame(btn.dataset.difficulty));
+});
+
+document.getElementById('retryBtn').addEventListener('click', () => {
+    document.getElementById('gameOverScreen').style.display = 'none';
+    startGame(difficulty);
+});
+
+document.getElementById('menuBtn').addEventListener('click', () => {
+    gameState = 'menu';
+    document.getElementById('gameOverScreen').style.display = 'none';
+    document.getElementById('mainMenu').style.display = 'flex';
+});
+
+document.getElementById('pauseBtn').addEventListener('click', () => {
+    if (gameState !== 'playing') return;
+    isPaused = true;
+    document.getElementById('pauseScreen').style.display = 'flex';
+});
+
+document.getElementById('resumeBtn').addEventListener('click', () => {
+    isPaused = false;
+    document.getElementById('pauseScreen').style.display = 'none';
+});
+
+document.addEventListener('keydown', e => {
+    if (gameState !== 'playing' || isPaused) return;
+    if (e.code === 'Space' || e.code === 'KeyW' || e.code === 'ArrowUp') {
+        e.preventDefault();
+        jump();
+    }
+    if (e.code === 'KeyS' || e.code === 'ArrowDown') {
+        e.preventDefault();
+        slide();
+    }
+    if (e.code === 'Escape') {
+        isPaused = true;
+        document.getElementById('pauseScreen').style.display = 'flex';
+    }
+});
+
+if (/Android|webOS|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+    document.getElementById('mobileControls').style.display = 'flex';
+    document.getElementById('jumpBtn').addEventListener('touchstart', e => {
+        e.preventDefault();
+        if (gameState === 'playing' && !isPaused) jump();
+    });
+    document.getElementById('slideBtn').addEventListener('touchstart', e => {
+        e.preventDefault();
+        if (gameState === 'playing' && !isPaused) slide();
+    });
+}
+
+gameLoop();
+</script>
+</body>
+</html>

@@ -1,0 +1,648 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>Gem Runner — Enhanced with Levels</title>
+  <style>
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial;background:#071019}
+    #gameCanvas{display:block;width:100%;height:100vh}
+    .ui {position:absolute;left:12px;top:12px;color:#fff;font-weight:600;text-shadow:0 2px 6px rgba(0,0,0,.6);z-index:3}
+    .ui .score{font-size:18px}
+    .ui .lives{margin-top:8px;font-size:16px}
+    .ui .level{margin-top:8px;font-size:16px}
+    .ui .message{margin-top:8px;font-size:13px;opacity:.9}
+    .controls{position:absolute;right:12px;bottom:12px;display:flex;gap:8px;z-index:3}
+    .btn{background:linear-gradient(180deg,#ffffff22,#00000022);border:2px solid #ffffff20;padding:12px;border-radius:12px;color:white;backdrop-filter:blur(4px);min-width:56px;text-align:center;user-select:none;cursor:pointer}
+    .centerMsg{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:#fff;text-align:center;z-index:3;background:rgba(7,16,25,0.9);padding:30px;border-radius:16px;border:2px solid #1db954}
+    .centerMsg button{margin-top:12px;padding:12px 24px;border-radius:8px;border:none;background:#1db954;color:#fff;font-weight:700;cursor:pointer;font-size:16px;transition:all 0.3s}
+    .centerMsg button:hover{background:#17a34a;transform:scale(1.05)}
+    .touchLeft,.touchRight{position:fixed;bottom:0;top:0;width:40%;z-index:2}
+    .touchLeft{left:0}
+    .touchRight{right:0}
+    @media(min-width:800px){.touchLeft,.touchRight{display:none}}
+    /* Fallback message style */
+    #fallbackNotice{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);color:#ffd;z-index:4;padding:8px 12px;background:#00000066;border-radius:8px;font-size:13px}
+    /* Loading screen */
+    #loadingScreen{position:absolute;left:0;top:0;width:100%;height:100%;background:#071019;display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:10;color:#fff}
+    .loader{width:60px;height:60px;border:5px solid rgba(29,185,84,0.3);border-radius:50%;border-top-color:#1db954;animation:spin 1s ease-in-out infinite;margin-bottom:20px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    /* Level complete animation */
+    .levelComplete{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(29,185,84,0.9);color:white;padding:20px 40px;border-radius:12px;font-size:24px;font-weight:bold;z-index:5;animation:fadeInOut 2s ease-in-out}
+    @keyframes fadeInOut{0%,100%{opacity:0}50%{opacity:1}}
+  </style>
+
+  <!-- Import map so modules that import 'three' can resolve to the CDN. Modern browsers support import maps. -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.161.0/build/three.module.js"
+    }
+  }
+  </script>
+</head>
+<body>
+  <div id="loadingScreen">
+    <div class="loader"></div>
+    <h2>Loading Gem Runner...</h2>
+    <div style="margin-top:12px;font-size:14px;opacity:.8">Preparing your adventure</div>
+  </div>
+
+  <canvas id="gameCanvas"></canvas>
+
+  <div class="ui">
+    <div class="score">Score: <span id="score">0</span></div>
+    <div class="lives">Lives: <span id="lives">❤️❤️❤️❤️</span></div>
+    <div class="level">Level: <span id="level">1</span></div>
+    <div class="message">Collect gems — avoid obstacles. Use ← / → or A / D (or tap sides on mobile).</div>
+  </div>
+
+  <div class="centerMsg" id="overlay" style="display:none">
+    <h1 id="overlayTitle" style="margin:0 0 8px 0;font-size:28px">Gem Runner</h1>
+    <div id="overlaySubtitle" style="opacity:.9">Polished 3D road, moving obstacles, camera follow. 4 lives (3 extra).</div>
+    <button id="startBtn">Play Now</button>
+    <div style="margin-top:8px;font-size:12px;opacity:.8">If your browser doesn't support WebGL the game will run in a 2D fallback mode.</div>
+  </div>
+
+  <div class="controls" aria-hidden>
+    <div class="btn" id="leftBtn">◀</div>
+    <div class="btn" id="rightBtn">▶</div>
+  </div>
+
+  <div class="touchLeft" id="touchLeft"></div>
+  <div class="touchRight" id="touchRight"></div>
+
+  <div id="fallbackNotice" style="display:none">WebGL unavailable — running 2D fallback</div>
+
+  <!-- GameMonetize SDK -->
+  <script type="text/javascript">
+    window.SDK_OPTIONS = {
+      gameId: "oqb0sn6kv4qfmcqzqo5hjzpy2w9vplxu",
+      onEvent: function (a) {
+        switch (a.name) {
+          case "SDK_GAME_PAUSE":
+            // Pause game logic and mute audio
+            if (window.gamePause) window.gamePause();
+            break;
+          case "SDK_GAME_START":
+            // Advertisement done, resume game logic and unmute audio
+            if (window.gameResume) window.gameResume();
+            break;
+          case "SDK_READY":
+            // SDK is ready
+            console.log("GameMonetize SDK is ready");
+            if (window.sdkReady) window.sdkReady();
+            break;
+        }
+      }
+    };
+    
+    (function (a, b, c) {
+      var d = a.getElementsByTagName(b)[0];
+      a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+    })(document, "script", "gamemonetize-sdk");
+  </script>
+
+  <script type="module">
+  import * as THREE from 'three';
+  import { OrbitControls } from 'https://unpkg.com/three@0.161.0/examples/jsm/controls/OrbitControls.js';
+
+  // Elements
+  const canvas = document.getElementById('gameCanvas');
+  const overlay = document.getElementById('overlay');
+  const startBtn = document.getElementById('startBtn');
+  const scoreEl = document.getElementById('score');
+  const livesEl = document.getElementById('lives');
+  const levelEl = document.getElementById('level');
+  const overlayTitle = document.getElementById('overlayTitle');
+  const overlaySubtitle = document.getElementById('overlaySubtitle');
+  const fallbackNotice = document.getElementById('fallbackNotice');
+  const loadingScreen = document.getElementById('loadingScreen');
+
+  // Game state variables
+  let gamePaused = false;
+  let gameMuted = false;
+  let sdkInitialized = false;
+
+  // Game configuration
+  let playing = false;
+  let score = 0;
+  let lives = 4;
+  let currentLevel = 1;
+  let gemsCollected = 0;
+  let gemsRequired = 10; // Gems needed to complete level 1
+  
+  const levelConfigs = [
+    { gemsRequired: 10, speed: 0.9, obstacleFrequency: 0.35, name: "Easy Street" },
+    { gemsRequired: 15, speed: 1.2, obstacleFrequency: 0.45, name: "Gem Highway" },
+    { gemsRequired: 20, speed: 1.5, obstacleFrequency: 0.55, name: "Crystal Canyon" },
+    { gemsRequired: 25, speed: 1.8, obstacleFrequency: 0.65, name: "Diamond Dash" },
+    { gemsRequired: 30, speed: 2.1, obstacleFrequency: 0.75, name: "Master Run" }
+  ];
+
+  const updateUI = ()=>{ 
+    scoreEl.textContent = score; 
+    livesEl.textContent = '❤️'.repeat(Math.max(0, lives)); 
+    levelEl.textContent = currentLevel;
+  };
+
+  // Audio (WebAudio synthesized so no external files required)
+  let audioCtx;
+  let audioEnabled = true;
+  
+  function ensureAudio(){
+    if(!audioCtx){
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if(audioCtx.state === 'suspended') audioCtx.resume();
+  }
+  
+  function playCollectSound(){
+    if (!audioEnabled || gameMuted) return;
+    try{
+      ensureAudio();
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = 'sine'; o.frequency.setValueAtTime(1100, audioCtx.currentTime);
+      o.connect(g); g.connect(audioCtx.destination);
+      g.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.18, audioCtx.currentTime + 0.01);
+      o.start();
+      g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.25);
+      o.stop(audioCtx.currentTime + 0.3);
+    }catch(e){/*ignore*/}
+  }
+  
+  function playCrashSound(){
+    if (!audioEnabled || gameMuted) return;
+    try{
+      ensureAudio();
+      // short noise burst
+      const bufferSize = audioCtx.sampleRate * 0.12;
+      const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for(let i=0;i<bufferSize;i++){ data[i] = (Math.random()*2-1) * (1 - i/bufferSize); }
+      const src = audioCtx.createBufferSource(); src.buffer = buffer;
+      const g = audioCtx.createGain(); g.gain.value = 0.6;
+      src.connect(g); g.connect(audioCtx.destination);
+      src.start();
+      setTimeout(()=>{ try{ src.disconnect(); g.disconnect(); }catch(e){} }, 200);
+    }catch(e){/*ignore*/}
+  }
+
+  function playLevelUpSound(){
+    if (!audioEnabled || gameMuted) return;
+    try{
+      ensureAudio();
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = 'sine';
+      o.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+      o.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1); // E5
+      o.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.2); // G5
+      o.connect(g); g.connect(audioCtx.destination);
+      g.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.15, audioCtx.currentTime + 0.05);
+      o.start();
+      g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.5);
+      o.stop(audioCtx.currentTime + 0.5);
+    }catch(e){/*ignore*/}
+  }
+
+  // Unified input handlers (use e.code so localization/shift doesn't matter)
+  const input = { left:false, right:false };
+  window.addEventListener('keydown', (e)=>{
+    if(gamePaused) return;
+    if(e.code === 'ArrowLeft' || e.code === 'KeyA') input.left = true;
+    if(e.code === 'ArrowRight' || e.code === 'KeyD') input.right = true;
+    // space to start
+    if(!playing && e.code === 'Space') startButtonClicked();
+  });
+  window.addEventListener('keyup', (e)=>{
+    if(e.code === 'ArrowLeft' || e.code === 'KeyA') input.left = false;
+    if(e.code === 'ArrowRight' || e.code === 'KeyD') input.right = false;
+  });
+  document.getElementById('leftBtn').addEventListener('click', ()=>{ if(!gamePaused) { input.left = true; setTimeout(()=>input.left=false,120); } });
+  document.getElementById('rightBtn').addEventListener('click', ()=>{ if(!gamePaused) { input.right = true; setTimeout(()=>input.right=false,120); } });
+  const touchL = document.getElementById('touchLeft'), touchR = document.getElementById('touchRight');
+  touchL.addEventListener('touchstart', (e)=>{ if(!gamePaused) { e.preventDefault(); input.left = true; setTimeout(()=>input.left=false,120); } }, {passive:false});
+  touchR.addEventListener('touchstart', (e)=>{ if(!gamePaused) { e.preventDefault(); input.right = true; setTimeout(()=>input.right=false,120); } }, {passive:false});
+
+  // Game pause/resume functions for SDK
+  window.gamePause = function() {
+    gamePaused = true;
+    gameMuted = true;
+    console.log("Game paused for ad");
+  };
+
+  window.gameResume = function() {
+    gamePaused = false;
+    gameMuted = false;
+    console.log("Game resumed after ad");
+  };
+
+  // SDK ready callback
+  window.sdkReady = function() {
+    sdkInitialized = true;
+    console.log("SDK is ready");
+  };
+
+  // Show level complete animation
+  function showLevelComplete() {
+    const levelComplete = document.createElement('div');
+    levelComplete.className = 'levelComplete';
+    levelComplete.textContent = `Level ${currentLevel} Complete!`;
+    document.body.appendChild(levelComplete);
+    
+    setTimeout(() => {
+      document.body.removeChild(levelComplete);
+    }, 2000);
+  }
+
+  // Show ad with callback
+  function showAd(callback) {
+    if (sdkInitialized && typeof sdk !== 'undefined' && sdk.showBanner !== 'undefined') {
+      console.log("Showing ad");
+      sdk.showBanner();
+      setTimeout(callback, 2000); // Wait for ad to display
+    } else {
+      console.log("SDK not available, skipping ad");
+      setTimeout(callback, 500); // Short delay even without ad
+    }
+  }
+
+  // Decide whether WebGL is available
+  function hasWebGLContext(){
+    try{
+      const gl = canvas.getContext('webgl2') || canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+      return !!gl;
+    }catch(e){ return false; }
+  }
+
+  // We'll attempt to initialize a WebGL Three.js renderer using an existing context (safer in restricted envs).
+  let using3D = false;
+  let threeRenderer, threeScene, threeCamera, threeActors, threePlayer, threeStripeMat;
+
+  async function init3D(){
+    // create context first
+    const gl = canvas.getContext('webgl2') || canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    if(!gl) throw new Error('No WebGL context');
+
+    // create renderer with the existing context to avoid internal creation failures
+    threeRenderer = new THREE.WebGLRenderer({ canvas, context: gl, antialias: true, alpha: false });
+    threeRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    threeRenderer.setSize(window.innerWidth, window.innerHeight);
+    threeRenderer.shadowMap.enabled = true; threeRenderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+    // scene & camera
+    threeScene = new THREE.Scene(); threeScene.background = new THREE.Color(0x071019); threeScene.fog = new THREE.FogExp2(0x071019, 0.01);
+    threeCamera = new THREE.PerspectiveCamera(62, window.innerWidth / window.innerHeight, 0.1, 500); threeCamera.position.set(0,6,10);
+
+    window.addEventListener('resize', ()=>{ threeRenderer.setSize(window.innerWidth, window.innerHeight); threeCamera.aspect = window.innerWidth/window.innerHeight; threeCamera.updateProjectionMatrix(); }, {passive:true});
+
+    // lights
+    const hemi = new THREE.HemisphereLight(0xffffff, 0x222233, 0.7); threeScene.add(hemi);
+    const dir = new THREE.DirectionalLight(0xffffff, 1.0); dir.position.set(-10,30,20); dir.castShadow=true; dir.shadow.mapSize.set(1024,1024); threeScene.add(dir);
+
+    // road
+    const road = new THREE.Mesh(new THREE.PlaneGeometry(30,1200), new THREE.MeshStandardMaterial({ color:0x0f1a24, roughness:0.9 })); road.rotation.x = -Math.PI/2; road.receiveShadow = true; threeScene.add(road);
+
+    // stripe texture
+    const lineCanvas = document.createElement('canvas'); lineCanvas.width = 512; lineCanvas.height = 64; const lctx = lineCanvas.getContext('2d');
+    lctx.fillStyle = '#0d1420'; lctx.fillRect(0,0,512,64); lctx.fillStyle = '#fff'; for(let x=40;x<512;x+=100){ lctx.fillRect(x,28,40,4); }
+    const lineTex = new THREE.CanvasTexture(lineCanvas); lineTex.wrapS = THREE.RepeatWrapping; lineTex.repeat.set(30,6);
+    threeStripeMat = new THREE.MeshStandardMaterial({ map: lineTex, transparent:true });
+    const stripe = new THREE.Mesh(new THREE.PlaneGeometry(10,1200), threeStripeMat); stripe.rotation.x = -Math.PI/2; stripe.position.y = 0.02; threeScene.add(stripe);
+
+    // player
+    threePlayer = new THREE.Mesh(new THREE.IcosahedronGeometry(0.8,1), new THREE.MeshStandardMaterial({ color:0x77ddff, metalness:0.3, roughness:0.25 }));
+    threePlayer.castShadow = true; threePlayer.position.set(0,1.0,4); threeScene.add(threePlayer);
+
+    // actors
+    threeActors = [];
+    const gemGeo = new THREE.OctahedronGeometry(0.45);
+    const gemMat = new THREE.MeshStandardMaterial({ color:0xffd166, emissive:0xffd166, emissiveIntensity:0.6, metalness:0.6, roughness:0.15 });
+    const obsGeo = new THREE.BoxGeometry(1.2,1.2,1.2);
+    const obsMat = new THREE.MeshStandardMaterial({ color:0xff6b6b, metalness:0.05, roughness:0.8 });
+    function spawn(z){ 
+      const lane = (Math.floor(Math.random()*3)-1); 
+      const isGem = Math.random() < (1 - levelConfigs[currentLevel-1].obstacleFrequency);
+      const mesh = isGem ? new THREE.Mesh(gemGeo, gemMat.clone()) : new THREE.Mesh(obsGeo, obsMat.clone()); 
+      mesh.castShadow=true; 
+      mesh.position.set(lane*2.5,1.0,z); 
+      threeScene.add(mesh); 
+      threeActors.push({mesh,type:isGem?'gem':'obs'});
+    }
+    for(let i=0;i<36;i++) spawn(-20 - i*14 - Math.random()*40);
+
+    // controls & state for 3D
+    let laneIndex = 1; const lanes = [-2.5,0,2.5]; let targetX = lanes[laneIndex];
+    function moveLeft(){ if(!gamePaused) { laneIndex = Math.max(0, laneIndex - 1); targetX = lanes[laneIndex]; } }
+    function moveRight(){ if(!gamePaused) { laneIndex = Math.min(2, laneIndex + 1); targetX = lanes[laneIndex]; } }
+    // wire mobile/ui to these
+    document.getElementById('leftBtn').addEventListener('click', moveLeft); document.getElementById('rightBtn').addEventListener('click', moveRight);
+
+    // animation loop
+    let last = performance.now();
+    function animate3D(t){
+      if (gamePaused) {
+        requestAnimationFrame(animate3D);
+        return;
+      }
+      
+      const dt = Math.min(0.05, (t - last)/1000); last = t;
+      // inputs
+      if(input.left) moveLeft(); if(input.right) moveRight();
+      // smooth player
+      threePlayer.position.x += (targetX - threePlayer.position.x) * Math.min(1, 8 * dt);
+      // move actors
+      const speed = levelConfigs[currentLevel-1].speed + Math.min(1.8, score/200);
+      for(let i=0;i<threeActors.length;i++){
+        const a = threeActors[i]; a.mesh.position.z += speed * 36 * dt; if(a.mesh.rotationSpeed) a.mesh.rotation.y += a.mesh.rotationSpeed;
+        if(a.mesh.position.z > 12){ 
+          a.mesh.position.z = -500 - Math.random()*200; 
+          a.mesh.position.x = (Math.floor(Math.random()*3)-1)*2.5; 
+          if(Math.random() < (1 - levelConfigs[currentLevel-1].obstacleFrequency)){ 
+            a.type = 'gem'; 
+            a.mesh.geometry = gemGeo; 
+            a.mesh.material = gemMat.clone(); 
+            a.mesh.rotationSpeed = 0.03 + Math.random()*0.04; 
+          } else { 
+            a.type = 'obs'; 
+            a.mesh.geometry = obsGeo; 
+            a.mesh.material = obsMat.clone(); 
+          } 
+        }
+
+        // collision
+        if(playing && Math.abs(a.mesh.position.z - threePlayer.position.z) < 1.4){
+          const dx = a.mesh.position.x - threePlayer.position.x; const dz = a.mesh.position.z - threePlayer.position.z; const dy = a.mesh.position.y - threePlayer.position.y; const dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
+          if(dist < 1.0){
+            if(a.type === 'gem'){ 
+              score += 10; 
+              gemsCollected++;
+              updateUI(); 
+              a.mesh.position.z = -500 - Math.random()*200; 
+              a.mesh.position.x = (Math.floor(Math.random()*3)-1)*2.5; 
+              playCollectSound(); 
+              
+              // Check if level completed
+              if (gemsCollected >= levelConfigs[currentLevel-1].gemsRequired) {
+                playLevelUpSound();
+                showLevelComplete();
+                
+                // Move to next level or win game
+                if (currentLevel < levelConfigs.length) {
+                  currentLevel++;
+                  gemsCollected = 0;
+                  updateUI();
+                } else {
+                  // Game completed - show win screen with ad
+                  playing = false;
+                  showAd(() => {
+                    overlay.style.display = '';
+                    overlayTitle.textContent = 'You Win!';
+                    overlaySubtitle.textContent = `Congratulations! You completed all ${levelConfigs.length} levels with ${score} points!`;
+                    startBtn.textContent = 'Play Again';
+                  });
+                }
+              }
+            }
+            else { 
+              lives -= 1; updateUI(); playCrashSound(); 
+              a.mesh.position.z = -500 - Math.random()*200; 
+              a.mesh.position.x = (Math.floor(Math.random()*3)-1)*2.5; 
+              if(lives > 0){ 
+                laneIndex = 1; targetX = lanes[laneIndex]; threePlayer.position.set(0,1.0,4); 
+                threeActors.forEach(aa=>{ aa.mesh.position.z -= 8 + Math.random()*6; }); 
+              } else { 
+                playing = false; 
+                // Show ad on game over
+                showAd(() => {
+                  overlay.style.display = '';
+                  overlayTitle.textContent = 'Game Over';
+                  overlaySubtitle.textContent = `You reached Level ${currentLevel} with ${score} points. Try again!`;
+                  startBtn.textContent = 'Try Again';
+                });
+              }
+            }
+          }
+        }
+      }
+
+      // camera follow
+      const camTarget = new THREE.Vector3(threePlayer.position.x * 0.35, threePlayer.position.y + 2.8, threePlayer.position.z + 8.5);
+      threeCamera.position.lerp(new THREE.Vector3(camTarget.x, camTarget.y + 2.6, camTarget.z + 6.2), 0.08);
+      threeCamera.lookAt(threePlayer.position.x, threePlayer.position.y + 0.6, threePlayer.position.z - 6);
+
+      if(threeStripeMat && threeStripeMat.map) threeStripeMat.map.offset.y += 0.002 * speed;
+
+      threeRenderer.render(threeScene, threeCamera);
+      if(playing) requestAnimationFrame(animate3D);
+    }
+
+    // start/stop helpers for 3D
+    function start3DGame(){
+      // ensure audio unlocked
+      ensureAudio();
+      score = 0; lives = 4; currentLevel = 1; gemsCollected = 0; 
+      updateUI(); 
+      playing = true; 
+      overlay.style.display = 'none'; 
+      overlayTitle.textContent = 'Gem Runner'; 
+      startBtn.textContent = 'Play Now';
+      // reset actors
+      for(let i=0;i<threeActors.length;i++){ 
+        threeActors[i].mesh.position.z = -20 - i*14 - Math.random()*40; 
+        threeActors[i].mesh.position.x = (Math.floor(Math.random()*3)-1)*2.5; 
+      }
+      threePlayer.position.set(0,1.0,4);
+      requestAnimationFrame(animate3D);
+    }
+
+    // expose start3DGame for start button
+    return { start: start3DGame };
+  }
+
+  // --------------- 2D fallback implementation ---------------
+  function init2D(){
+    fallbackNotice.style.display = '';
+    const ctx = canvas.getContext('2d');
+    function resize(){ canvas.width = innerWidth; canvas.height = innerHeight; }
+    resize(); window.addEventListener('resize', resize, {passive:true});
+
+    const lanesX = [canvas.width/2 - 140, canvas.width/2, canvas.width/2 + 140];
+    let playerX = lanesX[1]; const playerY = canvas.height - 140;
+    let laneIndex = 1;
+
+    let actors = []; // {x,y,type}
+    function spawnActor(){ 
+      const lane = Math.floor(Math.random()*3); 
+      const isGem = Math.random() < (1 - levelConfigs[currentLevel-1].obstacleFrequency);
+      actors.push({ x: lanesX[lane], y: -40, type: isGem ? 'gem' : 'obs' }); 
+    }
+    for(let i=0;i<14;i++){ spawnActor(); actors[i].y = -i*120 - Math.random()*200; }
+
+    let last = performance.now();
+    function draw(){
+      if (gamePaused) {
+        requestAnimationFrame(draw);
+        return;
+      }
+      
+      const now = performance.now(); const dt = Math.min(0.05, (now - last)/1000); last = now;
+      // input move
+      if(input.left){ laneIndex = Math.max(0, laneIndex - 1); playerX = lanesX[laneIndex]; input.left = false; }
+      if(input.right){ laneIndex = Math.min(2, laneIndex + 1); playerX = lanesX[laneIndex]; input.right = false; }
+
+      // move actors down
+      const sp = levelConfigs[currentLevel-1].speed + Math.min(3, score/100);
+      for(let i=0;i<actors.length;i++){
+        const a = actors[i]; a.y += sp * 60 * dt; if(a.y > canvas.height + 60){ 
+          a.y = -200 - Math.random()*300; 
+          a.x = lanesX[Math.floor(Math.random()*3)]; 
+          a.type = Math.random() < (1 - levelConfigs[currentLevel-1].obstacleFrequency) ? 'gem' : 'obs'; 
+        }
+        // collision check (simple)
+        if(playing && Math.abs(a.y - playerY) < 40 && Math.abs(a.x - playerX) < 50){ 
+          if(a.type === 'gem'){ 
+            score += 10; 
+            gemsCollected++;
+            playCollectSound(); updateUI(); a.y = -400 - Math.random()*300; 
+            
+            // Check if level completed
+            if (gemsCollected >= levelConfigs[currentLevel-1].gemsRequired) {
+              playLevelUpSound();
+              showLevelComplete();
+              
+              // Move to next level or win game
+              if (currentLevel < levelConfigs.length) {
+                currentLevel++;
+                gemsCollected = 0;
+                updateUI();
+              } else {
+                // Game completed - show win screen with ad
+                playing = false;
+                showAd(() => {
+                  overlay.style.display = '';
+                  overlayTitle.textContent = 'You Win!';
+                  overlaySubtitle.textContent = `Congratulations! You completed all ${levelConfigs.length} levels with ${score} points!`;
+                  startBtn.textContent = 'Play Again';
+                });
+              }
+            }
+          } else { 
+            lives -= 1; playCrashSound(); updateUI(); a.y = -400 - Math.random()*300; 
+            if(lives > 0){ 
+              laneIndex = 1; playerX = lanesX[1]; 
+            } else { 
+              playing = false; 
+              // Show ad on game over
+              showAd(() => {
+                overlay.style.display = '';
+                overlayTitle.textContent = 'Game Over';
+                overlaySubtitle.textContent = `You reached Level ${currentLevel} with ${score} points. Try again!`;
+                startBtn.textContent = 'Try Again';
+              });
+            } 
+          } 
+        }
+      }
+
+      // draw background
+      ctx.fillStyle = '#071019'; ctx.fillRect(0,0,canvas.width,canvas.height);
+      // road
+      ctx.fillStyle = '#0f1a24'; ctx.fillRect(canvas.width/2 - 300, 0, 600, canvas.height);
+      // lane markers
+      ctx.fillStyle = '#ffffff22'; for(let y=0;y<canvas.height;y+=40){ ctx.fillRect(canvas.width/2 - 6, y, 12, 16); }
+
+      // draw actors
+      for(const a of actors){ 
+        if(a.type === 'gem'){ 
+          ctx.fillStyle = '#ffd166'; 
+          ctx.beginPath(); 
+          ctx.moveTo(a.x, a.y-12); 
+          ctx.lineTo(a.x+10, a.y); 
+          ctx.lineTo(a.x, a.y+12); 
+          ctx.lineTo(a.x-10, a.y); 
+          ctx.closePath(); 
+          ctx.fill(); 
+        } else { 
+          ctx.fillStyle = '#ff6b6b'; 
+          ctx.fillRect(a.x-16, a.y-16, 32, 32); 
+        } 
+      }
+
+      // draw player
+      ctx.fillStyle = '#77ddff'; ctx.beginPath(); ctx.ellipse(playerX, playerY, 28, 28, 0, 0, Math.PI*2); ctx.fill();
+
+      if(playing) requestAnimationFrame(draw);
+    }
+
+    function start2DGame(){ 
+      ensureAudio(); 
+      score = 0; lives = 4; currentLevel = 1; gemsCollected = 0;
+      updateUI(); 
+      playing = true; 
+      overlay.style.display = 'none'; 
+      overlayTitle.textContent = 'Gem Runner'; 
+      startBtn.textContent = 'Play Now'; 
+      actors = []; 
+      for(let i=0;i<14;i++){ spawnActor(); actors[i].y = -i*120 - Math.random()*200; } 
+      requestAnimationFrame(draw); 
+    }
+    return { start: start2DGame };
+  }
+
+  // --------------- Init and runtime selection ---------------
+  let game3D, game2D;
+  let rendererOk = false;
+  
+  // Initialize game
+  async function initializeGame() {
+    try{
+      if(hasWebGLContext()){
+        // attempt to initialize three. This may still throw in restrictive sandboxes which is why we wrap.
+        game3D = await init3D();
+        using3D = true; rendererOk = true;
+      } else {
+        rendererOk = false;
+      }
+    }catch(err){
+      console.warn('Failed to init WebGL/Three.js — falling back to 2D. Error:', err);
+      rendererOk = false;
+    }
+
+    if(!rendererOk){
+      // setup 2D fallback
+      game2D = init2D();
+      using3D = false; fallbackNotice.style.display = '';
+    }
+
+    // Hide loading screen and show main menu after 3 seconds
+    setTimeout(() => {
+      loadingScreen.style.display = 'none';
+      overlay.style.display = '';
+    }, 3000);
+  }
+
+  function startButtonClicked(){
+    // NO AD when play button is clicked - start game immediately
+    if(using3D && game3D){ 
+      game3D.start(); 
+    } else if(game2D){ 
+      game2D.start(); 
+    }
+  }
+
+  startBtn.addEventListener('click', startButtonClicked);
+
+  // For accessibility: clicking canvas also starts if not playing
+  canvas.addEventListener('click', ()=>{ if(!playing) startButtonClicked(); });
+
+  // Initialize the game
+  initializeGame();
+
+  </script>
+</body>
+</html>

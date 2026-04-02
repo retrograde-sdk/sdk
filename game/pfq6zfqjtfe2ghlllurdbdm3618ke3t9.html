@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <link
+      rel="shortcut icon"
+      href="./assets/icons/ficon.jpeg"
+      type="image/x-icon"
+    />
+    <title>Digit Hunter</title>
+    <style>
+      @import url("./assets/css/styles.css");
+
+      /* Override for page management */
+      .page-hidden {
+        display: none !important;
+      }
+    </style>
+
+    <!-- GameMonetize SDK Implementation -->
+    <script type="text/javascript">
+      window.SDK_OPTIONS = {
+        gameId: "pfq6zfqjtfe2ghlllurdbdm3618ke3t9",
+        onEvent: function (a) {
+          switch (a.name) {
+            case "SDK_GAME_PAUSE":
+              // pause game logic / mute audio
+              if (game) {
+                  game.setPaused(true);
+                  if (game.sound) game.sound.muteAll();
+              }
+              break;
+            case "SDK_GAME_START":
+              // advertisement done, resume game logic and unmute audio
+              if (game) {
+                  game.setPaused(false);
+                  if (game.sound) game.sound.unmuteAll();
+              }
+              
+              // ✅ Give reward if this was a reward ad
+              if (watchingRewardedAd) {
+                giveReward();
+                watchingRewardedAd = false;
+              }
+              break;
+            case "SDK_READY":
+              // when sdk is ready
+              window.gmSdkReady = true;
+              break;
+            case "SDK_ERROR":
+              // when sdk get error
+              window.gmSdkReady = false;
+              if (watchingRewardedAd) {
+                watchingRewardedAd = false;
+              }
+              break;
+          }
+        }
+      };
+      
+      (function (a, b, c) {
+        var d = a.getElementsByTagName(b)[0];
+        a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+      })(document, "script", "gamemonetize-sdk");
+    </script>
+  </head>
+
+  <body>
+    <!-- Splash Screen -->
+    <div id="splashDisplay" class="splash-container">
+      <div class="splash-content">
+        <img
+          src="./assets/icons/digitdestro.jpg"
+          alt="Digit Hunter Logo"
+          class="splash-logo"
+        />
+        <div class="linear-loader">
+          <div class="bar"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="home-body" id="homeContainer">
+      <!-- Home Page -->
+      <div class="home-container">
+        <h1 class="home-title">Digit Hunter</h1>
+
+        <div class="btn-group">
+          <button class="home-btn" onclick="startGame()">Start</button>
+          <button class="home-btn" onclick="showHomeInstructions()">
+            How to Play
+          </button>
+          <button class="home-btn" onclick="showAbout()">About Game</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Instructions Modal -->
+    <div class="modal" id="instructionsModal">
+      <div class="modal-content">
+        <h3>🎯 How to Play</h3>
+        <ul>
+          <li><strong>Hover</strong> to preview groups</li>
+          <li><strong>Click</strong> to destroy 2+ adjacent digits</li>
+          <li>
+            <strong>Larger groups = Bonus points!</strong> Build combos for mega
+            scores
+          </li>
+          <li>
+            🌟 <strong>Power-ups</strong> appear randomly - click to activate!
+          </li>
+          <li>Total <strong>50 levels 🏆</strong> to master!</li>
+          <li>
+            Level-up requires more score each time (e.g., 600 → 1300 → 2100 …).
+          </li>
+        </ul>
+        <div class="modal-btn-group">
+          <button class="btn" onclick="closeModal('instructionsModal')">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- About Modal -->
+    <div class="modal" id="aboutModal">
+      <div class="modal-content">
+        <h3>ℹ️ About Game</h3>
+        <p>
+          Digit Hunter is a fun and fast-paced puzzle game. Match digits,
+          make combos, and destroy blocks for maximum score!
+        </p>
+        <div class="modal-btn-group">
+          <button class="btn" onclick="closeModal('aboutModal')">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Game Page -->
+    <div id="gameContainer" class="page-hidden">
+      <div class="special-effects" id="specialEffects"></div>
+
+      <div class="game-container">
+        <h1 class="title">Digit Hunter</h1>
+
+        <div class="combo-display" id="comboDisplay">
+          COMBO x<span id="comboMultiplier">0</span>
+        </div>
+
+        <div class="game-stats">
+          <div class="stat-item">
+            <div class="stat-label">Score</div>
+            <div class="stat-value" id="score">0</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Time</div>
+            <div class="stat-value" id="timer">60</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Level</div>
+            <div class="stat-value" id="level">1/50</div>
+          </div>
+        </div>
+
+        <!-- Controls moved to the top -->
+        <div class="controls">
+          <button class="btn" id="pauseBtn" aria-label="Pause Game">
+            <span class="btn-text">Pause</span>
+            <span class="btn-icon">⏸️</span>
+          </button>
+          <button class="btn" id="resetBtn" aria-label="Reset Game">
+            <span class="btn-text">Reset</span>
+            <span class="btn-icon">🔄</span>
+          </button>
+          <button class="btn" onclick="gotoHome()" aria-label="Go to Home">
+            <span class="btn-text">Home</span>
+            <span class="btn-icon">🏠</span>
+          </button>
+        </div>
+        
+        <!-- Sound Toggle Top Left -->
+        <button id="soundBtn" class="sound-btn" aria-label="Toggle Sound">🔊</button>
+
+        <div class="game-grid" id="gameGrid"></div>
+      </div>
+
+      <div class="instructions-container">
+        <div class="instructions">
+          <h3>🎯 How to Play:</h3>
+          <ul>
+            <li><strong>Hover</strong> to preview groups</li>
+            <li><strong>Click</strong> to destroy 2+ adjacent digits</li>
+            <li>
+              <strong>Larger groups = Bonus points!</strong> Build combos for
+              mega scores
+            </li>
+            <li>
+              🌟 <strong>Power-ups</strong> appear randomly - click to activate!
+            </li>
+            <li>Total <strong>50 levels 🏆</strong> to master!</li>
+            <li>
+              Level-up requires more score each time (e.g., 600 → 1300 → 2100
+              …).
+            </li>
+          </ul>
+          <button class="btn" id="startBtn">OK</button>
+        </div>
+      </div>
+
+      <div class="game-over" id="gameOver">
+        <div class="game-over-content">
+          <h2 class="title">🎮 GAME OVER! 🎮</h2>
+          <div class="final-score" id="finalScore">Final Score: 0</div>
+          <div class="high-score" id="gameOverHighScore">High Score: 0</div>
+
+          <div class="gameover-btn-group">
+            <button class="btn" onclick="startNewGame()">Play Again</button>
+          </div>
+        </div>
+      </div>
+      <div class="game-over" id="levelOver">
+        <div class="game-over-content">
+          <h2 class="">🎉 Congratulation! 🎉</h2>
+          <div class="final-score" id="LevelOverScore">Final Score: 0</div>
+          <div class="high-score" id="levelOverHighScore">High Score: 0</div>
+          <p>You have completed the highest level of the game.</p>
+          <div class="gameover-btn-group">
+            <button class="btn" onclick="startNewGame()">Play Again</button>
+            <button class="btn" onclick="gotoHome()">Go to Home</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="gamemonetize-video"></div>
+    <!-- Remove GameMonetize Video API since we're using the main SDK -->
+    <script src="./assets/js/app.js" type="text/javascript"></script>
+    <script>
+      // Splash Logic (smooth fade after loader completes)
+      window.addEventListener("load", () => {
+        const splash = document.getElementById("splashDisplay");
+        const home = document.getElementById("homeContainer");
+        const bar = document.querySelector(".linear-loader .bar");
+
+        // Check if splash shown already in this session
+        const splashShown = sessionStorage.getItem("splashShown");
+
+        if (!splashShown) {
+          // Show splash only on first open of the game
+          bar.classList.add("fill");
+          setTimeout(() => {
+            splash.classList.add("hidden");
+            home.classList.remove("hidden");
+            // Mark splash as shown for this session
+            sessionStorage.setItem("splashShown", "true");
+          }, 2200);
+        } else {
+          // Skip splash if already shown in this session
+          splash.classList.add("hidden");
+          home.classList.remove("hidden");
+        }
+      });
+
+      function startGame() {
+        document.getElementById("homeContainer").classList.add("page-hidden");
+        document
+          .getElementById("gameContainer")
+          .classList.remove("page-hidden");
+        // ✅ Use startFromHome instead of resetGame to show instructions
+        game.startFromHome();
+      }
+
+      function showHomeInstructions() {
+        document.getElementById("instructionsModal").style.display = "flex";
+        document.getElementById("aboutModal").style.display = "none";
+      }
+
+      function showAbout() {
+        document.getElementById("aboutModal").style.display = "flex";
+      }
+
+      function closeModal(id) {
+        document.getElementById(id).style.display = "none";
+      }
+
+      function gotoHome() {
+        if (game) {
+            game.gotoHome();
+        } else {
+             document.getElementById("gameContainer").classList.add("page-hidden");
+             document
+               .getElementById("homeContainer")
+               .classList.remove("page-hidden");
+        }
+      }
+
+      // Pause game when window/tab is hidden, resume when visible
+      document.addEventListener("visibilitychange", () => {
+        if (typeof game === "undefined" || !game || !game.isPlaying) return;
+
+        const { pauseBtn } = game.els();
+
+        if (document.hidden) {
+          if (!game.isPaused) {
+              game.setPaused(true);
+          }
+        }
+      });
+    </script>
+  </body>
+</html>

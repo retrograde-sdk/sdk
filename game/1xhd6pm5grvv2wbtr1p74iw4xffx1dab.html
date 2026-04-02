@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>NEON STRIKER — MAPI GAMES</title>
+    <style type="text/css">@font-face {font-family:Orbitron;font-style:normal;font-weight:400;src:url(/cf-fonts/v/orbitron/5.0.18/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Orbitron;font-style:normal;font-weight:700;src:url(/cf-fonts/v/orbitron/5.0.18/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Orbitron;font-style:normal;font-weight:900;src:url(/cf-fonts/v/orbitron/5.0.18/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}</style>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+        html,body{width:100%;height:100%;overflow:hidden;background:#00000f;touch-action:none;font-family:'Orbitron',monospace}
+        #gameCanvas{position:fixed;inset:0;display:block}
+        body::after{content:'';position:fixed;inset:0;
+            background:repeating-linear-gradient(to bottom,transparent 0,transparent 2px,rgba(0,0,0,.055) 2px,rgba(0,0,0,.055) 4px);
+            pointer-events:none;z-index:100}
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- ══ GameMonetize SDK ══ -->
+    <script type="text/javascript">
+        window.SDK_OPTIONS = {
+            gameId: "zq4bxz38g8randr622f3w4ffi3utsdtu",
+            onEvent: function(a) {
+                switch(a.name) {
+                    case "SDK_GAME_PAUSE":
+                        // Pubblicità in corso: pausa audio e gioco
+                        if(window.__neonPauseForAd) window.__neonPauseForAd();
+                        break;
+                    case "SDK_GAME_START":
+                        // Pubblicità finita: riprendi audio e gioco
+                        if(window.__neonResumeAfterAd) window.__neonResumeAfterAd();
+                        break;
+                    case "SDK_READY":
+                        window.__sdkReady = true;
+                        break;
+                    case "SDK_ERROR":
+                        window.__sdkReady = false;
+                        break;
+                }
+            }
+        };
+        (function(a,b,c){
+            var d=a.getElementsByTagName(b)[0];
+            a.getElementById(c)||(a=a.createElement(b),a.id=c,
+            a.src="https://api.gamemonetize.com/sdk.js",d.parentNode.insertBefore(a,d))
+        })(document,"script","gamemonetize-sdk");
+
+        // Helper: mostra banner in sicurezza (solo se SDK pronto)
+        window.__showAd = function(cb) {
+            if(window.sdk && window.__sdkReady) {
+                window.__adCallback = cb || null;
+                sdk.showBanner();
+            } else {
+                if(cb) cb();
+            }
+        };
+    </script>
+
+    <script src="game.js"></script>
+</body>
+</html>

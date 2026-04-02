@@ -1,0 +1,1422 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Draw a Perfect Circle</title>
+
+  
+  
+  <style type="text/css">@font-face {font-family:Inter;font-style:normal;font-weight:400;src:url(/cf-fonts/v/inter/5.0.16/greek-ext/wght/normal.woff2);unicode-range:U+1F00-1FFF;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:400;src:url(/cf-fonts/v/inter/5.0.16/cyrillic/wght/normal.woff2);unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:400;src:url(/cf-fonts/v/inter/5.0.16/greek/wght/normal.woff2);unicode-range:U+0370-03FF;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:400;src:url(/cf-fonts/v/inter/5.0.16/vietnamese/wght/normal.woff2);unicode-range:U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:400;src:url(/cf-fonts/v/inter/5.0.16/cyrillic-ext/wght/normal.woff2);unicode-range:U+0460-052F,U+1C80-1C88,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:400;src:url(/cf-fonts/v/inter/5.0.16/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:400;src:url(/cf-fonts/v/inter/5.0.16/latin-ext/wght/normal.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:500;src:url(/cf-fonts/v/inter/5.0.16/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:500;src:url(/cf-fonts/v/inter/5.0.16/cyrillic-ext/wght/normal.woff2);unicode-range:U+0460-052F,U+1C80-1C88,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:500;src:url(/cf-fonts/v/inter/5.0.16/greek/wght/normal.woff2);unicode-range:U+0370-03FF;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:500;src:url(/cf-fonts/v/inter/5.0.16/greek-ext/wght/normal.woff2);unicode-range:U+1F00-1FFF;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:500;src:url(/cf-fonts/v/inter/5.0.16/latin-ext/wght/normal.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:500;src:url(/cf-fonts/v/inter/5.0.16/vietnamese/wght/normal.woff2);unicode-range:U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:500;src:url(/cf-fonts/v/inter/5.0.16/cyrillic/wght/normal.woff2);unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:600;src:url(/cf-fonts/v/inter/5.0.16/latin-ext/wght/normal.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:600;src:url(/cf-fonts/v/inter/5.0.16/vietnamese/wght/normal.woff2);unicode-range:U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:600;src:url(/cf-fonts/v/inter/5.0.16/greek-ext/wght/normal.woff2);unicode-range:U+1F00-1FFF;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:600;src:url(/cf-fonts/v/inter/5.0.16/cyrillic/wght/normal.woff2);unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:600;src:url(/cf-fonts/v/inter/5.0.16/cyrillic-ext/wght/normal.woff2);unicode-range:U+0460-052F,U+1C80-1C88,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:600;src:url(/cf-fonts/v/inter/5.0.16/greek/wght/normal.woff2);unicode-range:U+0370-03FF;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:600;src:url(/cf-fonts/v/inter/5.0.16/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:700;src:url(/cf-fonts/v/inter/5.0.16/latin-ext/wght/normal.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:700;src:url(/cf-fonts/v/inter/5.0.16/vietnamese/wght/normal.woff2);unicode-range:U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:700;src:url(/cf-fonts/v/inter/5.0.16/cyrillic-ext/wght/normal.woff2);unicode-range:U+0460-052F,U+1C80-1C88,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:700;src:url(/cf-fonts/v/inter/5.0.16/cyrillic/wght/normal.woff2);unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:700;src:url(/cf-fonts/v/inter/5.0.16/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:700;src:url(/cf-fonts/v/inter/5.0.16/greek/wght/normal.woff2);unicode-range:U+0370-03FF;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:700;src:url(/cf-fonts/v/inter/5.0.16/greek-ext/wght/normal.woff2);unicode-range:U+1F00-1FFF;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:800;src:url(/cf-fonts/v/inter/5.0.16/cyrillic/wght/normal.woff2);unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:800;src:url(/cf-fonts/v/inter/5.0.16/greek/wght/normal.woff2);unicode-range:U+0370-03FF;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:800;src:url(/cf-fonts/v/inter/5.0.16/cyrillic-ext/wght/normal.woff2);unicode-range:U+0460-052F,U+1C80-1C88,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:800;src:url(/cf-fonts/v/inter/5.0.16/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:800;src:url(/cf-fonts/v/inter/5.0.16/latin-ext/wght/normal.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:800;src:url(/cf-fonts/v/inter/5.0.16/greek-ext/wght/normal.woff2);unicode-range:U+1F00-1FFF;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:800;src:url(/cf-fonts/v/inter/5.0.16/vietnamese/wght/normal.woff2);unicode-range:U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:900;src:url(/cf-fonts/v/inter/5.0.16/greek/wght/normal.woff2);unicode-range:U+0370-03FF;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:900;src:url(/cf-fonts/v/inter/5.0.16/cyrillic-ext/wght/normal.woff2);unicode-range:U+0460-052F,U+1C80-1C88,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:900;src:url(/cf-fonts/v/inter/5.0.16/vietnamese/wght/normal.woff2);unicode-range:U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:900;src:url(/cf-fonts/v/inter/5.0.16/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:900;src:url(/cf-fonts/v/inter/5.0.16/cyrillic/wght/normal.woff2);unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:900;src:url(/cf-fonts/v/inter/5.0.16/latin-ext/wght/normal.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:900;src:url(/cf-fonts/v/inter/5.0.16/greek-ext/wght/normal.woff2);unicode-range:U+1F00-1FFF;font-display:swap;}</style>
+
+  <script>
+    let sdkInitialized = false;
+    let sdkReady = false;
+    
+    function initializeSDK() {
+      if (sdkInitialized) return;
+      sdkInitialized = true;
+      
+      window.SDK_OPTIONS = {
+        "gameId": "m4scm9dora4j56myxv3gxx16vi2drpw9",
+        "advertisementSettings": {
+          "autoplay": false
+        },
+        "onEvent": function(event) {
+          switch (event.name) {
+            case "SDK_GAME_START":
+              console.log("GameMonetize: Game started");
+              break;
+            case "SDK_GAME_PAUSE":
+              console.log("GameMonetize: Game paused");
+              break;
+            case "SDK_READY":
+              console.log("GameMonetize: SDK ready");
+              sdkReady = true;
+              // Exibir banner quando SDK estiver pronto
+              showGameMonetizeBanner();
+              break;
+            case "SDK_ERROR":
+              console.log("GameMonetize: SDK error", event);
+              break;
+          }
+        }
+      };
+      
+      (function(d, s, id) {
+        var js, fjs = d.getElementsByTagName(s)[0];
+        if (d.getElementById(id)) return;
+        js = d.createElement(s);
+        js.id = id;
+        js.src = 'https://api.gamemonetize.com/sdk.js';
+        fjs.parentNode.insertBefore(js, fjs);
+      }(document, 'script', 'gamemonetize-sdk'));
+    }
+    
+    window.showGameMonetizeAd = function() {
+      if (typeof window.sdk !== 'undefined' && window.sdk.play) {
+        try {
+          window.sdk.play();
+        } catch(e) {
+          console.log("GameMonetize: Error showing ad", e);
+        }
+      } else {
+        setTimeout(function() {
+          if (typeof window.sdk !== 'undefined' && window.sdk.play) {
+            try {
+              window.sdk.play();
+            } catch(e) {
+              console.log("GameMonetize: Error showing ad (retry)", e);
+            }
+          }
+        }, 500);
+      }
+    };
+    
+    window.showGameMonetizeBanner = function() {
+      if (typeof window.sdk !== 'undefined' && window.sdk.showBanner) {
+        try {
+          window.sdk.showBanner();
+        } catch(e) {
+          console.log("GameMonetize: Error showing banner", e);
+        }
+      } else {
+        setTimeout(function() {
+          if (typeof window.sdk !== 'undefined' && window.sdk.showBanner) {
+            try {
+              window.sdk.showBanner();
+            } catch(e) {
+              console.log("GameMonetize: Error showing banner (retry)", e);
+            }
+          }
+        }, 500);
+      }
+    };
+    
+    function ensureAdsOnTop() {
+      const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+          mutation.addedNodes.forEach(function(node) {
+            if (node.nodeType === 1) { // Element node
+              if (node.tagName === 'IFRAME') {
+                const src = node.src || node.getAttribute('src') || '';
+                if (src.includes('gamemonetize') || src.includes('adsense') || 
+                    src.includes('googleads') || src.includes('doubleclick')) {
+                  node.style.position = 'fixed';
+                  node.style.top = '0';
+                  node.style.left = '0';
+                  node.style.width = '100vw';
+                  node.style.height = '100vh';
+                  node.style.zIndex = '999999';
+                  node.style.backgroundColor = 'rgba(0, 0, 0, 0.9)';
+                }
+              }
+              
+              const id = node.id || '';
+              const className = node.className || '';
+              if (id.includes('gamemonetize') || id.includes('adsense') || 
+                  id.includes('google_ads') || className.includes('gamemonetize') || 
+                  className.includes('adsense') || className.includes('ad-container')) {
+                node.style.position = 'fixed';
+                node.style.top = '0';
+                node.style.left = '0';
+                node.style.width = '100vw';
+                node.style.height = '100vh';
+                node.style.zIndex = '999999';
+                node.style.backgroundColor = 'rgba(0, 0, 0, 0.9)';
+              }
+              
+              const iframes = node.querySelectorAll ? node.querySelectorAll('iframe') : [];
+              iframes.forEach(function(iframe) {
+                const src = iframe.src || iframe.getAttribute('src') || '';
+                if (src.includes('gamemonetize') || src.includes('adsense') || 
+                    src.includes('googleads') || src.includes('doubleclick')) {
+                  iframe.style.position = 'fixed';
+                  iframe.style.top = '0';
+                  iframe.style.left = '0';
+                  iframe.style.width = '100vw';
+                  iframe.style.height = '100vh';
+                  iframe.style.zIndex = '999999';
+                  
+                  let parent = iframe.parentElement;
+                  while (parent && parent !== document.body) {
+                    parent.style.position = 'fixed';
+                    parent.style.top = '0';
+                    parent.style.left = '0';
+                    parent.style.width = '100vw';
+                    parent.style.height = '100vh';
+                    parent.style.zIndex = '999999';
+                    parent.style.backgroundColor = 'rgba(0, 0, 0, 0.9)';
+                    parent = parent.parentElement;
+                  }
+                }
+              });
+            }
+          });
+        });
+      });
+      
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true
+      });
+      
+      setInterval(function() {
+        const allIframes = document.querySelectorAll('iframe');
+        allIframes.forEach(function(iframe) {
+          const src = iframe.src || iframe.getAttribute('src') || '';
+          if (src.includes('gamemonetize') || src.includes('adsense') || 
+              src.includes('googleads') || src.includes('doubleclick')) {
+            iframe.style.position = 'fixed';
+            iframe.style.top = '0';
+            iframe.style.left = '0';
+            iframe.style.width = '100vw';
+            iframe.style.height = '100vh';
+            iframe.style.zIndex = '999999';
+            
+            let parent = iframe.parentElement;
+            while (parent && parent !== document.body) {
+              parent.style.position = 'fixed';
+              parent.style.top = '0';
+              parent.style.left = '0';
+              parent.style.width = '100vw';
+              parent.style.height = '100vh';
+              parent.style.zIndex = '999999';
+              parent.style.backgroundColor = 'rgba(0, 0, 0, 0.9)';
+              parent = parent.parentElement;
+            }
+          }
+        });
+      }, 500);
+    }
+    
+  </script>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      overflow: hidden;
+      background: #f3f4f6;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
+
+    img {
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+      -webkit-user-drag: none;
+      -khtml-user-drag: none;
+      -moz-user-drag: none;
+      -o-user-drag: none;
+      pointer-events: none;
+    }
+
+    .mainWrapper {
+      position: relative;
+      width: 800px;
+      height: 600px;
+      overflow: hidden;
+      background: white;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      transition: opacity 0.5s ease;
+    }
+
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      cursor: crosshair;
+      z-index: 1;
+      touch-action: none;
+    }
+
+    #demoCanvas {
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .btn-primary {
+      background: black;
+      color: white;
+      border: none;
+      padding: 14px 36px;
+      margin-bottom: 50px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    .btn-primary:hover {
+      background: #1f2937;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .welcomeMessage {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      pointer-events: none;
+      z-index: 5;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    .welcomeMessage h1 {
+      font-size: 2.25rem;
+      font-weight: 800;
+      margin-bottom: 16px;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      display: none;
+    }
+
+    .welcomeMessage p {
+      color: #4b5563;
+      font-size: 1.125rem;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    .welcomeMessage .scoreStats {
+      color: #6b7280;
+      font-size: 0.875rem;
+      margin-top: 8px;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    @media screen and (max-width: 360px) and (orientation: portrait) {
+      body {
+        padding: 0;
+      }
+
+      .mainWrapper {
+        width: 100vw;
+        height: 100vh;
+        max-width: 100%;
+        max-height: 100%;
+        box-shadow: none;
+      }
+
+      .welcomeMessage h1 {
+        font-size: 1.25rem;
+        margin-bottom: 10px;
+      }
+
+      .welcomeMessage p {
+        font-size: 0.875rem;
+      }
+
+      .welcomeMessage .scoreStats {
+        font-size: 0.7rem;
+        margin-top: 6px;
+      }
+
+      .retryButtonWrapper {
+        bottom: 15px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: calc(100% - 32px);
+      }
+
+      .btn-primary {
+        padding: 10px 18px;
+        font-size: 13px;
+        width: 100%;
+        max-width: 200px;
+      }
+    }
+
+    @media screen and (min-width: 361px) and (max-width: 480px) and (orientation: portrait) {
+      body {
+        padding: 8px;
+      }
+
+      .mainWrapper {
+        width: 100vw;
+        height: 100vh;
+        max-width: 100%;
+        max-height: 100%;
+        box-shadow: none;
+      }
+
+      .welcomeMessage h1 {
+        font-size: 1.5rem;
+        margin-bottom: 12px;
+      }
+
+      .welcomeMessage p {
+        font-size: 1rem;
+      }
+
+      .welcomeMessage .scoreStats {
+        font-size: 0.75rem;
+        margin-top: 8px;
+      }
+
+      .retryButtonWrapper {
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+
+      .btn-primary {
+        padding: 10px 24px;
+        font-size: 14px;
+      }
+    }
+
+    @media screen and (min-width: 461px) and (max-width: 475px) and (orientation: portrait) {
+      body {
+        padding: 10px;
+      }
+
+      .mainWrapper {
+        width: 100vw;
+        height: 100vh;
+        max-width: 100%;
+        max-height: 100%;
+        box-shadow: none;
+      }
+
+      .welcomeMessage h1 {
+        font-size: 1.625rem;
+        margin-bottom: 13px;
+      }
+
+      .welcomeMessage p {
+        font-size: 1.0625rem;
+      }
+
+      .welcomeMessage .scoreStats {
+        font-size: 0.8125rem;
+        margin-top: 9px;
+      }
+
+      .retryButtonWrapper {
+        bottom: 22px;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+
+      .btn-primary {
+        padding: 11px 26px;
+        font-size: 14.5px;
+      }
+    }
+
+    @media screen and (min-width: 461px) and (max-width: 475px) and (orientation: landscape) {
+      body {
+        padding: 5px;
+      }
+
+      .mainWrapper {
+        width: 100vw;
+        height: 100vh;
+        max-width: 100%;
+        max-height: 100%;
+        box-shadow: none;
+      }
+
+      .welcomeMessage h1 {
+        font-size: 1.375rem;
+        margin-bottom: 9px;
+      }
+
+      .welcomeMessage p {
+        font-size: 0.9375rem;
+      }
+
+      .welcomeMessage .scoreStats {
+        font-size: 0.725rem;
+        margin-top: 7px;
+      }
+
+      .retryButtonWrapper {
+        bottom: 14px;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+
+      .btn-primary {
+        padding: 9px 18px;
+        font-size: 13px;
+      }
+    }
+
+    @media screen and (min-width: 481px) and (max-width: 600px) and (orientation: portrait) {
+      body {
+        padding: 10px;
+      }
+
+      .mainWrapper {
+        width: 100vw;
+        height: 100vh;
+        max-width: 100%;
+        max-height: 100%;
+        box-shadow: none;
+      }
+
+      .welcomeMessage h1 {
+        font-size: 1.75rem;
+        margin-bottom: 14px;
+      }
+
+      .welcomeMessage p {
+        font-size: 1.125rem;
+      }
+
+      .welcomeMessage .scoreStats {
+        font-size: 0.875rem;
+        margin-top: 10px;
+      }
+
+      .retryButtonWrapper {
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+
+      .btn-primary {
+        padding: 12px 28px;
+        font-size: 15px;
+      }
+    }
+
+    @media screen and (max-width: 640px) and (max-height: 480px) and (orientation: landscape) {
+      body {
+        padding: 5px;
+      }
+
+      .mainWrapper {
+        width: 100vw;
+        height: 100vh;
+        max-width: 100%;
+        max-height: 100%;
+        box-shadow: none;
+      }
+
+      .welcomeMessage h1 {
+        font-size: 1.25rem;
+        margin-bottom: 8px;
+      }
+
+      .welcomeMessage p {
+        font-size: 0.875rem;
+      }
+
+      .welcomeMessage .scoreStats {
+        font-size: 0.7rem;
+        margin-top: 6px;
+      }
+
+      .retryButtonWrapper {
+        bottom: 12px;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+
+      .btn-primary {
+        padding: 8px 16px;
+        font-size: 12px;
+      }
+    }
+
+    @media screen and (min-width: 641px) and (max-width: 800px) and (max-height: 600px) and (orientation: landscape) {
+      body {
+        padding: 5px;
+      }
+
+      .mainWrapper {
+        width: 100vw;
+        height: 100vh;
+        max-width: 100%;
+        max-height: 100%;
+        box-shadow: none;
+      }
+
+      .welcomeMessage h1 {
+        font-size: 1.5rem;
+        margin-bottom: 10px;
+      }
+
+      .welcomeMessage p {
+        font-size: 1rem;
+      }
+
+      .welcomeMessage .scoreStats {
+        font-size: 0.75rem;
+        margin-top: 8px;
+      }
+
+      .retryButtonWrapper {
+        bottom: 15px;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+
+      .btn-primary {
+        padding: 10px 20px;
+        font-size: 14px;
+      }
+    }
+
+    @media screen and (min-width: 601px) and (max-width: 768px) and (orientation: portrait) {
+      body {
+        padding: 15px;
+      }
+
+      .mainWrapper {
+        width: 100%;
+        height: 100%;
+        max-width: 100%;
+        max-height: calc(100vh - 30px);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+
+      .welcomeMessage h1 {
+        font-size: 2rem;
+        margin-bottom: 16px;
+      }
+
+      .welcomeMessage p {
+        font-size: 1.125rem;
+      }
+
+      .welcomeMessage .scoreStats {
+        font-size: 0.875rem;
+        margin-top: 10px;
+      }
+
+      .retryButtonWrapper {
+        bottom: 28px;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+
+      .btn-primary {
+        padding: 12px 32px;
+        font-size: 16px;
+      }
+    }
+
+    @media screen and (min-width: 769px) and (max-width: 1024px) and (orientation: portrait) {
+      .mainWrapper {
+        width: 90%;
+        max-width: 700px;
+        height: 80vh;
+        max-height: 800px;
+      }
+
+      .welcomeMessage h1 {
+        font-size: 2.25rem;
+      }
+
+      .welcomeMessage p {
+        font-size: 1.125rem;
+      }
+
+      .retryButtonWrapper {
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+
+      .btn-primary {
+        padding: 12px 32px;
+        font-size: 16px;
+      }
+    }
+
+    @media screen and (min-width: 601px) and (max-width: 1024px) and (min-height: 481px) and (orientation: landscape) {
+      .mainWrapper {
+        width: 90%;
+        max-width: 900px;
+        height: 90vh;
+        max-height: 600px;
+      }
+
+      .welcomeMessage h1 {
+        font-size: 1.75rem;
+        margin-bottom: 12px;
+      }
+
+      .welcomeMessage p {
+        font-size: 1rem;
+      }
+
+      .welcomeMessage .scoreStats {
+        font-size: 0.875rem;
+      }
+
+      .retryButtonWrapper {
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+
+      .btn-primary {
+        padding: 10px 24px;
+        font-size: 14px;
+      }
+    }
+
+    @media (hover: none) and (pointer: coarse) {
+      canvas {
+        touch-action: none;
+      }
+
+      .btn-primary {
+        -webkit-tap-highlight-color: transparent;
+      }
+    }
+
+    .retryButtonWrapper {
+      position: absolute;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      width: auto;
+    }
+
+    .resultOverlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.95);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 8;
+      pointer-events: none;
+    }
+
+    .resultOverlay.active {
+      display: flex;
+      pointer-events: auto;
+    }
+
+    .resultContent {
+      text-align: center;
+      padding: 20px;
+      padding-bottom: 80px;
+    }
+
+    .resultScore {
+      font-size: 72px;
+      font-weight: 900;
+      color: #000000;
+      margin-bottom: 16px;
+      line-height: 1;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    .resultMessage {
+      font-size: 24px;
+      font-weight: 600;
+      color: #000000;
+      margin-bottom: 12px;
+      line-height: 1.3;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    .resultStats {
+      font-size: 18px;
+      font-weight: 500;
+      color: #4b5563;
+      line-height: 1.4;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    @media screen and (max-width: 600px) and (orientation: portrait) {
+      .resultOverlay {
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding-top: 20px;
+        padding-bottom: 20px;
+      }
+
+      .resultContent {
+        padding-bottom: 0;
+        margin-bottom: 0;
+      }
+
+      .resultScore {
+        font-size: 56px;
+        margin-bottom: 14px;
+      }
+
+      .resultMessage {
+        font-size: 18px;
+        margin-bottom: 10px;
+      }
+
+      .resultStats {
+        font-size: 14px;
+        margin-bottom: 24px;
+      }
+
+      .retryButtonWrapper {
+        position: relative;
+        bottom: auto;
+        left: auto;
+        transform: none;
+        margin-top: 0;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+      }
+    }
+
+    @media screen and (max-width: 480px) and (orientation: portrait) {
+      .resultOverlay {
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding-top: 20px;
+        padding-bottom: 20px;
+      }
+
+      .resultContent {
+        padding-bottom: 0;
+        margin-bottom: 0;
+      }
+
+      .resultScore {
+        font-size: 48px;
+        margin-bottom: 12px;
+      }
+
+      .resultMessage {
+        font-size: 16px;
+        margin-bottom: 8px;
+      }
+
+      .resultStats {
+        font-size: 12px;
+        margin-bottom: 20px;
+      }
+
+      .retryButtonWrapper {
+        position: relative;
+        bottom: auto;
+        left: auto;
+        transform: none;
+        margin-top: 0;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+      }
+    }
+
+    @media screen and (max-width: 360px) and (orientation: portrait) {
+      .resultOverlay {
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding-top: 20px;
+        padding-bottom: 20px;
+      }
+
+      .resultContent {
+        padding-bottom: 0;
+        margin-bottom: 0;
+      }
+
+      .resultScore {
+        font-size: 42px;
+        margin-bottom: 10px;
+      }
+
+      .resultMessage {
+        font-size: 14px;
+        margin-bottom: 6px;
+      }
+
+      .resultStats {
+        font-size: 11px;
+        margin-bottom: 18px;
+      }
+
+      .retryButtonWrapper {
+        position: relative;
+        bottom: auto;
+        left: auto;
+        transform: none;
+        margin-top: 0;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+      }
+    }
+
+    @media screen and (max-height: 600px) and (orientation: landscape) {
+      .resultOverlay {
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding-top: 15px;
+        padding-bottom: 15px;
+      }
+
+      .resultContent {
+        padding-bottom: 0;
+        margin-bottom: 0;
+      }
+
+      .resultScore {
+        font-size: 36px;
+        margin-bottom: 8px;
+      }
+
+      .resultMessage {
+        font-size: 14px;
+        margin-bottom: 6px;
+      }
+
+      .resultStats {
+        font-size: 11px;
+        margin-bottom: 16px;
+      }
+
+      .retryButtonWrapper {
+        position: relative;
+        bottom: auto;
+        left: auto;
+        transform: none;
+        margin-top: 0;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+      }
+    }
+
+    @media screen and (max-height: 480px) and (orientation: landscape) {
+      .resultOverlay {
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding-top: 10px;
+        padding-bottom: 10px;
+      }
+
+      .resultContent {
+        padding-bottom: 0;
+        margin-bottom: 0;
+      }
+
+      .resultScore {
+        font-size: 32px;
+        margin-bottom: 6px;
+      }
+
+      .resultMessage {
+        font-size: 12px;
+        margin-bottom: 4px;
+      }
+
+      .resultStats {
+        font-size: 10px;
+        margin-bottom: 14px;
+      }
+
+      .retryButtonWrapper {
+        position: relative;
+        bottom: auto;
+        left: auto;
+        transform: none;
+        margin-top: 0;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+      }
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    /* Menu Inicial */
+    .startMenu {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #ffffff;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      transition: opacity 0.5s ease, visibility 0.5s ease;
+    }
+
+    .startMenu.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .startMenu .menuLogo {
+      margin-bottom: 40px;
+      animation: fadeInDown 0.8s ease;
+    }
+
+    .startMenu .menuLogo img {
+      max-width: 100px;
+      height: auto;
+      width: auto;
+      display: block;
+      filter: brightness(0) drop-shadow(0 2px 8px rgba(0, 0, 0, 0.1));
+    }
+
+    .startMenu .menuTitle {
+      font-size: 3rem;
+      font-weight: 900;
+      margin-bottom: 10px;
+      color: #000000;
+      text-shadow: none;
+      animation: fadeInUp 0.8s ease 0.2s both;
+    }
+
+    .startMenu .menuSubtitle {
+      font-size: 1.25rem;
+      color: #4b5563;
+      margin-bottom: 50px;
+      text-shadow: none;
+      animation: fadeInUp 0.8s ease 0.4s both;
+    }
+
+    .startMenu .startButton {
+      background: #000000;
+      color: #ffffff;
+      border: none;
+      padding: 18px 50px;
+      border-radius: 50px;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      animation: fadeInUp 0.8s ease 0.6s both;
+    }
+
+    .startMenu .startButton:hover {
+      transform: translateY(-3px) scale(1.05);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+      background: #f0f0f0;
+    }
+
+    .startMenu .startButton:active {
+      transform: translateY(-1px) scale(1.02);
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    @keyframes fadeInDown {
+      from {
+        opacity: 0;
+        transform: translateY(-30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Responsivo para menu */
+    @media screen and (max-width: 600px) {
+      .startMenu .menuLogo img {
+        max-width: 200px;
+      }
+
+      .startMenu .menuTitle {
+        font-size: 2rem;
+      }
+
+      .startMenu .menuSubtitle {
+        font-size: 1rem;
+        margin-bottom: 40px;
+      }
+
+      .startMenu .startButton {
+        padding: 14px 40px;
+        font-size: 16px;
+      }
+    }
+
+    @media screen and (max-width: 480px) {
+      .startMenu .menuLogo img {
+        max-width: 150px;
+      }
+
+      .startMenu .menuTitle {
+        font-size: 1.5rem;
+      }
+
+      .startMenu .menuSubtitle {
+        font-size: 0.9rem;
+        margin-bottom: 30px;
+      }
+
+      .startMenu .startButton {
+        padding: 12px 35px;
+        font-size: 14px;
+      }
+    }
+
+    /* Estilos para garantir que anúncios apareçam por cima de tudo */
+    /* GameMonetize SDK e AdSense */
+    iframe[src*="gamemonetize"],
+    iframe[src*="adsense"],
+    iframe[src*="googleads"],
+    iframe[src*="doubleclick"],
+    div[id*="gamemonetize"],
+    div[id*="adsense"],
+    div[id*="google_ads"],
+    div[class*="gamemonetize"],
+    div[class*="adsense"],
+    div[class*="ad-container"],
+    div[class*="ad-wrapper"],
+    #gamemonetize-ad-container,
+    #adsense-container,
+    .gamemonetize-ad,
+    .adsense-ad {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      z-index: 999999 !important;
+      background: rgba(0, 0, 0, 0.9) !important;
+      display: block !important;
+    }
+
+    /* Garantir que elementos de anúncio de vídeo fiquem no topo */
+    iframe,
+    video[class*="ad"],
+    video[id*="ad"],
+    div[data-ad],
+    div[data-ad-slot] {
+      z-index: 999999 !important;
+    }
+
+    /* Container de anúncios será tratado pelo JavaScript para melhor compatibilidade */
+  </style>
+</head>
+<body>
+  <!-- Menu Inicial -->
+  <div class="startMenu" id="startMenu">
+    <div class="menuLogo">
+      <img src="scripts/fzlogo.webp" alt="Gameplay Logo">
+    </div>
+    <h1 class="menuTitle">Draw a Perfect Circle</h1>
+    <p class="menuSubtitle">Test your drawing skills!</p>
+    <button class="startButton" id="startButton">Start Game</button>
+  </div>
+
+  <div class="mainWrapper">
+    <canvas id="drawingCanvas"></canvas>
+    <canvas id="demoCanvas" style="position: absolute; top: 0; left: 0; pointer-events: none; z-index: 1;"></canvas>
+
+    <div class="welcomeMessage" id="welcomeSection">
+      <h1 id="mainTitle"></h1>
+      <p id="instructionText"></p>
+      <p class="scoreStats" id="scoreStats"></p>
+    </div>
+
+    <div class="resultOverlay" id="resultOverlay">
+      <div class="resultContent">
+        <div class="resultScore" id="resultScore"></div>
+        <div class="resultMessage" id="resultMessage"></div>
+        <div class="resultStats" id="resultStats"></div>
+        <div class="retryButtonWrapper hidden" id="retrySection">
+          <button class="btn-primary" id="retryButton"></button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // Controle do Menu Inicial
+    const startMenu = document.getElementById('startMenu');
+    const startButton = document.getElementById('startButton');
+    const mainWrapper = document.querySelector('.mainWrapper');
+
+    // Inicialmente, esconder o jogo até o menu ser fechado
+    if (mainWrapper) {
+      mainWrapper.style.opacity = '0';
+      mainWrapper.style.pointerEvents = 'none';
+    }
+
+    function startGame() {
+      // Inicializar SDK e anúncios apenas quando o jogo começar
+      if (typeof initializeSDK === 'function') {
+        initializeSDK();
+      }
+      if (typeof ensureAdsOnTop === 'function') {
+        ensureAdsOnTop();
+      }
+      
+      startMenu.classList.add('hidden');
+      if (mainWrapper) {
+        setTimeout(() => {
+          mainWrapper.style.opacity = '1';
+          mainWrapper.style.pointerEvents = 'auto';
+        }, 500);
+      }
+    }
+
+    startButton.addEventListener('click', startGame);
+
+    // Permitir iniciar com Enter também
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !startMenu.classList.contains('hidden')) {
+        startGame();
+      }
+    });
+  </script>
+
+  <script src="scripts/scripts.js"></script>
+  <script src="scripts/game.js"></script>
+  
+  <script>
+    // Animação de círculo demonstrativo (apenas primeira tentativa)
+    (function() {
+      let showDemoCircle = true;
+      let demoAnimationId = null;
+      let demoProgress = 0;
+      let mainCanvas, demoCanvas, demoCtx;
+      let userHasStarted = false;
+      
+      function syncCanvasSize() {
+        if (!mainCanvas || !demoCanvas) return;
+        
+        // Sincronizar tamanhos
+        const rect = mainCanvas.getBoundingClientRect();
+        const scale = window.devicePixelRatio || 1;
+        
+        demoCanvas.width = mainCanvas.width;
+        demoCanvas.height = mainCanvas.height;
+        demoCanvas.style.width = rect.width + 'px';
+        demoCanvas.style.height = rect.height + 'px';
+        
+        // Posicionar sobre o canvas principal
+        const wrapper = mainCanvas.parentElement;
+        if (wrapper) {
+          const wrapperRect = wrapper.getBoundingClientRect();
+          const canvasRect = mainCanvas.getBoundingClientRect();
+          demoCanvas.style.position = 'absolute';
+          demoCanvas.style.top = (canvasRect.top - wrapperRect.top) + 'px';
+          demoCanvas.style.left = (canvasRect.left - wrapperRect.left) + 'px';
+        }
+      }
+      
+      function drawDemoCircle() {
+        if (!showDemoCircle || !demoCanvas || !demoCtx || userHasStarted) {
+          return;
+        }
+        
+        syncCanvasSize();
+        
+        const scale = window.devicePixelRatio || 1;
+        const displayWidth = demoCanvas.width / scale;
+        const displayHeight = demoCanvas.height / scale;
+        const centerX = displayWidth / 2;
+        const centerY = displayHeight / 2;
+        const radius = Math.min(displayWidth, displayHeight) * 0.35;
+        
+        // Limpar canvas de demo
+        demoCtx.clearRect(0, 0, demoCanvas.width, demoCanvas.height);
+        
+        // Desenhar círculo progressivamente
+        demoCtx.save();
+        demoCtx.setTransform(1, 0, 0, 1, 0, 0);
+        demoCtx.scale(scale, scale);
+        
+        demoCtx.strokeStyle = '#000000';
+        demoCtx.lineWidth = 3;
+        demoCtx.lineCap = 'round';
+        demoCtx.lineJoin = 'round';
+        demoCtx.setLineDash([8, 4]);
+        
+        demoCtx.beginPath();
+        const endAngle = (demoProgress / 100) * Math.PI * 2;
+        demoCtx.arc(centerX, centerY, radius, 0, endAngle, false);
+        demoCtx.stroke();
+        
+        // Desenhar ponto inicial
+        if (demoProgress > 2) {
+          demoCtx.setLineDash([]);
+          demoCtx.fillStyle = '#000000';
+          demoCtx.beginPath();
+          demoCtx.arc(centerX + radius, centerY, 5, 0, Math.PI * 2);
+          demoCtx.fill();
+        }
+        
+        demoCtx.restore();
+        
+        // Incrementar progresso
+        demoProgress += 1.2;
+        if (demoProgress >= 100) {
+          demoProgress = 0;
+        }
+      }
+      
+      function startAnimation() {
+        if (!showDemoCircle || userHasStarted || !demoCanvas || !demoCtx) {
+          return;
+        }
+        
+        function animate() {
+          if (!showDemoCircle || userHasStarted) {
+            if (demoAnimationId) {
+              cancelAnimationFrame(demoAnimationId);
+              demoAnimationId = null;
+            }
+            if (demoCanvas) {
+              demoCtx.clearRect(0, 0, demoCanvas.width, demoCanvas.height);
+            }
+            return;
+          }
+          
+          // Desenhar animação
+          drawDemoCircle();
+          
+          // Continuar animação
+          demoAnimationId = requestAnimationFrame(animate);
+        }
+        
+        animate();
+      }
+      
+      function integrateDemoAnimation() {
+        mainCanvas = document.getElementById('drawingCanvas');
+        demoCanvas = document.getElementById('demoCanvas');
+        
+        if (!mainCanvas || !demoCanvas) {
+          setTimeout(integrateDemoAnimation, 50);
+          return;
+        }
+        
+        demoCtx = demoCanvas.getContext('2d');
+        syncCanvasSize();
+        
+        // Observar mudanças de tamanho do canvas principal
+        if (typeof ResizeObserver !== 'undefined') {
+          const resizeObserver = new ResizeObserver(() => {
+            syncCanvasSize();
+          });
+          resizeObserver.observe(mainCanvas);
+        }
+        
+        // Também observar mudanças na janela
+        window.addEventListener('resize', syncCanvasSize);
+        
+        // Sincronizar periodicamente para garantir
+        const syncInterval = setInterval(() => {
+          if (userHasStarted) {
+            clearInterval(syncInterval);
+          } else {
+            syncCanvasSize();
+          }
+        }, 100);
+        
+        // Interceptar eventos para parar animação quando usuário começar
+        const stopDemoOnStart = (e) => {
+          userHasStarted = true;
+          showDemoCircle = false;
+          if (demoAnimationId) {
+            cancelAnimationFrame(demoAnimationId);
+            demoAnimationId = null;
+          }
+          if (demoCanvas && demoCtx) {
+            demoCtx.clearRect(0, 0, demoCanvas.width, demoCanvas.height);
+          }
+        };
+        
+        // Adicionar listeners com capture para interceptar antes dos outros
+        mainCanvas.addEventListener('mousedown', stopDemoOnStart, { capture: true });
+        mainCanvas.addEventListener('touchstart', stopDemoOnStart, { passive: false, capture: true });
+        
+        // Aguardar o jogo estar pronto e então iniciar animação
+        function waitForGameReady() {
+          const wrapper = document.querySelector('.mainWrapper');
+          const isVisible = wrapper && (wrapper.style.opacity === '1' || wrapper.style.opacity === '' || !wrapper.style.opacity);
+          
+          if (isVisible) {
+            setTimeout(() => {
+              startAnimation();
+            }, 1000);
+          } else {
+            setTimeout(waitForGameReady, 200);
+          }
+        }
+        
+        // Aguardar scripts carregarem e jogo estar pronto
+        setTimeout(waitForGameReady, 600);
+      }
+      
+      // Aguardar scripts carregarem
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+          setTimeout(integrateDemoAnimation, 400);
+        });
+      } else {
+        setTimeout(integrateDemoAnimation, 400);
+      }
+    })();
+  </script>
+
+</body>
+</html>

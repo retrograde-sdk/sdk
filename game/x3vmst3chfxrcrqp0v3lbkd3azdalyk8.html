@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Evolve Numbers</title>
+    
+    
+    
+    <style type="text/css">@font-face {font-family:Inter;font-style:normal;font-weight:400;src:url(/cf-fonts/v/inter/5.0.16/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:400;src:url(/cf-fonts/v/inter/5.0.16/latin-ext/wght/normal.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:400;src:url(/cf-fonts/v/inter/5.0.16/cyrillic-ext/wght/normal.woff2);unicode-range:U+0460-052F,U+1C80-1C88,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:400;src:url(/cf-fonts/v/inter/5.0.16/vietnamese/wght/normal.woff2);unicode-range:U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:400;src:url(/cf-fonts/v/inter/5.0.16/greek/wght/normal.woff2);unicode-range:U+0370-03FF;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:400;src:url(/cf-fonts/v/inter/5.0.16/cyrillic/wght/normal.woff2);unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:400;src:url(/cf-fonts/v/inter/5.0.16/greek-ext/wght/normal.woff2);unicode-range:U+1F00-1FFF;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:700;src:url(/cf-fonts/v/inter/5.0.16/cyrillic-ext/wght/normal.woff2);unicode-range:U+0460-052F,U+1C80-1C88,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:700;src:url(/cf-fonts/v/inter/5.0.16/greek/wght/normal.woff2);unicode-range:U+0370-03FF;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:700;src:url(/cf-fonts/v/inter/5.0.16/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:700;src:url(/cf-fonts/v/inter/5.0.16/vietnamese/wght/normal.woff2);unicode-range:U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:700;src:url(/cf-fonts/v/inter/5.0.16/cyrillic/wght/normal.woff2);unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:700;src:url(/cf-fonts/v/inter/5.0.16/greek-ext/wght/normal.woff2);unicode-range:U+1F00-1FFF;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:700;src:url(/cf-fonts/v/inter/5.0.16/latin-ext/wght/normal.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:900;src:url(/cf-fonts/v/inter/5.0.16/cyrillic/wght/normal.woff2);unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:900;src:url(/cf-fonts/v/inter/5.0.16/greek-ext/wght/normal.woff2);unicode-range:U+1F00-1FFF;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:900;src:url(/cf-fonts/v/inter/5.0.16/latin-ext/wght/normal.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:900;src:url(/cf-fonts/v/inter/5.0.16/vietnamese/wght/normal.woff2);unicode-range:U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:900;src:url(/cf-fonts/v/inter/5.0.16/cyrillic-ext/wght/normal.woff2);unicode-range:U+0460-052F,U+1C80-1C88,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:900;src:url(/cf-fonts/v/inter/5.0.16/greek/wght/normal.woff2);unicode-range:U+0370-03FF;font-display:swap;}@font-face {font-family:Inter;font-style:normal;font-weight:900;src:url(/cf-fonts/v/inter/5.0.16/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}</style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        :root {
+            --font-family-sans: 'Inter', sans-serif;
+            
+            /* Light Theme Colors (Default) */
+            --bg-color: #FAF8EF;
+            --text-color: #776E65;
+            --strong-text-color: #5E534A;
+            --board-bg-color: #BBADA0;
+            --cell-bg-color: #CDC1B4;
+            --button-bg-color: #8F7A66;
+            --button-text-color: #FFFFFF;
+            --button-hover-color: #9F8B77;
+            --button-secondary-bg-color: #CDC1B4;
+            --button-secondary-hover-color: #EEE4DA;
+            --overlay-bg-color: rgba(250, 248, 239, 0.9);
+
+            /* Tile Colors */
+            --tile-2-bg: #EEE4DA;   --tile-2-text: #776E65;
+            --tile-4-bg: #EDE0C8;   --tile-4-text: #776E65;
+            --tile-8-bg: #F2B179;   --tile-8-text: #F9F6F2;
+            --tile-16-bg: #F59563;  --tile-16-text: #F9F6F2;
+            --tile-32-bg: #F67C5F;  --tile-32-text: #F9F6F2;
+            --tile-64-bg: #F65E3B;  --tile-64-text: #F9F6F2;
+            --tile-128-bg: #EDCF72; --tile-128-text: #F9F6F2;
+            --tile-256-bg: #EDCC61; --tile-256-text: #F9F6F2;
+            --tile-512-bg: #EDC850; --tile-512-text: #F9F6F2;
+            --tile-1024-bg: #EDC53F;--tile-1024-text: #F9F6F2;
+            --tile-2048-bg: #EDC22E;--tile-2048-text: #F9F6F2;
+            --tile-super-bg: #3C3A32;--tile-super-text: #F9F9F2;
+        }
+
+        html, body {
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-family-sans);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .btn {
+            transition: background-color 0.2s ease-in-out;
+        }
+        .btn-primary {
+            background-color: var(--button-bg-color);
+            color: var(--button-text-color);
+        }
+        .btn-primary:hover {
+            background-color: var(--button-hover-color);
+        }
+        .btn-secondary {
+            background-color: var(--button-secondary-bg-color);
+            color: var(--text-color);
+        }
+        .btn-secondary:hover {
+            background-color: var(--button-secondary-hover-color);
+        }
+
+        .tile {
+            position: absolute;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: 900;
+            border-radius: 4px;
+            transition: transform 100ms ease-in-out, top 100ms ease-in-out, left 100ms ease-in-out, background-color 0.3s, color 0.3s;
+        }
+
+        .tile.new-tile { 
+            animation: appear 250ms ease-out; 
+        } 
+
+        @keyframes appear {
+            0% { transform: scale(0.5); opacity: 0; } 
+            75% { transform: scale(1.05); opacity: 1; } 
+            100% { transform: scale(1); opacity: 1; } 
+        }
+
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); } 
+            100% { transform: scale(1); }
+        }
+
+        .score-update-animation {
+            animation: scorePop 150ms ease-out;
+        }
+        @keyframes scorePop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .tile-2 { background-color: var(--tile-2-bg); color: var(--tile-2-text); }
+        .tile-4 { background-color: var(--tile-4-bg); color: var(--tile-4-text); }
+        .tile-8 { background-color: var(--tile-8-bg); color: var(--tile-8-text); }
+        .tile-16 { background-color: var(--tile-16-bg); color: var(--tile-16-text); }
+        .tile-32 { background-color: var(--tile-32-bg); color: var(--tile-32-text); }
+        .tile-64 { background-color: var(--tile-64-bg); color: var(--tile-64-text); }
+        .tile-128 { background-color: var(--tile-128-bg); color: var(--tile-128-text); }
+        .tile-256 { background-color: var(--tile-256-bg); color: var(--tile-256-text); }
+        .tile-512 { background-color: var(--tile-512-bg); color: var(--tile-512-text); }
+        --tile-1024-bg: #EDC53F;--tile-1024-text: #F9F6F2;
+        --tile-2048-bg: #EDC22E;--tile-2048-text: #F9F6F2;
+        --tile-super-bg: #3C3A32;--tile-super-text: #F9F9F2;
+    }
+
+    html, body {
+        height: 100%;
+        width: 100%;
+        overflow: hidden;
+        margin: 0;
+        padding: 0;
+    }
+
+    body {
+        font-family: var(--font-family-sans);
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        transition: background-color 0.3s, color 0.3s;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .btn {
+        transition: background-color 0.2s ease-in-out;
+    }
+    .btn-primary {
+        background-color: var(--button-bg-color);
+        color: var(--button-text-color);
+    }
+    .btn-primary:hover {
+        background-color: var(--button-hover-color);
+    }
+    .btn-secondary {
+        background-color: var(--button-secondary-bg-color);
+        color: var(--text-color);
+    }
+    .btn-secondary:hover {
+        background-color: var(--button-secondary-hover-color);
+    }
+
+    .tile {
+        position: absolute;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-weight: 900;
+        border-radius: 4px;
+        transition: transform 100ms ease-in-out, top 100ms ease-in-out, left 100ms ease-in-out, background-color 0.3s, color 0.3s;
+    }
+
+    .tile.new-tile { 
+        animation: appear 250ms ease-out; 
+    } 
+
+    @keyframes appear {
+        0% { transform: scale(0.5); opacity: 0; } 
+        75% { transform: scale(1.05); opacity: 1; } 
+        100% { transform: scale(1); opacity: 1; } 
+    }
+
+    @keyframes pop {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.2); } 
+        100% { transform: scale(1); }
+    }
+
+    .score-update-animation {
+        animation: scorePop 150ms ease-out;
+    }
+    @keyframes scorePop {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+    }
+
+    .tile-2 { background-color: var(--tile-2-bg); color: var(--tile-2-text); }
+    .tile-4 { background-color: var(--tile-4-bg); color: var(--tile-4-text); }
+    .tile-8 { background-color: var(--tile-8-bg); color: var(--tile-8-text); }
+    .tile-16 { background-color: var(--tile-16-bg); color: var(--tile-16-text); }
+    .tile-32 { background-color: var(--tile-32-bg); color: var(--tile-32-text); }
+    .tile-64 { background-color: var(--tile-64-bg); color: var(--tile-64-text); }
+    .tile-128 { background-color: var(--tile-128-bg); color: var(--tile-128-text); }
+    .tile-256 { background-color: var(--tile-256-bg); color: var(--tile-256-text); }
+    .tile-512 { background-color: var(--tile-512-bg); color: var(--tile-512-text); }
+    .tile-1024 { background-color: var(--tile-1024-bg); color: var(--tile-1024-text); }
+    .tile-2048 { background-color: var(--tile-2048-bg); color: var(--tile-2048-text); }
+    .tile-super { background-color: var(--tile-super-bg); color: var(--tile-super-text); }
+
+    .floating-score {
+        position: absolute;
+        color: var(--strong-text-color); 
+        font-size: 2.5rem; 
+        font-weight: 900;
+        opacity: 0; 
+        pointer-events: none; 
+        z-index: 10; 
+        animation: float-up-fade 700ms ease-out forwards; 
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.2); 
+    }
+
+    @keyframes float-up-fade {
+        0% { transform: translateY(0) scale(1); opacity: 1; }
+        50% { transform: translateY(-30px) scale(1.1); opacity: 0.8; } 
+        100% { transform: translateY(-60px) scale(1); opacity: 0; } 
+    }
+
+    .action-button-disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .game-board.cursor-pointer {
+        cursor: pointer;
+    }
+
+    .game-board.powerup-active-border {
+        box-shadow: 0 0 0 5px var(--button-bg-color), 0 0 0 10px rgba(143, 122, 102, 0.5);
+        transition: box-shadow 0.2s ease-in-out;
+    }
+
+    .button-pulse-animation {
+        animation: pulse 0.3s ease-out;
+    }
+
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+    }
+</style>
+
+<script type="text/javascript">
+   window.SDK_OPTIONS = {
+      // IMPORTANT! Replaced with your new gameId
+      gameId: "x3vmst3chfxrcrqp0v3lbkd3azdalyk8", 
+      onEvent: function (a) {
+         switch (a.name) {
+            case "SDK_GAME_PAUSE":
+               // Call the global function to pause the game and mute audio
+               window.handleAdPause(); 
+               break;
+            case "SDK_GAME_START":
+               // Call the global function to resume the game and unmute audio
+               window.handleAdResume();
+               break;
+            case "SDK_READY":
+               console.log("GameMonetize SDK is ready.");
+               // You can show an ad here if the game hasn't started yet,
+               // or if you want an ad on page load.
+               // showAdBanner(); // Uncomment if you want an ad when the SDK loads
+               break;
+         }
+      }
+   };
+(function (a, b, c) {
+   var d = a.getElementsByTagName(b)[0];
+   a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+})(document, "script", "gamemonetize-sdk"); 
+</script>
+</head>
+<body class="p-4 sm:p-10">
+<div class="flex flex-col items-center justify-center max-w-full sm:max-w-md lg:max-w-sm mx-auto text-center">
+    
+    <header class="w-full mb-6 flex flex-col items-center">
+        <h1 class="text-3xl sm:text-4xl lg:text-5xl font-black mb-4 text-center" style="color: var(--strong-text-color);">2048</h1>
+        
+        <div class="flex justify-end w-full mb-3 pr-1 sm:pr-3">
+            <div class="flex items-center space-x-2 sm:space-x-4">
+                <div class="flex items-center justify-center p-2 px-3 sm:px-5 rounded-md" style="background-color: var(--board-bg-color);">
+                    <div class="text-xs uppercase" style="color: var(--button-text-color);">Score:</div>
+                    <div id="score" class="text-base font-bold ml-1" style="color: var(--button-text-color);">0</div>
+                </div>
+                <div class="flex items-center justify-center p-2 px-3 sm:px-5 rounded-md" style="background-color: var(--board-bg-color);">
+                    <div class="text-xs uppercase" style="color: var(--button-text-color);">Best:</div>
+                    <div id="high-score" class="text-base font-bold ml-1" style="color: var(--button-text-color);">0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex justify-center w-full">
+             <div class="flex space-x-2 sm:space-x-4">
+                <button id="menu-btn" class="btn btn-primary w-12 h-12 text-base rounded-md"><i class="fas fa-bars"></i></button>
+                <button id="undo-btn" class="btn btn-primary w-12 h-12 text-base rounded-md"><i class="fas fa-undo"></i></button>
+                <button id="clear-tile-btn" class="btn btn-primary w-12 h-12 text-base rounded-md"><i class="fas fa-eraser"></i></button>
+                <button id="upgrade-tile-btn" class="btn btn-primary w-12 h-12 text-base rounded-md"><i class="fas fa-level-up-alt"></i></button>
+                <button id="shuffle-board-btn" class="btn btn-primary w-12 h-12 text-base rounded-md"><i class="fas fa-random"></i></button>
+             </div>
+        </div>
+    </header>
+
+    <main id="game-container" class="w-full relative">
+        <!-- Added 'relative' class here for correct positioning of absolute children -->
+        <div id="game-board" class="relative aspect-square rounded-lg p-2.5 grid grid-cols-4 grid-rows-4 gap-2.5" style="background-color: var(--board-bg-color);">
+        </div>
+        <div id="game-over-overlay" class="absolute inset-0 items-center justify-center rounded-lg hidden flex-col" style="background-color: var(--overlay-bg-color);">
+            <h2 id="game-over-title" class="text-5xl font-black" style="color: var(--strong-text-color);">Game Over!</h2>
+            <button id="try-again-btn" class="btn btn-primary mt-6 px-6 py-3 font-bold rounded-md">Try Again</button>
+        </div>
+        <div id="game-won-overlay" class="absolute inset-0 items-center justify-center rounded-lg hidden flex-col" style="background-color: var(--overlay-bg-color);">
+            <h2 class="text-5xl font-black text-yellow-500">Congratulations!</h2>
+            <p class="mt-2 text-lg" style="color: var(--strong-text-color);">You've reached the 2048 tile.</p>
+            <button id="keep-playing-btn" class="btn btn-primary mt-6 px-6 py-3 font-bold rounded-md">Keep Playing</button>
+        </div>
+
+        <div id="swipe-indicator" class="absolute inset-0 flex items-center justify-center pointer-events-none hidden opacity-0 transition-opacity duration-150">
+            <i class="text-6xl text-gray-700"></i>
+        </div>
+
+        <p class="text-sm text-center mt-4" style="color: var(--text-color);">Join the numbers and get to the <strong>2048 tile!</strong></p>
+    </main>
+
+    <div id="confirm-restart-overlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white p-8 rounded-lg shadow-lg text-center max-w-xs text-gray-800">
+            <p class="text-lg font-bold mb-4">Are you sure you want to restart?</p>
+            <p class="text-sm mb-6">Your current progress will be lost.</p>
+            <div class="flex justify-center space-x-4">
+                <button id="confirm-restart-yes" class="btn btn-primary px-5 py-2 rounded-md font-bold">Yes</button>
+                <button id="confirm-restart-no" class="btn btn-secondary px-5 py-2 rounded-md font-bold">No</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="main-menu-overlay" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 hidden">
+        <div class="bg-white p-8 rounded-lg shadow-lg text-center max-w-sm mx-4 text-gray-800">
+            <h2 class="text-3xl font-bold mb-6">Menu</h2>
+            <div class="flex flex-col space-y-4">
+                <button id="menu-new-game-btn" class="btn btn-primary px-6 py-3 font-bold rounded-md"><i class="fas fa-plus-circle mr-2"></i> <span id="new-game-text">New Game</span></button>
+                <button id="how-to-play-btn" class="btn btn-primary px-6 py-3 font-bold rounded-md"><i class="fas fa-question-circle mr-2"></i> How to Play</button>
+                <button id="toggle-sound-btn" class="btn btn-primary px-6 py-3 font-bold rounded-md"><i class="fas fa-volume-up mr-2"></i> <span id="sound-status-text">Sound: ON</span></button>
+                <button id="privacy-policy-btn" class="btn btn-primary px-6 py-3 font-bold rounded-md"><i class="fas fa-shield-alt mr-2"></i> Privacy Policy</button>
+                <button id="menu-close-btn" class="btn btn-secondary px-6 py-3 font-bold rounded-md mt-4">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="how-to-play-overlay" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 hidden">
+        <div class="bg-white p-8 rounded-lg shadow-lg text-center max-w-sm mx-4 text-gray-800">
+            <h2 class="text-3xl font-bold mb-4">How to Play</h2>
+            <p class="text-base mb-4 text-left">Use your <strong>arrow keys</strong> (PC) or <strong>swipe</strong> (mobile) to move the tiles.</p>
+            <p class="text-base mb-4 text-left">When two tiles with the same number touch, they <strong>merge into one</strong> with double the value!</p>
+            <p class="text-base mb-6 text-left">The goal is to create a tile with the number <strong>2048</strong>. Be careful not to run out of moves!</p>
+            <button id="how-to-play-close-btn" class="btn btn-primary px-6 py-3 font-bold rounded-md">Got it!</button>
+        </div>
+    </div>
+
+    <div id="tutorial-overlay" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 hidden">
+        <div class="bg-white p-8 rounded-lg shadow-lg text-center max-w-sm mx-4 text-gray-800">
+            <h2 class="text-3xl font-bold mb-4">Welcome to 2048!</h2>
+            <p class="text-base mb-4 text-left">The goal is to merge tiles with the same number to create a 2048 tile.</p>
+            <p class="text-base mb-4 text-left">Swipe to move the tiles.</p>
+            <p class="text-base mb-6 text-left">A new 2 or 4 tile will appear with every move. Plan your moves carefully!</p>
+            <button id="tutorial-close-btn" class="btn btn-primary px-6 py-3 font-bold rounded-md">Got it!</button>
+        </div>
+    </div>
+
+    <div id="game-message-overlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white p-8 rounded-lg shadow-lg text-center max-w-xs text-gray-800">
+            <p id="game-message-text" class="text-lg font-bold mb-6"></p>
+            <button id="game-message-close" class="btn btn-primary px-5 py-2 rounded-md font-bold">OK</button>
+        </div>
+    </div>
+
+    <div id="privacy-policy-overlay" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 hidden">
+        <div class="bg-white p-8 rounded-lg shadow-lg text-left max-w-lg mx-4 overflow-y-auto max-h-[90vh] text-gray-800">
+            <h2 class="text-3xl font-bold mb-4 text-center">Privacy Policy</h2>
+            <p class="text-sm mb-3">This Privacy Policy describes how "Evolve Numbers" handles your information.</p>
+            <h3 class="text-lg font-bold mb-2 mt-4">Data Security</h3>
+            <p class="text-sm mb-3">No personal information is collected. Game information is saved locally on your device and is protected by its own security features.</p>
+            <h3 class="text-lg font-bold mb-2 mt-4">Changes to this Policy</h3>
+            <p class="text-sm mb-3">We may update this policy from time to time. Any changes will be posted here.</p>
+            <h3 class="text-lg font-bold mb-2 mt-4">Contact</h3>
+            <p class="text-sm mb-6">If you have any questions, contact us at: <strong>androlitegaming@gmail.com</strong></p>
+            <p class="text-xs text-right mt-6">Last updated: July 4, 2025.</p>
+            <button id="privacy-policy-close-btn" class="btn btn-primary mt-6 px-6 py-3 font-bold rounded-md w-full">Close</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const GRID_SIZE = 4;
+        let board = [];
+        let score = 0;
+        let highScore = 0;
+        let hasWon = false;
+        let isGameOver = false;
+        let isPaused = false; // Variable to control game pause, including for ads
+        
+        const UNDO_COOLDOWN = 5;
+        let movesSinceLastUndo = 0;
+        let stateHistory = [];
+        const MAX_HISTORY_LENGTH = 10;
+
+        let powerups = {};
+        let isClearTileActive = false;
+        let isUpgradeTileActive = false;
+
+        let soundsEnabled = false; 
+        let wasSoundsEnabledBeforeAd = false; // To restore sound state after an ad
+
+        let newTileIndices = new Set(); 
+        let mergeAnimationsData = [];
+
+        const gameBoard = document.getElementById('game-board');
+        const scoreElement = document.getElementById('score');
+        const highScoreElement = document.getElementById('high-score');
+        const menuBtn = document.getElementById('menu-btn');
+        const undoBtn = document.getElementById('undo-btn');
+        const clearTileBtn = document.getElementById('clear-tile-btn');
+        const upgradeTileBtn = document.getElementById('upgrade-tile-btn');
+        const shuffleBoardBtn = document.getElementById('shuffle-board-btn');
+        const gameOverOverlay = document.getElementById('game-over-overlay');
+        const gameOverTitle = document.getElementById('game-over-title');
+        const tryAgainBtn = document.getElementById('try-again-btn');
+        const gameWonOverlay = document.getElementById('game-won-overlay');
+        const keepPlayingBtn = document.getElementById('keep-playing-btn');
+        const confirmRestartOverlay = document.getElementById('confirm-restart-overlay');
+        const confirmRestartYesBtn = document.getElementById('confirm-restart-yes');
+        const confirmRestartNoBtn = document.getElementById('confirm-restart-no');
+        const mainMenuOverlay = document.getElementById('main-menu-overlay');
+        const menuNewGameBtn = document.getElementById('menu-new-game-btn');
+        const howToPlayBtn = document.getElementById('how-to-play-btn');
+        const toggleSoundBtn = document.getElementById('toggle-sound-btn');
+        const privacyPolicyBtn = document.getElementById('privacy-policy-btn');
+        const menuCloseBtn = document.getElementById('menu-close-btn');
+        const soundStatusText = document.getElementById('sound-status-text');
+        const howToPlayOverlay = document.getElementById('how-to-play-overlay');
+        const howToPlayCloseBtn = document.getElementById('how-to-play-close-btn');
+        const tutorialOverlay = document.getElementById('tutorial-overlay');
+        const tutorialCloseBtn = document.getElementById('tutorial-close-btn');
+        const gameMessageOverlay = document.getElementById('game-message-overlay');
+        const gameMessageText = document.getElementById('game-message-text');
+        const gameMessageCloseBtn = document.getElementById('game-message-close');
+        const privacyPolicyOverlay = document.getElementById('privacy-policy-overlay');
+        const privacyPolicyCloseBtn = document.getElementById('privacy-policy-close-btn');
+        const swipeIndicator = document.getElementById('swipe-indicator');
+        const swipeIndicatorIcon = swipeIndicator.querySelector('i');
+
+        // Audio paths are in base64, which is good for a single HTML file.
+        const moveSound = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA'); 
+        const mergeSound = new Audio('data:audio/wav;base64,UklGRiAAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAAAAAA==');
+        moveSound.volume = 0.3;
+        mergeSound.volume = 0.3;
+        
+        function playSound(sound) {
+            if (!soundsEnabled || isPaused) return; // Do not play if sounds are disabled or game is paused
+            sound.currentTime = 0;
+            sound.play().catch(e => console.log("Error playing sound:", e));
+        }
+
+        // Global function to pause the game when an ad is displayed
+        window.handleAdPause = function() {
+            if (!isPaused) {
+                isPaused = true;
+                // Save the current sound state to restore it later
+                wasSoundsEnabledBeforeAd = soundsEnabled;
+                soundsEnabled = false; // Mute the game during the ad
+                updateSoundButton(); // Update the sound button in the UI
+                console.log("Game paused for ad.");
+            }
+        };
+
+        // Global function to resume the game when the ad ends
+        window.handleAdResume = function() {
+            isPaused = false;
+            // Restore the sound state to what it was before the ad
+            soundsEnabled = wasSoundsEnabledBeforeAd;
+            updateSoundButton(); // Update the sound button in the UI
+            console.log("Game resumed.");
+        };
+
+        // Function to show the ad banner
+        function showAdBanner() {
+            // Only try to show the banner if the SDK is defined and the function exists
+            if (typeof sdk !== 'undefined' && typeof sdk.showBanner === 'function') {
+                console.log("Attempting to show banner.");
+                sdk.showBanner();
+            } else {
+                console.log("GameMonetize SDK not available or showBanner function missing.");
+            }
+        }
+
+        function setupGame() {
+            document.documentElement.classList.add('light'); 
+            loadSoundPreference();
+            loadHighScore();
+            createGridCells();
+            
+            if (!loadGame()) {
+                startNewGame();
+            }
+
+            document.body.addEventListener('keydown', enableSoundsOnce, { once: true });
+            document.body.addEventListener('touchstart', enableSoundsOnce, { once: true });
+            showTutorialIfNeeded();
+        }
+        
+        function enableSoundsOnce() {
+            if (!soundsEnabled) {
+               console.log("Sounds enabled by user interaction.");
+               soundsEnabled = true;
+               updateSoundButton();
+            }
+        }
+
+        function createGridCells() {
+            for (let i = 0; i < GRID_SIZE * GRID_SIZE; i++) {
+                const cell = document.createElement('div');
+                cell.classList.add('w-full', 'h-full', 'rounded');
+                cell.style.backgroundColor = 'var(--cell-bg-color)';
+                gameBoard.appendChild(cell);
+            }
+        }
+        
+        function startNewGame() {
+            board = Array(GRID_SIZE * GRID_SIZE).fill(0);
+            updateScore(0);
+            hasWon = false;
+            isGameOver = false;
+            isPaused = false; // Ensure it's not paused at the start of a new game
+            stateHistory = [];
+            movesSinceLastUndo = 0;
+
+            powerups = {
+                clearTile: { available: 1, cooldown: 5, movesSinceLastUse: 5 },
+                upgradeTile: { available: 1, cooldown: 7, movesSinceLastUse: 7 },
+                shuffleBoard: { available: 1, cooldown: 10, movesSinceLastUse: 10 }
+            };
+            deactivateSelectionPowerups();
+
+            newTileIndices.clear();
+            mergeAnimationsData = [];
+            
+            [gameOverOverlay, gameWonOverlay, confirmRestartOverlay, tutorialOverlay, gameMessageOverlay, privacyPolicyOverlay, mainMenuOverlay, howToPlayOverlay].forEach(overlay => {
+                overlay.classList.add('hidden');
+                overlay.classList.remove('flex');
+            });
+
+            addRandomTile();
+            addRandomTile();
+            
+            saveGame();
+            renderBoard();
+            updateActionButtons();
+            // Show an ad when starting a new game
+            showAdBanner(); 
+        }
+        
+        function loadGame() {
+            try {
+                const savedStateStr = localStorage.getItem('2048-gameState');
+                if (!savedStateStr) return false;
+
+                const savedState = JSON.parse(savedStateStr);
+                
+                const isValid = savedState &&
+                                Array.isArray(savedState.board) && savedState.board.length === GRID_SIZE * GRID_SIZE &&
+                                typeof savedState.score === 'number' &&
+                                Array.isArray(savedState.stateHistory);
+
+                if (isValid) {
+                    board = savedState.board;
+                    score = savedState.score;
+                    stateHistory = savedState.stateHistory;
+                    movesSinceLastUndo = savedState.movesSinceLastUndo || 0;
+                    hasWon = savedState.hasWon || false;
+                    isGameOver = savedState.isGameOver || false;
+                    powerups = savedState.powerups || {
+                        clearTile: { available: 1, cooldown: 5, movesSinceLastUse: 5 },
+                        upgradeTile: { available: 1, cooldown: 7, movesSinceLastUse: 7 },
+                        shuffleBoard: { available: 1, cooldown: 10, movesSinceLastUse: 10 }
+                    };
+
+                    updateScore(score); 
+                    renderBoard();
+                    updateActionButtons();
+                    if(isGameOver) showGameOverScreen();
+                    return true; 
+                }
+            } catch (e) {
+                console.error("Error loading game:", e);
+            }
+            return false; 
+        }
+
+        function saveGame() {
+            try {
+                const gameState = {
+                    board,
+                    score,
+                    stateHistory,
+                    movesSinceLastUndo,
+                    powerups,
+                    isGameOver,
+                    hasWon
+                };
+                localStorage.setItem('2048-gameState', JSON.stringify(gameState));
+            } catch (e) {
+                console.error("Error saving game:", e);
+            }
+        }
+
+        function loadHighScore() {
+            try {
+                highScore = parseInt(localStorage.getItem('2048-highScore')) || 0;
+                highScoreElement.textContent = highScore; 
+            } catch (e) {
+                console.error("Error loading high score:", e);
+                highScore = 0; 
+            }
+        }
+
+        function saveHighScore() {
+            try {
+                localStorage.setItem('2048-highScore', highScore.toString());
+            }
+            catch (e) {
+                console.error("Error saving high score:", e);
+            }
+        }
+
+        function loadSoundPreference() {
+            try {
+                const savedSound = localStorage.getItem('2048-soundsEnabled');
+                soundsEnabled = savedSound === 'true' || savedSound === null;
+                wasSoundsEnabledBeforeAd = soundsEnabled;
+                updateSoundButton();
+            } catch (e) {
+                console.error("Error loading sound preference:", e);
+                soundsEnabled = true;
+            }
+        }
+
+        function toggleSound() {
+            soundsEnabled = !soundsEnabled;
+            localStorage.setItem('2048-soundsEnabled', soundsEnabled.toString());
+            wasSoundsEnabledBeforeAd = soundsEnabled; // Also update this variable
+            updateSoundButton();
+        }
+
+        function updateSoundButton() {
+            const icon = toggleSoundBtn.querySelector('i');
+            if (soundsEnabled) {
+                icon.className = 'fas fa-volume-up mr-2';
+                soundStatusText.textContent = 'Sound: ON';
+            } else {
+                icon.className = 'fas fa-volume-mute mr-2';
+                soundStatusText.textContent = 'Sound: OFF';
+            }
+        }
+
+        function renderBoard() {
+            gameBoard.querySelectorAll('.tile').forEach(tile => tile.remove());
+            
+            const computedStyle = window.getComputedStyle(gameBoard);
+            const padding = parseFloat(computedStyle.paddingLeft);
+            const gap = parseFloat(computedStyle.gap);
+            const boardWidth = gameBoard.clientWidth - (padding * 2);
+            const tileSize = (boardWidth - (gap * (GRID_SIZE - 1))) / GRID_SIZE;
+
+            board.forEach((value, index) => {
+                if (value === 0) return;
+
+                const tile = document.createElement('div');
+                const row = Math.floor(index / GRID_SIZE);
+                const col = index % GRID_SIZE;
+
+                tile.textContent = value;
+                tile.className = `tile tile-${value > 2048 ? 'super' : value}`;
+                
+                const numDigits = value.toString().length;
+                if (numDigits > 4) tile.style.fontSize = `${tileSize * 0.25}px`;
+                else if (numDigits > 3) tile.style.fontSize = `${tileSize * 0.35}px`;
+                else tile.style.fontSize = `${tileSize * 0.45}px`;
+                
+                tile.style.width = `${tileSize}px`;
+                tile.style.height = `${tileSize}px`;
+                
+                // Round the top and left values to avoid sub-pixel rendering issues
+                tile.style.top = `${Math.round(padding + row * (tileSize + gap))}px`;
+                tile.style.left = `${Math.round(padding + col * (tileSize + gap))}px`;
+                
+                if (newTileIndices.has(index)) {
+                    tile.classList.add('new-tile');
+                }
+                gameBoard.appendChild(tile);
+            });
+            newTileIndices.clear(); 
+        }
+
+        function addRandomTile() {
+            const emptyCells = board.map((val, i) => (val === 0 ? i : null)).filter(v => v !== null);
+            if (emptyCells.length > 0) {
+                const index = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+                board[index] = Math.random() < 0.9 ? 2 : 4; 
+                newTileIndices.add(index); 
+            }
+        }
+        
+        function updateScore(newScoreValue) {
+            score = newScoreValue; 
+            scoreElement.textContent = score; 
+
+            scoreElement.classList.add('score-update-animation');
+            scoreElement.addEventListener('animationend', () => {
+                scoreElement.classList.remove('score-update-animation');
+            }, { once: true });
+
+            if (score > highScore) {
+                highScore = score;
+                highScoreElement.textContent = highScore; 
+                saveHighScore(); 
+            }
+        }
+        
+        function saveStateForUndo() {
+            if (board.some(val => val !== 0)) {
+                stateHistory.push({ board: [...board], score });
+                if (stateHistory.length > MAX_HISTORY_LENGTH) {
+                    stateHistory.shift();
+                }
+            }
+        }
+
+        function undo() {
+            if (isGameOver || isPaused) return; // Do not allow undo if game is paused or over
+            if (movesSinceLastUndo < UNDO_COOLDOWN) {
+                showGameMessage(`You need ${UNDO_COOLDOWN - movesSinceLastUndo} more move(s) to undo.`);
+                return;
+            }
+            if (stateHistory.length > 0) {
+                const prevState = stateHistory.pop();
+                board = prevState.board;
+                updateScore(prevState.score);
+                hasWon = false;
+                isGameOver = false;
+                movesSinceLastUndo = 0;
+                
+                gameOverOverlay.classList.add('hidden');
+                gameWonOverlay.classList.add('hidden');
+                
+                renderBoard();
+                updateActionButtons();
+                saveGame();
+            } else {
+                showGameMessage("No moves to undo.");
+            }
+        }
+        
+        function updateActionButtons() {
+            const updateButtonState = (btn, powerup) => {
+                if (powerup.available <= 0 || powerup.movesSinceLastUse < powerup.cooldown) {
+                    btn.classList.add('action-button-disabled');
+                } else {
+                    btn.classList.remove('action-button-disabled');
+                }
+            };
+            
+            undoBtn.classList.toggle('action-button-disabled', movesSinceLastUndo < UNDO_COOLDOWN || stateHistory.length === 0);
+            updateButtonState(clearTileBtn, powerups.clearTile);
+            updateButtonState(upgradeTileBtn, powerups.upgradeTile);
+            updateButtonState(shuffleBoardBtn, powerups.shuffleBoard);
+        }
+
+        function showFloatingScores(tileSize, padding, gap) {
+            mergeAnimationsData.forEach(data => {
+                const floatingScoreDiv = document.createElement('div');
+                floatingScoreDiv.textContent = `+${data.value}`;
+                floatingScoreDiv.className = 'floating-score';
+
+                const row = Math.floor(data.index / GRID_SIZE);
+                const col = data.index % GRID_SIZE;
+
+                floatingScoreDiv.style.left = `${padding + col * (tileSize + gap) + tileSize / 2}px`;
+                floatingScoreDiv.style.top = `${padding + row * (tileSize + gap) + tileSize / 2}px`;
+                floatingScoreDiv.style.transform = 'translate(-50%, -50%)';
+
+                gameBoard.appendChild(floatingScoreDiv);
+                setTimeout(() => floatingScoreDiv.remove(), 700); 
+            });
+            mergeAnimationsData = []; 
+        }
+
+        function getTileIndexFromClick(event) {
+            const rect = gameBoard.getBoundingClientRect();
+            const style = window.getComputedStyle(gameBoard);
+            const padding = parseFloat(style.paddingLeft);
+            const gap = parseFloat(style.gap);
+            const boardWidth = gameBoard.clientWidth - (padding * 2);
+            const tileSize = (boardWidth - (gap * (GRID_SIZE - 1))) / GRID_SIZE;
+
+            const x = event.clientX - rect.left - padding;
+            const y = event.clientY - rect.top - padding;
+
+            const col = Math.floor(x / (tileSize + gap));
+            const row = Math.floor(y / (tileSize + gap));
+
+            if (col >= 0 && col < GRID_SIZE && row >= 0 && row < GRID_SIZE && (x % (tileSize + gap)) < tileSize && (y % (tileSize + gap)) < tileSize) {
+                return row * GRID_SIZE + col;
+            }
+            return -1;
+        }
+
+        function deactivateSelectionPowerups() {
+            if (isClearTileActive || isUpgradeTileActive) {
+                isClearTileActive = false;
+                isUpgradeTileActive = false;
+                gameBoard.removeEventListener('click', handleClearTileSelection);
+                gameBoard.removeEventListener('click', handleUpgradeTileSelection);
+                gameBoard.classList.remove('cursor-pointer', 'powerup-active-border');
+                isPaused = isAnyOverlayActive(); // Check if any other overlay is active to keep paused
+            }
+        }
+
+        function activatePowerup(powerupType) {
+            if (isGameOver || isPaused) return; // Do not activate powerup if game is paused or over
+
+            const powerup = powerups[powerupType];
+            const messages = {
+                clearTile: "Clear Tile",
+                upgradeTile: "Upgrade Tile",
+                shuffleBoard: "Shuffle Board"
+            };
+
+            if (powerup.available <= 0) {
+                showGameMessage(`You have no ${messages[powerupType]} uses left.`);
+                return;
+            }
+            if (powerup.movesSinceLastUse < powerup.cooldown) {
+                showGameMessage(`You need ${powerup.cooldown - powerup.movesSinceLastUse} more move(s) to use ${messages[powerupType]}.`);
+                return;
+            }
+
+            deactivateSelectionPowerups();
+
+            if (powerupType === 'shuffleBoard') {
+                const nonZeroTiles = board.filter(val => val !== 0);
+                const zeroTiles = Array(board.length - nonZeroTiles.length).fill(0);
+                let newBoard = [...nonZeroTiles, ...zeroTiles];
+                for (let i = newBoard.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [newBoard[i], newBoard[j]] = [newBoard[j], newBoard[i]]; 
+                }
+                board = newBoard;
+                powerup.available--;
+                powerup.movesSinceLastUse = 0;
+                renderBoard();
+                saveGame();
+                updateActionButtons(); 
+                playSound(moveSound);
+            } else {
+                isPaused = true; // Pause the game while selection powerup is active
+                isClearTileActive = powerupType === 'clearTile';
+                isUpgradeTileActive = powerupType === 'upgradeTile';
+                gameBoard.classList.add('cursor-pointer', 'powerup-active-border');
+                const handler = powerupType === 'clearTile' ? handleClearTileSelection : handleUpgradeTileSelection;
+                gameBoard.addEventListener('click', handler, { once: true });
+            }
+        }
+
+        function handleClearTileSelection(event) {
+            const index = getTileIndexFromClick(event);
+            if (index !== -1 && board[index] !== 0) {
+                board[index] = 0;
+                powerups.clearTile.available--;
+                powerups.clearTile.movesSinceLastUse = 0;
+                playSound(mergeSound);
+                renderBoard();
+                saveGame();
+                updateActionButtons();
+            }
+            deactivateSelectionPowerups();
+        }
+
+        function handleUpgradeTileSelection(event) {
+            const index = getTileIndexFromClick(event);
+            if (index !== -1 && board[index] !== 0 && board[index] < 2048) {
+                const originalValue = board[index];
+                board[index] *= 2;
+                updateScore(score + originalValue);
+                powerups.upgradeTile.available--;
+                powerups.upgradeTile.movesSinceLastUse = 0;
+                playSound(mergeSound);
+                renderBoard();
+                saveGame();
+                updateActionButtons();
+                checkGameState();
+            }
+            deactivateSelectionPowerups();
+        }
+
+        function move(direction) {
+            if (isGameOver || isPaused) return; // Do not allow moves if game is paused or over
+            
+            saveStateForUndo(); 
+            
+            let hasMoved = false;
+            let scoreGained = 0; 
+            mergeAnimationsData = []; 
+
+            const isVertical = direction === 'up' || direction === 'down';
+            const isReversed = direction === 'right' || direction === 'down';
+
+            const lines = Array.from({ length: GRID_SIZE }, (_, i) => 
+                Array.from({ length: GRID_SIZE }, (_, j) => 
+                    isVertical ? board[i + j * GRID_SIZE] : board[i * GRID_SIZE + j]
+                )
+            );
+
+            if (isReversed) lines.forEach(line => line.reverse());
+
+            for (let i = 0; i < lines.length; i++) {
+                const originalLine = [...lines[i]]; 
+                const nonZero = lines[i].filter(v => v !== 0); 
+                const newLine = [];
+
+                for (let j = 0; j < nonZero.length; j++) {
+                    if (j + 1 < nonZero.length && nonZero[j] === nonZero[j + 1]) {
+                        const mergedValue = nonZero[j] * 2;
+                        newLine.push(mergedValue);
+                        scoreGained += mergedValue;
+                        
+                        let row = isVertical ? newLine.length - 1 : i;
+                        let col = isVertical ? i : newLine.length - 1;
+                        if (isReversed) {
+                            if(isVertical) row = GRID_SIZE - 1 - row;
+                            else col = GRID_SIZE - 1 - col;
+                        }
+                        mergeAnimationsData.push({ value: mergedValue, index: row * GRID_SIZE + col });
+                        j++; 
+                    } else {
+                        newLine.push(nonZero[j]);
+                    }
+                }
+                while (newLine.length < GRID_SIZE) newLine.push(0);
+                lines[i] = newLine;
+                if (originalLine.join(',') !== newLine.join(',')) hasMoved = true;
+            }
+
+            if (isReversed) lines.forEach(line => line.reverse());
+
+            if (hasMoved) {
+                lines.forEach((line, i) => line.forEach((val, j) => {
+                    if (isVertical) board[i + j * GRID_SIZE] = val;
+                    else board[i * GRID_SIZE + j] = val;
+                }));
+                
+                addRandomTile(); 
+                updateScore(score + scoreGained); 
+                playSound(scoreGained > 0 ? mergeSound : moveSound); 
+                renderBoard(); 
+
+                const style = window.getComputedStyle(gameBoard);
+                const padding = parseFloat(style.paddingLeft);
+                const gap = parseFloat(style.gap);
+                const width = gameBoard.clientWidth - (padding * 2);
+                const tileSize = (width - (gap * (GRID_SIZE - 1))) / GRID_SIZE;
+                showFloatingScores(tileSize, padding, gap); 
+
+                checkGameState(); 
+                movesSinceLastUndo++;
+                Object.values(powerups).forEach(p => p.movesSinceLastUse++);
+            } else {
+                if (navigator.vibrate) navigator.vibrate(100);
+                stateHistory.pop();
+            }
+            updateActionButtons();
+            saveGame(); 
+        }
+
+        function checkGameState() {
+            if (!hasWon && board.includes(2048)) {
+                showVictoryScreen();
+            }
+
+            for (let i = 0; i < board.length; i++) {
+                if (board[i] === 0) return;
+                const col = i % GRID_SIZE;
+                if (col < GRID_SIZE - 1 && board[i] === board[i + 1]) return;
+                if (i < GRID_SIZE * (GRID_SIZE - 1) && board[i] === board[i + GRID_SIZE]) return;
+            }
+            
+            isGameOver = true;
+            showGameOverScreen();
+        }
+        
+        function showOverlay(overlay) {
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex');
+            isPaused = true; // Pause the game when any overlay is shown
+        }
+
+        function hideOverlay(overlay) {
+            overlay.classList.add('hidden');
+            overlay.classList.remove('flex');
+            isPaused = isAnyOverlayActive(); // Only unpause if no other overlays are active
+        }
+
+        function showVictoryScreen() {
+            hasWon = true;
+            showOverlay(gameWonOverlay);
+            saveGame(); 
+            // Show an ad when winning the game
+            showAdBanner(); 
+        }
+
+        function showGameOverScreen() {
+            isGameOver = true; 
+            gameOverTitle.textContent = 'Game Over!';
+            showOverlay(gameOverOverlay);
+            saveGame(); 
+            // Show an ad when losing the game
+            showAdBanner(); 
+        }
+
+        function showTutorialIfNeeded() {
+            if (!localStorage.getItem('2048-tutorialSeen')) {
+                showOverlay(tutorialOverlay);
+                localStorage.setItem('2048-tutorialSeen', 'true'); 
+            }
+        }
+
+        function showGameMessage(message) {
+            gameMessageText.textContent = message;
+            showOverlay(gameMessageOverlay);
+        }
+
+        // Function to check if any overlay is active
+        function isAnyOverlayActive() {
+            return ![gameOverOverlay, gameWonOverlay, confirmRestartOverlay, tutorialOverlay, gameMessageOverlay, mainMenuOverlay, privacyPolicyOverlay, howToPlayOverlay].every(o => o.classList.contains('hidden'));
+        }
+
+        function showSwipeIndicator(direction) {
+            const icons = { up: 'fa-arrow-up', down: 'fa-arrow-down', left: 'fa-arrow-left', right: 'fa-arrow-right' };
+            swipeIndicatorIcon.className = `fas ${icons[direction]}`; 
+            swipeIndicator.classList.remove('hidden', 'opacity-0');
+            setTimeout(() => swipeIndicator.classList.add('opacity-0'), 150);
+            setTimeout(() => swipeIndicator.classList.add('hidden'), 300);
+        }
+
+        function handleKeyPress(e) {
+            if (isPaused) return; // Do not allow keyboard input if game is paused
+            const keyMap = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' };
+            if (keyMap[e.key]) {
+                e.preventDefault();
+                move(keyMap[e.key]);
+            }
+        }
+        
+        let touchStartX = 0, touchStartY = 0;
+        function handleTouchStart(e) {
+            if (isPaused) return; // Do not allow touch input if game is paused
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        }
+
+        function handleTouchEnd(e) {
+            if (isPaused) return; // Do not allow touch input if game is paused
+            const dx = e.changedTouches[0].clientX - touchStartX;
+            const dy = e.changedTouches[0].clientY - touchStartY;
+            if (Math.max(Math.abs(dx), Math.abs(dy)) > 30) {
+                const direction = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
+                move(direction);
+                showSwipeIndicator(direction); 
+            }
+        }
+
+        menuBtn.addEventListener('click', () => showOverlay(mainMenuOverlay));
+        menuCloseBtn.addEventListener('click', () => hideOverlay(mainMenuOverlay));
+        menuNewGameBtn.addEventListener('click', () => { hideOverlay(mainMenuOverlay); showOverlay(confirmRestartOverlay); });
+        howToPlayBtn.addEventListener('click', () => { hideOverlay(mainMenuOverlay); showOverlay(howToPlayOverlay); });
+        howToPlayCloseBtn.addEventListener('click', () => hideOverlay(howToPlayOverlay));
+        toggleSoundBtn.addEventListener('click', toggleSound);
+        privacyPolicyBtn.addEventListener('click', () => { hideOverlay(mainMenuOverlay); showOverlay(privacyPolicyOverlay); });
+        privacyPolicyCloseBtn.addEventListener('click', () => hideOverlay(privacyPolicyOverlay));
+        confirmRestartYesBtn.addEventListener('click', startNewGame);
+        confirmRestartNoBtn.addEventListener('click', () => hideOverlay(confirmRestartOverlay));
+        tutorialCloseBtn.addEventListener('click', () => hideOverlay(tutorialOverlay)); 
+        tryAgainBtn.addEventListener('click', startNewGame);
+        keepPlayingBtn.addEventListener('click', () => hideOverlay(gameWonOverlay));
+        undoBtn.addEventListener('click', undo); 
+        gameMessageCloseBtn.addEventListener('click', () => { hideOverlay(gameMessageOverlay); deactivateSelectionPowerups(); });
+        clearTileBtn.addEventListener('click', () => activatePowerup('clearTile'));
+        upgradeTileBtn.addEventListener('click', () => activatePowerup('upgradeTile'));
+        shuffleBoardBtn.addEventListener('click', () => activatePowerup('shuffleBoard'));
+        document.addEventListener('keydown', handleKeyPress);
+        gameBoard.addEventListener('touchstart', handleTouchStart, { passive: true });
+        gameBoard.addEventListener('touchend', handleTouchEnd, { passive: false });
+        window.addEventListener('resize', renderBoard);
+
+        setupGame();
+    });
+</script>
+</body>
+</html>

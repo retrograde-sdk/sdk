@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>DRIVE AND AVOID — Final Build</title>
+  <style>
+    /* =============================
+       GLOBAL LAYOUT & THEME
+       ============================= */
+    :root {
+      --bg: #222;
+      --panel: #333;
+      --border: #555;
+      --lane: #2f2f2f;
+      --lane-sep: #ffffff;
+      --accent: #4CAF50;
+      --accent-2: #2ecc71;
+      --warning: #f39c12;
+      --danger: #e74c3c;
+      --gold: #f1c40f;
+      --shadow: rgba(0, 0, 0, 0.6);
+      --overlay: rgba(0, 0, 0, 0.78);
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: var(--bg);
+      font-family: "Arial Black", Gadget, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      touch-action: manipulation; /* mobile */
+    }
+
+    body {
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+
+    /* =============================
+       GAME CONTAINER & CANVAS
+       ============================= */
+    #gameContainer {
+      position: relative;
+      width: 100%;
+      max-width: 800px;
+      height: 60vh;
+      min-height: 420px;
+      max-height: 640px;
+      background: var(--panel);
+      border: 4px solid var(--border);
+      border-radius: 8px;
+      box-shadow: 0 0 24px var(--shadow);
+      overflow: hidden;
+    }
+
+    canvas {
+      position: absolute;
+      inset: 0;
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* =============================
+       SCREENS (START / GAME OVER / WIN)
+       ============================= */
+    .screen {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: var(--overlay);
+      color: #fff;
+      z-index: 30;
+      text-align: center;
+      padding: 18px;
+    }
+
+    .screen[hidden] { display: none; }
+
+    .screen-title {
+      font-size: clamp(28px, 6vw, 44px);
+      color: var(--gold);
+      text-shadow: 3px 3px 0 var(--danger);
+      margin: 0 0 12px 0;
+    }
+
+    .screen-btn {
+      padding: 12px 22px;
+      font-size: clamp(16px, 4vw, 18px);
+      background: var(--accent);
+      color: #fff;
+      border: 0;
+      border-radius: 6px;
+      cursor: pointer;
+      min-width: 160px;
+      box-shadow: 0 2px 0 rgba(0,0,0,0.5);
+    }
+
+    .screen-btn:active { transform: translateY(1px); }
+
+    .screen-subtle { opacity: 0.85; font-weight: normal; }
+
+    /* =============================
+       HUD ROW
+       ============================= */
+    #hudRow {
+      width: 100%;
+      max-width: 800px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 10px;
+      gap: 10px;
+      color: #fff;
+    }
+
+    #levelDisplay, #scoreDisplay {
+      font-size: clamp(14px, 3vw, 18px);
+      white-space: nowrap;
+    }
+
+    #distanceBar {
+      flex-grow: 1;
+      max-width: 420px;
+      height: 16px;
+      background: #555;
+      border-radius: 10px;
+      overflow: hidden;
+      min-width: 100px;
+    }
+
+    #distanceProgress { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), var(--accent-2)); transition: width 0.1s; }
+
+    /* =============================
+       CONTROLS ROW
+       ============================= */
+    #controlsRow {
+      width: 100%;
+      max-width: 800px;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 3px;
+      padding: 0 10px;
+      box-sizing: border-box;
+    }
+
+    .control-btn {
+      background: var(--accent);
+      color: white;
+      border: 0;
+      padding: 10px 20px;
+      font-size: clamp(16px, 4vw, 18px);
+      border-radius: 8px;
+      cursor: pointer;
+      user-select: none;
+      flex: 1;
+      max-width: 200px;
+      box-shadow: 0 2px 0 rgba(0,0,0,0.5);
+    }
+
+    .control-btn:active { transform: translateY(1px); }
+
+    /* =============================
+       LIVES / HEALTH ROW
+       ============================= */
+    #livesContainer {
+      width: 100%;
+      max-width: 800px;
+      margin-top: 10px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      padding: 0 10px;
+      box-sizing: border-box;
+      color: #fff;
+    }
+
+    #healthBar { flex-grow: 1; height: 16px; background: #555; border-radius: 10px; overflow: hidden; position: relative; }
+    #healthProgress { height: 100%; width: 100%; background: linear-gradient(90deg, var(--danger), var(--warning)); transition: width 0.1s; }
+    #healthText { width: 120px; text-align: center; color: #fff; white-space: nowrap; font-size: clamp(14px, 3vw, 16px); }
+
+    /* =============================
+       NOTES
+       ============================= */
+    .note { color: #ddd; font-size: clamp(10px, 2.5vw, 12px); margin-top: 6px; text-align: center; }
+
+    /* Responsive tweaks for shorter viewports */
+    @media (max-height: 700px) { #gameContainer { height: 55vh; } }
+    @media (max-height: 600px) { #gameContainer { height: 50vh; } }
+  </style>
+
+  <!-- =============================
+       AD SDK BOOTSTRAP (GameMonetize)
+       NOTE: This build uses interstitials only, not rewarded 
+       to avoid the test popup "Watch to continue — simulated".
+       ============================= -->
+  <script type="text/javascript">
+    // Guarded SDK options: we listen for PAUSE/START to gate game + audio.
+    window.SDK_OPTIONS = {
+      gameId: "u86fh1bsoacxgocn89rlxzoqu169s3sk",
+      onEvent: function (evt) {
+        switch (evt.name) {
+          case "SDK_GAME_PAUSE":
+            // Entering ad or SDK requested pause
+            adInProgress = true;
+            gameRunning = false; // pause game loop
+            hardPauseAudio();
+            // If the pause originated from a pending ad sequence, we just wait.
+            break;
+          case "SDK_GAME_START":
+            // Ad finished or resume requested.
+            adInProgress = false;
+            // If an action is waiting for the ad to finish, run it now.
+            if (pendingAfterAdAction) {
+              const action = pendingAfterAdAction; // capture & clear first
+              pendingAfterAdAction = null;
+              action();
+            } else {
+              // Otherwise, if a session is active, resume
+              softResumeAudio();
+              if (sessionActive) {
+                lastTime = performance.now();
+                gameRunning = true;
+                requestAnimationFrame(loop);
+              }
+            }
+            break;
+          case "SDK_READY":
+            sdkReady = true;
+            break;
+        }
+      }
+    };
+
+    (function (d, tag, id) {
+      var ref = d.getElementsByTagName(tag)[0];
+      if (!d.getElementById(id)) {
+        var s = d.createElement(tag);
+        s.id = id;
+        s.src = "https://api.gamemonetize.com/sdk.js";
+        ref.parentNode.insertBefore(s, ref);
+      }
+    })(document, "script", "gamemonetize-sdk");
+  </script>
+</head>
+
+<body>
+  <!-- =============================
+       AUDIO ELEMENTS
+       ============================= -->
+  <audio id="bgMusic" preload="auto" loop>
+    <source src="Music.mp3" type="audio/mpeg" />
+  </audio>
+  <audio id="bulletSound" preload="auto">
+    <source src="Bullet.mp3" type="audio/mpeg" />
+  </audio>
+  <audio id="moveSound" preload="auto">
+    <source src="Move.mp3" type="audio/mpeg" />
+  </audio>
+  <audio id="crashSound" preload="auto">
+    <source src="Crash.mp3" type="audio/mpeg" />
+  </audio>
+  <audio id="winSound" preload="auto">
+    <source src="Win.mp3" type="audio/mpeg" />
+  </audio>
+
+  <!-- =============================
+       GAME CONTAINER & OVERLAYS
+       ============================= -->
+  <div id="gameContainer">
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- START SCREEN -->
+    <div id="startScreen" class="screen">
+      <h1 class="screen-title">DRIVE AND AVOID</h1>
+      <div style="max-width:520px; text-align:left; background:rgba(0,0,0,0.45); padding:12px; border-radius:8px;">
+        <h3 style="margin:0 0 6px 0">How to play</h3>
+        <ul style="margin:6px 0 0 18px; padding:0; color:#fff; line-height:1.4">
+          <li>Use LEFT / RIGHT buttons or arrow keys to change lanes</li>
+          <li>Avoid enemy cars and the black orb's projectiles</li>
+          <li>Reach the distance goal to complete each level (20 total)</li>
+          <li>You have 1 life; each life starts with 100% health</li>
+        </ul>
+        <p class="screen-subtle" style="margin-top:10px">Audio is muted until you click Start Race.</p>
+      </div>
+      <button id="startBtn" class="screen-btn" style="margin-top:12px;">START RACE</button>
+    </div>
+
+    <!-- GAME OVER SCREEN (no revive; Replay shows ad) -->
+    <div id="gameOverScreen" class="screen" hidden>
+      <h1 class="screen-title">GAME OVER</h1>
+      <p id="finalScore" style="margin:6px 0; font-size:18px">Score: 0</p>
+      <p id="finalLevel" style="margin:6px 0; font-size:16px">Level: 0 / 20</p>
+      <button id="restartBtn" class="screen-btn" style="margin-top:8px;">RESTART RACE</button>
+      <p class="screen-subtle" style="margin:10px 0 0">Restart will show an ad, then start a new run.</p>
+    </div>
+
+    <!-- WIN SCREEN (no ad here; only on new Start from menu) -->
+    <div id="winScreen" class="screen" hidden>
+      <h1 class="screen-title">YOU WON!</h1>
+      <p id="totalScore" style="margin:6px 0; font-size:24px; color:var(--gold);">Total Score: 0</p>
+      <button id="menuBtn" class="screen-btn" style="margin-top:8px;">GO TO MAIN MENU</button>
+      <p class="screen-subtle" style="margin:10px 0 0">No ad here — you'll only see ads when you Start Race or Restart after a loss.</p>
+    </div>
+  </div>
+
+  <!-- HUD ROWS -->
+  <div id="hudRow">
+    <div id="levelDisplay">Level: 1 / 20</div>
+    <div id="distanceBar"><div id="distanceProgress"></div></div>
+    <div id="scoreDisplay">Score: 0</div>
+  </div>
+
+  <div id="controlsRow">
+    <button id="leftBtn" class="control-btn">← LEFT</button>
+    <button id="rightBtn" class="control-btn">RIGHT →</button>
+  </div>
+
+  <div id="livesContainer">
+    <div id="healthBar"><div id="healthProgress"></div></div>
+    <div id="healthText">❤️ 1x: 100%</div>
+  </div>
+
+  <div class="note">Touch & hold buttons to move continuously on mobile.</div>
+
+  <!-- =============================
+       GAME SCRIPT
+       ============================= -->
+  <script>
+    /****************************************************
+     * CONSTANTS & CONFIG
+     ****************************************************/
+    const MAX_LEVEL = 20;            // total levels
+    const MAX_LIVES = 1;            // lives per run
+    const START_HEALTH = 100;        // health per life
+    const HEALTH_DECREMENT = 15;      // base damage unit
+    const BASE_ROAD_SPEED = 3;       // base scrolling speed
+    const BASE_ENEMY_SPAWN = 0.008;  // base spawn probability per frame chunk
+    const LANE_COUNT = 9;            // lanes on the road
+
+    // Difficulty scaling per level
+    const LEVEL_DISTANCE_BASE = 3000;  // base distance to finish
+    const LEVEL_DISTANCE_STEP = 600;   // extra per level
+    const LEVEL_SPEED_STEP = 0.35;     // road speed increment per level
+    const LEVEL_SPAWN_STEP = 0.006;    // enemy spawn increment per level
+
+    // Visual constants
+    const MARKER_GAP = 70;            // vertical spacing of road markers
+    const MARKER_H = 40;              // height of road markers
+
+    // Ad categories for clarity
+    const AD_REASON = {
+      START: 'start',     // Start Race from main menu
+      RESTART: 'restart', // Restart after a loss
+    };
+
+    /****************************************************
+     * DOM LOOKUPS
+     ****************************************************/
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const startScreen = document.getElementById('startScreen');
+    const startBtn = document.getElementById('startBtn');
+
+    const gameOverScreen = document.getElementById('gameOverScreen');
+    const restartBtn = document.getElementById('restartBtn');
+
+    const winScreen = document.getElementById('winScreen');
+    const menuBtn = document.getElementById('menuBtn');
+
+    const leftBtn = document.getElementById('leftBtn');
+    const rightBtn = document.getElementById('rightBtn');
+
+    const levelDisplay = document.getElementById('levelDisplay');
+    const scoreDisplay = document.getElementById('scoreDisplay');
+    const distanceProgress = document.getElementById('distanceProgress');
+    const healthProgress = document.getElementById('healthProgress');
+    const healthText = document.getElementById('healthText');
+    const finalScore = document.getElementById('finalScore');
+    const finalLevel = document.getElementById('finalLevel');
+    const totalScore = document.getElementById('totalScore');
+
+    // Audio
+    const bgMusic = document.getElementById('bgMusic');
+    const bulletSound = document.getElementById('bulletSound');
+    const moveSound = document.getElementById('moveSound');
+    const crashSound = document.getElementById('crashSound');
+    const winSound = document.getElementById('winSound');
+
+    /****************************************************
+     * RUNTIME STATE
+     ****************************************************/
+    let CANVAS_W = 0, CANVAS_H = 0, ROAD_WIDTH = 0, roadX = 0, laneWidth = 0;
+
+    let gameRunning = false;      // true when loop is actively animating
+    let sessionActive = false;    // true during a run (even if paused by ad)
+
+    let level = 1;
+    let score = 0;
+    let lives = MAX_LIVES;
+    let health = START_HEALTH;
+
+    let distance = 0;
+    let maxDistance = LEVEL_DISTANCE_BASE;
+
+    let roadSpeed = BASE_ROAD_SPEED;
+    let enemySpawnRate = BASE_ENEMY_SPAWN;
+
+    let enemies = [];
+    let projectiles = [];
+    let roadMarkers = [];
+
+    // Orb shooter (boss-like source of projectiles)
+    let orb = {
+      x: 0,
+      y: 70,
+      radius: 20,
+      active: false,
+      dir: 1,
+      speed: 1.6,
+      lastShot: 0,
+      shotInterval: 2000
+    };
+
+    let inputLocked = false;      // prevent spamming lane change
+    let adInProgress = false;     // true while an ad is onscreen
+    let sdkReady = false;         // set when GameMonetize SDK_READY fires
+
+    let needsAudioResume = false; // when autoplay is blocked until tap
+    let pendingAfterAdAction = null; // function queued to run after ad
+    let pendingAdReason = null;   // tracks why an ad is shown (debug/telemetry)
+
+    let lastTime = 0;             // for RAF delta
+
+    // Player car
+    const player = {
+      lane: Math.floor(LANE_COUNT / 2),
+      width: 0,
+      height: 70,
+      get x() { return roadX + this.lane * laneWidth + (laneWidth - this.width)/2; },
+      get y() { return CANVAS_H - 120; },
+      invincible: false
+    };
+
+    /****************************************************
+     * AUDIO HELPERS
+     ****************************************************/
+    function playSound(snd) {
+      if (adInProgress) return; // never play SFX during an ad
+      try {
+        snd.currentTime = 0;
+        snd.play();
+      } catch (err) {
+        // benign in browsers that need a gesture first
+      }
+    }
+
+    function softResumeAudio() {
+      // Attempt to resume bg music; don't force if user muted or blocked.
+      if (!bgMusic.paused) return;
+      bgMusic.volume = 0.5;
+      const p = bgMusic.play();
+      if (p && typeof p.catch === 'function') {
+        p.catch(() => { needsAudioResume = true; });
+      }
+    }
+
+    function hardPauseAudio() {
+      // Always pause bg music immediately.
+      try { bgMusic.pause(); } catch (e) {}
+    }
+
+    /****************************************************
+     * AD HELPERS
+     * Using interstitials only to avoid the rewarded-test popup.
+     ****************************************************/
+    function canShowInterstitial() {
+      return typeof sdk !== 'undefined' && typeof sdk.showBanner() !== 'undefined' && sdkReady;
+    }
+
+    function showInterstitial(reason, afterAdFn) {
+      // Queue an action to run after ad → on SDK_GAME_START event.
+      pendingAfterAdAction = afterAdFn || null;
+      pendingAdReason = reason || null;
+      adInProgress = true;
+      gameRunning = false;      // freeze loop now
+      hardPauseAudio();         // pause music now
+
+      try {
+        if (canShowInterstitial()) {
+          sdk.showBanner();
+        } else {
+          // If SDK not ready, just run the action immediately (no simulated popup).
+          adInProgress = false;
+          const act = pendingAfterAdAction; pendingAfterAdAction = null; pendingAdReason = null;
+          if (act) act();
+        }
+      } catch (e) {
+        // On errors, just proceed to action without showing anything.
+        adInProgress = false;
+        const act = pendingAfterAdAction; pendingAfterAdAction = null; pendingAdReason = null;
+        if (act) act();
+      }
+    }
+
+    /****************************************************
+     * GEOMETRY / RESIZE
+     ****************************************************/
+    function initGeometry() {
+      const container = document.getElementById('gameContainer');
+      CANVAS_W = container.clientWidth;
+      CANVAS_H = container.clientHeight;
+      canvas.width = CANVAS_W;
+      canvas.height = CANVAS_H;
+
+      // Road sizing: prefer wide but clamp to canvas
+      ROAD_WIDTH = Math.min(CANVAS_W * 0.9, CANVAS_H * 1.5);
+      ROAD_WIDTH = Math.max(CANVAS_W * 0.8, ROAD_WIDTH);
+      roadX = Math.round((CANVAS_W - ROAD_WIDTH) / 2);
+      laneWidth = ROAD_WIDTH / LANE_COUNT;
+
+      // Player size scales with lane width
+      player.width = Math.max(36, laneWidth * 0.78);
+
+      // Orb sizing/position
+      orb.x = roadX + ROAD_WIDTH / 2;
+      orb.radius = Math.max(15, Math.min(25, laneWidth * 0.5));
+    }
+
+    function initRoadMarkers() {
+      roadMarkers = [];
+      const count = Math.floor(CANVAS_H / MARKER_GAP) + 2;
+      for (let i = 0; i < count; i++) {
+        roadMarkers.push({ y: i * MARKER_GAP - (MARKER_H + 30), h: MARKER_H });
+      }
+    }
+
+    /****************************************************
+     * HUD / UI
+     ****************************************************/
+    function updateHealthUI() {
+      healthProgress.style.width = Math.max(0, Math.min(100, health)) + '%';
+      healthText.textContent = `❤️ ${lives}x: ${health.toFixed(2)}%`;
+
+      // color blend feedback
+      if (health > 50) {
+        healthProgress.style.background = 'linear-gradient(90deg, #4CAF50, #2ecc71)';
+      } else if (health > 20) {
+        healthProgress.style.background = 'linear-gradient(90deg, #f39c12, #f1c40f)';
+      } else {
+        healthProgress.style.background = 'linear-gradient(90deg, #e74c3c, #f39c12)';
+      }
+    }
+
+    function updateHud() {
+      levelDisplay.textContent = `Level: ${Math.min(level, MAX_LEVEL)} / ${MAX_LEVEL}`;
+      scoreDisplay.textContent = `Score: ${score}`;
+      const pct = Math.max(0, Math.min(100, (distance / maxDistance) * 100));
+      distanceProgress.style.width = pct + '%';
+      updateHealthUI();
+    }
+
+    /****************************************************
+     * ENEMIES & PROJECTILES
+     ****************************************************/
+    function spawnEnemy() {
+      const maxEnemies = 4 + Math.floor(level * 0.9);
+      if (enemies.length >= maxEnemies) return;
+
+      const lane = Math.floor(Math.random() * LANE_COUNT);
+      const w = Math.max(36, laneWidth * 0.78);
+      enemies.push({
+        lane: lane,
+        x: roadX + lane * laneWidth + (laneWidth - w) / 2,
+        y: -80 - Math.random() * 80,
+        width: w,
+        height: 56,
+        speed: 3 + Math.random() * 1.5 + level * 0.12,
+        color: ['#e74c3c', '#f39c12', '#9b59b6', '#1abc9c'][Math.floor(Math.random() * 4)],
+        jumping: false,
+        jumpH: 0,
+        jumpDir: 1
+      });
+    }
+
+    function drawCar(x, y, w, h, color) {
+      ctx.fillStyle = color; ctx.fillRect(x, y, w, h);
+      // simple tires
+      ctx.fillStyle = '#000';
+      const tw = Math.max(6, w * 0.22), th = Math.max(4, h * 0.18);
+      ctx.fillRect(x - tw * 0.6, y + h * 0.18, tw, th);
+      ctx.fillRect(x + w - tw * 0.4, y + h * 0.18, tw, th);
+      ctx.fillRect(x - tw * 0.6, y + h * 0.62, tw, th);
+      ctx.fillRect(x + w - tw * 0.4, y + h * 0.62, tw, th);
+    }
+
+    function drawRoad() {
+      // background + asphalt
+      ctx.fillStyle = '#1f2b36'; ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+      ctx.fillStyle = '#2f2f2f'; ctx.fillRect(roadX, 0, ROAD_WIDTH, CANVAS_H);
+
+      // dashed lane dividers
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2; ctx.setLineDash([18, 14]);
+      for (let i = 1; i < LANE_COUNT; i++) {
+        const x = roadX + i * laneWidth;
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, CANVAS_H); ctx.stroke();
+      }
+      ctx.setLineDash([]);
+    }
+
+    function drawMarkers() {
+      const mx = roadX + (ROAD_WIDTH - 8) / 2;
+      ctx.fillStyle = '#f1c40f';
+      for (const m of roadMarkers) {
+        m.y += roadSpeed;
+        if (m.y > CANVAS_H) m.y = -m.h;
+        ctx.fillRect(mx, m.y, 8, m.h);
+      }
+    }
+
+    function orbShootBurst() {
+      const count = Math.min(2 + Math.floor(level / 3), 6);
+      const px = player.x + player.width / 2;
+      const py = player.y + player.height / 2;
+
+      const dx = px - orb.x;
+      const dy = py - orb.y;
+      const baseAngle = Math.atan2(dy, dx);
+      const spread = Math.PI * 0.14;
+
+      playSound(bulletSound);
+
+      for (let i = 0; i < count; i++) {
+        const t = count === 1 ? 0.5 : i / (count - 1);
+        const angle = baseAngle - spread / 2 + t * spread;
+        const speed = 3 + level * 0.18;
+        projectiles.push({
+          x: orb.x,
+          y: orb.y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          r: Math.max(6, Math.min(10, laneWidth * 0.15)),
+          dmg: HEALTH_DECREMENT * 4
+        });
+      }
+    }
+
+    function updateOrb(dt) {
+      if (!orb.active) return;
+      orb.x += orb.dir * orb.speed;
+      if (orb.x < roadX + orb.radius) orb.dir = 1;
+      if (orb.x > roadX + ROAD_WIDTH - orb.radius) orb.dir = -1;
+
+      if (Date.now() - orb.lastShot > orb.shotInterval) {
+        orb.lastShot = Date.now();
+        orb.shotInterval = Math.max(600, 1700 - level * 80) + Math.random() * 600;
+        orbShootBurst();
+      }
+    }
+
+    /****************************************************
+     * COLLISION HELPERS
+     ****************************************************/
+    function rectRect(a, b) {
+      return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
+    }
+
+    function circleRect(c, r) {
+      const distX = Math.abs(c.x - (r.x + r.width / 2));
+      const distY = Math.abs(c.y - (r.y + r.height / 2));
+      if (distX > (r.width / 2 + c.r)) return false;
+      if (distY > (r.height / 2 + c.r)) return false;
+      if (distX <= (r.width / 2) || distY <= (r.height / 2)) return true;
+      const dx = distX - r.width / 2, dy = distY - r.height / 2;
+      return dx * dx + dy * dy <= c.r * c.r;
+    }
+
+    /****************************************************
+     * INPUT
+     ****************************************************/
+    function moveLeft() {
+      if (!sessionActive || inputLocked || adInProgress) return;
+      inputLocked = true;
+      player.lane = Math.max(0, player.lane - 1);
+      playSound(moveSound);
+      setTimeout(() => { inputLocked = false; }, 100);
+    }
+
+    function moveRight() {
+      if (!sessionActive || inputLocked || adInProgress) return;
+      inputLocked = true;
+      player.lane = Math.min(LANE_COUNT - 1, player.lane + 1);
+      playSound(moveSound);
+      setTimeout(() => { inputLocked = false; }, 100);
+    }
+
+    /****************************************************
+     * DAMAGE / LIVES / LEVELS
+     ****************************************************/
+    function takeDamage(amount) {
+      if (!sessionActive || player.invincible || adInProgress) return;
+      health = Math.max(0, health - amount);
+      playSound(crashSound);
+
+      player.invincible = true;
+      setTimeout(() => { player.invincible = false; }, 500);
+
+      if (health <= 0) {
+        lives--;
+        health = START_HEALTH;
+        if (lives <= 0) {
+          // end the run (no revive). Show game over screen.
+          endGame(false);
+          return; // ensure no further HUD updates from this frame's loop
+        }
+      }
+      updateHealthUI();
+    }
+
+    function nextLevel() {
+      level++;
+      if (level > MAX_LEVEL) { endGame(true); return; }
+
+      distance = 0;
+      maxDistance = LEVEL_DISTANCE_BASE + level * LEVEL_DISTANCE_STEP;
+      roadSpeed = BASE_ROAD_SPEED + level * LEVEL_SPEED_STEP;
+      enemySpawnRate = BASE_ENEMY_SPAWN + level * LEVEL_SPAWN_STEP;
+
+      orb.active = (level >= 2);
+      if (orb.active) {
+        orb.x = roadX + ROAD_WIDTH / 2;
+        orb.dir = 1; orb.lastShot = Date.now(); orb.speed = 1.6;
+      }
+
+      initRoadMarkers();
+      spawnEnemy();
+      updateHud();
+
+      lastTime = performance.now();
+      requestAnimationFrame(loop);
+    }
+
+    /****************************************************
+     * GAME FLOW (START / END / MENU)
+     ****************************************************/
+    function startRunAfterAd() {
+      // Called once the ad (if any) has finished for Start or Restart
+      initRunState();
+      sessionActive = true;
+      gameRunning = true;
+      softResumeAudio();
+      lastTime = performance.now();
+      requestAnimationFrame(loop);
+    }
+
+    function startFromMenu() {
+      // Clicking Start from main menu should: show interstitial, then start a new run.
+      // 1) Freeze any current audio/loop (they should be already idle at menu, but safe):
+      hardPauseAudio();
+      sessionActive = false; // not yet active
+      gameRunning = false;
+
+      // 2) Show interstitial; when done, start the run.
+      showInterstitial(AD_REASON.START, startRunAfterAd);
+    }
+
+    function restartAfterLoss() {
+      // Pressing Restart on Game Over screen shows an ad then starts a new run.
+      hardPauseAudio();
+      sessionActive = true;
+      gameRunning = true;
+      showInterstitial(AD_REASON.RESTART, startRunAfterAd);
+    }
+
+    function initRunState() {
+      // Shared initializer for a fresh run
+      initGeometry();
+      initRoadMarkers();
+
+      // Hide overlays (menu & end screens)
+      startScreen.hidden = true;
+      gameOverScreen.hidden = true;
+      winScreen.hidden = true;
+
+      // Reset run stats
+     
+
+      // Clear entities
+      enemies = [];
+      projectiles = [];
+
+      // Orb reset
+      orb.active = false;
+      orb.x = roadX + ROAD_WIDTH / 2;
+      orb.lastShot = Date.now();
+      player.invincible = false;
+
+      // Start music (will be muted if browser blocks until first gesture; we resume on click)
+      bgMusic.volume = 0.5;
+      softResumeAudio();
+
+      spawnEnemy();
+      updateHud();
+    }
+
+    function endGame(completed = false) {
+      // End run, show appropriate screen.
+      sessionActive = false;
+      gameRunning = true;
+
+      if (completed) {
+        playSound(winSound);
+        totalScore.textContent = `Total Score: ${score}`;
+        winScreen.hidden = false; // NO AD here per requirement
+      } else {
+        finalScore.textContent = `Score: ${score}`;
+        finalLevel.textContent = `Level: ${Math.max(1, level)} / ${MAX_LEVEL}`;
+        gameOverScreen.hidden = false; // Ad will run only when user presses Restart
+      }
+    }
+
+    function returnToMenu() {
+      // Go back to main menu without showing ads
+      sessionActive = false;
+      gameRunning = false;
+      hardPauseAudio(); // stop music at menu unless the user starts again
+
+      // Reset overlays
+      winScreen.hidden = true;
+      gameOverScreen.hidden = true;
+      startScreen.hidden = false;
+    }
+
+    /****************************************************
+     * MAIN LOOP
+     ****************************************************/
+    function loop(ts) {
+      if (!gameRunning || adInProgress) return; // frozen while in ad or not running
+      const dt = Math.max(1, ts - lastTime);
+      lastTime = ts;
+
+      // Distance & level progression
+      distance += roadSpeed * (dt / 16);
+      if (distance >= maxDistance) {
+        score += 1000 * level;
+        nextLevel();
+        return; // early exit; nextLevel schedules next frame
+      }
+
+      // Spawns
+      if (Math.random() < enemySpawnRate * (dt / 16)) spawnEnemy();
+
+      // Orb logic
+      updateOrb(dt);
+
+      // Projectiles update & collisions
+      for (let i = projectiles.length - 1; i >= 0; i--) {
+        const p = projectiles[i];
+        p.x += p.vx * (dt / 16);
+        p.y += p.vy * (dt / 16);
+
+        const pRect = { x: player.x, y: player.y, width: player.width, height: player.height };
+        if (circleRect({ x: p.x, y: p.y, r: p.r }, pRect)) {
+          takeDamage(p.dmg);
+          projectiles.splice(i, 1);
+          continue;
+        }
+        if (p.y > CANVAS_H + 60 || p.x < -60 || p.x > CANVAS_W + 60) projectiles.splice(i, 1);
+      }
+
+      // Enemies update & collisions
+      for (let i = enemies.length - 1; i >= 0; i--) {
+        const e = enemies[i];
+        e.y += e.speed * (dt / 16);
+
+        // playful jumping animation
+        if (!e.jumping && Math.random() < 0.006) e.jumping = true;
+        if (e.jumping) {
+          e.jumpH += 0.8 * e.jumpDir;
+          if (e.jumpH > 14) e.jumpDir = -1;
+          if (e.jumpH < 0) { e.jumping = false; e.jumpDir = 1; e.jumpH = 0; }
+        }
+
+        const eRect = { x: e.x, y: e.y - e.jumpH, width: e.width, height: e.height };
+        const playerRect = { x: player.x, y: player.y, width: player.width, height: player.height };
+        if (rectRect(eRect, playerRect)) {
+          takeDamage(HEALTH_DECREMENT * 2);
+          enemies.splice(i, 1);
+          continue;
+        }
+
+        // Offscreen -> score small points
+        if (e.y > CANVAS_H + 80) {
+          enemies.splice(i, 1);
+          score += Math.max(1, Math.floor(3 + level * 0.1));
+          updateHud();
+        }
+      }
+
+      // DRAW
+      ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
+      drawRoad();
+      drawMarkers();
+
+      // Orb + glow
+      if (orb.active) {
+        ctx.fillStyle = '#000';
+        ctx.beginPath(); ctx.arc(orb.x, orb.y, orb.radius, 0, Math.PI * 2); ctx.fill();
+        const g = ctx.createRadialGradient(orb.x, orb.y, orb.radius * 0.4, orb.x, orb.y, orb.radius * 2);
+        g.addColorStop(0, 'rgba(120,120,120,0.9)'); g.addColorStop(1, 'rgba(120,120,120,0)');
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(orb.x, orb.y, orb.radius * 1.8, 0, Math.PI * 2); ctx.fill();
+      }
+
+      // Projectiles visuals
+      for (const p of projectiles) {
+        ctx.beginPath(); ctx.fillStyle = '#f1c40f'; ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
+        const grad = ctx.createRadialGradient(p.x, p.y, p.r * 0.3, p.x, p.y, p.r * 1.5);
+        grad.addColorStop(0, 'rgba(241,196,15,0.9)'); grad.addColorStop(1, 'rgba(241,196,15,0)');
+        ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(p.x, p.y, p.r * 1.5, 0, Math.PI * 2); ctx.fill();
+      }
+
+      // Enemies
+      for (const e of enemies) drawCar(e.x, e.y - e.jumpH, e.width, e.height, e.color);
+
+      // Player blink if invincible
+      if (player.invincible && Math.floor(Date.now() / 100) % 2 === 0) ctx.globalAlpha = 0.5;
+      drawCar(player.x, player.y, player.width, player.height, '#3498db');
+      ctx.globalAlpha = 1;
+
+      updateHud();
+      requestAnimationFrame(loop);
+    }
+
+    /****************************************************
+     * INPUT WIRING
+     ****************************************************/
+    function makeHoldable(button, action) {
+      let timer = null; let isHolding = false;
+      const start = (e) => {
+        e.preventDefault();
+        if (isHolding || adInProgress) return;
+        isHolding = true; action(); playSound(moveSound);
+        timer = setInterval(() => {
+          if (adInProgress) { clearInterval(timer); timer = null; isHolding = false; return; }
+          action(); playSound(moveSound);
+        }, 200);
+      };
+      const end = () => { isHolding = false; if (timer) { clearInterval(timer); timer = null; } };
+      button.addEventListener('mousedown', start);
+      button.addEventListener('touchstart', start, { passive: false });
+      ['mouseup', 'mouseleave', 'touchend', 'touchcancel'].forEach(evt => button.addEventListener(evt, end));
+    }
+
+    function wireInputs() {
+      makeHoldable(leftBtn, moveLeft);
+      makeHoldable(rightBtn, moveRight);
+      document.addEventListener('keydown', (e) => {
+        if (!sessionActive || adInProgress) return;
+        if (e.key === 'ArrowLeft') { moveLeft(); playSound(moveSound); }
+        if (e.key === 'ArrowRight') { moveRight(); playSound(moveSound); }
+      });
+
+      // Start from menu
+      startBtn.addEventListener('click', () => {
+        playSound(moveSound);
+        startFromMenu();
+      });
+
+      // Restart from Game Over
+      restartBtn.addEventListener('click', () => {
+        playSound(moveSound);
+        restartAfterLoss();
+      });
+
+      // Go back to menu from Win screen (no ad)
+      menuBtn.addEventListener('click', () => {
+        playSound(moveSound);
+        returnToMenu();
+      });
+
+      // On any document click: attempt to resume music if a prior play was blocked
+      document.body.addEventListener('click', function () {
+        if (needsAudioResume && bgMusic.paused) {
+          bgMusic.play().then(() => { needsAudioResume = false; }).catch(() => {});
+        }
+      });
+
+      // Resize
+      window.addEventListener('resize', () => {
+        if (sessionActive) { initGeometry(); initRoadMarkers(); }
+      });
+    }
+
+    /****************************************************
+     * STARTUP
+     * At boot we show the Start screen and keep everything paused.
+     ****************************************************/
+    function boot() {
+      // Start screen visible by default, others hidden
+      startScreen.hidden = false;
+      gameOverScreen.hidden = true;
+      winScreen.hidden = true;
+
+      // Geometry & markers (for immediate canvas sizing even at menu)
+      initGeometry();
+      initRoadMarkers();
+      updateHud();
+
+      // IMPORTANT: music is paused until the user clicks Start Race
+      hardPauseAudio();
+    }
+
+    // Wire inputs and boot the game
+    wireInputs();
+    boot();
+
+    /****************************************************
+     * OPTIONAL: DEBUG OVERLAYS (toggleable)
+     * - Lightweight FPS/State panel — disabled by default.
+     *   Uncomment to use during development.
+     ****************************************************/
+    /*
+    const dbg = document.createElement('div');
+    dbg.style.position = 'fixed';
+    dbg.style.left = '8px';
+    dbg.style.bottom = '8px';
+    dbg.style.font = '12px/1.2 monospace';
+    dbg.style.color = '#fff';
+    dbg.style.background = 'rgba(0,0,0,0.35)';
+    dbg.style.padding = '6px 8px';
+    dbg.style.borderRadius = '6px';
+    dbg.style.pointerEvents = 'none';
+    document.body.appendChild(dbg);
+    let fpsLast = performance.now(), fpsFrames = 0, fpsValue = 0;
+    function dbgTick(ts) {
+      fpsFrames++;
+      const dt = ts - fpsLast;
+      if (dt >= 500) { fpsValue = Math.round(1000 * fpsFrames / dt); fpsFrames = 0; fpsLast = ts; }
+      dbg.textContent = `running:${gameRunning} ad:${adInProgress} sdk:${sdkReady} lvl:${level} lives:${lives} dist:${Math.floor(distance)}/${maxDistance} FPS:${fpsValue}`;
+      requestAnimationFrame(dbgTick);
+    }
+    requestAnimationFrame(dbgTick);
+    */
+  </script>
+</body>
+</html>

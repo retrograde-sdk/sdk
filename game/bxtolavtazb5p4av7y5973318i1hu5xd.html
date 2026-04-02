@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="screen-orientation" content="landscape">
+    <meta name="x5-orientation" content="landscape">
+    <meta name="full-screen" content="yes">
+
+    <!-- ══ GameMonetize SDK — stesso pattern di Neon Jumper ══ -->
+    <script type="text/javascript">
+        window.SDK_OPTIONS = {
+            gameId: "bxtolavtazb5p4av7y5973318i1hu5xd",
+            onEvent: function(a) {
+                switch(a.name) {
+                    case "SDK_GAME_PAUSE":
+                        if(typeof pauseGameForAd === 'function') pauseGameForAd();
+                        break;
+                    case "SDK_GAME_START":
+                        if(typeof resumeGameFromAd === 'function') resumeGameFromAd();
+                        break;
+                    case "SDK_READY":
+                        break;
+                    case "SDK_ERROR":
+                        if(typeof resumeGameFromAd === 'function') resumeGameFromAd();
+                        break;
+                }
+            }
+        };
+        (function(a,b,c){
+            var d=a.getElementsByTagName(b)[0];
+            a.getElementById(c)||(a=a.createElement(b),a.id=c,
+            a.src="https://api.gamemonetize.com/sdk.js",d.parentNode.insertBefore(a,d))
+        })(document,"script","gamemonetize-sdk");
+    </script>
+
+    <title>NEON BLASTER — MAPI GAMES</title>
+    <style type="text/css">@font-face {font-family:Orbitron;font-style:normal;font-weight:400;src:url(/cf-fonts/v/orbitron/5.0.18/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Orbitron;font-style:normal;font-weight:700;src:url(/cf-fonts/v/orbitron/5.0.18/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Orbitron;font-style:normal;font-weight:900;src:url(/cf-fonts/v/orbitron/5.0.18/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}</style>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <script src="game.js"></script>
+</body>
+</html>

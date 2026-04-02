@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Tris - Tic Tac Toe by Mapi Games</title>
+    
+    <!-- GameMonetize SDK -->
+    <script src="https://api.gamemonetize.com/sdk.js"></script>
+    <script>
+        window.GD_OPTIONS = {
+            "gameId": "memt6xmgz88enbhyo9rbyj7a58wcee4y",
+            "onEvent": function(event) {
+                switch (event.name) {
+                    case "SDK_GAME_START":
+                        console.log('Game started');
+                        break;
+                    case "SDK_GAME_PAUSE":
+                        console.log('Game paused');
+                        break;
+                    case "SDK_GDPR_TRACKING":
+                        console.log('GDPR tracking');
+                        break;
+                    case "SDK_GDPR_TARGETING":
+                        console.log('GDPR targeting');
+                        break;
+                    case "SDK_GDPR_THIRD_PARTY":
+                        console.log('GDPR third party');
+                        break;
+                }
+            }
+        };
+    </script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #feca57);
+            background-size: 400% 400%;
+            animation: gradientShift 8s ease infinite;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .screen {
+            display: none;
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+            padding: 20px;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        /* Mapi Games Logo */
+        .mapi-logo {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #ff0000;
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            z-index: 1000;
+            background: rgba(255,255,255,0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255,0,0,0.4);
+        }
+
+        /* Home Screen Styles */
+        .home-screen h1 {
+            font-size: 4rem;
+            color: #fff;
+            text-shadow: 4px 4px 8px rgba(0,0,0,0.3);
+            margin-bottom: 2rem;
+            animation: bounce 2s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-20px); }
+            60% { transform: translateY(-10px); }
+        }
+
+        .play-btn {
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            border: none;
+            padding: 20px 40px;
+            font-size: 2rem;
+            color: white;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .play-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.3);
+        }
+
+        /* Game Screen Styles */
+        .game-screen h2 {
+            color: white;
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .scoreboard {
+            background: rgba(255,255,255,0.2);
+            padding: 15px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            color: white;
+            font-size: 1.2rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .difficulty-display {
+            background: rgba(255,255,255,0.3);
+            padding: 10px 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            color: white;
+            font-weight: bold;
+            backdrop-filter: blur(10px);
+        }
+
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            max-width: 300px;
+            margin: 0 auto 20px;
+            background: rgba(255,255,255,0.2);
+            padding: 20px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .cell {
+            width: 80px;
+            height: 80px;
+            background: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 2.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cell:hover:not(.taken) {
+            background: #f0f0f0;
+            transform: scale(1.05);
+        }
+
+        .cell.x {
+            color: #ff6b6b;
+            animation: popIn 0.3s ease;
+        }
+
+        .cell.o {
+            color: #4ecdc4;
+            animation: popIn 0.3s ease;
+        }
+
+        .cell.winning {
+            background: linear-gradient(45deg, #ffd700, #ffed4a);
+            animation: glow 1s ease-in-out infinite alternate;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0); }
+            80% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes glow {
+            from { box-shadow: 0 0 20px #ffd700; }
+            to { box-shadow: 0 0 30px #ffed4a, 0 0 40px #ffd700; }
+        }
+
+        /* Game Over Screen Styles */
+        .game-over-screen h2 {
+            font-size: 3rem;
+            color: white;
+            text-shadow: 4px 4px 8px rgba(0,0,0,0.3);
+            margin-bottom: 2rem;
+        }
+
+        .win-message {
+            color: #4ecdc4;
+            animation: celebrate 2s ease-in-out infinite;
+        }
+
+        .lose-message {
+            color: #ff6b6b;
+        }
+
+        .draw-message {
+            color: #feca57;
+        }
+
+        @keyframes celebrate {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .restart-btn {
+            background: linear-gradient(45deg, #4ecdc4, #45b7d1);
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.5rem;
+            color: white;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            font-family: inherit;
+            animation: softBounce 3s ease-in-out infinite;
+        }
+
+        .restart-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+
+        @keyframes softBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        /* Confetti Animation */
+        .confetti {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 999;
+        }
+
+        .confetti-piece {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #ff6b6b;
+            animation: fall 3s linear infinite;
+        }
+
+        .confetti-piece:nth-child(2n) { background: #4ecdc4; }
+        .confetti-piece:nth-child(3n) { background: #feca57; }
+        .confetti-piece:nth-child(4n) { background: #45b7d1; }
+
+        @keyframes fall {
+            0% {
+                transform: translateY(-100vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 600px) {
+            .home-screen h1 {
+                font-size: 3rem;
+            }
+            
+            .cell {
+                width: 60px;
+                height: 60px;
+                font-size: 2rem;
+            }
+            
+            .game-board {
+                max-width: 220px;
+            }
+            
+            .game-over-screen h2 {
+                font-size: 2rem;
+            }
+            
+            .mapi-logo {
+                font-size: 1rem;
+                bottom: 10px;
+                padding: 6px 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Home Screen -->
+    <div class="screen active" id="homeScreen">
+        <div class="home-screen">
+            <h1>Super Tris</h1>
+            <button class="play-btn" onclick="startGame()">Play!</button>
+        </div>
+    </div>
+
+    <!-- Game Screen -->
+    <div class="screen" id="gameScreen">
+        <div class="game-screen">
+            <h2>Super Tris</h2>
+            <div class="scoreboard">
+                Wins: <span id="wins">0</span> | 
+                Losses: <span id="losses">0</span> | 
+                Draws: <span id="draws">0</span>
+            </div>
+            <div class="difficulty-display" id="difficultyDisplay">
+                Difficulty: Easy
+            </div>
+            <div class="game-board" id="gameBoard">
+                <button class="cell" onclick="makeMove(0)"></button>
+                <button class="cell" onclick="makeMove(1)"></button>
+                <button class="cell" onclick="makeMove(2)"></button>
+                <button class="cell" onclick="makeMove(3)"></button>
+                <button class="cell" onclick="makeMove(4)"></button>
+                <button class="cell" onclick="makeMove(5)"></button>
+                <button class="cell" onclick="makeMove(6)"></button>
+                <button class="cell" onclick="makeMove(7)"></button>
+                <button class="cell" onclick="makeMove(8)"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div class="screen" id="gameOverScreen">
+        <div class="game-over-screen">
+            <h2 id="gameOverMessage">Game Over!</h2>
+            <button class="restart-btn" onclick="goHome()">Play Again</button>
+        </div>
+    </div>
+
+    <!-- Confetti Container -->
+    <div class="confetti" id="confetti"></div>
+
+    <!-- Mapi Games Logo -->
+    <div class="mapi-logo">
+        Mapi Games
+    </div>
+
+    <script>
+        // ========================================
+        // GAME STATE AND VARIABLES
+        // ========================================
+
+        let gameState = {
+            board: Array(9).fill(''),
+            currentPlayer: 'X',
+            gameActive: true,
+            difficulty: 'easy',
+            wins: 0,
+            losses: 0,
+            draws: 0
+        };
+
+        const difficulties = ['easy', 'medium', 'hard'];
+        let currentScreen = 'home';
+        let gameStarted = false;
+
+        // ========================================
+        // GAMEMONETIZE INTEGRATION
+        // ========================================
+
+        function initializeGameMonetize() {
+            console.log('GameMonetize initializing...');
+            
+            // Notify GameMonetize that the game has started
+            if (typeof gdsdk !== 'undefined' && gdsdk.showBanner) {
+                try {
+                    gdsdk.init();
+                    console.log('GameMonetize SDK initialized');
+                } catch (e) {
+                    console.log('GameMonetize init error:', e);
+                }
+            }
+        }
+
+        function showGameMonetizeAds() {
+            console.log('🎯 Triggering GameMonetize ads...');
+            
+            try {
+                // Show banner ad
+                if (typeof gdsdk !== 'undefined' && gdsdk.showBanner) {
+                    gdsdk.showBanner();
+                    console.log('✅ Banner ad requested');
+                }
+                
+                // Show interstitial ad
+                if (typeof gdsdk !== 'undefined' && gdsdk.showInterstitial) {
+                    gdsdk.showInterstitial();
+                    console.log('✅ Interstitial ad requested');
+                }
+                
+                // Alternative SDK check
+                if (typeof sdk !== 'undefined') {
+                    if (sdk.showBanner) {
+                        sdk.showBanner();
+                        console.log('✅ SDK Banner ad requested');
+                    }
+                    if (sdk.showInterstitial) {
+                        sdk.showInterstitial();
+                        console.log('✅ SDK Interstitial ad requested');
+                    }
+                }
+                
+            } catch (error) {
+                console.log('❌ GameMonetize ads error:', error);
+            }
+        }
+
+        // ========================================
+        // AUDIO SYSTEM
+        // ========================================
+
+        class AudioManager {
+            constructor() {
+                this.audioContext = null;
+                this.sounds = {};
+                this.initAudio();
+            }
+
+            initAudio() {
+                try {
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                } catch (e) {
+                    console.log('Web Audio API not supported');
+                }
+            }
+
+            createBeep(frequency, duration, type = 'sine') {
+                if (!this.audioContext) return;
+                
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+                
+                oscillator.frequency.value = frequency;
+                oscillator.type = type;
+                
+                gainNode.gain.setValueAtTime(0.3, this.audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + duration);
+                
+                oscillator.start(this.audioContext.currentTime);
+                oscillator.stop(this.audioContext.currentTime + duration);
+            }
+
+            playMoveSound() {
+                this.createBeep(800, 0.1);
+            }
+
+            playWinSound() {
+                setTimeout(() => this.createBeep(523, 0.2), 0);
+                setTimeout(() => this.createBeep(659, 0.2), 200);
+                setTimeout(() => this.createBeep(784, 0.3), 400);
+            }
+
+            playLoseSound() {
+                setTimeout(() => this.createBeep(400, 0.2), 0);
+                setTimeout(() => this.createBeep(350, 0.2), 200);
+                setTimeout(() => this.createBeep(300, 0.3), 400);
+            }
+
+            playDrawSound() {
+                this.createBeep(500, 0.5);
+            }
+        }
+
+        const audioManager = new AudioManager();
+
+        // ========================================
+        // SCREEN MANAGEMENT
+        // ========================================
+
+        function showScreen(screenName) {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.getElementById(screenName + 'Screen').classList.add('active');
+            currentScreen = screenName;
+        }
+
+        function startGame() {
+            // Enable audio context on user interaction
+            if (audioManager.audioContext && audioManager.audioContext.state === 'suspended') {
+                audioManager.audioContext.resume();
+            }
+            
+            // Initialize GameMonetize on first game start
+            if (!gameStarted) {
+                initializeGameMonetize();
+                gameStarted = true;
+            }
+            
+            showScreen('game');
+            resetGame();
+        }
+
+        function goHome() {
+            // IMPORTANTE: Qui facciamo partire le pubblicità GameMonetize
+            console.log('🚀 Play Again pressed - triggering ads...');
+            showGameMonetizeAds();
+            
+            // Ritorna alla home screen dopo un breve delay per permettere alle ads di caricarsi
+            setTimeout(() => {
+                showScreen('home');
+            }, 500);
+        }
+
+        // ========================================
+        // GAME LOGIC
+        // ========================================
+
+        function resetGame() {
+            gameState.board = Array(9).fill('');
+            gameState.currentPlayer = 'X';
+            gameState.gameActive = true;
+            
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach(cell => {
+                cell.textContent = '';
+                cell.className = 'cell';
+            });
+            
+            updateScoreboard();
+            updateDifficultyDisplay();
+            hideConfetti();
+        }
+
+        function makeMove(index) {
+            if (!gameState.gameActive || gameState.board[index] !== '') {
+                return;
+            }
+
+            // Player move
+            gameState.board[index] = 'X';
+            const cell = document.querySelectorAll('.cell')[index];
+            cell.textContent = 'X';
+            cell.classList.add('x', 'taken');
+            
+            audioManager.playMoveSound();
+
+            if (checkWinner()) {
+                return;
+            }
+
+            if (checkDraw()) {
+                return;
+            }
+
+            // Computer move
+            gameState.currentPlayer = 'O';
+            setTimeout(() => {
+                makeComputerMove();
+            }, 500);
+        }
+
+        function makeComputerMove() {
+            let moveIndex;
+            
+            switch (gameState.difficulty) {
+                case 'easy':
+                    moveIndex = getRandomMove();
+                    break;
+                case 'medium':
+                    moveIndex = getMediumMove();
+                    break;
+                case 'hard':
+                    moveIndex = getMinimaxMove();
+                    break;
+            }
+
+            if (moveIndex !== -1) {
+                gameState.board[moveIndex] = 'O';
+                const cell = document.querySelectorAll('.cell')[moveIndex];
+                cell.textContent = 'O';
+                cell.classList.add('o', 'taken');
+                
+                audioManager.playMoveSound();
+
+                checkWinner();
+                checkDraw();
+            }
+
+            gameState.currentPlayer = 'X';
+        }
+
+        // ========================================
+        // AI DIFFICULTY IMPLEMENTATIONS
+        // ========================================
+
+        function getRandomMove() {
+            const availableMoves = gameState.board
+                .map((cell, index) => cell === '' ? index : null)
+                .filter(val => val !== null);
+            
+            if (availableMoves.length === 0) return -1;
+            return availableMoves[Math.floor(Math.random() * availableMoves.length)];
+        }
+
+        function getMediumMove() {
+            // First try to win
+            for (let i = 0; i < 9; i++) {
+                if (gameState.board[i] === '') {
+                    gameState.board[i] = 'O';
+                    if (checkWinCondition('O')) {
+                        gameState.board[i] = '';
+                        return i;
+                    }
+                    gameState.board[i] = '';
+                }
+            }
+
+            // Then try to block player
+            for (let i = 0; i < 9; i++) {
+                if (gameState.board[i] === '') {
+                    gameState.board[i] = 'X';
+                    if (checkWinCondition('X')) {
+                        gameState.board[i] = '';
+                        return i;
+                    }
+                    gameState.board[i] = '';
+                }
+            }
+
+            // Otherwise random move
+            return getRandomMove();
+        }
+
+        function getMinimaxMove() {
+            let bestScore = -Infinity;
+            let bestMove = -1;
+
+            for (let i = 0; i < 9; i++) {
+                if (gameState.board[i] === '') {
+                    gameState.board[i] = 'O';
+                    let score = minimax(gameState.board, 0, false);
+                    gameState.board[i] = '';
+                    
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestMove = i;
+                    }
+                }
+            }
+
+            return bestMove;
+        }
+
+        function minimax(board, depth, isMaximizing) {
+            if (checkWinCondition('O')) return 1;
+            if (checkWinCondition('X')) return -1;
+            if (board.every(cell => cell !== '')) return 0;
+
+            if (isMaximizing) {
+                let bestScore = -Infinity;
+                for (let i = 0; i < 9; i++) {
+                    if (board[i] === '') {
+                        board[i] = 'O';
+                        let score = minimax(board, depth + 1, false);
+                        board[i] = '';
+                        bestScore = Math.max(score, bestScore);
+                    }
+                }
+                return bestScore;
+            } else {
+                let bestScore = Infinity;
+                for (let i = 0; i < 9; i++) {
+                    if (board[i] === '') {
+                        board[i] = 'X';
+                        let score = minimax(board, depth + 1, true);
+                        board[i] = '';
+                        bestScore = Math.min(score, bestScore);
+                    }
+                }
+                return bestScore;
+            }
+        }
+
+        // ========================================
+        // WIN/DRAW CHECKING
+        // ========================================
+
+        const winPatterns = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
+            [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
+            [0, 4, 8], [2, 4, 6] // Diagonals
+        ];
+
+        function checkWinCondition(player) {
+            return winPatterns.some(pattern => 
+                pattern.every(index => gameState.board[index] === player)
+            );
+        }
+
+        function checkWinner() {
+            for (let pattern of winPatterns) {
+                const [a, b, c] = pattern;
+                if (gameState.board[a] && 
+                    gameState.board[a] === gameState.board[b] && 
+                    gameState.board[a] === gameState.board[c]) {
+                    
+                    // Highlight winning cells
+                    const cells = document.querySelectorAll('.cell');
+                    pattern.forEach(index => {
+                        cells[index].classList.add('winning');
+                    });
+
+                    gameState.gameActive = false;
+                    
+                    setTimeout(() => {
+                        if (gameState.board[a] === 'X') {
+                            // Player wins
+                            gameState.wins++;
+                            // Increase difficulty after win
+                            const currentDiffIndex = difficulties.indexOf(gameState.difficulty);
+                            if (currentDiffIndex < difficulties.length - 1) {
+                                gameState.difficulty = difficulties[currentDiffIndex + 1];
+                            }
+                            showGameOver('win');
+                            showConfetti();
+                        } else {
+                            // Computer wins
+                            gameState.losses++;
+                            showGameOver('lose');
+                        }
+                    }, 1000);
+                    
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function checkDraw() {
+            if (gameState.board.every(cell => cell !== '')) {
+                gameState.gameActive = false;
+                gameState.draws++;
+                setTimeout(() => {
+                    showGameOver('draw');
+                }, 500);
+                return true;
+            }
+            return false;
+        }
+
+        // ========================================
+        // UI UPDATES
+        // ========================================
+
+        function updateScoreboard() {
+            document.getElementById('wins').textContent = gameState.wins;
+            document.getElementById('losses').textContent = gameState.losses;
+            document.getElementById('draws').textContent = gameState.draws;
+        }
+
+        function updateDifficultyDisplay() {
+            const difficultyText = gameState.difficulty.charAt(0).toUpperCase() + 
+                                 gameState.difficulty.slice(1);
+            document.getElementById('difficultyDisplay').textContent = 
+                `Difficulty: ${difficultyText}`;
+        }
+
+        function showGameOver(result) {
+            const message = document.getElementById('gameOverMessage');
+            
+            switch (result) {
+                case 'win':
+                    message.textContent = 'You Win!';
+                    message.className = 'win-message';
+                    audioManager.playWinSound();
+                    break;
+                case 'lose':
+                    message.textContent = 'You Lose!';
+                    message.className = 'lose-message';
+                    audioManager.playLoseSound();
+                    break;
+                case 'draw':
+                    message.textContent = "It's a Draw!";
+                    message.className = 'draw-message';
+                    audioManager.playDrawSound();
+                    break;
+            }
+            
+            showScreen('gameOver');
+        }
+
+        // ========================================
+        // CONFETTI SYSTEM
+        // ========================================
+
+        function showConfetti() {
+            const confetti = document.getElementById('confetti');
+            confetti.innerHTML = '';
+            
+            for (let i = 0; i < 50; i++) {
+                const piece = document.createElement('div');
+                piece.className = 'confetti-piece';
+                piece.style.left = Math.random() * 100 + '%';
+                piece.style.animationDelay = Math.random() * 2 + 's';
+                piece.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                confetti.appendChild(piece);
+            }
+            
+            setTimeout(hideConfetti, 3000);
+        }
+
+        function hideConfetti() {
+            document.getElementById('confetti').innerHTML = '';
+        }
+
+        // ========================================
+        // INITIALIZATION
+        // ========================================
+
+        // Initialize the game when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            showScreen('home');
+            updateScoreboard();
+            
+            console.log('🎮 Super Tris by Mapi Games - Ready!');
+            console.log('🔗 GameMonetize ID: memt6xmgz88enbhyo9rbyj7a58wcee4y');
+        });
+
+        // GameMonetize SDK ready handler
+        document.addEventListener('gdsdk_ready', function() {
+            console.log('🚀 GameMonetize SDK is ready!');
+        });
+    </script>
+</body>
+</html>

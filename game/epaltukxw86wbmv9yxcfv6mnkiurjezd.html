@@ -1,0 +1,2089 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+	<title>Flying Baby Billi</title>
+	
+	<!-- Standardised web app manifest -->
+	<link rel="manifest" href="appmanifest.json" />
+	
+	<!-- Allow fullscreen mode on iOS devices. (These are Apple specific meta tags.) -->
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
+	<meta name="apple-mobile-web-app-capable" content="yes" />
+	<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+	<link rel="apple-touch-icon" sizes="256x256" href="icon-256.png" />
+	<meta name="HandheldFriendly" content="true" />
+	<!-- GameMonetize.com SDK - Interstitial Ads -->
+	<script type="text/javascript">
+	window.__fbbAdCallback = null;
+	window.SDK_OPTIONS = {
+		gameId: "epaltukxw86wbmv9yxcfv6mnkiurjezd",
+		onEvent: function (a) {
+			switch (a.name) {
+				case "SDK_GAME_PAUSE":
+					// Pause game and mute audio during ad
+					try { if (typeof cr_setSuspended === "function") cr_setSuspended(true); } catch(e){}
+					try {
+						var ctx = window.__fbbAudioCtx;
+						if (ctx && typeof ctx.suspend === "function") ctx.suspend().catch(function(){});
+					} catch(e){}
+					try {
+						var st = document.getElementById("fbb-soundtrack-audio");
+						if (st) st.pause();
+					} catch(e){}
+					break;
+				case "SDK_GAME_START":
+					// Resume game and unmute audio after ad
+					try { if (typeof cr_setSuspended === "function") cr_setSuspended(false); } catch(e){}
+					try {
+						var ctx2 = window.__fbbAudioCtx;
+						if (ctx2 && typeof ctx2.resume === "function") ctx2.resume().catch(function(){});
+					} catch(e){}
+					try {
+						if (typeof window.__fbbSoundtrackTryPlay === "function") window.__fbbSoundtrackTryPlay();
+					} catch(e){}
+					// Run stored callback if any
+					if (typeof window.__fbbAdCallback === "function") {
+						var cb = window.__fbbAdCallback;
+						window.__fbbAdCallback = null;
+						try { cb(); } catch(e){}
+					}
+					break;
+				case "SDK_READY":
+					console.log("GameMonetize SDK Ready");
+					break;
+				case "SDK_ERROR":
+					console.log("GameMonetize SDK Error");
+					// Still run callback on error so game doesn't freeze
+					if (typeof window.__fbbAdCallback === "function") {
+						var cb2 = window.__fbbAdCallback;
+						window.__fbbAdCallback = null;
+						try { cb2(); } catch(e){}
+					}
+					break;
+			}
+		}
+	};
+	(function (a, b, c) {
+		var d = a.getElementsByTagName(b)[0];
+		a.getElementById(c) || (a = a.createElement(b), a.id = c,
+		a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+	})(document, "script", "gamemonetize-sdk");
+	</script>
+	
+	<!-- Chrome for Android web app tags -->
+	<meta name="mobile-web-app-capable" content="yes" />
+	<link rel="shortcut icon" sizes="256x256" href="icon-256.png" />
+    <meta name="theme-color" content="#000000" />
+
+    <!-- All margins and padding must be zero for the canvas to fill the screen. -->
+	<style type="text/css">
+		* {
+			padding: 0;
+			margin: 0;
+			box-sizing: border-box;
+		}
+		html, body {
+			background: #000;
+			color: #fff;
+			overflow: hidden;
+			touch-action: none;
+			-ms-touch-action: none;
+			height: 100%;
+		}
+		body {
+			display: flex;
+			align-items: stretch;
+			justify-content: center;
+		}
+		#c2canvasdiv {
+			position: relative;
+			width: 100vw;
+			height: 100vh;
+		}
+		canvas {
+			touch-action-delay: none;
+			touch-action: none;
+			-ms-touch-action: none;
+			width: 100%;
+			height: 100%;
+			display: block;
+		}
+		#fbb-back-ui {
+			position: fixed;
+			top: 0.75rem;
+			left: 0.5rem;
+			z-index: 21;
+			pointer-events: auto;
+		}
+		#fbb-menu-ui {
+			position: fixed;
+			bottom: 0.75rem;
+			right: 0.5rem;
+			z-index: 21;
+			pointer-events: auto;
+		}
+		#fbb-top-ui {
+			position: absolute;
+			top: 0.5rem;
+			right: 0.5rem;
+			z-index: 20;
+			display: flex;
+			flex-direction: column;
+			align-items: flex-end;
+			gap: 0.4rem;
+			font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+			pointer-events: none;
+		}
+		#fbb-top-left,
+		#fbb-top-right {
+			display: flex;
+			align-items: center;
+			gap: 0.4rem;
+			pointer-events: auto;
+		}
+		#fbb-top-right {
+			flex-direction: column;
+			align-items: flex-end;
+		}
+		.fbb-circle-btn {
+			width: 36px;
+			height: 36px;
+			border-radius: 999px;
+			border: 1px solid rgba(148,163,184,0.7);
+			background: radial-gradient(circle at top, rgba(15,23,42,0.95), rgba(15,23,42,0.9));
+			color: #e5e7eb;
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			cursor: pointer;
+			box-shadow: 0 8px 22px rgba(0,0,0,0.7);
+			transition: transform 0.12s ease-out, box-shadow 0.12s ease-out, background 0.12s ease-out;
+		}
+		.fbb-circle-btn:hover {
+			transform: translateY(-1px);
+			box-shadow: 0 10px 26px rgba(0,0,0,0.85);
+			background: radial-gradient(circle at top, rgba(37,99,235,0.9), rgba(15,23,42,0.98));
+		}
+		.fbb-circle-btn span {
+			font-size: 16px;
+		}
+		#fbb-menu-ui {
+			display: flex;
+			flex-direction: column;
+			align-items: flex-end;
+			gap: 0.4rem;
+		}
+		#fbb-music-panel {
+			position: fixed;
+			bottom: 4rem;
+			right: 0.75rem;
+			width: min(300px, 90vw);
+			border-radius: 1rem;
+			border: 1px solid rgba(168,85,247,0.6);
+			background: radial-gradient(circle at top, rgba(88,28,135,0.85), rgba(30,27,75,0.96));
+			box-shadow: 0 18px 45px rgba(0,0,0,0.9);
+			padding: 0.7rem 0.85rem 0.9rem;
+			color: #f3e8ff;
+			font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+			font-size: 11px;
+			z-index: 19;
+			display: none;
+		}
+		#fbb-music-panel.fbb-music-panel-open { display: block; }
+		#fbb-music-panel h3 {
+			font-size: 12px;
+			font-weight: 600;
+			margin-bottom: 0.5rem;
+			display: flex;
+			align-items: center;
+			gap: 0.35rem;
+		}
+		#fbb-music-current {
+			font-size: 11px;
+			color: rgba(243,232,255,0.95);
+			margin-bottom: 0.5rem;
+		}
+		#fbb-music-controls {
+			display: flex;
+			align-items: center;
+			gap: 0.5rem;
+			margin-bottom: 0.5rem;
+		}
+		#fbb-music-mode {
+			display: flex;
+			gap: 0.25rem;
+			flex-wrap: wrap;
+		}
+		#fbb-music-mode button {
+			padding: 0.2rem 0.5rem;
+			font-size: 10px;
+			border-radius: 999px;
+			border: 1px solid rgba(216,180,254,0.6);
+			background: rgba(88,28,135,0.5);
+			color: #e9d5ff;
+			cursor: pointer;
+		}
+		#fbb-music-mode button.fbb-mode-active {
+			background: rgba(168,85,247,0.8);
+			color: #fff;
+		}
+		#fbb-leaderboard-panel {
+			position: fixed;
+			top: 3.4rem;
+			right: 0.75rem;
+			width: min(320px, 90vw);
+			max-height: 60vh;
+			overflow: auto;
+			border-radius: 1rem;
+			border: 1px solid rgba(16,185,129,0.7);
+			background: radial-gradient(circle at top, rgba(6,95,70,0.9), rgba(6,78,59,0.96));
+			box-shadow: 0 18px 45px rgba(0,0,0,0.9);
+			padding: 0.7rem 0.85rem 0.9rem;
+			color: #ecfdf5;
+			font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+			font-size: 11px;
+			z-index: 19;
+		}
+		#fbb-leaderboard-panel h3 {
+			font-size: 12px;
+			font-weight: 600;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 0.35rem;
+			margin-bottom: 0.25rem;
+		}
+		#fbb-leaderboard-panel h3 span {
+			font-size: 14px;
+		}
+		#fbb-leaderboard-panel dl {
+			display: grid;
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+			gap: 0.35rem 0.6rem;
+			margin: 0.25rem 0 0.45rem;
+		}
+		#fbb-leaderboard-panel dt {
+			text-transform: uppercase;
+			letter-spacing: 0.08em;
+			color: rgba(209,250,229,0.85);
+		}
+		#fbb-leaderboard-panel dd {
+			color: #ecfdf5;
+		}
+		#fbb-leaderboard-panel ol {
+			margin: 0.15rem 0 0;
+			padding-left: 1.1rem;
+		}
+		#fbb-leaderboard-panel li {
+			margin: 0.05rem 0;
+		}
+		#fbb-leaderboard-panel small {
+			display: block;
+			margin-top: 0.3rem;
+			color: rgba(190,242,213,0.9);
+		}
+		#fbb-settings-panel {
+			position: fixed;
+			top: 3.4rem;
+			right: 0.75rem;
+			width: min(260px, 90vw);
+			border-radius: 1rem;
+			border: 1px solid rgba(148,163,184,0.8);
+			background: radial-gradient(circle at top, rgba(15,23,42,0.98), rgba(15,23,42,0.96));
+			box-shadow: 0 18px 45px rgba(0,0,0,0.9);
+			padding: 0.6rem 0.85rem 0.75rem;
+			color: #e5e7eb;
+			font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+			font-size: 11px;
+			z-index: 19;
+		}
+		#fbb-settings-panel h3 {
+			font-size: 12px;
+			font-weight: 600;
+			margin: 0 0 0.3rem;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 0.4rem;
+		}
+		#fbb-settings-panel label {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 0.5rem;
+			margin: 0.25rem 0;
+		}
+		#fbb-settings-panel input[type="checkbox"] {
+			accent-color: #22c55e;
+		}
+	</style>
+	
+	<!-- Simple icon font for settings / leaderboards -->
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+	<script>
+	// Intercept AudioContext so we can globally mute the C2 game engine audio.
+	// The custom soundtrack plays through a separate <audio> element (not affected).
+	(function () {
+		try {
+			var OrigAC = window.AudioContext || window.webkitAudioContext;
+			if (!OrigAC) return;
+
+			function WrappedAC() {
+				var ctx = new OrigAC();
+				if (!window.__fbbAudioCtx) {
+					window.__fbbAudioCtx = ctx;
+				}
+
+				// Mute C2 engine audio: insert a zero-gain node before the real destination.
+				// All C2 sounds route through ctx.destination, so this silences them.
+				try {
+					var muteGain = ctx.createGain();
+					muteGain.gain.value = 0; // silence C2 SFX
+					muteGain.connect(ctx.__fbbOrigDest || ctx.destination);
+					// Override destination so all C2 audio routes through our mute node
+					Object.defineProperty(ctx, 'destination', {
+						get: function () { return muteGain; },
+						configurable: true
+					});
+					window.__fbbMuteGain = muteGain;
+				} catch (e) {
+					console.warn("[Flying Baby Billi] Could not mute C2 audio:", e);
+				}
+
+				// Defer resume() until after a user gesture so Chrome doesn't show "AudioContext was not allowed to start".
+				var origResume = ctx.resume && ctx.resume.bind(ctx);
+				if (typeof origResume === "function") {
+					ctx.__fbbOrigResume = origResume;
+					ctx.resume = function () {
+						if (window.__fbbAudioUnlocked) return origResume();
+						window.__fbbResumePending = true;
+						return Promise.resolve();
+					};
+				}
+				return ctx;
+			}
+
+			WrappedAC.prototype = OrigAC.prototype;
+			window.AudioContext = WrappedAC;
+			if (window.webkitAudioContext) {
+				window.webkitAudioContext = WrappedAC;
+			}
+		} catch (e) {
+			console.warn("[Flying Baby Billi] AudioContext wrapper failed:", e);
+		}
+	})();
+
+	// Unlock AudioContext on user gesture (required on mobile/PWA and Chrome autoplay policy).
+	(function () {
+		var isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+		var isPWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+		var audioUnlocked = false;
+		
+		function tryResume() {
+			if (audioUnlocked) return;
+			try {
+				console.log("[Flying Baby Billi] Attempting to unlock audio context...");
+				window.__fbbAudioUnlocked = true;
+				audioUnlocked = true;
+				
+				var ctx = window.__fbbAudioCtx;
+				if (ctx && ctx.state !== "running" && typeof ctx.__fbbOrigResume === "function") {
+					ctx.__fbbOrigResume().then(function () {
+						if (ctx.state === "running") {
+							console.log("[Flying Baby Billi] AudioContext resumed successfully");
+							window.__fbbAudioUnlocked = true;
+							
+							// Check if autoplay was requested
+							try {
+								// Start game audio only after walkthrough ad is closed (user pressed X), not on initial load
+								if (window.__fbbWalkthroughClosed) {
+									setTimeout(function() {
+										try {
+											if (typeof window.__fbbStartSoundtrack === "function") window.__fbbStartSoundtrack();
+											else if (typeof window.__fbbAutoStartMusic === "function") window.__fbbAutoStartMusic();
+										} catch (e) {}
+									}, 200);
+								}
+							} catch (e) {}
+						}
+					}).catch(function (e) {
+						console.warn("[Flying Baby Billi] AudioContext resume failed:", e);
+					});
+				}
+			} catch (e) {
+				console.warn("[Flying Baby Billi] Audio unlock failed:", e);
+			}
+		}
+		
+		function onGesture() {
+			tryResume();
+			// Do NOT start/restart soundtrack here — only unlock AudioContext for SFX.
+			// Soundtrack starts once when page loads (from game hub "Play now") or on first gesture only (see onFirstGesture).
+		}
+		
+		// Check if audio was pre-unlocked by parent page
+		try {
+			if (sessionStorage.getItem('fbb-audio-unlocked') === 'true') {
+				console.log("[Flying Baby Billi] Audio pre-unlocked by parent page");
+				setTimeout(tryResume, 100);
+			}
+		} catch (e) {
+			console.warn("[Flying Baby Billi] Could not check audio unlock status:", e);
+		}
+		
+		// Listen for audio unlock messages from parent page  
+		window.addEventListener('message', function(event) {
+			try {
+				if (event.data && event.data.type === 'AUDIO_UNLOCK') {
+					console.log("[Flying Baby Billi] Received audio unlock message from parent");
+					setTimeout(tryResume, 50);
+				}
+			} catch (e) {
+				// Ignore errors from cross-origin messages
+			}
+		}, false);
+		
+		// For PWA/mobile, try immediate unlock if launched from home screen
+		if (isPWA || window.navigator.standalone) {
+			setTimeout(function() {
+				console.log("[Flying Baby Billi] PWA detected, attempting immediate audio unlock");
+				tryResume();
+			}, 300);
+		}
+		
+		// Check for autoplay parameter on load
+		try {
+			var urlParams = new URLSearchParams(window.location.search);
+			if (urlParams.get('autoplay') === '1') {
+				console.log("[Flying Baby Billi] Autoplay parameter detected");
+				setTimeout(tryResume, 500);
+			}
+		} catch (e) {
+			console.warn("[Flying Baby Billi] Autoplay parameter check failed:", e);
+		}
+		
+		window.__fbbResumeAudio = tryResume;
+		document.addEventListener("click", onGesture, { passive: true });
+		document.addEventListener("touchstart", onGesture, { passive: true });
+		document.addEventListener("touchend", onGesture, { passive: true });
+		document.addEventListener("keydown", onGesture, { passive: true });
+		
+		// Also try when the game canvas is touched (user taps to flap)
+		document.addEventListener("DOMContentLoaded", function () {
+			function attachCanvas() {
+				var canvas = document.getElementById("c2canvas");
+				if (canvas && !canvas.__fbbAudioListeners) {
+					canvas.__fbbAudioListeners = true;
+					canvas.addEventListener("touchstart", onGesture, { passive: true });
+					canvas.addEventListener("touchend", onGesture, { passive: true });
+					canvas.addEventListener("click", onGesture, { passive: true });
+				}
+			}
+			attachCanvas();
+			setTimeout(attachCanvas, 500);
+			setTimeout(attachCanvas, 2000);
+		});
+		
+		// Additional mobile/PWA support
+		if (isMobile || isPWA) {
+			// Try when page becomes visible
+			document.addEventListener("visibilitychange", function() {
+				if (!document.hidden && !audioUnlocked) {
+					setTimeout(tryResume, 100);
+				}
+			});
+			
+			// Try when window gains focus  
+			window.addEventListener("focus", function() {
+				if (!audioUnlocked) {
+					setTimeout(tryResume, 100);
+				}
+			});
+		}
+	})();
+
+	// Per-device progress tracking (time-based, optional score field).
+	(function () {
+		var STORAGE_KEY = "flyingBabyBilli_progress_v1";
+		var sessionStart = Date.now();
+
+		function load() {
+			try {
+				var raw = localStorage.getItem(STORAGE_KEY);
+				if (!raw) return null;
+				return JSON.parse(raw);
+			} catch (e) {
+				return null;
+			}
+		}
+
+		function save(data) {
+			try {
+				localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+			} catch (e) {
+				// ignore
+			}
+		}
+
+		function finalizeSession() {
+			var elapsedMs = Date.now() - sessionStart;
+			var seconds = Math.max(0, Math.round(elapsedMs / 1000));
+			if (!seconds) return;
+
+			var data = load() || {};
+			data.totalPlaySeconds = (data.totalPlaySeconds || 0) + seconds;
+			data.sessions = (data.sessions || 0) + 1;
+			if (!data.bestSessionSeconds || seconds > data.bestSessionSeconds) {
+				data.bestSessionSeconds = seconds;
+			}
+			data.lastPlayed = Date.now();
+
+			if (!Array.isArray(data.runs)) {
+				data.runs = [];
+			}
+			data.runs.push({
+				seconds: seconds,
+				score: null,
+				at: Date.now()
+			});
+			data.runs = data.runs.slice(-50);
+
+			save(data);
+		}
+
+		window.addEventListener("beforeunload", finalizeSession);
+		window.__fbbFinalizeSession = finalizeSession;
+		window.__fbbProgressStorageKey = STORAGE_KEY;
+	})();
+
+	// API base: use Cloudflare Worker URL on production when games hub hasn't set fbb_api_base.
+	var FBB_CLOUDFLARE_WORKER_URL = "https://petlife-api-proxy.pethoria7.workers.dev";
+	function getFbbApiBase() {
+		var fromStorage = (typeof localStorage !== "undefined" && localStorage.getItem("fbb_api_base"))
+			? localStorage.getItem("fbb_api_base").replace(/\/$/, "") : "";
+		if (fromStorage) return fromStorage;
+		var origin = (typeof location !== "undefined" && location.origin) ? location.origin : "";
+		var isLocal = !origin || /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin);
+		if (!isLocal) return FBB_CLOUDFLARE_WORKER_URL;
+		return origin;
+	}
+
+	// Go to Games hub (menu/landing). Used by in-game bottom-right Menu button and C3 Button_contonue.
+	window.__fbbGoToMenu = function () {
+		if (typeof window.__fbbSoundtrackStop === "function") window.__fbbSoundtrackStop();
+		try {
+			var target = (window.top && window.top.location) ? window.top : window;
+			target.location.href = "/game.html";
+		} catch (e) {
+			window.location.href = "/game.html";
+		}
+	};
+
+	// GameMonetize SDK: show interstitial ad on user actions (play, continue, level complete, etc.)
+	function fbbShowBanner() {
+		if (typeof sdk !== "undefined" && sdk.showBanner) {
+			sdk.showBanner();
+		}
+	}
+	// Replaces old walkthrough ad system: calls GameMonetize SDK and runs callback when ad finishes.
+	window.__fbbShowWalkthroughAd = function (onCloseCallback) {
+		window.__fbbAdCallback = typeof onCloseCallback === "function" ? onCloseCallback : null;
+		if (typeof sdk !== "undefined" && sdk.showBanner) {
+			sdk.showBanner();
+		} else {
+			// SDK not loaded, run callback directly
+			if (window.__fbbAdCallback) {
+				var cb = window.__fbbAdCallback;
+				window.__fbbAdCallback = null;
+				try { cb(); } catch(e){}
+			}
+		}
+	};
+
+	// Simple level model based on coins. Milestones ramp until 100 coins.
+	// Level 1: 10 coins, Level 2: 25, Level 3: 40, then every +15 coins up to 100.
+	var FBB_LEVEL_THRESHOLDS = [
+		{ level: 1, coins: 10 },
+		{ level: 2, coins: 25 },
+		{ level: 3, coins: 40 },
+		{ level: 4, coins: 55 },
+		{ level: 5, coins: 70 },
+		{ level: 6, coins: 85 },
+		{ level: 7, coins: 100 }
+	];
+	function fbbComputeLevel(score) {
+		var num = Number(score);
+		if (!Number.isFinite(num) || num < 0) return 0;
+		var lvl = 0;
+		for (var i = 0; i < FBB_LEVEL_THRESHOLDS.length; i++) {
+			if (num >= FBB_LEVEL_THRESHOLDS[i].coins) lvl = FBB_LEVEL_THRESHOLDS[i].level;
+		}
+		return lvl;
+	}
+	function fbbGetLevelRewards(level) {
+		if (level <= 0) return [];
+		if (level === 1) return ["Unlocked Level 1", "Future PeThoria XP bonus (coming soon)"];
+		if (level === 2) return ["Unlocked Level 2", "Speed and difficulty step-up"];
+		if (level === 3) return ["Unlocked Level 3", "Higher challenge, better future rewards"];
+		if (level === 4) return ["Unlocked Level 4", "Elite runner status preview"];
+		if (level === 5) return ["Unlocked Level 5", "You’re in the top tier of runners"];
+		if (level === 6) return ["Unlocked Level 6", "Almost max level for this beta"];
+		if (level >= 7) return ["Unlocked Level 7", "Max level for this beta – huge future rewards"];
+		return [];
+	}
+	function fbbFormatDuration(seconds) {
+		if (seconds == null || !Number.isFinite(seconds) || seconds < 0) return "0 min & 0 seconds";
+		var s = Math.round(Number(seconds));
+		if (s <= 0) return "0 min & 0 seconds";
+		var mins = Math.floor(s / 60);
+		var secs = s % 60;
+		if (mins <= 0) return "0 min & " + secs + " second" + (secs === 1 ? "" : "s");
+		if (mins === 1) return "1 min & " + secs + " second" + (secs === 1 ? "" : "s");
+		return mins + " mins & " + secs + " second" + (secs === 1 ? "" : "s");
+	}
+	function fbbShowLevelPopup(level, score, durationSeconds, passed, pointsAwarded) {
+		var overlay = document.getElementById("fbb-level-overlay");
+		if (!overlay) {
+			if (window.__fbbDebug) window.__fbbDebugLog("[FBB] Level popup: overlay element not found!");
+			return;
+		}
+		var titleEl = document.getElementById("fbb-level-title");
+		var infoEl = document.getElementById("fbb-level-info");
+		var rewardsEl = document.getElementById("fbb-level-rewards");
+		var continueBtn = document.getElementById("fbb-level-continue");
+		var backBtn = document.getElementById("fbb-level-back");
+		var secs = Number(durationSeconds);
+		var isPassed = passed !== false && level > 0;
+		var pethoriaPoints = Number(pointsAwarded) || 0;
+		
+		if (window.__fbbDebug) {
+			window.__fbbDebugLog("[FBB] Showing level popup: level=" + level + ", score=" + score + ", passed=" + isPassed);
+		}
+		
+		if (titleEl) {
+			if (isPassed) {
+				titleEl.textContent = "Level " + level + " Passed! ✓";
+				titleEl.style.color = "#4ade80";
+			} else {
+				titleEl.textContent = "Level Failed";
+				titleEl.style.color = "#f87171";
+			}
+		}
+		if (infoEl) {
+			var line = "You collected " + Number(score || 0) + " coins";
+			if (Number.isFinite(secs) && secs > 0) line += " in " + fbbFormatDuration(secs);
+			if (isPassed) {
+				line += ". Great job!";
+			} else {
+				var targetCoins = level > 0 && level <= FBB_LEVEL_THRESHOLDS.length ? FBB_LEVEL_THRESHOLDS[level - 1].coins : 10;
+				line += ". Need " + targetCoins + " coins to pass Level " + level + ".";
+			}
+			infoEl.textContent = line;
+		}
+		if (rewardsEl) {
+			rewardsEl.innerHTML = "";
+			if (pethoriaPoints > 0) {
+				var li = document.createElement("li");
+				li.textContent = "+" + pethoriaPoints + " PeThoria points added to your account!";
+				li.style.color = "#fbbf24";
+				rewardsEl.appendChild(li);
+			}
+			if (isPassed) {
+				var rewards = fbbGetLevelRewards(level);
+				if (!rewards.length) {
+					var li = document.createElement("li");
+					li.textContent = "More rewards coming in future updates.";
+					rewardsEl.appendChild(li);
+				} else {
+					rewards.forEach(function (txt) {
+						var li = document.createElement("li");
+						li.textContent = txt;
+						rewardsEl.appendChild(li);
+					});
+				}
+			} else if (pethoriaPoints <= 0) {
+				var li = document.createElement("li");
+				li.textContent = "Keep trying! Collect more coins to pass this level.";
+				rewardsEl.appendChild(li);
+			}
+		}
+		if (continueBtn) {
+			continueBtn.onclick = function () {
+				if (typeof window.__fbbShowWalkthroughAd === "function") {
+					window.__fbbShowWalkthroughAd(function () {
+						overlay.style.display = "none";
+						if (typeof fbbShowBanner === "function") fbbShowBanner();
+					});
+				} else {
+					overlay.style.display = "none";
+					if (typeof fbbShowBanner === "function") fbbShowBanner();
+				}
+			};
+		}
+		if (backBtn) {
+			backBtn.onclick = function () {
+				if (typeof window.__fbbShowWalkthroughAd === "function") {
+					window.__fbbShowWalkthroughAd(function () {
+						try {
+							if (typeof window.__fbbFinalizeSession === "function") window.__fbbFinalizeSession();
+						} catch (e) {}
+						if (typeof window.__fbbSoundtrackStop === "function") window.__fbbSoundtrackStop();
+						window.location.href = "/game.html";
+					});
+				} else {
+					try {
+						if (typeof window.__fbbFinalizeSession === "function") window.__fbbFinalizeSession();
+					} catch (e) {}
+					if (typeof window.__fbbSoundtrackStop === "function") window.__fbbSoundtrackStop();
+					window.location.href = "/game.html";
+				}
+			};
+		}
+		fbbShowBanner(); // GameMonetize: show banner on level complete / level failed
+		overlay.style.display = "flex";
+		overlay.style.zIndex = "99999";
+		// Ad shows when user clicks Continue or Back to Games (see button handlers above)
+	}
+
+	// Call this from Construct when the player dies / fails / round ends so we show the level popup and walkthrough ad.
+	// e.g. in C2: On player death -> Run JavaScript: if (window.__fbbOnGameOver) window.__fbbOnGameOver(runtime.globalVars.Coins, durationSeconds);
+	window.__fbbOnGameOver = function (score, durationSeconds) {
+		if (window.__fbbSubmittedThisRun) return;
+		var s = Number(score);
+		var d = Number(durationSeconds);
+		if (!Number.isFinite(s) || s < 0) s = 0;
+		if (!Number.isFinite(d) || d < 0) d = 0;
+		window.__fbbLastKnownScore = s;
+		if (typeof window.__fbbDebugLog === "function") window.__fbbDebugLog("[FBB] Game over — score=" + s + " duration=" + d);
+		if (typeof window.__fbbSubmitScore === "function") window.__fbbSubmitScore(s, d);
+		window.__fbbSubmittedThisRun = true;
+		// Ad shows when user taps Continue, Back to Games, or Menu (see button handlers)
+	};
+
+	// Submit score to PeThoria global leaderboard. Call from Construct on game over, e.g.:
+	// if (window.__fbbSubmitScore) window.__fbbSubmitScore(projectScore, durationSeconds);
+	// Records run locally even when score is 0; only POSTs to server when score > 0.
+	window.__fbbSubmitScore = function (score, durationSeconds) {
+		var numScore = Number(score);
+		var numDuration = Number(durationSeconds);
+		if (!Number.isFinite(numScore) || numScore < 0) return;
+		var base = (typeof getFbbApiBase === "function" ? getFbbApiBase() : (typeof location !== "undefined" && location.origin ? location.origin : ""));
+		var runSeconds = Number.isFinite(numDuration) ? numDuration : 0;
+
+		function doLocalUpdateAndPopup(pointsAwarded) {
+			pointsAwarded = Number(pointsAwarded) || 0;
+			try {
+				var key = window.__fbbProgressStorageKey || "flyingBabyBilli_progress_v1";
+				var raw = localStorage.getItem(key);
+				var data = raw ? JSON.parse(raw) : {};
+				if (!Array.isArray(data.runs)) data.runs = [];
+				data.runs.push({ score: numScore, seconds: runSeconds, at: Date.now() });
+				data.runs = data.runs.slice(-50);
+				data.lastPlayed = Date.now();
+
+				var meta = data.levelMeta || {};
+				var prevHighest = Number(meta.highestLevel || 0) || 0;
+				var prevLevelsPassed = Number(meta.levelsPassed || 0) || 0;
+				var newLevel = fbbComputeLevel(numScore);
+				var highest = prevHighest;
+				var levelsPassed = prevLevelsPassed;
+				var passed = newLevel > 0;
+
+				var targetLevel = 1;
+				if (newLevel > 0) {
+					targetLevel = newLevel;
+				} else {
+					for (var i = 0; i < FBB_LEVEL_THRESHOLDS.length; i++) {
+						if (numScore < FBB_LEVEL_THRESHOLDS[i].coins) {
+							targetLevel = FBB_LEVEL_THRESHOLDS[i].level;
+							break;
+						}
+					}
+				}
+				setTimeout(function () {
+					fbbShowLevelPopup(targetLevel, numScore, runSeconds, passed, pointsAwarded);
+				}, 100);
+
+				if (newLevel > highest) {
+					levelsPassed += (newLevel - highest);
+					highest = newLevel;
+				}
+				var result = newLevel > 0 ? "passed" : "lost";
+				var history = Array.isArray(meta.history) ? meta.history.slice() : [];
+				history.push({ level: newLevel, score: numScore, seconds: runSeconds, passed: newLevel > 0, at: Date.now() });
+				history = history.slice(-50);
+				data.levelMeta = { highestLevel: highest, levelsPassed: levelsPassed, lastLevel: newLevel, lastResult: result, history: history };
+				localStorage.setItem(key, JSON.stringify(data));
+				try { window.dispatchEvent(new CustomEvent("fbb-score-submitted")); } catch (e2) {}
+			} catch (e) {}
+		}
+
+		if (base && numScore > 0) {
+			var token = (typeof localStorage !== "undefined" &&
+				(localStorage.getItem("token") || localStorage.getItem("auth_token") || localStorage.getItem("authToken"))) || "";
+			var url = base + "/api/games/flying-baby-billi/score";
+			var opts = {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ score: numScore, durationSeconds: runSeconds })
+			};
+			if (token) opts.headers["Authorization"] = "Bearer " + token;
+			fetch(url, opts)
+				.then(function (r) { return r.json(); })
+				.then(function (res) {
+					var pts = (res && res.levelProgress && res.levelProgress.pointsAwardedThisRun) ? res.levelProgress.pointsAwardedThisRun : 0;
+					doLocalUpdateAndPopup(pts);
+				})
+				.catch(function () { doLocalUpdateAndPopup(0); });
+		} else {
+			doLocalUpdateAndPopup(0);
+		}
+	};
+	</script>
+	
+</head> 
+ 
+<body> 
+	<div id="fb-root"></div>
+	
+	<script>
+	// Issue a warning if trying to preview an exported project on disk.
+	(function(){
+		// Check for running exported on file protocol
+		if (window.location.protocol.substr(0, 4) === "file")
+		{
+			alert("Exported games won't work until you upload them. (When running on the file:/// protocol, browsers block many features from working for security reasons.)");
+		}
+	})();
+	</script>
+	
+	<!-- Visible debug panel: add ?fbb_debug=1 to URL or set localStorage.fbb_debug=1 (reload to show) -->
+	<div id="fbb-debug-panel" style="display:none; position:fixed; bottom:0; left:0; right:0; max-height:200px; background:rgba(0,0,0,0.92); color:#4ade80; font:11px monospace; padding:8px; z-index:2147483647; border-top:1px solid #22c55e;">
+		<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-shrink:0;">
+			<span style="font-weight:600;">FBB bridge debug</span>
+			<div style="display:flex; gap:6px;">
+				<button type="button" id="fbb-debug-copy" style="padding:2px 8px; font-size:10px; border-radius:4px; background:#22c55e; color:#022c22; border:none; cursor:pointer;">Copy</button>
+				<button type="button" id="fbb-debug-close" style="padding:2px 8px; font-size:10px; border-radius:4px; background:#475569; color:#f1f5f9; border:none; cursor:pointer;">Close</button>
+			</div>
+		</div>
+		<div id="fbb-debug-log" style="overflow:auto; max-height:160px; white-space:pre-wrap; word-break:break-all;"></div>
+	</div>
+	<script>
+	(function () {
+		var panel = document.getElementById("fbb-debug-panel");
+		var logEl = document.getElementById("fbb-debug-log");
+		var isDebug = (typeof location !== "undefined" && location.search && location.search.indexOf("fbb_debug=1") >= 0)
+			|| (typeof localStorage !== "undefined" && localStorage.getItem("fbb_debug"));
+		if (isDebug && panel) {
+			try { if (typeof localStorage !== "undefined") localStorage.setItem("fbb_debug", "1"); } catch (e) {}
+			window.__fbbDebug = true;
+			panel.style.display = "block";
+			panel.style.zIndex = "2147483647";
+		}
+		window.__fbbDebugLog = function (msg) {
+			try {
+				if (typeof console !== "undefined" && console.log) console.log(msg);
+				if (logEl && panel && panel.style.display !== "none") {
+					var line = document.createElement("div");
+					line.textContent = (typeof msg === "string") ? msg : JSON.stringify(msg);
+					line.style.marginBottom = "2px";
+					logEl.appendChild(line);
+					logEl.scrollTop = logEl.scrollHeight;
+				}
+			} catch (e) {}
+		};
+		var closeBtn = document.getElementById("fbb-debug-close");
+		if (closeBtn && panel) closeBtn.addEventListener("click", function () {
+			panel.style.display = "none";
+			try { if (typeof localStorage !== "undefined") localStorage.removeItem("fbb_debug"); } catch (e) {}
+		});
+		var copyBtn = document.getElementById("fbb-debug-copy");
+		if (copyBtn) copyBtn.addEventListener("click", function () {
+			if (!logEl || !logEl.textContent) return;
+			try {
+				if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(logEl.textContent);
+				else { var ta = document.createElement("textarea"); ta.value = logEl.textContent; ta.style.position = "fixed"; ta.style.left = "-9999px"; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta); }
+				copyBtn.textContent = "Copied!";
+				setTimeout(function () { copyBtn.textContent = "Copy"; }, 1500);
+			} catch (e) { copyBtn.textContent = "Copy failed"; setTimeout(function () { copyBtn.textContent = "Copy"; }, 1500); }
+		});
+	})();
+	</script>
+
+	<!-- Level-up overlay (uses game art as backdrop) -->
+	<div id="fbb-level-overlay" style="display:none; position:fixed; inset:0; z-index:40; align-items:center; justify-content:center; background:radial-gradient(circle at top, rgba(15,23,42,0.96), rgba(0,0,0,0.96)); backdrop-filter:blur(14px);">
+		<div style="position:absolute; inset:0; opacity:0.22; background-image:url('loading-logo.png'); background-size:cover; background-position:center;"></div>
+		<div style="position:relative; max-width:380px; width:90%; border-radius:1.25rem; border:1px solid rgba(52,211,153,0.8); background:radial-gradient(circle at top, rgba(16,185,129,0.15), rgba(15,23,42,0.98)); box-shadow:0 24px 60px rgba(0,0,0,0.95); padding:1.3rem 1.2rem 1rem; color:#ecfdf5; font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; font-size:13px;">
+			<div style="display:flex; align-items:center; justify-content:space-between; gap:0.75rem; margin-bottom:0.4rem;">
+				<div style="display:flex; align-items:center; gap:0.4rem;">
+					<div style="width:32px; height:32px; border-radius:999px; background:radial-gradient(circle at top,rgba(34,197,94,0.4),rgba(5,46,22,0.95)); display:flex; align-items:center; justify-content:center; box-shadow:0 10px 25px rgba(22,163,74,0.7);">
+						<i class="fas fa-bolt" style="color:#bbf7d0; font-size:16px;"></i>
+					</div>
+					<div>
+						<div id="fbb-level-title" style="font-weight:700; letter-spacing:0.04em; text-transform:uppercase; font-size:11px;"></div>
+						<div id="fbb-level-info" style="font-size:11px; color:rgba(209,250,229,0.9); margin-top:2px;"></div>
+					</div>
+				</div>
+			</div>
+			<div style="margin-top:0.4rem;">
+				<div style="font-size:11px; text-transform:uppercase; letter-spacing:0.08em; color:rgba(167,243,208,0.9); margin-bottom:0.15rem;">Rewards & status</div>
+				<ul id="fbb-level-rewards" style="margin:0; padding-left:1.1rem; font-size:11px; color:#ecfdf5;"></ul>
+			</div>
+			<div style="display:flex; justify-content:flex-end; gap:0.5rem; margin-top:0.8rem;">
+				<button id="fbb-level-continue" type="button" style="padding:0.25rem 0.7rem; border-radius:999px; border:1px solid rgba(148,163,184,0.7); background:rgba(15,23,42,0.9); color:#e5e7eb; font-size:11px; cursor:pointer;">Continue</button>
+				<button id="fbb-level-back" type="button" style="padding:0.25rem 0.9rem; border-radius:999px; border:none; background:linear-gradient(135deg,#34d399,#22c55e); color:#064e3b; font-size:11px; font-weight:600; cursor:pointer; box-shadow:0 10px 25px rgba(16,185,129,0.7);">Back to Games</button>
+			</div>
+		</div>
+	</div>
+	<!-- Rotate overlay shown ONCE on first visit -->
+	<div id="fbb-rotate-overlay" style="display:none; position:fixed; inset:0; z-index:100001; background:rgba(0,0,0,0.96); color:#e5e7eb; align-items:center; justify-content:center; padding:1.25rem; text-align:center;">
+		<div style="max-width:420px; margin:0 auto; background:rgba(15,23,42,0.96); border-radius:1rem; border:1px solid rgba(96,165,250,0.7); box-shadow:0 24px 60px rgba(0,0,0,0.9); padding:1.5rem;">
+			<h2 style="font-size:1.4rem; margin:0 0 0.75rem; font-weight:700;">Rotate your phone</h2>
+			<p style="font-size:0.95rem; margin:0 0 0.75rem; color:rgba(226,232,240,0.9);">
+				For the best Flying Baby Billi experience, rotate your device to <strong>landscape</strong> before you start playing.
+			</p>
+			<p style="font-size:0.85rem; margin:0 0 1rem; color:rgba(148,163,184,0.9);">
+				This reminder is shown only once. You can always come back here from the in‑game back button.
+			</p>
+			<p style="font-size:0.8rem; margin:0 0 0.75rem; color:rgba(148,163,184,0.8);">
+				PWA / home screen app: if sound doesn’t start, tap <strong>Play game audio</strong> below.
+			</p>
+			<div style="display:flex; flex-direction:column; gap:0.75rem; align-items:center;">
+				<button id="fbb-play-audio-btn" type="button" style="padding:0.5rem 1.25rem; border-radius:999px; border:1px solid rgba(148,163,184,0.6); background:rgba(30,64,175,0.2); color:#93c5fd; font-size:0.85rem; font-weight:600; cursor:pointer;">
+					🔊 Play game audio
+				</button>
+				<button id="fbb-rotate-continue" type="button" style="padding:0.5rem 1.5rem; border-radius:999px; border:none; background:linear-gradient(135deg,#22c55e,#16a34a); color:#022c22; font-size:0.9rem; font-weight:600; cursor:pointer; box-shadow:0 16px 40px rgba(34,197,94,0.6);">
+					Okay, start game
+				</button>
+			</div>
+		</div>
+	</div>
+	<script>
+	// Rotate overlay + GameMonetize ad triggers (no timer-based ads, no floating ads)
+	(function () {
+		var rotateOverlay = document.getElementById("fbb-rotate-overlay");
+		var rotateContinue = document.getElementById("fbb-rotate-continue");
+
+		function fbbShowRotateOverlayOnce() {
+			try {
+				if (sessionStorage.getItem("fbb_rotate_shown") === "true") return;
+			} catch (e) {}
+			if (!rotateOverlay || !rotateContinue) return;
+			rotateOverlay.style.display = "flex";
+			rotateOverlay.style.alignItems = "center";
+			rotateOverlay.style.justifyContent = "center";
+			try { rotateContinue.focus(); } catch (e) {}
+		}
+
+		// Start game audio
+		function fbbStartGameAudio() {
+			try {
+				window.__fbbWalkthroughClosed = true;
+				var ctx = window.__fbbAudioCtx;
+				if (ctx && ctx.state !== "closed") {
+					if (typeof ctx.resume === "function") {
+						ctx.resume().then(function () {
+							if (typeof cr_setSuspended === "function") cr_setSuspended(false);
+							fbbStartSoundtrackWithRetry();
+						}).catch(function () { fbbStartSoundtrackWithRetry(); });
+					} else {
+						if (typeof cr_setSuspended === "function") cr_setSuspended(false);
+						fbbStartSoundtrackWithRetry();
+					}
+				} else {
+					if (typeof cr_setSuspended === "function") cr_setSuspended(false);
+					fbbStartSoundtrackWithRetry();
+				}
+			} catch (e) {
+				fbbStartSoundtrackWithRetry();
+			}
+		}
+
+		function fbbStartSoundtrackWithRetry() {
+			function tryOnce() {
+				try {
+					if (typeof window.__fbbStartSoundtrack === "function") { window.__fbbStartSoundtrack(); return true; }
+					if (typeof window.__fbbStartSoundtrackWhenReady === "function") { window.__fbbStartSoundtrackWhenReady(); return true; }
+					if (typeof window.__fbbAutoStartMusic === "function") { window.__fbbAutoStartMusic(); return true; }
+				} catch (e) {}
+				return false;
+			}
+			if (tryOnce()) return;
+			var attempts = 0;
+			var t = setInterval(function () {
+				attempts++;
+				if (tryOnce() || attempts >= 10) clearInterval(t);
+			}, 250);
+		}
+
+		var playAudioBtn = document.getElementById("fbb-play-audio-btn");
+		if (playAudioBtn) {
+			playAudioBtn.addEventListener("click", function () {
+				fbbStartGameAudio();
+				try { playAudioBtn.textContent = "\u2713 Sound on"; playAudioBtn.style.background = "rgba(34,197,94,0.2)"; playAudioBtn.style.color = "#86efac"; } catch (e) {}
+			});
+		}
+
+		if (rotateContinue) {
+			rotateContinue.addEventListener("click", function () {
+				if (rotateOverlay) rotateOverlay.style.display = "none";
+				try { sessionStorage.setItem("fbb_rotate_shown", "true"); } catch (e) {}
+				fbbStartGameAudio();
+				// GameMonetize: show ad on play/start (user-triggered, not timer)
+				if (typeof fbbShowBanner === "function") fbbShowBanner();
+			});
+		}
+
+		// Show rotate overlay once on page load (no timer-based ads — GameMonetize compliant)
+		function showRotateOnLoad() {
+			setTimeout(function () {
+				fbbShowRotateOverlayOnce();
+			}, 500);
+		}
+		if (document.readyState === "loading") {
+			document.addEventListener("DOMContentLoaded", showRotateOnLoad);
+		} else {
+			showRotateOnLoad();
+		}
+	})();
+	</script>
+	<div id="fbb-settings-panel" hidden>
+		<h3>
+			<span><i class="fas fa-gear"></i> Game settings</span>
+			<button type="button" id="fbb-close-settings" class="fbb-circle-btn" style="width: 26px; height: 26px; box-shadow: none;">
+				<span style="font-size: 12px;"><i class="fas fa-xmark"></i></span>
+			</button>
+		</h3>
+		<label>
+			<span>Mute soundtrack</span>
+			<input type="checkbox" id="fbb-mute-toggle">
+		</label>
+		<small>Settings apply only on this device while you play Flying Baby Billi.</small>
+	</div>
+	<div id="fbb-leaderboard-panel" hidden>
+		<h3>
+			<span><i class="fas fa-ranking-star"></i> Your Flying Baby Billi Stats</span>
+			<button type="button" id="fbb-close-panel" class="fbb-circle-btn" style="width: 26px; height: 26px; box-shadow: none;">
+				<span style="font-size: 12px;"><i class="fas fa-xmark"></i></span>
+			</button>
+		</h3>
+		<dl>
+			<div>
+				<dt>Current level</dt>
+				<dd id="fbb-panel-level">—</dd>
+			</div>
+			<div>
+				<dt>This run: Coins</dt>
+				<dd id="fbb-panel-total-coins">—</dd>
+			</div>
+			<div id="fbb-panel-duration-row" style="display:none;">
+				<dt>This run: Duration</dt>
+				<dd id="fbb-panel-best-session">—</dd>
+			</div>
+			<div>
+				<dt>Status</dt>
+				<dd id="fbb-panel-total-time">—</dd>
+			</div>
+			<div>
+				<dt>Run #</dt>
+				<dd id="fbb-panel-sessions">—</dd>
+			</div>
+			<div>
+				<dt>Lifetime: coins & time</dt>
+				<dd id="fbb-panel-last-played">—</dd>
+			</div>
+		</dl>
+		<h4 style="font-size:11px;font-weight:600;margin:0.35rem 0 0.2rem;display:flex;align-items:center;gap:0.35rem;">
+			<i class="fas fa-coins" style="color:#f59e0b;"></i> Top runs by rewards (coins earned)
+		</h4>
+		<ol id="fbb-panel-runs">
+			<li class="opacity-70">No scored runs yet. Finish a round to see coins here.</li>
+		</ol>
+		<small>Stats and top runs are stored on this device. Log in and play from the Games hub to sync to the global leaderboard.</small>
+		<h4 style="font-size:11px;font-weight:600;margin:0.5rem 0 0.25rem;display:flex;align-items:center;gap:0.35rem;">
+			<i class="fas fa-trophy"></i> Global leaderboard (most coins, least time)
+		</h4>
+		<ol id="fbb-panel-global" class="opacity-90">
+			<li class="opacity-70">Open from Games hub to load.</li>
+		</ol>
+	</div>
+
+	<!-- Soundtrack / music player panel -->
+	<div id="fbb-music-panel">
+		<h3><i class="fas fa-music"></i> Soundtrack</h3>
+		<div id="fbb-music-current" style="font-size:12px;font-weight:600;color:#c4b5fd;margin-bottom:0.4rem;">Track 1: Interstellar — Adam</div>
+		<div id="fbb-music-embed" style="display:none; width:100%; min-height:80px; margin-bottom:0.5rem;"></div>
+		<div id="fbb-music-controls">
+			<button type="button" id="fbb-music-rewind" class="fbb-circle-btn" style="width:32px;height:32px;" aria-label="Rewind"><span><i class="fas fa-backward"></i></span></button>
+			<button type="button" id="fbb-music-stop" class="fbb-circle-btn" style="width:32px;height:32px;" aria-label="Stop music"><span><i class="fas fa-stop"></i></span></button>
+			<button type="button" id="fbb-music-replay" class="fbb-circle-btn" style="width:32px;height:32px;" aria-label="Replay"><span><i class="fas fa-rotate-left"></i></span></button>
+			<button type="button" id="fbb-music-skip" class="fbb-circle-btn" style="width:32px;height:32px;" aria-label="Next track"><span><i class="fas fa-forward"></i></span></button>
+		</div>
+		<div id="fbb-music-status" style="font-size:10px;color:rgba(243,232,255,0.7);margin:0.25rem 0;">🎵 Ready</div>
+		<div class="fbb-music-mode-label" style="font-size:10px;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.25rem;color:rgba(243,232,255,0.8);">Play</div>
+		<div id="fbb-music-mode">
+			<button type="button" data-mode="beats">Beats</button>
+			<button type="button" data-mode="songs">Songs</button>
+			<button type="button" data-mode="both" class="fbb-mode-active">Both</button>
+		</div>
+	</div>
+	
+	<!-- Back button top-left; Menu button bottom-right (landing / in-game) -->
+	<!-- Game soundtrack: one Audio element, playlist built from beats/songs/both (saved on hub). -->
+	<audio id="fbb-soundtrack-audio" preload="metadata" style="display:none;"></audio>
+
+	<div id="fbb-back-ui">
+		<button id="fbb-back-btn" class="fbb-circle-btn" type="button" aria-label="Back to Games hub">
+			<span><i class="fas fa-arrow-left"></i></span>
+		</button>
+	</div>
+	<div id="fbb-menu-ui">
+		<button id="fbb-music-btn" class="fbb-circle-btn" type="button" aria-label="Soundtrack">
+			<span><i class="fas fa-music"></i></span>
+		</button>
+		<button id="fbb-menu-btn" class="fbb-circle-btn" type="button" aria-label="Menu (Games hub)">
+			<span><i class="fas fa-bars"></i></span>
+		</button>
+	</div>
+
+	<!-- The canvas must be inside a div called c2canvasdiv -->
+	<div id="c2canvasdiv">
+		<!-- Settings + Leaderboard UI overlay - inside canvas -->
+		<div id="fbb-top-ui">
+			<div id="fbb-top-right">
+				<button id="fbb-settings-btn" class="fbb-circle-btn" type="button" aria-label="Game settings (mute audio)">
+					<span><i class="fas fa-gear"></i></span>
+				</button>
+				<button id="fbb-leaderboard-btn" class="fbb-circle-btn" type="button" aria-label="View Flying Baby Billi leaderboard">
+					<span><i class="fas fa-trophy"></i></span>
+				</button>
+			</div>
+		</div>
+		<!-- The canvas the project will render to.  If you change its ID, don't forget to change the
+		ID the runtime looks for in the jQuery events above (ready() and cr_sizeCanvas()). -->
+		<canvas id="c2canvas" width="1280" height="720">
+			<!-- This text is displayed if the visitor's browser does not support HTML5.
+			You can change it, but it is a good idea to link to a description of a browser
+			and provide some links to download some popular HTML5-compatible browsers. -->
+			<h1>Your browser does not appear to support HTML5.  Try upgrading your browser to the latest version.  <a href="http://www.whatbrowser.org">What is a browser?</a>
+			<br/><br/><a href="http://www.microsoft.com/windows/internet-explorer/default.aspx">Microsoft Internet Explorer</a><br/>
+			<a href="http://www.mozilla.com/firefox/">Mozilla Firefox</a><br/>
+			<a href="https://www.google.com/chrome/">Google Chrome</a><br/>
+			<a href="http://www.apple.com/safari/download/">Apple Safari</a></h1>
+		</canvas>
+		
+	</div>
+	
+	<!-- Pages load faster with scripts at the bottom -->
+	
+	<!-- Construct 2 exported games require jQuery. -->
+	<script src="jquery-3.4.1.min.js"></script>
+	<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+	
+    <!-- The runtime script.  You can rename it, but don't forget to rename the reference here as well.
+    This file will have been minified and obfuscated if you enabled "Minify script" during export. -->
+	<script src="c2runtime.js"></script>
+
+	<!-- Flying Baby Billi soundtrack: loaded from API (admin-editable) or built-in default. Mode: beats / songs / both. -->
+	<script>
+	(function () {
+		var STORAGE_KEY = "fbb_soundtrack_mode";
+		var API_BASE = (typeof window !== "undefined" && window.API_CONFIG && window.API_CONFIG.API_BASE) ? window.API_CONFIG.API_BASE : (location.hostname === "localhost" || location.hostname === "127.0.0.1" ? "http://localhost:8000" : "https://petlife-api-proxy.pethoria7.workers.dev");
+		// Default beat URL from current page directory so it works on production (same path as page = no 404)
+		var pathDir = (typeof location !== "undefined" && location.pathname) ? location.pathname.replace(/\/[^/]*$/, "") : "";
+		var defaultBeatSrc = (typeof location !== "undefined" && location.origin && pathDir) ? (location.origin + pathDir + "/audio/interstellar-adam.mp3") : "audio/interstellar-adam.mp3";
+		var FBB_SOUNDTRACK = { beats: [{ id: 1, name: "Interstellar", artist: "Adam", src: defaultBeatSrc, type: "audio" }], music: [] };
+		function getMode() {
+			try {
+				var m = (localStorage.getItem(STORAGE_KEY) || "both").toLowerCase();
+				if (m !== "beats" && m !== "songs" && m !== "both") m = "both";
+				return m;
+			} catch (e) { return "both"; }
+		}
+		function setMode(m) {
+			try { localStorage.setItem(STORAGE_KEY, m); } catch (e) {}
+		}
+		function buildPlaylist(mode) {
+			var list = [];
+			if (mode === "beats") list = FBB_SOUNDTRACK.beats.slice();
+			else if (mode === "songs") list = FBB_SOUNDTRACK.music.slice();
+			else list = FBB_SOUNDTRACK.beats.slice().concat(FBB_SOUNDTRACK.music);
+			return list;
+		}
+		function startSoundtrackWhenReady() {
+			if (window.__fbbSoundtrackInited) {
+				if (typeof window.__fbbSoundtrackTryPlay === "function") window.__fbbSoundtrackTryPlay();
+				return;
+			}
+			window.__fbbSoundtrackInited = true;
+			var audio = document.getElementById("fbb-soundtrack-audio");
+			var panel = document.getElementById("fbb-music-panel");
+			var currentEl = document.getElementById("fbb-music-current");
+			if (!audio) return;
+			var mode = getMode();
+			var playlist = buildPlaylist(mode);
+			var index = 0;
+			function getCurrentTrack() { return playlist[index]; }
+			function embedUrlFromLink(link) {
+				if (!link) return null;
+				var s = link.trim();
+				var yt = s.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
+				if (yt) return "https://www.youtube.com/embed/" + yt[1];
+				var sp = s.match(/spotify\.com\/track\/([a-zA-Z0-9]+)/);
+				if (sp) return "https://open.spotify.com/embed/track/" + sp[1];
+				return null;
+			}
+			var embedEl = document.getElementById("fbb-music-embed");
+			function updateCurrentLabel() {
+				var t = getCurrentTrack();
+				if (currentEl) currentEl.textContent = t ? "Track " + (index + 1) + ": " + t.name + " — " + t.artist : "—";
+			}
+			function updateStatusLabel(text) {
+				var statusEl = document.getElementById("fbb-music-status");
+				if (statusEl) statusEl.textContent = text;
+			}
+			function playCurrent() {
+				var t = getCurrentTrack();
+				if (!t) { updateCurrentLabel(); updateStatusLabel("No tracks"); return; }
+				if (t.type === "embed" && t.link && embedEl) {
+					var url = embedUrlFromLink(t.link);
+					if (url) {
+						embedEl.innerHTML = "<iframe width=\"100%\" height=\"80\" style=\"max-width:100%;border:0;border-radius:8px;\" src=\"" + url.replace(/"/g, "&quot;") + "\" allowfullscreen allow=\"encrypted-media\"></iframe>";
+						embedEl.style.display = "block";
+						audio.pause();
+						audio.removeAttribute("src");
+					}
+				} else {
+					if (embedEl) { embedEl.innerHTML = ""; embedEl.style.display = "none"; }
+					if (t.src) {
+						audio.src = t.src;
+						audio.play().catch(function() {});
+					}
+				}
+				updateCurrentLabel();
+				updateStatusLabel("♪ Playing: " + t.name + " — " + t.artist);
+			}
+			function stopPlayback() {
+				audio.pause();
+				audio.currentTime = 0;
+				updateStatusLabel("⏹ Stopped");
+			}
+			function rewindTrack() {
+				audio.currentTime = 0;
+				if (!audio.paused) {
+					updateStatusLabel("⏪ Rewound — playing from start");
+				} else {
+					audio.play().catch(function() {});
+					updateStatusLabel("⏪ Rewound — playing from start");
+				}
+			}
+			function nextTrack() {
+				if (playlist.length === 0) return;
+				index = (index + 1) % playlist.length;
+				playCurrent();
+			}
+			audio.addEventListener("ended", function () { nextTrack(); });
+			audio.addEventListener("play", function () {
+				var t = getCurrentTrack();
+				if (t) updateStatusLabel("♪ Playing: " + t.name + " — " + t.artist);
+			});
+			audio.addEventListener("pause", function () {
+				if (audio.currentTime === 0) updateStatusLabel("⏹ Stopped");
+				else updateStatusLabel("⏸ Paused");
+			});
+			document.getElementById("fbb-music-skip") && document.getElementById("fbb-music-skip").addEventListener("click", function () { nextTrack(); });
+			document.getElementById("fbb-music-replay") && document.getElementById("fbb-music-replay").addEventListener("click", function () {
+				audio.currentTime = 0;
+				audio.play().catch(function() {});
+			});
+			document.getElementById("fbb-music-stop") && document.getElementById("fbb-music-stop").addEventListener("click", function () { stopPlayback(); });
+			document.getElementById("fbb-music-rewind") && document.getElementById("fbb-music-rewind").addEventListener("click", function () { rewindTrack(); });
+			var modeBtns = document.querySelectorAll("#fbb-music-mode button[data-mode]");
+			function setActiveMode(m) {
+				setMode(m);
+				modeBtns.forEach(function (btn) {
+					btn.classList.toggle("fbb-mode-active", btn.getAttribute("data-mode") === m);
+				});
+				playlist = buildPlaylist(m);
+				index = 0;
+				if (playlist.length > 0) playCurrent(); else { audio.pause(); audio.removeAttribute("src"); updateCurrentLabel(); }
+			}
+			modeBtns.forEach(function (btn) {
+				btn.addEventListener("click", function () { setActiveMode(btn.getAttribute("data-mode")); });
+			});
+			window.__fbbSoundtrackPlaylist = function () { return playlist; };
+			window.__fbbSoundtrackIndex = function () { return index; };
+			window.__fbbSoundtrackSetMode = setActiveMode;
+			window.__fbbSoundtrackNext = nextTrack;
+			window.__fbbSoundtrackReplay = function () { audio.currentTime = 0; audio.play().catch(function() {}); };
+			window.__fbbSoundtrackTryPlay = function () {
+				if (playlist.length > 0 && audio) {
+					var t = playlist[index];
+					if (t && t.src) { audio.src = t.src; audio.play().catch(function () {}); }
+				}
+			};
+			if (playlist.length > 0) playCurrent();
+			updateCurrentLabel();
+		}
+		var __fbbSoundtrackStarted = false;
+		function onFirstGesture() {
+			if (__fbbSoundtrackStarted) return;
+			__fbbSoundtrackStarted = true;
+			startSoundtrackWhenReady();
+		}
+		window.__fbbStartSoundtrackWhenReady = function () {
+			if (__fbbSoundtrackStarted) return;
+			__fbbSoundtrackStarted = true;
+			startSoundtrackWhenReady();
+		};
+		// Used by fbbStartGameAudio (rotate button / PWA) so soundtrack actually starts
+		window.__fbbStartSoundtrack = function () {
+			if (typeof window.__fbbStartSoundtrackWhenReady === "function") window.__fbbStartSoundtrackWhenReady();
+			setTimeout(function () {
+				if (typeof window.__fbbSoundtrackTryPlay === "function") window.__fbbSoundtrackTryPlay();
+			}, 350);
+		};
+		window.__fbbAutoStartMusic = window.__fbbStartSoundtrack;
+		window.__fbbSoundtrackStop = function () {
+			var el = document.getElementById("fbb-soundtrack-audio");
+			if (el) {
+				try { el.pause(); el.removeAttribute("src"); } catch (e) {}
+			}
+		};
+		function loadSoundtrackFromApi() {
+			return fetch(API_BASE + "/api/games/flying-baby-billi/soundtrack")
+				.then(function(r) { return r.json(); })
+				.then(function(data) {
+					if (data && data.success && Array.isArray(data.beats)) {
+						FBB_SOUNDTRACK.beats = data.beats;
+						FBB_SOUNDTRACK.music = Array.isArray(data.music) ? data.music : [];
+					}
+				})
+				.catch(function() {});
+		}
+		document.addEventListener("DOMContentLoaded", function () {
+			var musicBtn = document.getElementById("fbb-music-btn");
+			var musicPanel = document.getElementById("fbb-music-panel");
+			if (musicBtn && musicPanel) {
+				musicBtn.addEventListener("click", function () {
+					onFirstGesture();
+					musicPanel.classList.toggle("fbb-music-panel-open");
+				});
+			}
+			loadSoundtrackFromApi().then(function() {
+				setTimeout(function() {
+					if (typeof window.__fbbStartSoundtrackWhenReady === "function") window.__fbbStartSoundtrackWhenReady();
+					if (typeof window.__fbbResumeAudio === "function") window.__fbbResumeAudio();
+				}, 150);
+			});
+			document.addEventListener("click", onFirstGesture, { passive: true });
+			document.addEventListener("touchstart", onFirstGesture, { passive: true });
+			document.addEventListener("keydown", onFirstGesture, { passive: true });
+			window.addEventListener("pagehide", function () {
+				if (typeof window.__fbbSoundtrackStop === "function") window.__fbbSoundtrackStop();
+			});
+			setTimeout(function () {
+				var m = getMode();
+				document.querySelectorAll("#fbb-music-mode button[data-mode]").forEach(function (btn) {
+					btn.classList.toggle("fbb-mode-active", btn.getAttribute("data-mode") === m);
+				});
+			}, 100);
+		});
+	})();
+	</script>
+
+    <script>
+		// Start the Construct 2 project running on window load.
+		jQuery(document).ready(function ()
+		{			
+			// Create new runtime using the c2canvas
+			cr_createRuntime("c2canvas");
+
+			// Resize canvas to fill the viewport (fullscreen feel on mobile & PWA).
+			function resizeCanvas() {
+				try {
+					if (typeof cr_sizeCanvas === "function") {
+						cr_sizeCanvas(window.innerWidth, window.innerHeight);
+					}
+				} catch (e) {
+					// ignore – fallback is CSS scaling
+				}
+			}
+			resizeCanvas();
+			window.addEventListener("resize", resizeCanvas);
+			window.addEventListener("orientationchange", resizeCanvas);
+
+			// Flying Baby Billi: auto-submit score when game-over (C2 layout game -> menu).
+			// Layout: menu=0, game=1, tutorial=2. Variables in rt.Vh keyed by internal id (from data.js Event sheet).
+			// Prefer resolving by variable .name so we adapt if a different export uses other ids.
+			// Visible debug panel: ?fbb_debug=1 or localStorage.fbb_debug — create and append to body so it always shows on top.
+			(function () {
+				var isDebug = (typeof location !== "undefined" && location.search && location.search.indexOf("fbb_debug=1") >= 0)
+					|| (typeof localStorage !== "undefined" && localStorage.getItem("fbb_debug"));
+				if (isDebug) {
+					if (typeof localStorage !== "undefined") try { localStorage.setItem("fbb_debug", "1"); } catch (e) {}
+					window.__fbbDebug = true;
+				}
+				function ensureFbbDebugPanel() {
+					var pan = document.getElementById("fbb-debug-panel");
+					var logEl = document.getElementById("fbb-debug-log");
+					if (pan && logEl) {
+						pan.style.display = "block";
+						pan.style.zIndex = "2147483647";
+						pan.style.position = "fixed";
+						pan.style.bottom = "0";
+						pan.style.left = "0";
+						pan.style.right = "0";
+						document.body.appendChild(pan);
+						return;
+					}
+					pan = document.createElement("div");
+					pan.id = "fbb-debug-panel";
+					pan.setAttribute("style", "display:block;position:fixed;bottom:0;left:0;right:0;max-height:200px;background:rgba(0,0,0,0.92);color:#4ade80;font:11px monospace;padding:8px;z-index:2147483647;border-top:1px solid #22c55e;");
+					pan.innerHTML = "<div style=\"display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;\"><span style=\"font-weight:600;\">FBB bridge debug</span><div style=\"display:flex;gap:6px;\"><button type=\"button\" id=\"fbb-debug-copy\" style=\"padding:2px 8px;font-size:10px;border-radius:4px;background:#22c55e;color:#022c22;border:none;cursor:pointer;\">Copy</button><button type=\"button\" id=\"fbb-debug-close\" style=\"padding:2px 8px;font-size:10px;border-radius:4px;background:#475569;color:#f1f5f9;border:none;cursor:pointer;\">Close</button></div></div><div id=\"fbb-debug-log\" style=\"overflow:auto;max-height:160px;white-space:pre-wrap;word-break:break-all;\"></div>";
+					document.body.appendChild(pan);
+					var closeBtn = document.getElementById("fbb-debug-close");
+					if (closeBtn) closeBtn.addEventListener("click", function () { pan.style.display = "none"; try { localStorage.removeItem("fbb_debug"); } catch (e) {} });
+					var copyBtn = document.getElementById("fbb-debug-copy");
+					if (copyBtn) copyBtn.addEventListener("click", function () {
+						var el = document.getElementById("fbb-debug-log");
+						if (!el || !el.textContent) return;
+						try {
+							if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(el.textContent);
+							else { var ta = document.createElement("textarea"); ta.value = el.textContent; ta.style.position = "fixed"; ta.style.left = "-9999px"; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta); }
+							copyBtn.textContent = "Copied!";
+							setTimeout(function () { copyBtn.textContent = "Copy"; }, 1500);
+						} catch (e) { copyBtn.textContent = "Copy failed"; setTimeout(function () { copyBtn.textContent = "Copy"; }, 1500); }
+					});
+				}
+				window.__fbbDebugLog = function (msg) {
+					try {
+						if (typeof console !== "undefined" && console.log) console.log(msg);
+						var p = document.getElementById("fbb-debug-log");
+						var pan = document.getElementById("fbb-debug-panel");
+						if (p && pan && pan.style.display !== "none") {
+							var line = document.createElement("div");
+							line.textContent = (typeof msg === "string") ? msg : JSON.stringify(msg);
+							line.style.marginBottom = "2px";
+							p.appendChild(line);
+							p.scrollTop = p.scrollHeight;
+						}
+					} catch (e) {}
+				};
+				window.__fbbEnsureDebugPanel = function () {
+					if (window.__fbbDebug || (typeof localStorage !== "undefined" && localStorage.getItem("fbb_debug"))) {
+						window.__fbbDebug = true;
+						ensureFbbDebugPanel();
+					}
+				};
+				if (isDebug) {
+					ensureFbbDebugPanel();
+					setTimeout(ensureFbbDebugPanel, 500);
+					setTimeout(ensureFbbDebugPanel, 2000);
+				}
+				var existingCopy = document.getElementById("fbb-debug-copy");
+				var existingClose = document.getElementById("fbb-debug-close");
+				if (existingCopy && !existingCopy._fbbBound) {
+					existingCopy._fbbBound = true;
+					existingCopy.addEventListener("click", function () {
+						var el = document.getElementById("fbb-debug-log");
+						if (!el || !el.textContent) return;
+						try {
+							if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(el.textContent);
+							else { var ta = document.createElement("textarea"); ta.value = el.textContent; ta.style.position = "fixed"; ta.style.left = "-9999px"; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta); }
+							existingCopy.textContent = "Copied!";
+							setTimeout(function () { existingCopy.textContent = "Copy"; }, 1500);
+						} catch (e) { existingCopy.textContent = "Copy failed"; setTimeout(function () { existingCopy.textContent = "Copy"; }, 1500); }
+					});
+				}
+				if (existingClose && !existingClose._fbbBound) {
+					existingClose._fbbBound = true;
+					existingClose.addEventListener("click", function () {
+						var pan = document.getElementById("fbb-debug-panel");
+						if (pan) pan.style.display = "none";
+						try { localStorage.removeItem("fbb_debug"); } catch (e) {}
+					});
+				}
+			})();
+			var FBB_SCORE_IDS = ["6160167400545605", "2277904764505684"];
+			// Names we never use for "coins earned" (often enemy/kill count in C2).
+			var FBB_NON_COIN_NAMES = /^(enemy|enemies|enemycount|enemy_count|kill|kills|count)$/i;
+			function fbbIsCoinScoreName(n) {
+				if (!n || typeof n !== "string") return false;
+				var lower = n.toLowerCase();
+				if (FBB_NON_COIN_NAMES.test(lower)) return false;
+				return lower === "coins" || lower === "score" || lower === "scorekm";
+			}
+			function fbbCoinPriority(n) {
+				var lower = (n && typeof n === "string") ? n.toLowerCase() : "";
+				if (lower === "coins") return 1;
+				if (lower === "score") return 2;
+				if (lower === "scorekm") return 3;
+				return 99;
+			}
+			// Fallback: read score from C2 save blobs; prefer variable named "coins", then "score".
+			function fbbScoreFromSaveBlobs() {
+				try {
+					var keys = [];
+					for (var i = 0; i < localStorage.length; i++) {
+						var k = localStorage.key(i);
+						if (k && k.indexOf("__c2save_") === 0) keys.push(k);
+					}
+					var best = null;
+					var bestPri = 99;
+					for (var j = 0; j < keys.length; j++) {
+						var raw = localStorage.getItem(keys[j]);
+						if (!raw) continue;
+						var obj = JSON.parse(raw);
+						if (!obj || !obj.events || !obj.events.vars) continue;
+						var v = obj.events.vars;
+						for (var key in v) {
+							if (!v.hasOwnProperty(key)) continue;
+							var entry = v[key];
+							var name = (entry && typeof entry.name === "string") ? entry.name : "";
+							if (!fbbIsCoinScoreName(name)) continue;
+							var val = entry && entry.data != null ? Number(entry.data) : NaN;
+							if (!Number.isFinite(val) || val < 0) continue;
+							var pri = fbbCoinPriority(name);
+							if (pri < bestPri) { bestPri = pri; best = val; }
+						}
+					}
+					return best != null ? best : null;
+				} catch (e) {}
+				return null;
+			}
+			// Get coins earned this run from C2 runtime. Prefer variable named "coins"; never use enemy/kill count.
+			function fbbGetScore(rt) {
+				if (!rt || !rt.Vh) return null;
+				var v, k, n, num;
+				var foundCoins = null, foundScore = null, foundScorekm = null;
+				for (k in rt.Vh) {
+					if (!rt.Vh.hasOwnProperty(k)) continue;
+					v = rt.Vh[k];
+					n = (v && typeof v.name === "string") ? v.name : "";
+					if (!fbbIsCoinScoreName(n) || v.data == null) continue;
+					num = Number(v.data);
+					if (!Number.isFinite(num) || num < 0) continue;
+					if (n.toLowerCase() === "coins") foundCoins = num;
+					else if (n.toLowerCase() === "score") foundScore = num;
+					else if (n.toLowerCase() === "scorekm") foundScorekm = num;
+				}
+				if (foundCoins != null) return foundCoins;
+				if (foundScore != null) return foundScore;
+				if (foundScorekm != null) return foundScorekm;
+				// By known ids only if name wasn't found (avoid wrong variable)
+				for (k = 0; k < FBB_SCORE_IDS.length; k++) {
+					v = rt.Vh[FBB_SCORE_IDS[k]];
+					if (v && v.data != null) {
+						n = (v && typeof v.name === "string") ? v.name.toLowerCase() : "";
+						if (FBB_NON_COIN_NAMES.test(n)) continue;
+						num = Number(v.data);
+						if (Number.isFinite(num) && num >= 0) return num;
+					}
+				}
+				return null;
+			}
+			function fbbIsGameLayout(rt) {
+				if (!rt || !rt.Da) return false;
+				var ka = typeof rt.Da.ka !== "undefined" ? rt.Da.ka : -1;
+				var name = (rt.Da && rt.Da.name) ? String(rt.Da.name).toLowerCase() : "";
+				return ka === 1 || name === "game";
+			}
+			function fbbIsMenuLayout(rt) {
+				if (!rt || !rt.Da) return false;
+				var ka = typeof rt.Da.ka !== "undefined" ? rt.Da.ka : -1;
+				var name = (rt.Da && rt.Da.name) ? String(rt.Da.name).toLowerCase() : "";
+				return ka === 0 || name === "menu";
+			}
+			window.__fbbPollCount = 0;
+			// Track previous score so we can detect when a run actually starts (first non‑zero score)
+			window.__fbbPrevScore = 0;
+			function fbbPoll() {
+				window.__fbbPollCount = (window.__fbbPollCount || 0) + 1;
+				try {
+					var rt = (typeof window.cr_getC2Runtime === "function") ? window.cr_getC2Runtime() : null;
+					if (!rt) {
+						var canvas = document.getElementById("c2canvas");
+						rt = (canvas && canvas.c2runtime) ? canvas.c2runtime : (typeof window.c2runtime !== "undefined" ? window.c2runtime : null);
+					}
+					var vhKeys = (rt && rt.Vh && typeof rt.Vh === "object") ? Object.keys(rt.Vh).length : 0;
+					var debug = window.__fbbDebug || (typeof localStorage !== "undefined" && localStorage.getItem("fbb_debug"));
+					// Log first few polls and every 15th — to on-page panel when debug, so you see it without opening console
+					if (window.__fbbPollCount <= 4 || (window.__fbbPollCount % 15 === 0)) {
+						var pollMsg = "[FBB] poll #" + window.__fbbPollCount + " rt=" + (rt ? "ok" : "null") + " VhKeys=" + (vhKeys >= 0 ? vhKeys : "-");
+						if (debug && typeof window.__fbbDebugLog === "function") window.__fbbDebugLog(pollMsg);
+					}
+					if (!rt || !rt.Vh) { setTimeout(fbbPoll, 800); return; }
+					// One-time dump of rt.Vh — to on-page panel when debug so we can fix the bridge from real data
+					if (!window.__fbbVhDumped && rt.Vh && vhKeys > 0) {
+						window.__fbbVhDumped = true;
+						var out = [];
+						for (var pk in rt.Vh) {
+							if (!rt.Vh.hasOwnProperty(pk)) continue;
+							var pv = rt.Vh[pk];
+							out.push({ key: pk, name: (pv && pv.name) ? pv.name : "(no name)", data: (pv && pv.data) !== undefined ? pv.data : "(none)", ka: (pv && pv.ka) !== undefined ? pv.ka : "(none)" });
+						}
+						if (debug && typeof window.__fbbDebugLog === "function") {
+							window.__fbbDebugLog("[FBB] rt.Vh dump (once, " + out.length + " vars): " + JSON.stringify(out));
+							window.__fbbDebugLog("[FBB] rt.Da (current layout): " + JSON.stringify(rt.Da ? { ka: rt.Da.ka, name: rt.Da.name } : "null"));
+						}
+					}
+					var onGame = fbbIsGameLayout(rt);
+					var onMenu = fbbIsMenuLayout(rt);
+					var last = window.__fbbLastLayoutId;
+					var wasOnGame = last === true || last === 1;
+					if (onGame) {
+						var s = fbbGetScore(rt);
+						// Detect real "run start" as the first time score becomes > 0 this attempt.
+						if (Number.isFinite(s) && s > 0 && (!Number.isFinite(window.__fbbPrevScore) || window.__fbbPrevScore <= 0)) {
+							// Start timer only when the player actually starts earning coins.
+							window.__fbbGameStartTime = Date.now();
+							fbbShowBanner(); // GameMonetize: show banner on play (run start)
+						}
+						if (Number.isFinite(s) && s >= 0) window.__fbbLastKnownScore = s;
+						if (Number.isFinite(s)) window.__fbbPrevScore = s;
+						window.__fbbSubmittedThisRun = false;
+					}
+					if (wasOnGame && onMenu && typeof window.__fbbSubmitScore === "function") {
+						var score = fbbGetScore(rt);
+						// C2 resets global vars when switching to menu, so rt often shows 0 — use last in-game value
+						if ((score == null || score === 0) && window.__fbbLastKnownScore != null && Number(window.__fbbLastKnownScore) >= 0) {
+							score = Number(window.__fbbLastKnownScore);
+						}
+						if ((score == null || score === 0) && typeof fbbScoreFromSaveBlobs === "function") {
+							var fromSave = fbbScoreFromSaveBlobs();
+							if (fromSave != null && Number.isFinite(fromSave) && fromSave >= 0) score = fromSave;
+						}
+						if (score == null) score = 0;
+						if (!Number.isFinite(score)) score = 0;
+						if (!window.__fbbSubmittedThisRun) {
+							var durationSec = 0;
+							if (window.__fbbGameStartTime && Number.isFinite(score) && score > 0) {
+								durationSec = Math.max(0, Math.round((Date.now() - window.__fbbGameStartTime) / 1000));
+							}
+							if (debug && typeof window.__fbbDebugLog === "function") window.__fbbDebugLog("[FBB] submit score=" + score + " duration=" + durationSec);
+							window.__fbbSubmitScore(score, durationSec);
+							window.__fbbSubmittedThisRun = true;
+							window.__fbbGameStartTime = null;
+							window.__fbbPrevScore = 0;
+							if (typeof renderPanel === "function") {
+								setTimeout(function() { try { renderPanel(); } catch(e) {} }, 200);
+							}
+							// Walkthrough ad is shown by fbbShowLevelPopup when !passed (Level Failed)
+						}
+					}
+					if (!onGame && !(wasOnGame && onMenu)) window.__fbbGameStartTime = null;
+					window.__fbbLastLayoutId = onGame ? 1 : (onMenu ? 0 : last);
+					if (debug && onGame) {
+						var d = fbbGetScore(rt);
+						if (typeof window.__fbbDebugLog === "function") window.__fbbDebugLog("[FBB] in game, score=" + d + ", lastKnown=" + window.__fbbLastKnownScore);
+					}
+					// Refresh in-game stats panel periodically while playing (every 15th poll = ~9s) so current score/time update
+					if (onGame && window.__fbbPollCount % 15 === 0 && typeof renderPanel === "function") {
+						try { renderPanel(); } catch (e2) {}
+					}
+				} catch (e) {
+					var errMsg = "[FBB] poll error " + (e && e.message ? e.message : (e && typeof e.toString === "function" ? e.toString() : String(e)));
+					// Show panel on any bridge error so you see it without opening the console
+					var pan = document.getElementById("fbb-debug-panel");
+					if (pan) { pan.style.display = "block"; window.__fbbDebug = true; }
+					if (typeof window.__fbbDebugLog === "function") window.__fbbDebugLog(errMsg);
+				}
+				setTimeout(fbbPoll, 600);
+			}
+			// Show FBB debug panel if enabled — create/reappend so it is visible above canvas
+			try {
+				if (typeof localStorage !== "undefined" && localStorage.getItem("fbb_debug")) {
+					window.__fbbDebug = true;
+					if (typeof window.__fbbEnsureDebugPanel === "function") window.__fbbEnsureDebugPanel();
+					if (typeof window.__fbbDebugLog === "function") window.__fbbDebugLog("[FBB] Debug enabled. Panel at bottom.");
+				}
+			} catch (e) {}
+			console.log("[FBB] bridge loaded. Debug: add ?fbb_debug=1 to game URL and reload, or in this frame run: localStorage.setItem('fbb_debug','1'); location.reload();");
+			setTimeout(fbbPoll, 2000);
+			// Fallback: submit stashed score on leave if we had a run and never submitted
+			window.addEventListener("pagehide", function () {
+				if (window.__fbbLastKnownScore != null && Number(window.__fbbLastKnownScore) >= 0 && !window.__fbbSubmittedThisRun && typeof window.__fbbSubmitScore === "function") {
+					window.__fbbSubmitScore(window.__fbbLastKnownScore, 0);
+				}
+			});
+		});
+		
+		// Pause and resume on page becoming visible/invisible
+		function onVisibilityChanged() {
+			if (document.hidden || document.mozHidden || document.webkitHidden || document.msHidden)
+				cr_setSuspended(true);
+			else
+				cr_setSuspended(false);
+		};
+		
+		document.addEventListener("visibilitychange", onVisibilityChanged, false);
+		document.addEventListener("mozvisibilitychange", onVisibilityChanged, false);
+		document.addEventListener("webkitvisibilitychange", onVisibilityChanged, false);
+		document.addEventListener("msvisibilitychange", onVisibilityChanged, false);
+		
+		function OnRegisterSWError(e)
+		{
+			console.warn("Failed to register service worker: ", e);
+		};
+		
+		// Runtime calls this global method when ready to start caching (i.e. after startup).
+		// This registers the service worker which caches resources for offline support.
+		window.C2_RegisterSW = function C2_RegisterSW()
+		{
+			if (!navigator.serviceWorker)
+				return;		// no SW support, ignore call
+			
+			try {
+				navigator.serviceWorker.register("sw.js", { scope: "./" })
+				.then(function (reg)
+				{
+					console.log("Registered service worker on " + reg.scope);
+				})
+				.catch(OnRegisterSWError);
+			}
+			catch (e)
+			{
+				OnRegisterSWError(e);
+			}
+		};
+
+		// Settings + leaderboard behaviour
+		(function () {
+			function formatSeconds(seconds) {
+				if (seconds == null || !Number.isFinite(seconds) || seconds < 0) return "0 min & 0 seconds";
+				var s = Math.round(Number(seconds));
+				if (s <= 0) return "0 min & 0 seconds";
+				var mins = Math.floor(s / 60);
+				var secs = s % 60;
+				if (mins <= 0) return "0 min & " + secs + " second" + (secs === 1 ? "" : "s");
+				if (mins === 1) return "1 min & " + secs + " second" + (secs === 1 ? "" : "s");
+				return mins + " mins & " + secs + " second" + (secs === 1 ? "" : "s");
+			}
+
+			function loadProgress() {
+				try {
+					var key = window.__fbbProgressStorageKey || "flyingBabyBilli_progress_v1";
+					var raw = localStorage.getItem(key);
+					if (!raw) return null;
+					return JSON.parse(raw);
+				} catch (e) {
+					return null;
+				}
+			}
+
+			function renderPanel() {
+				// In‑game panel: show current run stats while playing, last completed run on menu.
+				var data = loadProgress();
+				var levelEl = document.getElementById("fbb-panel-level");
+				var totalCoinsEl = document.getElementById("fbb-panel-total-coins");
+				var bestEl = document.getElementById("fbb-panel-best-session");
+				var totalEl = document.getElementById("fbb-panel-total-time");
+				var sessionsEl = document.getElementById("fbb-panel-sessions");
+				var lastEl = document.getElementById("fbb-panel-last-played");
+				var listEl = document.getElementById("fbb-panel-runs");
+
+				// Check if we're currently in-game (read runtime layout)
+				var rt = (typeof window.cr_getC2Runtime === "function") ? window.cr_getC2Runtime() : null;
+				if (!rt) {
+					var canvas = document.getElementById("c2canvas");
+					rt = (canvas && canvas.c2runtime) ? canvas.c2runtime : (typeof window.c2runtime !== "undefined" ? window.c2runtime : null);
+				}
+				var onGame = rt && rt.Da && (rt.Da.ka === 1 || (rt.Da.name && String(rt.Da.name).toLowerCase() === "game"));
+				var currentScore = 0;
+				var currentSeconds = 0;
+				var runNumber = 0;
+				var statusText = "—";
+
+				if (onGame) {
+					// While playing: show live stats from current run
+					currentScore = (window.__fbbLastKnownScore != null && Number.isFinite(window.__fbbLastKnownScore)) ? Number(window.__fbbLastKnownScore) : 0;
+					if (window.__fbbGameStartTime && currentScore > 0) {
+						// Only count duration once the run has really started (score > 0)
+						currentSeconds = Math.max(0, Math.round((Date.now() - window.__fbbGameStartTime) / 1000));
+					}
+					statusText = "Playing now";
+					runNumber = data && Array.isArray(data.runs) ? data.runs.length + 1 : 1;
+				} else {
+					// On menu: show last completed run
+					if (data && Array.isArray(data.runs) && data.runs.length > 0) {
+						var last = data.runs[data.runs.length - 1];
+						currentScore = Number(last.score || 0);
+						currentSeconds = Number(last.seconds || 0);
+						// If the last run earned 0 coins, treat its duration as 0s for display
+						if (!Number.isFinite(currentSeconds) || currentScore === 0) currentSeconds = 0;
+						runNumber = data.runs.length;
+						statusText = "Completed";
+					} else {
+						statusText = "No runs yet";
+						runNumber = 0;
+					}
+				}
+
+				// Compute lifetime totals from all recorded runs
+				var lifetimeCoins = 0;
+				var lifetimeSeconds = 0;
+				if (data && Array.isArray(data.runs)) {
+					data.runs.forEach(function (run) {
+						var cs = Number(run.score || 0);
+						if (Number.isFinite(cs) && cs >= 0) lifetimeCoins += cs;
+						var ts = Number(run.seconds || 0);
+						if (Number.isFinite(ts) && ts >= 0) lifetimeSeconds += ts;
+					});
+				}
+
+				// Level from levelMeta (current/highest level)
+				var meta = (data && data.levelMeta) ? data.levelMeta : {};
+				var currentLevel = Number(meta.lastLevel || meta.highestLevel || 0);
+				var levelText = currentLevel > 0 ? ("Level " + currentLevel) : "—";
+				if (levelEl) levelEl.textContent = levelText;
+
+				// Update panel fields with current run stats + lifetime summary (duration hidden – not accurate without C2 run-end event)
+				if (totalCoinsEl) totalCoinsEl.textContent = String(currentScore);
+				if (bestEl) bestEl.textContent = formatSeconds(currentSeconds || 0);
+				if (totalEl) totalEl.textContent = statusText;
+				if (sessionsEl) sessionsEl.textContent = runNumber > 0 ? String(runNumber) : "—";
+				if (lastEl) {
+					if (!data || !Array.isArray(data.runs) || !data.runs.length) {
+						lastEl.textContent = "0 coins, 0 min & 0 seconds";
+					} else {
+						lastEl.textContent = String(lifetimeCoins) + " coins, " + formatSeconds(lifetimeSeconds || 0);
+					}
+				}
+
+				// Show top 5 recent runs (most recent first)
+				if (!data || !Array.isArray(data.runs) || !data.runs.length) {
+					listEl.innerHTML = '<li class="opacity-70">No runs yet. Finish a round to see coins for this game.</li>';
+					return;
+				}
+
+				var recent = data.runs.slice(-5).reverse();
+				listEl.innerHTML = "";
+				recent.forEach(function (run, idx) {
+					var li = document.createElement("li");
+					var coins = Number(run.score || 0);
+					li.textContent = "#" + (idx + 1) + " – " + coins + " coins";
+					listEl.appendChild(li);
+				});
+			}
+
+			var settingsBtn = document.getElementById("fbb-settings-btn");
+			var leaderboardBtn = document.getElementById("fbb-leaderboard-btn");
+			var backBtn = document.getElementById("fbb-back-btn");
+			var panel = document.getElementById("fbb-leaderboard-panel");
+			var closeBtn = document.getElementById("fbb-close-panel");
+			var settingsPanel = document.getElementById("fbb-settings-panel");
+			var closeSettingsBtn = document.getElementById("fbb-close-settings");
+			var muteToggle = document.getElementById("fbb-mute-toggle");
+			var audioMuted = false;
+
+			function toggleMute() {
+				var soundtrackAudio = document.getElementById("fbb-soundtrack-audio");
+				if (!soundtrackAudio) {
+					alert("Soundtrack is not available yet.");
+					return;
+				}
+				if (!audioMuted) {
+					soundtrackAudio.muted = true;
+					if (typeof window.__fbbSoundtrackStop === "function") window.__fbbSoundtrackStop();
+					audioMuted = true;
+					settingsBtn.style.borderColor = "rgba(248,113,113,0.9)";
+					if (muteToggle && !muteToggle.checked) muteToggle.checked = true;
+				} else {
+					soundtrackAudio.muted = false;
+					if (typeof window.__fbbSoundtrackTryPlay === "function") window.__fbbSoundtrackTryPlay();
+					audioMuted = false;
+					settingsBtn.style.borderColor = "rgba(148,163,184,0.7)";
+					if (muteToggle && muteToggle.checked) muteToggle.checked = false;
+				}
+			}
+
+			function loadGlobalInPanel() {
+				var listEl = document.getElementById("fbb-panel-global");
+				if (!listEl) return;
+				var base = (typeof getFbbApiBase === "function" ? getFbbApiBase() : (typeof location !== "undefined" && location.origin ? location.origin : ""));
+				if (!base) {
+					listEl.innerHTML = "<li class=\"opacity-70\">Play from the Games hub to see global scores.</li>";
+					return;
+				}
+				listEl.innerHTML = "<li class=\"opacity-70\">Loading…</li>";
+				var url = base.replace(/\/$/, "") + "/api/games/flying-baby-billi/leaderboard";
+				fetch(url, { credentials: "omit", cache: "no-store" })
+					.then(function (r) {
+						if (!r.ok) throw new Error("Leaderboard request failed");
+						return r.json();
+					})
+					.then(function (data) {
+						if (!data || !data.success || !Array.isArray(data.leaderboard) || data.leaderboard.length === 0) {
+							listEl.innerHTML = "<li class=\"opacity-70\">No scores yet. Play to be first!</li>";
+							return;
+						}
+						listEl.innerHTML = "";
+						data.leaderboard.forEach(function (row, idx) {
+							var li = document.createElement("li");
+							var score = row.best_score != null ? row.best_score : 0;
+							var total = row.total_coins != null ? row.total_coins : 0;
+							var totalStr = Number(total) > 0 ? " (" + total + " total)" : "";
+							li.textContent = "#" + (idx + 1) + " " + (row.display_name || "Player") + " — " + score + " coins" + totalStr;
+							listEl.appendChild(li);
+						});
+					})
+					.catch(function () {
+						listEl.innerHTML = "<li class=\"opacity-70\">Could not load leaderboard. Check the server is running.</li>";
+					});
+			}
+
+			function showPanel() {
+				renderPanel();
+				loadGlobalInPanel();
+				panel.hidden = false;
+			}
+
+			function hidePanel() {
+				panel.hidden = true;
+			}
+
+			function showSettings() {
+				if (settingsPanel) {
+					settingsPanel.hidden = false;
+				}
+			}
+
+			function hideSettings() {
+				if (settingsPanel) {
+					settingsPanel.hidden = true;
+				}
+			}
+
+			function goToGameHub() {
+				try {
+					if (typeof window.__fbbFinalizeSession === "function") window.__fbbFinalizeSession();
+				} catch (e) {}
+				if (typeof window.__fbbSoundtrackStop === "function") window.__fbbSoundtrackStop();
+				window.location.href = "/game.html";
+			}
+			function goToMenuOrHub() {
+				try {
+					if (typeof window.__fbbFinalizeSession === "function") window.__fbbFinalizeSession();
+				} catch (e) {}
+				if (typeof window.__fbbSoundtrackStop === "function") window.__fbbSoundtrackStop();
+				if (typeof window.__fbbGoToMenu === "function") window.__fbbGoToMenu();
+				else window.location.href = "/game.html";
+			}
+			if (backBtn) {
+				backBtn.addEventListener("click", function () {
+					if (typeof window.__fbbShowWalkthroughAd === "function") {
+						window.__fbbShowWalkthroughAd(goToGameHub);
+					} else {
+						goToGameHub();
+					}
+				});
+			}
+			var menuBtn = document.getElementById("fbb-menu-btn");
+			if (menuBtn) {
+				menuBtn.addEventListener("click", function () {
+					if (typeof window.__fbbShowWalkthroughAd === "function") {
+						window.__fbbShowWalkthroughAd(goToMenuOrHub);
+					} else {
+						goToMenuOrHub();
+					}
+				});
+			}
+			if (settingsBtn) {
+				settingsBtn.addEventListener("click", function () {
+					// Open settings panel and do not toggle mute immediately.
+					if (settingsPanel && settingsPanel.hidden) {
+						showSettings();
+					} else {
+						hideSettings();
+					}
+				});
+			}
+			if (leaderboardBtn) {
+				leaderboardBtn.addEventListener("click", function () {
+					if (panel.hidden) showPanel();
+					else hidePanel();
+				});
+			}
+			// When a score is submitted (e.g. on game-over), refresh local list and global leaderboard if panel is open.
+			window.addEventListener("fbb-score-submitted", function () {
+				if (panel && !panel.hidden) {
+					renderPanel();
+					loadGlobalInPanel();
+				}
+			});
+			// When user returns to this tab and the panel is open, refresh global leaderboard.
+			document.addEventListener("visibilitychange", function () {
+				if (!document.hidden && panel && !panel.hidden) {
+					loadGlobalInPanel();
+				}
+			});
+			// Real-time global leaderboard updates via Socket.io when anyone submits a score.
+			// Use Cloudflare Worker URL (getFbbApiBase) so we connect to the API proxy, not the static page origin.
+			try {
+				var _apiBase = (typeof getFbbApiBase === "function" ? getFbbApiBase() : "");
+				var _origin = (typeof location !== "undefined" && location.origin) ? location.origin : "";
+				if (typeof io !== "undefined" && _apiBase && _apiBase !== _origin) {
+					var _isWorker = _apiBase.indexOf("workers.dev") !== -1;
+					var _s = io(_apiBase, { transports: _isWorker ? ["polling"] : ["websocket", "polling"] });
+					_s.on("fbb-leaderboard-updated", function () {
+						if (panel && !panel.hidden && typeof loadGlobalInPanel === "function") loadGlobalInPanel();
+					});
+				}
+			} catch (e) {}
+			if (closeBtn) {
+				closeBtn.addEventListener("click", hidePanel);
+			}
+			if (closeSettingsBtn) {
+				closeSettingsBtn.addEventListener("click", hideSettings);
+			}
+			if (muteToggle) {
+				muteToggle.addEventListener("change", function () {
+					toggleMute();
+				});
+			}
+
+			// Expose for C3 menu: Leaderboard button in-game can call this to show website + global leaderboard.
+			window.showFBBLeaderboard = function () {
+				if (panel && !panel.hidden) return;
+				showPanel();
+			};
+			// Expose for C3 menu: Skins button – placeholder; replace with real skins UI when ready.
+			window.showFBBSkins = function () {
+				if (typeof window.__fbbShowSkinsPanel === "function") {
+					window.__fbbShowSkinsPanel();
+				} else {
+					alert("Skins coming soon! Unlock new looks as you level up.");
+				}
+			};
+
+			// C3 no-Script addon: Browser "Set hash" triggers these; we react and clear hash.
+			function fbbHandleHash() {
+				var h = (typeof location !== "undefined" && location.hash) ? location.hash : "";
+				if (!h) return;
+				try {
+					if (h === "#leaderboard" && typeof window.showFBBLeaderboard === "function") {
+						window.showFBBLeaderboard();
+					} else if (h === "#skins" && typeof window.showFBBSkins === "function") {
+						window.showFBBSkins();
+					} else if (h.indexOf("#submit/") === 0) {
+						var parts = h.slice(8).split("/");
+						var score = parts[0] != null ? Number(parts[0]) : 0;
+						var time = parts[1] != null ? Number(parts[1]) : 0;
+						if (typeof window.__fbbSubmitScore === "function") {
+							window.__fbbSubmitScore(score, time);
+						}
+					}
+				} finally {
+					if (history.replaceState) history.replaceState(null, "", location.pathname + location.search);
+				}
+			}
+			window.addEventListener("hashchange", fbbHandleHash);
+			fbbHandleHash();
+		})();
+    </script>
+</body> 
+</html> 

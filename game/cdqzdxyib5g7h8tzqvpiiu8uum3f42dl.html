@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Semiconductors Knockout Quiz</title>
+  <style>
+    :root{
+      /* Fresh palette: obsidian + spring‑green + rose */
+      --bg:#0b1024; --panel:#13173a; --text:#eaf2ff; --muted:#b9c4e6;
+      --accent:#22c55e; /* spring green */
+      --accent2:#fb7185; /* rose */
+      --danger:#ef4444; --gold:#f59e0b; --ink:#0b0e14;
+      --glow:0 14px 36px rgba(34,197,94,.22);
+    }
+    *{box-sizing:border-box}
+    body{margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif; background:radial-gradient(1200px 800px at 50% -10%, #1a2255, var(--bg)); color:var(--text); min-height:100dvh; display:grid; place-items:center}
+    .wrap{width:min(1040px,92vw)}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02)); border:1px solid rgba(255,255,255,0.1); border-radius:22px; padding:22px; box-shadow:var(--glow)}
+    h1{margin:0 0 6px; font-weight:900}
+    .muted{color:var(--muted)}
+    .row{display:flex; gap:12px; flex-wrap:wrap; align-items:center; justify-content:space-between}
+    .badge{background:rgba(255,255,255,.08); padding:8px 10px; border-radius:10px}
+    .gold{color:var(--gold)}
+    .center{display:grid; place-items:center; text-align:center; gap:14px; padding:20px}
+
+    /* New layout: split header, stacked glass cards with left neon bar & index chip */
+    .board{ margin-top:14px; padding:16px; border-radius:16px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08)}
+    .question{ font-size:clamp(22px, 4.2vw, 40px); font-weight:900; text-align:center; margin:10px 0 16px }
+    .choices{ display:flex; flex-direction:column; gap:12px }
+    .choice{ position:relative; overflow:hidden; padding:16px 18px 16px 58px; border-radius:16px; border:1px solid rgba(255,255,255,.16); background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02)); color:var(--text); cursor:pointer; font-weight:800; letter-spacing:.2px; box-shadow:0 10px 22px rgba(251,113,133,.16); transition:.14s transform, .2s box-shadow, .2s border-color }
+    .choice::before{ content:""; position:absolute; inset:0 0 0 auto; left:0; width:8px; background:linear-gradient(180deg, var(--accent), var(--accent2)); }
+    .choice:hover{ transform:translateY(-1px); box-shadow:0 12px 26px rgba(34,197,94,.28); border-color:rgba(255,255,255,.24) }
+    .chip{ position:absolute; left:14px; top:50%; transform:translateY(-50%); width:28px; height:28px; display:grid; place-items:center; border-radius:999px; background:linear-gradient(90deg, var(--accent), var(--accent2)); color:var(--ink); font-weight:900; font-size:12px }
+
+    .status{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:space-between; margin-top:8px }
+    .timer{flex:1; height:10px; background:rgba(255,255,255,.1); border-radius:999px; overflow:hidden}
+    .bar{height:100%; width:100%; background:linear-gradient(90deg, var(--accent), var(--accent2)); transform-origin:left center}
+    .small{font-size:13px}
+    .hide{ display:none !important }
+    .pulse{ animation:pulse .9s infinite }
+    .btn{background:var(--accent); color:var(--ink); border:0; padding:12px 16px; border-radius:12px; font-weight:800; cursor:pointer; box-shadow:0 8px 18px rgba(34,197,94,.35)}
+    .ghost{background:transparent; border:1px solid rgba(255,255,255,.18); color:var(--text)}
+    @keyframes pulse{ 0%{transform:scale(1)} 50%{transform:scale(1.04)} 100%{transform:scale(1)} }
+  </style>
+</head>
+<body>
+
+<script type="text/javascript">
+   window.SDK_OPTIONS = {
+      gameId: "cdqzdxyib5g7h8tzqvpiiu8uum3f42dl",
+      onEvent: function (a) {
+         switch (a.name) {
+            case "SDK_GAME_PAUSE":
+               // pause game logic / mute audio
+               break;
+            case "SDK_GAME_START":
+               // advertisement done, resume game logic and unmute audio
+               break;
+            case "SDK_READY":
+               // when sdk is ready
+               break;
+         }
+      }
+   };
+(function (a, b, c) {
+   var d = a.getElementsByTagName(b)[0];
+   a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+})(document, "script", "gamemonetize-sdk"); 
+</script>
+
+
+
+
+
+
+  <div class="wrap">
+    <div class="card">
+      <div class="row">
+        <div>
+          <h1>Semiconductors — Knockout Quiz</h1>
+          <p class="muted">Band theory • Intrinsic/extrinsic • Fermi level • Drift & diffusion • PN junctions • Diodes (Zener, LED) • BJTs • FETs/MOSFETs • Opto devices • Junction capacitance • Logic & CMOS • Numerics • 100+ MCQs • One wrong answer ends the game.</p>
+        </div>
+        <div class="row">
+          <div class="badge">Best: <span id="best" class="gold">0</span></div>
+          <div class="badge">Streak: <span id="streak">0</span></div>
+          <div class="badge">Last: <span id="last">0</span></div>
+        </div>
+      </div>
+
+      <div id="intro" class="center">
+        <div style="font-size:clamp(30px,6vw,50px); font-weight:900">Ready to dope some silicon?</div>
+        <p class="muted">Answer multiple-choice <b>semiconductor</b> questions. Each is <b>timed</b>. <br><b>Knockout rule:</b> one mistake or timeout ends your run.</p>
+        <div class="row" style="justify-content:center">
+          <button id="start" class="btn pulse">Start</button>
+          <button id="how" class="btn ghost">How to play</button>
+        </div>
+        <p class="small muted">Shortcuts: <b>1–4</b> to answer • <b>Enter</b> to start/restart</p>
+      </div>
+
+      <div id="board" class="board hide" role="group" aria-label="Question and answers">
+        <div class="status">
+          <div class="badge">Q <span id="qnum">1</span></div>
+          <div class="timer" aria-label="Time remaining"><div class="bar" id="bar"></div></div>
+          <div class="badge">Time: <span id="time">0</span>s</div>
+        </div>
+        <div id="q" class="question">—</div>
+        <div id="choices" class="choices"></div>
+      </div>
+
+      <div id="summary" class="center hide">
+        <div style="font-size:clamp(30px,6vw,50px); font-weight:900" id="sumTitle">Game Over</div>
+        <p class="muted" id="sumReason"></p>
+        <div class="row" style="justify-content:center">
+          <button id="again" class="btn">Play Again</button>
+          <button id="back" class="btn ghost">Back</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  const TIME_PER_Q = 12; // seconds
+
+  // ====== State ======
+  let best = Number(localStorage.getItem('semi.best')) || 0;
+  let last = Number(localStorage.getItem('semi.last')) || 0;
+  let streak = 0, qIndex = 0, ticking = null, current = null; let bank = [];
+
+  // ====== Elements ======
+  const elBest = document.getElementById('best');
+  const elLast = document.getElementById('last');
+  const elStreak = document.getElementById('streak');
+  const elIntro = document.getElementById('intro');
+  const elBoard = document.getElementById('board');
+  const elSummary = document.getElementById('summary');
+  const elBar = document.getElementById('bar');
+  const elTime = document.getElementById('time');
+  const elQ = document.getElementById('q');
+  const elChoices = document.getElementById('choices');
+  const elQnum = document.getElementById('qnum');
+  const elSumTitle = document.getElementById('sumTitle');
+  const elSumReason = document.getElementById('sumReason');
+  elBest.textContent = best; elLast.textContent = last; elStreak.textContent = 0;
+
+  // ====== Util ======
+  const rand = (a,b)=> Math.floor(Math.random()*(b-a+1))+a;
+  function shuffle(arr){ for(let i=arr.length-1;i>0;i--){ const j = rand(0,i); [arr[i],arr[j]]=[arr[j],arr[i]] } return arr }
+
+  // ====== Question Banks ======
+  function basicsBank(){
+    const items = [
+      ['A semiconductor typically has valence of', '4 (group IV elements like Si, Ge)', ['1','2','6']],
+      ['Common elemental semiconductors are', 'Silicon and Germanium', ['Copper and Iron','Sodium and Chlorine','Carbon and Nitrogen']],
+      ['Covalent bonding in silicon involves', 'Sharing of valence electrons', ['Transfer of electrons (ionic)','Metallic sea of electrons','Hydrogen bonding']],
+      ['At 0 K, an intrinsic semiconductor behaves like', 'An insulator', ['A conductor','A superconductor','A diode']],
+      ['Doping means', 'Adding controlled impurities to change carrier concentration', ['Heating the crystal','Applying magnetic field','Changing crystal shape']],
+      ['Donor impurities belong to', 'Group V (e.g., P, As, Sb)', ['Group III','Group II','Group I']],
+      ['Acceptor impurities belong to', 'Group III (e.g., B, Al, Ga)', ['Group V','Group IV','Group VI']],
+      ['Majority carriers in n‑type are', 'Electrons', ['Holes','Ions','Excitons']],
+      ['Majority carriers in p‑type are', 'Holes', ['Electrons','Ions','Photons']],
+      ['Intrinsic carrier concentration n_i', 'Increases rapidly with temperature', ['Decreases with temperature','Is constant','Is zero always']],
+      ['Resistivity of semiconductor with temperature', 'Generally decreases (negative temp. coefficient)', ['Increases always','Independent of T','Oscillates']],
+      ['Crystal structure of Si is', 'Diamond cubic', ['BCC','FCC (simple)','HCP']],
+    ];
+    return items.map(([q,a,wrong])=>({ q, choices: shuffle([a,...wrong]), answer: a }));
+  }
+
+  function bandgapBank(){
+    const items = [
+      ['Band gap of Si at room temperature ≈', '1.1 eV', ['0.3 eV','0.66 eV','2.2 eV']],
+      ['Band gap of Ge ≈', '0.66 eV', ['1.1 eV','1.43 eV','2.0 eV']],
+      ['Band gap of GaAs ≈', '1.43 eV (direct)', ['0.66 eV','1.1 eV','3.4 eV']],
+      ['Direct band gap materials are better for', 'Light emission (LED/laser)', ['Power rectification only','Heat conduction','Magnetic storage']],
+      ['Silicon has an', 'Indirect band gap', ['Direct band gap','Zero band gap','Negative gap']],
+      ['As doping increases moderately, band gap', 'Changes little (first order)', ['Increases linearly','Decreases to zero','Becomes negative']],
+      ['Energy bands arise due to', 'Overlap of atomic orbitals in crystals', ['Isolated atoms only','Magnetic ordering','Nuclear forces']],
+      ['Valence band is', 'Highest filled band at 0 K', ['Empty band always','Band of core levels','Conduction band']],
+      ['Fermi level lies', 'Near middle of gap for intrinsic Si', ['In conduction band for intrinsic','In valence band for intrinsic','Undefined']],
+      ['Effective mass in bands describes', 'Curvature of E(k) relation', ['Atomic mass','Lattice mass','Photon mass']],
+    ];
+    return items.map(([q,a,wrong])=>({ q, choices: shuffle([a,...wrong]), answer: a }));
+  }
+
+  function intrinsicExtrinsicBank(){
+    const items = [
+      ['In intrinsic semiconductor, n =', 'p = n_i', ['n ≫ p','p ≫ n','n = 0']],
+      ['In n‑type, approximately n p ≈', 'n_i² (mass action law)', ['n_i','n + p','0']],
+      ['Position of Fermi level in n‑type shifts', 'Toward conduction band', ['Toward valence band','To midgap exactly','Randomly']],
+      ['Position of Fermi level in p‑type shifts', 'Toward valence band', ['Toward conduction band','To vacuum level','No change']],
+      ['Compensation doping uses', 'Both donors and acceptors', ['Only donors','Only acceptors','Only intrinsic atoms']],
+      ['Mobility μ typically', 'Decreases with increasing temperature (phonon scattering)', ['Increases strongly with temperature','Unaffected by impurities','Becomes infinite']],
+      ['Heavy doping tends to', 'Reduce mobility (impurity scattering)', ['Increase band gap','Stop conduction','Create photons']],
+      ['Conductivity σ =', 'q(n μ_n + p μ_p)', ['q/μ','n/μ','μ/(n p)']],
+      ['Hall effect sign in n‑type is', 'Negative (electrons)', ['Positive','Zero','Alternating']],
+      ['Majority carrier concentration in heavily doped n‑type is approx.', '≈ donor density N_D (if complete ionization)', ['≈ acceptor density','≈ n_i only','≈ 0']],
+    ];
+    return items.map(([q,a,wrong])=>({ q, choices: shuffle([a,...wrong]), answer: a }));
+  }
+
+  function fermiLevelBank(){
+    const items = [
+      ['Fermi level is the energy where', 'Occupation probability is 1/2 at T>0 (by F‑D stats)', ['All states are filled','No states exist','Classical particles reside']],
+      ['In intrinsic Si at 300 K, E_F is', 'Near mid‑gap', ['At conduction band','At valence band','Above vacuum']],
+      ['In n‑type, E_F moves', 'Upward toward E_C', ['Downward toward E_V','Out of gap always','To midgap regardless']],
+      ['Under forward bias in a diode', 'Electron and hole quasi‑Fermi levels split', ['Merge into one','Reverse split only','Stay equal']],
+      ['Degenerate doping means', 'E_F enters conduction/valence band', ['No carriers at all','Purely intrinsic','T=0 only']],
+      ['At absolute zero, states below E_F are', 'Filled (in metals/degenerate)', ['Empty','Half filled','Random']],
+      ['Boltzmann approximation valid when', 'E−E_F ≫ kT', ['E−E_F ≪ kT','Always','Never']],
+      ['Quasi‑Fermi levels are used for', 'Non‑equilibrium carrier populations', ['Phonons only','Lattice defects only','Magnetic spins only']],
+      ['For intrinsic carrier product', 'n p = n_i² at equilibrium', ['n p = n_i','n + p = n_i','n = p = 0']],
+      ['Raising temperature generally moves E_F in intrinsic', 'Slightly toward midgap of exact position', ['Into bands strongly','To vacuum','Unaffected']],
+    ];
+    return items.map(([q,a,wrong])=>({ q, choices: shuffle([a,...wrong]), answer: a }));
+  }
+
+  function transportBank(){
+    const items = [
+      ['Drift current density J_d =', 'q(n μ_n + p μ_p) E', ['q n E/μ','n μ / E','E / (q μ)']],
+      ['Diffusion current arises due to', 'Carrier concentration gradients', ['Electric field only','Magnetic field only','Temperature only']],
+      ['Electron diffusion current direction is', 'From high n to low n', ['From low n to high n','Opposite holes','Random']],
+      ['Einstein relation links', 'D/μ = kT/q', ['D μ = kT/q','D = μ q/kT','D = μ² kT']],
+      ['Total current density J equals', 'Drift + diffusion components', ['Drift only','Diffusion only','Zero in equilibrium always']],
+      ['Recombination reduces', 'Minority and majority carriers (locally)', ['Only majority carriers','Only electrons','Only holes']],
+      ['Generation creates carriers due to', 'Thermal or optical excitation', ['Magnetic fields','Nuclear decay only','Pressure']],
+      ['Mobility units are', 'm²·V⁻¹·s⁻¹', ['V·s/m²','m/s','A·s/m³']],
+      ['Saturation velocity refers to', 'Velocity limit at high fields', ['Sound speed','Thermal velocity at 0 K','Drift at low fields']],
+      ['Recombination lifetime τ relates to', 'Average time before carrier recombines', ['Carrier energy','Lattice temperature only','Photon lifetime only']],
+    ];
+    return items.map(([q,a,wrong])=>({ q, choices: shuffle([a,...wrong]), answer: a }));
+  }
+
+  function pnJunctionBank(){
+    const items = [
+      ['Built‑in potential V_bi depends on', 'Doping and temperature', ['Crystal size only','Bias voltage only','Magnetic field']],
+      ['Depletion region contains', 'Ionized donors/acceptors (fixed charges)', ['Free electrons only','Free holes only','Neutral atoms']],
+      ['Forward bias on PN junction', 'Reduces barrier and narrows depletion width', ['Increases barrier','Widens depletion','Reverses doping']],
+      ['Reverse bias on PN junction', 'Widens depletion region and increases field', ['Narrows depletion','Creates carriers','Heats lattice only']],
+      ['Minority carrier injection under forward bias leads to', 'Diffusion currents across junction', ['Pure drift only','No current','Only majority movement']],
+      ['Direction of built‑in electric field points', 'From n to p region (due to ions)', ['From p to n','Random','Zero']],
+      ['Saturation current I_S is', 'Temperature dependent and small', ['Large at low T','Independent of T','Zero for ideal diode']],
+      ['Cut‑in (turn‑on) voltage for Si diode ≈', '0.7 V', ['0.3 V','1.5 V','5 V']],
+      ['Cut‑in voltage for Ge diode ≈', '0.3 V', ['0.7 V','1.0 V','2.2 V']],
+      ['Reverse breakdown can be due to', 'Zener or avalanche mechanisms', ['Hall effect','Photoemission only','Thermal expansion']],
+    ];
+    return items.map(([q,a,wrong])=>({ q, choices: shuffle([a,...wrong]), answer: a }));
+  }
+
+  function diodeBank(){
+    const items = [
+      ['Ideal diode I–V relation', 'I = I_S (e^{V/(nV_T)} − 1)', ['I = V/R','I = I_S + V','I ∝ V²'],],
+      ['Thermal voltage V_T at 300 K ≈', '≈ 25.9 mV', ['≈ 59 mV','≈ 0.7 V','≈ 1 mV']],
+      ['Zener diode is used for', 'Voltage regulation (reverse breakdown)', ['Rectification only','Amplification','Oscillation']],
+      ['For a half‑wave rectifier, ripple frequency equals', 'Line frequency (f)', ['2f','f/2','0']],
+      ['For a full‑wave bridge, ripple frequency equals', '2f', ['f','f/2','4f']],
+      ['LED emits light when', 'Electrons recombine with holes across band gap', ['Heated strongly','Forward current zero','Magnetic bias applied']],
+      ['Photodiode is typically operated under', 'Reverse bias (photocurrent mode)', ['Forward bias','No bias','AC bias only']],
+      ['Schottky diode has', 'Metal–semiconductor junction (low Vf, fast)', ['p–n junction only','High reverse recovery','Always emits light']],
+      ['Clamping circuit shifts', 'DC level of waveform', ['Frequency','Impedance only','Phase only']],
+      ['Clipping circuit', 'Limits amplitude beyond set level', ['Amplifies','Oscillates','Rectifies fully']],
+    ];
+    return items.map(([q,a,wrong])=>({ q, choices: shuffle([a,...wrong]), answer: a }));
+  }
+
+  function capacitanceBank(){
+    const items = [
+      ['Junction (depletion) capacitance', 'Decreases with reverse bias', ['Increases with reverse bias','Independent of bias','Only in forward bias']],
+      ['Diffusion (storage) capacitance', 'Dominates in forward bias due to injected charge', ['Occurs only in reverse bias','Unrelated to current','Zero in diodes']],
+      ['Varactor diode exploits', 'Voltage‑dependent junction capacitance', ['Quantum tunneling','Magnetic memory','Thermal noise']],
+      ['C–V profiling can measure', 'Doping concentration vs depth', ['Carrier lifetime only','Band gap','Mobility only']],
+      ['Depletion width W varies with reverse bias approximately as', 'W ∝ √V_R', ['W ∝ V_R','W ∝ 1/V_R','Independent']],
+      ['In abrupt junction, C_j ∝', '1/√(V_R + V_bi)', ['√(V_R)','(V_R)²','e^{V_R}']],
+      ['At high injection levels, diffusion capacitance', 'Increases (more charge stored)', ['Decreases','Is zero','Becomes negative']],
+      ['MOS capacitor accumulation occurs when', 'Gate attracts majority carriers to surface', ['Depletion only','Inversion always','No change']],
+      ['Threshold voltage in MOS is when', 'Strong inversion forms channel', ['Accumulation starts','No field present','Depletion disappears']],
+      ['Gate oxide capacitance per area C_ox equals', 'ε_ox / t_ox', ['t_ox / ε_ox','ε_si / t_ox','1/ε_ox t_ox']],
+    ];
+    return items.map(([q,a,wrong])=>({ q, choices: shuffle([a,...wrong]), answer: a }));
+  }
+
+  function bjtBank(){
+    const items = [
+      ['BJT stands for', 'Bipolar Junction Transistor', ['Binary Junction Transistor','Bipolar Junction Thyristor','Bistable JFET']],
+      ['In NPN transistor, majority carriers in base are', 'Holes (base is p‑type)', ['Electrons','Ions','Photons']],
+      ['Common‑emitter current gain β equals', 'I_C / I_B', ['I_E / I_C','I_B / I_C','V_CE / I_C']],
+      ['Active region requires', 'BE junction forward, BC junction reverse biased', ['Both forward','Both reverse','BE reverse only']],
+      ['Cutoff region corresponds to', 'No base drive (both junctions reverse)', ['Saturation','Breakdown','Thermal runaway']],
+      ['Saturation region corresponds to', 'Both junctions forward biased', ['BE reverse','BC reverse only','Open circuit']],
+      ['Emitter is', 'Heavily doped for high injection efficiency', ['Lightly doped','Same as base','Insulated']],
+      ['Base is made', 'Thin and lightly doped', ['Thick and heavily doped','Metallic','Oxidized']],
+      ['Collector is', 'Moderately doped and larger area for heat', ['Heavily doped like emitter','Very thin','Always p‑type']],
+      ['h_FE refers to', 'DC current gain in CE', ['Voltage gain','Power gain','Transconductance']],
+    ];
+    return items.map(([q,a,wrong])=>({ q, choices: shuffle([a,...wrong]), answer: a }));
+  }
+
+  function fetBank(){
+    const items = [
+      ['FET stands for', 'Field‑Effect Transistor', ['Forward‑Emitter Transistor','Fast Electron Tube','Field Emission Triode']],
+      ['JFET channel is controlled by', 'Reverse‑biased gate creating depletion', ['Forward biasing gate strongly','Emitter injection','Magnetic field']],
+      ['MOSFET gate is insulated by', 'Thin oxide (SiO₂)', ['Metal only','Air gap','Polymer']],
+      ['Enhancement‑mode NMOS conducts when', 'V_GS > V_T (positive)', ['V_GS < 0 always','Gate shorted','No threshold']],
+      ['PMOS channel carriers are', 'Holes', ['Electrons','Ions','Photons']],
+      ['MOSFET has very high', 'Input impedance', ['Output impedance','Gate current','Drain resistance zero']],
+      ['Body diode in MOSFET is due to', 'Intrinsic p–n junction between body and drain/source', ['Metal junction','Oxide tunneling','Schottky only']],
+      ['Transconductance g_m is', 'dI_D/dV_GS', ['dV_GS/dI_D','I_D/V_DS','V_DS/I_D']],
+      ['Channel pinch‑off in JFET occurs when', 'V_GS reaches V_P (pinch‑off voltage)', ['V_DS=0','V_GS>0 for n‑channel','Gate short']],
+      ['CMOS uses', 'Complementary NMOS and PMOS', ['Only NMOS','Only bipolar','Only JFET']],
+    ];
+    return items.map(([q,a,wrong])=>({ q, choices: shuffle([a,...wrong]), answer: a }));
+  }
+
+  function optoBank(){
+    const items = [
+      ['Photodiode photocurrent is roughly', 'Proportional to light intensity', ['Independent of light','Proportional to square','Inverse of intensity']],
+      ['Solar cell operates as', 'A photodiode in photovoltaic mode', ['A Zener diode','A thyristor','A resistor']],
+      ['LED color depends on', 'Band gap of semiconductor', ['Dopant color only','Current magnitude only','Package color only']],
+      ['Laser diode requires', 'Population inversion via injection', ['Reverse bias only','Thermal heating','Magnetic field']],
+      ['LDR typically made from', 'Photoconductive materials (e.g., CdS)', ['Pure metals','Insulators','Vacuum tubes']],
+      ['Quantum efficiency refers to', 'Photons producing carriers per incident photon', ['Voltage gain','Capacitance','Mobility']],
+      ['Dark current in photodiode is', 'Current without illumination', ['Current under bright light only','Zero always','Breakdown current only']],
+      ['Responsivity (A/W) indicates', 'Output current per optical power', ['Voltage per lumen','Power factor','Gain in dB']],
+      ['Avalanche photodiode uses', 'Internal gain via impact ionization', ['Thermionic emission','Schottky emission','Phonon scattering']],
+      ['Infrared LEDs often use', 'GaAs or related alloys', ['Silicon only','Germanium only','Copper']],
+    ];
+    return items.map(([q,a,wrong])=>({ q, choices: shuffle([a,...wrong]), answer: a }));
+  }
+
+  function logicBank(){
+    const items = [
+      ['CMOS static power consumption is', 'Very low (leakage dominated)', ['Very high','Same as TTL always','Infinite']],
+      ['In CMOS, dynamic power ≈', 'C V² f', ['V/I','I² R','C f / V']],
+      ['Noise margin is', 'Tolerance to input noise without wrong logic', ['Output current limit','Fan‑out count','Rise time']],
+      ['Propagation delay is time', 'From input change to output response', ['Clock period','Rise time only','Setup time only']],
+      ['TTL stands for', 'Transistor–Transistor Logic', ['Thin‑Thin Logic','Tunnel‑Time Logic','Triode–Thyratron Logic']],
+      ['Schmitt trigger provides', 'Hysteresis for clean switching', ['Amplification only','Oscillation','Temperature compensation']],
+      ['ECL trades lower logic swing for', 'High speed', ['Low speed','High power saving','Optical coupling']],
+      ['Pull‑up network in CMOS NOR uses', 'PMOS in parallel', ['PMOS in series','NMOS in series','BJTs']],
+      ['Pull‑down network in CMOS NAND uses', 'NMOS in series', ['NMOS in parallel','PMOS only','Diodes']],
+      ['Fan‑out defines', 'Max number of gates driven by an output', ['Min number of inputs','Number of stages','Area'],],
+    ];
+    return items.map(([q,a,wrong])=>({ q, choices: shuffle([a,...wrong]), answer: a }));
+  }
+
+  function numericsBank(){
+    const items = [];
+    // Simple numerics with handy constants: V_T ≈ 25.9 mV at 300K; hc ≈ 1240 eV·nm
+    items.push({ q:'Thermal voltage V_T at 300 K is ≈', choices: shuffle(['25.9 mV','59 mV','1.1 V','5 mV']), answer:'25.9 mV' });
+    items.push({ q:'Silicon diode forward drop ≈', choices: shuffle(['0.7 V','0.3 V','1.5 V','2.2 V']), answer:'0.7 V' });
+    items.push({ q:'Germanium diode forward drop ≈', choices: shuffle(['0.3 V','0.7 V','1.0 V','2.2 V']), answer:'0.3 V' });
+    items.push({ q:'For LED with Eg≈2 eV, λ ≈', choices: shuffle(['620 nm','1240 nm','310 nm','1550 nm']), answer:'620 nm' });
+    items.push({ q:'If n=10¹⁶ cm⁻³, μ_n=1000 cm²/V·s, σ_n≈', choices: shuffle(['≈1.6 (Ω·cm)⁻¹','≈0.16 (Ω·cm)⁻¹','≈16 (Ω·cm)⁻¹','≈160 (Ω·cm)⁻¹']), answer:'≈1.6 (Ω·cm)⁻¹' });
+    items.push({ q:'Einstein relation D/μ at 300K ≈', choices: shuffle(['≈ 0.026 V','≈ 0.26 V','≈ 2.6 V','≈ 0.0026 V']), answer:'≈ 0.026 V' });
+    items.push({ q:'If I_S = 10⁻¹² A and V_T=26 mV, diode current at 0.52 V (n=2) ≈ I_S e^{V/(nV_T)} ≈', choices: shuffle(['≈ 10⁻¹²·e^{10} ≈ 2.2×10⁻⁸ A','≈ 10⁻¹²·e^{5} ≈ 1.5×10⁻¹⁰ A','≈ 10⁻¹² A','≈ 1 mA']), answer:'≈ 10⁻¹²·e^{10} ≈ 2.2×10⁻⁸ A' });
+    items.push({ q:'Zener at 5.1 V in regulation: load 1 kΩ. Zener current if supply 9 V through 330 Ω ≈', choices: shuffle(['≈ (9−5.1)/330 − 5.1/1000 ≈ 6.7 mA','≈ 12 mA','≈ 0 mA','≈ 20 mA']), answer:'≈ (9−5.1)/330 − 5.1/1000 ≈ 6.7 mA' });
+    items.push({ q:'Full‑wave rectifier output freq for 50 Hz input is', choices: shuffle(['100 Hz','50 Hz','25 Hz','200 Hz']), answer:'100 Hz' });
+    items.push({ q:'MOS gate oxide t_ox=10 nm, ε_ox≈3.45×10⁻¹¹ F/m. C_ox per area ≈', choices: shuffle(['3.45 mF/m²','0.345 mF/m²','34.5 mF/m²','3.45 μF/m²']), answer:'3.45 mF/m²' });
+    items.push({ q:'If V_T=26 mV and n=1, small‑signal r_d at I=1 mA ≈', choices: shuffle(['≈ 26 Ω','≈ 260 Ω','≈ 2.6 kΩ','≈ 26 kΩ']), answer:'≈ 26 Ω' });
+    items.push({ q:'n_i for Si at 300K is about', choices: shuffle(['10¹⁰ cm⁻³','10¹⁴ cm⁻³','10⁵ cm⁻³','10²⁰ cm⁻³']), answer:'10¹⁰ cm⁻³' });
+    items.push({ q:'CMOS dynamic power with C=10 pF, V=3.3 V, f=10 MHz is ≈', choices: shuffle(['1.1 mW','0.11 mW','11 mW','110 mW']), answer:'1.1 mW' });
+    items.push({ q:'Built‑in V_bi roughly scales with ln(N_A N_D / n_i²), so if both dopings ×10, V_bi', choices: shuffle(['Increases by ~2×kT/q ln10','Unchanged','Decreases by ln10','Becomes zero']), answer:'Increases by ~2×kT/q ln10' });
+    items.push({ q:'Si diode in series with 1 kΩ on 5 V: current (approx Vf=0.7 V) ≈', choices: shuffle(['≈ 4.3 mA','≈ 5 mA','≈ 0.7 mA','≈ 7 mA']), answer:'≈ 4.3 mA' });
+    items.push({ q:'Avalanche breakdown typically occurs at', choices: shuffle(['Higher voltages than Zener','Lower than Zener always','Same as LED','Forward bias ~0.7 V']), answer:'Higher voltages than Zener' });
+    items.push({ q:'If LED needs 20 mA at 2 V from 5 V source, series R ≈', choices: shuffle(['150 Ω','100 Ω','250 Ω','50 Ω']), answer:'150 Ω' });
+    items.push({ q:'JFET pinch‑off at V_P=−4 V for n‑channel. For V_GS=−2 V, channel is', choices: shuffle(['Partially open (Id reduced)','Cut off','Fully enhanced','Shorted']), answer:'Partially open (Id reduced)' });
+    items.push({ q:'A 3.3 V Zener with 100 Ω series on 5 V: max load current while regulating ≈', choices: shuffle(['≈ (5−3.3)/100 ≈ 17 mA minus Zener knee','≈ 33 mA','≈ 3.3 mA','≈ 50 mA']), answer:'≈ (5−3.3)/100 ≈ 17 mA minus Zener knee' });
+    return items;
+  }
+
+  function buildBank(){
+    const pool = [
+      ...basicsBank(),
+      ...bandgapBank(),
+      ...intrinsicExtrinsicBank(),
+      ...fermiLevelBank(),
+      ...transportBank(),
+      ...pnJunctionBank(),
+      ...diodeBank(),
+      ...capacitanceBank(),
+      ...bjtBank(),
+      ...fetBank(),
+      ...optoBank(),
+      ...logicBank(),
+      ...numericsBank(),
+    ];
+    const seen = new Set(); const unique = [];
+    for(const item of pool){ if(!seen.has(item.q)){ seen.add(item.q); unique.push(item); } }
+    // Top up to ≥ 140 by reshuffling choice order for variety
+    while(unique.length < 140){
+      const base = unique[rand(0, unique.length-1)];
+      unique.push({ q: base.q + ' ', choices: shuffle([...base.choices]), answer: base.answer });
+    }
+    return shuffle(unique);
+  }
+
+  // ====== Game Flow ======
+  function startGame(){
+    streak = 0; qIndex = 0; current=null; elStreak.textContent = 0;
+    bank = buildBank();
+    elIntro.classList.add('hide');
+    elSummary.classList.add('hide');
+    elBoard.classList.remove('hide');
+    nextQuestion();
+  }
+
+  function nextQuestion(){
+    if(bank.length === 0) bank = buildBank();
+    current = bank.pop(); qIndex++;
+    elQnum.textContent = qIndex; elQ.textContent = current.q; elChoices.innerHTML = '';
+    const letters = ['A','B','C','D'];
+    current.choices.forEach((c, i)=>{
+      const btn = document.createElement('button');
+      btn.className = 'choice'; btn.setAttribute('data-val', c);
+      btn.innerHTML = `<span class="chip">${letters[i]||''}</span>${c}`;
+      btn.addEventListener('click', ()=> choose(btn.getAttribute('data-val')));
+      elChoices.appendChild(btn);
+    });
+    startTimer();
+  }
+
+  function startTimer(){
+    stopTimer(); const start = performance.now(); const total = TIME_PER_Q * 1000;
+    (function tick(){
+      const elapsed = performance.now() - start; const left = Math.max(0, total - elapsed);
+      elTime.textContent = Math.ceil(left/1000);
+      const r = left/total; const bar = Math.max(0, Math.min(1,r));
+      elBar.style.transform = `scaleX(${bar.toFixed(4)})`;
+      elBar.style.background = bar < 0.25 ? `linear-gradient(90deg, var(--danger), #dc2626)` :
+                               bar < 0.5 ? `linear-gradient(90deg, var(--gold), #f59e0b)` :
+                                            `linear-gradient(90deg, var(--accent), var(--accent2))`;
+      if(left <= 0){ stopTimer(); endGame('⏰ Time up!'); }
+      else { ticking = requestAnimationFrame(tick); }
+    })();
+  }
+
+  function stopTimer(){ if(ticking){ cancelAnimationFrame(ticking); ticking=null; } }
+
+  function choose(val){
+    if(String(val) === String(current.answer)){
+      streak++; elStreak.textContent = streak; flash(true); nextQuestion();
+    } else {
+      endGame(`❌ Incorrect. Correct answer: ${current.answer}`);
+    }
+  }
+
+  function flash(ok){
+    elBoard.style.outline = `3px solid ${ok? 'var(--accent)':'var(--danger)'}`;
+    setTimeout(()=> elBoard.style.outline='none', 140);
+  }
+
+  function endGame(reason){
+    stopTimer(); 
+
+
+if (typeof sdk !== 'undefined' && sdk.showBanner !== 'undefined') {
+sdk.showBanner();
+}
+
+console.log("Start");
+
+setTimeout(() => {
+  console.log("Waited 5 seconds!");
+}, 5000);
+
+
+
+
+
+
+elBoard.classList.add('hide'); elSummary.classList.remove('hide');
+    elSumTitle.textContent = `Game Over — Streak ${streak}`; elSumReason.textContent = reason || '';
+    last = streak; localStorage.setItem('semi.last', String(last));
+    if(streak > best){ best = streak; localStorage.setItem('semi.best', String(best)); }
+    elBest.textContent = best; elLast.textContent = last;
+  }
+
+  // ====== Events ======
+  document.getElementById('start').addEventListener('click', startGame);
+  document.getElementById('how').addEventListener('click', ()=>{
+    alert('Answer each Semiconductors question before the timer ends. One mistake or timeout ends your run. Build the longest streak!');
+  });
+  document.getElementById('again').addEventListener('click', startGame);
+  document.getElementById('back').addEventListener('click', ()=>{ elSummary.classList.add('hide'); elIntro.classList.remove('hide'); });
+
+  // Keyboard: Enter, 1-4
+  window.addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter'){ if(!elBoard.classList.contains('hide')) return; startGame(); }
+    const map = { '1':0, '2':1, '3':2, '4':3 };
+    if(map.hasOwnProperty(e.key) && !elBoard.classList.contains('hide')){
+      const idx = map[e.key]; const btn = elChoices.children[idx]; if(btn) btn.click();
+    }
+  });
+
+  // Focus first answer when rendered
+  const observer = new MutationObserver(()=>{ const first = elChoices.querySelector('button'); if(first) first.focus({preventScroll:true}); });
+  observer.observe(elChoices, {childList:true});
+})();
+</script>
+</body>
+</html>

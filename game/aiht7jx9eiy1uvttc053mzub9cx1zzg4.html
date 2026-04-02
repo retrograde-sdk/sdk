@@ -1,0 +1,457 @@
+﻿
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=800, height=600, initial-scale=1.0">
+  <title>Bitcoin Clicker</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      color: #333;
+      position: relative;
+    }
+
+    /* Animated background elements */
+    body::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-image: 
+        radial-gradient(circle at 20% 80%, rgba(247, 147, 26, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255, 179, 71, 0.1) 0%, transparent 50%);
+      animation: float 6s ease-in-out infinite;
+      z-index: -1;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-20px); }
+    }
+
+    #game-container {
+      width: 800px;
+      height: 600px;
+      margin: 0 auto;
+      overflow-y: auto;
+      text-align: center;
+      padding: 20px;
+      box-sizing: border-box;
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    h1 {
+      font-size: 32px;
+      font-weight: 700;
+      margin: 10px 0 20px;
+      color: #f7931a;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    #bitcoin {
+      width: 150px;
+      height: 150px;
+      margin: 15px auto;
+      cursor: pointer;
+      border-radius: 50%;
+      background: linear-gradient(45deg, #f7931a, #ffb347);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 80px;
+      color: white;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      transition: all 0.2s ease;
+      box-shadow: 0 8px 25px rgba(247, 147, 26, 0.3);
+    }
+
+    #bitcoin:hover {
+      transform: scale(1.05);
+      box-shadow: 0 12px 35px rgba(247, 147, 26, 0.4);
+    }
+
+    #bitcoin:active {
+      transform: scale(0.95);
+    }
+
+    #score {
+      font-size: 24px;
+      margin: 15px 0;
+      font-weight: 600;
+      color: #fff;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    }
+
+    .upgrade {
+      margin: 8px;
+      padding: 12px 20px;
+      font-size: 14px;
+      cursor: pointer;
+      max-width: 90%;
+      background: linear-gradient(135deg, #f7931a, #ffb347);
+      color: white;
+      border: none;
+      border-radius: 25px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(247, 147, 26, 0.2);
+    }
+
+    .upgrade:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(247, 147, 26, 0.3);
+    }
+
+    .upgrade:disabled {
+      background: #bdc3c7;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .achievement {
+      margin: 6px;
+      font-size: 14px;
+      padding: 8px 16px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 15px;
+      border-left: 4px solid #f7931a;
+      color: #fff;
+    }
+
+    h2 {
+      font-size: 20px;
+      margin: 20px 0 10px;
+      color: #fff;
+      font-weight: 600;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    }
+
+    p {
+      margin: 8px;
+      font-weight: 400;
+      color: #fff;
+    }
+
+    #clickValue {
+      font-size: 16px;
+      font-weight: 500;
+      color: #a8e6cf;
+      margin: 10px 0;
+    }
+
+    #autoClickerStatus {
+      font-size: 16px;
+      font-weight: 500;
+      color: #ffb3ba;
+      margin: 10px 0;
+    }
+
+    #adcooldown {
+      background: linear-gradient(135deg, #8e44ad, #3498db);
+      margin: 12px;
+      padding: 14px 24px;
+      font-weight: 600;
+    }
+
+    /* Custom Popup Styles */
+    .popup-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .popup {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      text-align: center;
+      max-width: 400px;
+      width: 90%;
+      color: white;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      animation: popupSlide 0.3s ease-out;
+    }
+
+    @keyframes popupSlide {
+      from {
+        transform: translateY(-50px) scale(0.9);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+      }
+    }
+
+    .popup h3 {
+      margin: 0 0 15px 0;
+      font-size: 24px;
+      color: #f7931a;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .popup p {
+      font-size: 16px;
+      margin: 15px 0;
+      line-height: 1.4;
+    }
+
+    .popup-close {
+      background: linear-gradient(135deg, #f7931a, #ffb347);
+      color: white;
+      border: none;
+      padding: 12px 30px;
+      border-radius: 25px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 15px;
+      transition: all 0.3s ease;
+    }
+
+    .popup-close:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(247, 147, 26, 0.4);
+    }
+
+    /* Scrollbar styling */
+    #game-container::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    #game-container::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+    }
+
+    #game-container::-webkit-scrollbar-thumb {
+      background: linear-gradient(135deg, #f7931a, #ffb347);
+      border-radius: 10px;
+    }
+
+    /* Achievement unlocked styling */
+    .achievement.unlocked {
+      background: rgba(39, 174, 96, 0.3);
+      border-left-color: #27ae60;
+      color: #a8e6cf;
+    }
+  </style>
+</head>
+<body>
+  <!-- Custom Popup -->
+  <div class="popup-overlay" id="popupOverlay">
+    <div class="popup">
+      <h3 id="popupTitle">Notice</h3>
+      <p id="popupMessage">Message content</p>
+      <button class="popup-close" onclick="closePopup()">OK</button>
+    </div>
+  </div>
+
+  <div id="game-container">
+    <h1>₿ Bitcoin Clicker</h1>
+
+    <div id="bitcoin" onclick="clickbitcoin()">₿</div>
+    <p id="score">Balance: <span id="scoreValue">0</span> BTC</p>
+
+    <h2>⚡ Upgrades</h2>
+    <p id="clickValue">Click Value: 1 BTC</p>
+    <button class="upgrade" onclick="buyUpgrade(10, 1)">Upgrade 1x click (10 BTC)</button>
+    <button class="upgrade" onclick="buyUpgrade(500, 50)">Upgrade 50x click (500 BTC)</button>
+    <button class="upgrade" onclick="buyUpgrade(score, Math.round(score /10))">Upgrade max click (all BTC)</button>
+
+    <h2>🤖 Auto-Miner</h2>
+    <p id="autoClickerStatus">Auto-Miner: Offline</p>
+    <button class="upgrade" onclick="buyAutoClicker(5000, 1)">Buy Auto-Miner (5000 BTC)</button>
+    <button class="upgrade" id="adcooldown" onclick="clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); clickbitcoin(); sdk.showBanner()">🎁 Watch Ad for 500 BTC Bonus</button>
+
+    <h2>🏆 Achievements</h2>
+    <p class="achievement" id="achievement4">5 upgrades: Not yet achieved</p>
+    <p class="achievement" id="achievement1">100 BTC: Not yet achieved</p>
+    <p class="achievement" id="achievement2">1000 BTC: Not yet achieved</p>
+    <p class="achievement" id="achievement3">10000 BTC: Not yet achieved</p>
+  </div>
+
+  <!-- GameMonetize SDK -->
+  <script type="text/javascript">
+    window.SDK_OPTIONS = {
+      gameId: "v2539kszysap1rx6vixdrl9v25aatj3w",
+      onEvent: function (a) {
+        switch (a.name) {
+          case "SDK_GAME_PAUSE":
+            break;
+          case "SDK_GAME_START":
+            break;
+          case "SDK_READY":
+            break;
+          case "SDK_ERROR":
+            break;
+        }
+      }
+    };
+    (function (a, b, c) {
+      var d = a.getElementsByTagName(b)[0];
+      a.getElementById(c) || (a = a.createElement(b), a.id = c,
+        a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+    })(document, "script", "gamemonetize-sdk");
+  </script>
+  <script>
+    const button = document.getElementById('adcooldown');
+    const cooldownTime = 30000; // 30 seconds
+    let cooldownActive = false;
+  
+    button.addEventListener('click', function() {
+      if (cooldownActive) return;
+      
+      cooldownActive = true;
+      let remaining = cooldownTime / 1000; // Convert to seconds
+      
+      button.disabled = true;
+      
+      const countdownInterval = setInterval(() => {
+        remaining--;
+        button.textContent = `⏳ Wait ${remaining}s`;
+        
+        if (remaining <= 0) {
+          clearInterval(countdownInterval);
+          button.disabled = false;
+          button.textContent = '🎁 Watch Ad for 500 BTC Bonus';
+          cooldownActive = false;
+        }
+      }, 1000);
+    });
+
+    // Custom popup functions
+    function showPopup(title, message) {
+      document.getElementById('popupTitle').textContent = title;
+      document.getElementById('popupMessage').textContent = message;
+      document.getElementById('popupOverlay').style.display = 'flex';
+    }
+
+    function closePopup() {
+      document.getElementById('popupOverlay').style.display = 'none';
+    }
+
+    // Close popup when clicking overlay
+    document.getElementById('popupOverlay').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closePopup();
+      }
+    });
+  </script>
+  <!-- Game Logic -->
+  <script>
+    let score = 0;
+    let clickValue = 1;
+    let autoClickerEnabled = false;
+    let autoClickerInterval;
+    let upgradeCount = 0;
+
+    function clickbitcoin() {
+      score += clickValue;
+      updateScore();
+      checkAchievements();
+      
+      // Add visual feedback
+      const bitcoin = document.getElementById('bitcoin');
+      bitcoin.style.transform = 'scale(0.95)';
+      setTimeout(() => {
+        bitcoin.style.transform = 'scale(1)';
+      }, 150);
+    }
+
+    function updateScore() {
+      document.getElementById("scoreValue").innerText = score.toLocaleString();
+    }
+
+    function updateClickValue() {
+      document.getElementById("clickValue").innerText = "Click Value: " + clickValue.toLocaleString() + " BTC";
+    }
+
+    function updateAchievement(id, message) {
+      const achievement = document.getElementById(id);
+      achievement.innerText = message;
+      achievement.classList.add('unlocked');
+    }
+
+    function buyUpgrade(cost, increase) {
+      if (score >= cost) {
+        score -= cost;
+        clickValue += increase;
+        upgradeCount++;
+        updateScore();
+        updateClickValue();
+        checkAchievements();
+        showPopup("Upgrade Successful! 🚀", `Your click power has increased by ${increase.toLocaleString()} BTC per click!`);
+      } else {
+        showPopup("Insufficient Funds ❌", `You need ${cost.toLocaleString()} BTC for this upgrade, but you only have ${score.toLocaleString()} BTC.`);
+      }
+    }
+
+    function buyAutoClicker(cost, speed) {
+      if (score >= cost && !autoClickerEnabled) {
+        score -= cost;
+        autoClickerEnabled = true;
+        document.getElementById("autoClickerStatus").innerHTML = "Auto-Miner: <span style='color: #a8e6cf;'>Online ⚡</span>";
+        autoClickerInterval = setInterval(() => {
+          score += clickValue;
+          updateScore();
+          checkAchievements();
+        }, 1000 / speed);
+        showPopup("Auto-Miner Activated! 🤖", `Your auto-miner is now generating ${clickValue.toLocaleString()} BTC per second!`);
+        updateScore();
+        updateClickValue();
+        checkAchievements();
+      } else if (autoClickerEnabled) {
+        showPopup("Already Active ⚠️", "Your auto-miner is already running and generating BTC!");
+      } else {
+        showPopup("Insufficient Funds ❌", `You need ${cost.toLocaleString()} BTC for the auto-miner, but you only have ${score.toLocaleString()} BTC.`);
+      }
+    }
+
+    function checkAchievements() {
+      if (score >= 100 && !document.getElementById("achievement1").classList.contains('unlocked')) {
+        updateAchievement("achievement1", "100 BTC: Unlocked! 🎉");
+        showPopup("Achievement Unlocked! 🏆", "You've reached 100 BTC! Keep clicking to earn more!");
+      }
+      if (score >= 1000 && !document.getElementById("achievement2").classList.contains('unlocked')) {
+        updateAchievement("achievement2", "1000 BTC: Unlocked! 🚀");
+        showPopup("Achievement Unlocked! 🏆", "Incredible! You've reached 1,000 BTC! You're becoming a Bitcoin whale!");
+      }
+      if (score >= 10000 && !document.getElementById("achievement3").classList.contains('unlocked')) {
+        updateAchievement("achievement3", "10000 BTC: Unlocked! 💎");
+        showPopup("Achievement Unlocked! 🏆", "Amazing! 10,000 BTC! You're now a true Bitcoin millionaire!");
+      }
+      if (upgradeCount >= 5 && !document.getElementById("achievement4").classList.contains('unlocked')) {
+        updateAchievement("achievement4", "5 upgrades: Unlocked! ⚡");
+        showPopup("Achievement Unlocked! 🏆", "Upgrade master! You've purchased 5 upgrades and boosted your mining power!");
+      }
+    }
+
+    // Initialize display
+    updateScore();
+    updateClickValue();
+  </script>
+</body>
+</html>

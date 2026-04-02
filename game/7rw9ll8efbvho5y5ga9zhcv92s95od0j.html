@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Colosseum Battle</title>
+  
+  <!-- GameMonetize SDK Integration -->
+  <script type="text/javascript">
+    window.SDK_OPTIONS = {
+      gameId: "7rw9ll8efbvho5y5ga9zhcv92s95od0j",
+      onEvent: function (a) {
+        switch (a.name) {
+          case "SDK_GAME_PAUSE":
+            // Pause game logic during ad
+            if (window.pauseForAd) window.pauseForAd();
+            break;
+          case "SDK_GAME_START":
+            // Resume game logic after ad
+            if (window.resumeAfterAd) window.resumeAfterAd();
+            break;
+          case "SDK_READY":
+            // SDK is ready
+            console.log("GameMonetize SDK Ready");
+            break;
+        }
+      }
+    };
+    (function (a, b, c) {
+      var d = a.getElementsByTagName(b)[0];
+      a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = 
+      "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+    })(document, "script", "gamemonetize-sdk");
+  </script>
+  
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="game-container">
+    <div id="menu">
+      <h1>COLOSSEUM BATTLE ⚔️</h1>
+      <p>Use WASD or arrows to move<br>Get close to tigers and press SPACE or LEFT CLICK to attack<br>ESC to pause</p>
+      <div id="best-record">🏆 Best Record: 0:00</div>
+      <button id="play-btn">▶️ PLAY</button>
+    </div>
+    <div id="ui">
+      <div id="health-bar">
+        <div id="health-fill"></div>
+      </div>
+      <div id="timer">⏱️ 0:00</div>
+      <button id="pause-btn">⏸️</button>
+    </div>
+    <div id="player"></div>
+    <div id="sword-attacks"></div>
+    <div id="tigers"></div>
+    <div id="hearts"></div>
+    <div id="blood-splats"></div>
+    <div id="pause-overlay">
+      <h2>⏸️ PAUSED</h2>
+      <p>Press ESC or click button to resume</p>
+    </div>
+    <div id="gameover-screen">
+      <h1>💀 GAME OVER 💀</h1>
+      <div id="final-time">⏱️ Survival Time: 0:00</div>
+      <div id="record-info"></div>
+      <div id="gameover-buttons">
+        <button id="replay-btn">🔄 PLAY AGAIN</button>
+      </div>
+    </div>
+    <div id="mobile-controls">
+      <div id="dpad">
+        <button class="dpad-btn" id="btn-up">▲</button>
+        <button class="dpad-btn" id="btn-down">▼</button>
+        <button class="dpad-btn" id="btn-left">◀</button>
+        <button class="dpad-btn" id="btn-right">▶</button>
+      </div>
+    </div>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>

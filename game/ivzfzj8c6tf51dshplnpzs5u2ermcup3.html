@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset='utf-8'>
+	<meta name='viewport' content='width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no'>
+	<link rel="canonical" href="https://h5games.online/play/Forest-Glade-Mysteries">	
+</head>
+<body>
+	<style>
+		html, body {
+			height: 100%;
+			padding: 0;
+			margin: 0;
+			background-color: #000;
+			overflow: hidden;
+			touch-action: none;
+			-webkit-touch-callout: none; /* iOS Safari */
+			-webkit-user-select: none; /* Safari */
+			-khtml-user-select: none; /* Konqueror HTML */
+			-moz-user-select: none; /* Old versions of Firefox */
+			-ms-user-select: none; /* Internet Explorer/Edge */
+            user-select: none; /* Non-prefixed version, currently supported by Chrome, Edge, Opera and Firefox */	
+		}
+		body {
+			background-size: cover;
+			background-position: 50% 50%;
+		}
+	</style>
+	<script>
+		window.SDK_OPTIONS = {
+		  gameId: "ivzfzj8c6tf51dshplnpzs5u2ermcup3",
+		  onEvent: function (a) {
+			 switch (a.name) {
+				case "SDK_GAME_PAUSE":
+					if (window.__gmGamePause) {
+						window.__gmGamePause();
+						window.__gmGamePause = null;
+					}
+					break;
+				case "SDK_GAME_START":
+					if (window.__gmGameStart) {
+						window.__gmGameStart();
+						window.__gmGameStart = null;
+					}
+					break;
+				case "SDK_READY":
+				   // when sdk is ready
+				   break;
+			 }
+		  }
+		};
+	</script>
+	<script defer src="https://api.gamemonetize.com/sdk.js" id="gamemonetize-sdk"></script>
+	<script>
+		let __GameLanguage = 'en';
+		const supportedLanguages = ["en", "ru", "tr", "de", "es", "ar"];
+		
+		// получаем язык браузера, например "ru-RU" или "en-US"
+		const rawLang = (navigator.language || navigator.userLanguage || "en").toLowerCase();
+
+		// оставляем только первые две буквы (кроме случаев с "tw")
+		let browserLang = rawLang.startsWith("zh-tw") ? "tw" : rawLang.substring(0, 2);
+
+		if (supportedLanguages.includes(browserLang)) {
+			__GameLanguage = browserLang;
+		}
+
+		console.log("Язык игры:", __GameLanguage);
+		
+		
+		loadScript = function (moduleName) {
+			const domScript = document.createElement('script');
+			domScript.async = true;
+			domScript.src = moduleName;
+			document.body.appendChild(domScript);
+		}
+		
+		insertLineBreaks = function (text, maxLength = 20) {
+			return text
+				.split(' ') // Разделяем текст на слова
+				.reduce((lines, word) => {
+					let currentLine = lines[lines.length - 1];
+					if ((currentLine + word).length <= maxLength) {
+						// Добавляем слово в текущую строку, если длина позволяет
+						lines[lines.length - 1] += (currentLine ? ' ' : '') + word;
+					} else {
+						// Начинаем новую строку с текущего слова
+						lines.push(word);
+					}
+					return lines;
+				}, [''])
+				.join('<br>'); // Объединяем строки с переносами
+		}
+		
+		i18n = function (fileName) {
+			const language = __GameLanguage;
+			return `i18n/${language}/${fileName}`;
+		}
+		
+		i18nText = function (_text, ...args) {
+			const language = __GameLanguage;
+			const translationEntry = translations[_text];
+
+			if (translationEntry && translationEntry[language]) {
+				const translatedTemplate = translationEntry[language];
+				// Подставляем значения в шаблон
+				return translatedTemplate.replace(/\{(\d+)\}/g, (_, index) => args[index] ?? '');
+			}
+
+			// Если перевод не найден, возвращаем исходный текст с подстановкой значений
+			return _text.replace(/\{(\d+)\}/g, (_, index) => args[index] ?? '');
+		}
+		
+		const translations = {
+			'Network error, failed to load data!': {
+				ru: "Ошибка сети, не удалось загрузить данные!",
+				tr: "Ağ hatası, veri yüklenemedi!",
+				de: "Netzwerkfehler, Daten konnten nicht geladen werden!",
+				es: "Error de red, no se pudieron cargar los datos.",
+				ar: "خطأ في الشبكة، تعذر تحميل البيانات!"				
+			},
+			'Unlock by passing lv.{0}！': {
+				ru: "Разблокируйте, пройдя уровень {0}！",
+				tr: "Lv.{0}'ı geçerek açın!",
+				de: "Freischalten, indem du Lv.{0} abschließt!",
+				es: "Desbloquea al pasar el nivel {0}!",
+				ar: "افتح بعد تجاوز المستوى {0}!"				
+			},
+			'Get props +1': {
+				ru: "Получен бонус +1",
+				tr: "Eşya alındı +1",
+				de: "Bonus erhalten +1",
+				es: "Obtén bono +1",
+				ar: "احصل على مكافأة +1"				
+			},
+			'Received today!': {
+				ru: "Получено сегодня!",
+				tr: "Bugün alındı!",
+				de: "Heute erhalten!",
+				es: "¡Recibido hoy!",
+				ar: "تم الاستلام اليوم!"				
+			},
+			'Purchase Success': {
+				ru: "Покупка успешно завершена",
+				tr: "Satın alma başarılı",
+				de: "Kauf erfolgreich",
+				es: "Compra exitosa",
+				ar: "تم الشراء بنجاح"				
+			},
+			'Complete all goals': {
+				ru: "Выполни все цели",
+				tr: "Tüm hedefleri tamamla",
+				de: "Erfülle alle Ziele",
+				es: "Completa todos los objetivos",
+				ar: "أكمل جميع الأهداف"				
+			},
+			'Eliminate the specified number of animals': {
+				ru: "Удали указанное количество животных",
+				tr: "Belirtilen sayıda hayvanı çıkar",
+				de: "Entferne die angegebene Anzahl an Tieren",
+				es: "Elimina el número especificado de animales",
+				ar: "أزل العدد المحدد من الحيوانات"				
+			},
+			'Remove all boxes': {
+				ru: "Убери все ящики",
+				tr: "Tüm kutuları kaldır",
+				de: "Entferne alle Kisten",
+				es: "Elimina todas las cajas",
+				ar: "أزل جميع الصناديق"					
+			},
+			'Back sleepy koala to home': {
+				ru: "Верни сонную коалу домой",
+				tr: "Uykulu koalayı eve götür",
+				de: "Bringe die schläfrige Koala nach Hause",
+				es: "Devuelve a la koala dormilona a casa",
+				ar: "أعد الكوالا النعسانة إلى المنزل"				
+			},
+			'Eliminate all jelly': {
+				ru: "Удали всё желе",
+				tr: "Tüm jöleyi temizle",
+				de: "Entferne das gesamte Gelee",
+				es: "Elimina toda la gelatina",
+				ar: "أزل كل الجيلي"				
+			},
+			'Eliminate all honey': {
+				ru: "Удали весь мёд",
+				tr: "Tüm balı temizle",
+				de: "Entferne den gesamten Honig",
+				es: "Elimina toda la miel",
+				ar: "أزل كل العسل"				
+			},
+			'Remove all ropes': {
+				ru: "Удали все верёвки",
+				tr: "Tüm ipleri çıkar",
+				de: "Entferne alle Seile",
+				es: "Elimina todas las cuerdas",
+				ar: "أزل جميع الحبال"				
+			},
+			'Remove all ice cubes': {
+				ru: "Убери ледяные кубики",
+				tr: "Tüm buz küplerini çıkar",
+				de: "Entferne alle Eiswürfel",
+				es: "Elimina todos los cubos de hielo",
+				ar: "أزل جميع مكعبات الثلج"				
+			},
+			'Make grass cover all grids': {
+				ru: "Покройте всю сетку травой",
+				tr: "Çimlerle tüm kareleri kapla",
+				de: "Lasse Gras alle Felder bedecken",
+				es: "Haz que el césped cubra todas las casillas",
+				ar: "اجعل العشب يغطي جميع الشبكات"				
+			},
+			'Remove all leaves': {
+				ru: "Убери все листья",
+				tr: "Tüm yaprakları kaldır",
+				de: "Entferne alle Blätter",
+				es: "Elimina todas las hojas",
+				ar: "أزل جميع الأوراق"				
+			},
+			'Let flowers bloom': {
+				ru: "Позволь цветам расцвести",
+				tr: "Çiçeklerin açmasını sağla",
+				de: "Lasse Blumen blühen",
+				es: "Haz que las flores florezcan",
+				ar: "اجعل الأزهار تتفتح"				
+			},
+			'Collect fruit in the basket': {
+				ru: "Собери фрукты в корзину",
+				tr: "Meyveleri sepete topla",
+				de: "Sammle die Früchte in den Korb",
+				es: "Recoge la fruta en la cesta",
+				ar: "اجمع الفاكهة في السلة"				
+			},
+			'Rescue trapped animals': {
+				ru: "Спаси животных в ловушке",
+				tr: "Tuzaktaki hayvanları kurtar",
+				de: "Rette die gefangenen Tiere",
+				es: "Rescata a los animales atrapados",
+				ar: "أنقذ الحيوانات المحبوسة"				
+			},
+			'Click and eliminate': {
+				ru: "Нажми и убери",
+				tr: "Tıkla ve yok et",
+				de: "Klicke und entferne",
+				es: "Haz clic y elimina",
+				ar: "انقر وأزل"				
+			},
+			"(You will meet some can't move)": {
+				ru: "Некоторые нельзя сдвинуть",
+				tr: "Bazılarını hareket ettiremezsiniz",
+				de: "Manche können sich nicht bewegen",
+				es: "Algunos no se pueden mover",
+				ar: "ستواجه بعض الأشياء التي لا يمكن تحريكها"				
+			},
+			'Pick a small animal': {
+				ru: "Выбери маленькое животное",
+				tr: "Küçük bir hayvan seç",
+				de: "Wähle ein kleines Tier",
+				es: "Elige un animal pequeño",
+				ar: "اختر حيوانًا صغيرًا"				
+			},
+			'Make it explode': {
+				ru: "Взорви его",
+				tr: "Patlat",
+				de: "Lass es explodieren",
+				es: "Hazlo explotar",
+				ar: "اجعله ينفجر"				
+			},
+			'Make it a colored ball': {
+				ru: "Преврати в цветной шар",
+				tr: "Renkli bir top yap",
+				de: "Mache es zu einer bunten Kugel",
+				es: "Convierte en una bola de color",
+				ar: "اجعله كرة ملونة"				
+			}
+		};				  
+
+		document.addEventListener("contextmenu", (e) => e.preventDefault());
+		
+		window.addEventListener("load", () => {
+		  document.body.style.backgroundImage = 'url("bg.png")';
+		});
+
+	</script>
+	<script src="./AudioManager.js"></script>
+	<script src="libs/laya.core.js"></script>
+    <script src="libs/laya.webgl.js"></script>
+    <script src="libs/laya.ani.js"></script>
+    <script src="libs/laya.filter.js"></script>
+    <script src="libs/laya.html.js"></script>
+    <script src="libs/laya.particle.js"></script>
+    <script src="libs/laya.tiledmap.js"></script>
+    <script src="libs/laya.ui.js"></script>
+	<script src="js/Game.js"></script>
+</body>
+</html>

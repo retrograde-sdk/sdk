@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Logic Puzzles Game (1000 Levels)</title>
+
+    <!-- ================= GameMonetize SDK - INSERT YOUR GAME ID =================
+         IMPORTANT: replace "YOUR_GAME_ID_HERE" with your real GameMonetize GameId
+    ========================================================================== -->
+    <script type="text/javascript">
+       window.SDK_OPTIONS = {
+          gameId: "YOUR_GAME_ID_HERE",
+          onEvent: function (a) {
+             try {
+                 console.log("GM SDK event:", a && a.name);
+                 switch ((a && a.name) || '') {
+                    case "SDK_GAME_PAUSE":
+                       try { window.__GM__onAdPause && window.__GM__onAdPause(); } catch(e){}
+                       break;
+                    case "SDK_GAME_START":
+                       try { window.__GM__onAdStart && window.__GM__onAdStart(); } catch(e){}
+                       break;
+                    case "SDK_READY":
+                       try { window.__GM__onSdkReady && window.__GM__onSdkReady(); } catch(e){}
+                       break;
+                 }
+             } catch (e) { console.warn(e); }
+          }
+       };
+       (function (d, tag, id) {
+          var first = d.getElementsByTagName(tag)[0];
+          if (!d.getElementById(id)) {
+              var s = d.createElement(tag);
+              s.id = id;
+              s.src = "https://api.gamemonetize.com/sdk.js";
+              s.async = true;
+              first.parentNode.insertBefore(s, first);
+          }
+       })(document, "script", "gamemonetize-sdk");
+    </script>
+    <!-- ====================================================================== -->
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tone.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color:#f0f4f8; min-height:100vh; display:flex; align-items:center; justify-content:center; }
+        .puzzle-card { background: linear-gradient(135deg,#fff,#f9f9f9); border:1px solid #e2e8f0; box-shadow:0 10px 30px rgba(0,0,0,0.08); }
+        .selection-button { transition: background-color .12s, transform .12s, box-shadow .12s; }
+        .selection-button:hover { transform:scale(1.04); box-shadow:0 6px 16px rgba(0,0,0,0.08); }
+        .win-overlay { z-index:50; backdrop-filter: blur(4px); background-color: rgba(255,255,255,0.92); }
+    </style>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter','sans-serif'] },
+                    colors: { 'primary-blue': '#1e40af', 'secondary-green': '#059669', 'danger-red': '#dc2626' }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="p-4 sm:p-8">
+
+    <!-- Win Overlay -->
+    <div id="win-overlay" class="win-overlay fixed inset-0 flex items-center justify-center hidden transition-opacity duration-300">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl text-center space-y-4 border-4 border-secondary-green">
+            <h1 class="text-5xl font-extrabold text-secondary-green">CORRECT! 🎉</h1>
+            <p class="text-lg text-gray-700">Moving to the next challenge...</p>
+        </div>
+    </div>
+
+    <!-- Start Screen (visible by default for reliability) -->
+    <div id="start-screen" class="w-full max-w-lg mx-auto puzzle-card rounded-xl p-8 text-center space-y-8 shadow-2xl transition duration-500">
+        <div class="flex justify-center items-center space-x-4">
+            <span class="text-yellow-400 text-3xl">⭐</span>
+            <h1 class="text-3xl font-extrabold text-primary-blue">Welcome to Puzzle World</h1>
+            <span class="text-yellow-400 text-3xl">⭐</span>
+        </div>
+        <p class="text-gray-700">Challenge yourself with <span class="font-bold text-secondary-green">logic puzzles</span> — 1000 levels!</p>
+
+        <p class="text-gray-600">Highest Level Unlocked: <span id="start-max-level" class="font-extrabold text-2xl text-primary-blue">1</span></p>
+
+        <button id="start-button" class="w-full max-w-xs mx-auto bg-primary-blue text-white font-bold py-3 rounded-xl text-lg hover:bg-primary-blue/90 transition">
+            Start Game (Level <span id="start-current-level-display">1</span>)
+        </button>
+
+        <p id="debug-line" class="text-xs text-gray-500 mt-4">Debug: waiting...</p>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="game-container" class="w-full max-w-lg mx-auto puzzle-card rounded-xl p-6 sm:p-8 space-y-6 transition duration-500 hidden">
+        <div class="flex flex-col sm:flex-row justify-between items-center bg-primary-blue/5 p-4 rounded-lg border border-primary-blue/10">
+            <h2 id="level-display" class="text-xl font-semibold text-primary-blue">Level: 1</h2>
+            <p class="text-sm text-gray-700">Max Unlocked: <span id="max-level-display" class="font-bold text-secondary-green">1</span></p>
+        </div>
+
+        <div id="puzzle-area" class="bg-white p-6 rounded-lg shadow-inner border border-gray-200 min-h-[140px] flex items-center justify-center">
+            <p id="puzzle-question" class="text-xl text-gray-800 font-bold text-center"></p>
+        </div>
+
+        <div class="space-y-4">
+            <div id="selection-area" class="grid gap-4"></div>
+            <p id="feedback-message" class="text-center font-bold text-lg min-h-[28px]"></p>
+        </div>
+    </div>
+
+    <script>
+    /* ----------------- Ad / SDK handlers (robust & defensive) ----------------- */
+    (function(){
+        window.__gm_sdk_ready = false;
+        window.__gm_waitingForAd = false;
+        window.__gm_pendingNextLevel = null;
+        window.__gm_startAdShown = false;
+        window.levelsUntilNextAd = (function(){ return Math.floor(Math.random()*3)+3; })(); // 3..5
+
+        window.__GM__onAdPause = function(){
+            try {
+                console.log('GM: onAdPause');
+                var btns = document.querySelectorAll('#selection-area button');
+                if (btns) btns.forEach(b=>b.disabled=true);
+                var fm = document.getElementById('feedback-message');
+                if (fm) fm.textContent = 'Ad playing...';
+                // try mute Tone safely
+                if (window.Tone && Tone.Destination && typeof Tone.Destination.mute !== 'undefined') {
+                    try { Tone.Destination.mute = true; } catch(e){}
+                }
+            } catch(e){ console.warn(e); }
+        };
+
+        window.__GM__onAdStart = function(){
+            try {
+                console.log('GM: onAdStart (resume)');
+                var btns = document.querySelectorAll('#selection-area button');
+                if (btns) btns.forEach(b=>b.disabled=false);
+                var fm = document.getElementById('feedback-message');
+                if (fm) fm.textContent = '';
+                if (window.Tone && Tone.Destination && typeof Tone.Destination.mute !== 'undefined') {
+                    try { Tone.Destination.mute = false; } catch(e){}
+                }
+                if (window.__gm_waitingForAd && window.__gm_pendingNextLevel) {
+                    var lvl = window.__gm_pendingNextLevel;
+                    window.__gm_pendingNextLevel = null;
+                    window.__gm_waitingForAd = false;
+                    var overlay = document.getElementById('win-overlay');
+                    if (overlay) overlay.classList.add('hidden');
+                    try { loadLevel(lvl); } catch(e){ console.warn(e); }
+                }
+            } catch(e){ console.warn(e); }
+        };
+
+        window.__GM__onSdkReady = function(){
+            try {
+                console.log('GM: SDK ready');
+                window.__gm_sdk_ready = true;
+                // show initial ad once (if available)
+                if (!window.__gm_startAdShown) {
+                    window.__gm_startAdShown = true;
+                    setTimeout(()=>{ showAd({pref:'interstitial', isInitial:true}); }, 300);
+                }
+            } catch(e){ console.warn(e); }
+        };
+
+        window.showAd = function(options){
+            try {
+                options = options || {};
+                if (!window.__gm_sdk_ready) {
+                    console.warn('GM SDK not ready yet');
+                    return false;
+                }
+                var pref = options.pref || 'interstitial';
+                var has = function(name){ return !!(window.sdk && typeof window.sdk[name] === 'function'); };
+
+                if (has('showInterstitial')) { try { window.sdk.showInterstitial(); return true; } catch(e){ console.warn(e); } }
+                if (has('showVideo')) { try { window.sdk.showVideo(); return true; } catch(e){ console.warn(e); } }
+                if (has('showRewarded')) { try { window.sdk.showRewarded(); return true; } catch(e){ console.warn(e); } }
+                if (has('showBanner')) {
+                    try {
+                        window.sdk.showBanner();
+                        // Banner may not pause; emulate a short pause/resume cycle
+                        setTimeout(function(){
+                            if (window.__gm_waitingForAd && window.__gm_pendingNextLevel) {
+                                window.__GM__onAdStart();
+                            }
+                        }, 1200);
+                        return true;
+                    } catch(e){ console.warn(e); }
+                }
+                console.warn('No ad API available on sdk object');
+                return false;
+            } catch(err){ console.warn(err); return false; }
+        };
+    })();
+    /* ------------------------------------------------------------------------- */
+
+    // ------------------------------- Game ------------------------------------ //
+    let maxUnlockedLevel = 1;
+    let currentLevel = 1;
+    const totalLevels = 1000;
+
+    // Tone audio setup (defensive)
+    let synth, initializedAudio=false;
+    function initAudio(){
+        try {
+            if (initializedAudio) return;
+            if (!window.Tone) return;
+            if (Tone.context && Tone.context.state !== 'running') {
+                Tone.start().then(()=>{ setupSynth(); }).catch(e=>{ console.warn(e); setupSynth(); });
+            } else { setupSynth(); }
+        } catch(e){ console.warn(e); }
+    }
+    function setupSynth(){
+        try {
+            synth = new Tone.PolySynth(Tone.Synth, {
+                oscillator: { type: "square" },
+                envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.5 }
+            }).toDestination();
+            initializedAudio = true;
+        } catch(e){ console.warn('setupSynth failed',e); }
+    }
+    function playWinSound(){ try { if(!initializedAudio) initAudio(); if(!synth) return; synth.triggerAttackRelease(["C5","E5","G5","C6"], "8n"); } catch(e){ console.warn(e); } }
+    function playLoseSound(){ try { if(!initializedAudio) initAudio(); if(!synth) return; synth.triggerAttackRelease("C3","4n"); setTimeout(()=>synth.triggerAttackRelease("B2","4n"),100); } catch(e){ console.warn(e); } }
+    document.addEventListener('click', initAudio, { once:true });
+    document.addEventListener('touchstart', initAudio, { once:true });
+
+    // Random helper
+    const getRandomInt = (min,max) => Math.floor(Math.random()*(max-min+1))+min;
+
+    // Puzzle generator (same types)
+    function getPuzzle(level){
+        try {
+            const levelIndex = level-1;
+            const type = levelIndex % 7;
+            // (omitting comments here - same logic as original, compacted)
+            switch(type){
+                case 0: {
+                    const opCycle = levelIndex % 8;
+                    const baseDifficulty = 1 + Math.floor(level / 200);
+                    const baseOperand = getRandomInt(baseDifficulty * 1, baseDifficulty * 3 + 2);
+                    let sequence=[]; let nextTerm;
+                    if (opCycle===0||opCycle===1){
+                        let current=getRandomInt(10,50); sequence.push(current);
+                        for(let i=0;i<5;i++){ current+=baseOperand; sequence.push(current); }
+                    } else if (opCycle===2||opCycle===3){
+                        let current=getRandomInt(baseOperand*5+10, baseOperand*8+30); sequence.push(current);
+                        for(let i=0;i<5;i++){ current-=baseOperand; sequence.push(current); }
+                    } else if (opCycle===4||opCycle===5){
+                        const mulOperand=getRandomInt(2,4); let current=getRandomInt(2,5); sequence.push(current);
+                        for(let i=0;i<5;i++){ current *= mulOperand; sequence.push(current); }
+                    } else {
+                        let current=getRandomInt(20,60); sequence.push(current);
+                        for(let i=0;i<5;i++){ if(i%2===0) current+=baseOperand; else current-=baseOperand; sequence.push(current); }
+                    }
+                    nextTerm = sequence.pop();
+                    const termsToShow = sequence.slice(0,5).join(' , ');
+                    const question_en = `What is the next number in the sequence? (${termsToShow}, ...)`;
+                    const options = new Set([String(nextTerm)]);
+                    let deviation = Math.max(1, Math.floor(baseOperand/2));
+                    while(options.size<4){ const incorrect = nextTerm + (getRandomInt(0,1)===0?deviation:-deviation); if(incorrect>0) options.add(String(incorrect)); deviation++; }
+                    return { question_ar: question_en, answer: String(nextTerm), type:'Sequence', options: Array.from(options).sort(()=>Math.random()-0.5) };
+                }
+                case 1: {
+                    let scenarios = [
+                        { q:"Only one person is lying. Who is the liar?", clues:[ {n:"Alex",e:"👤",clue:"Ben is the liar."},{n:"Ben",e:"👩",clue:"I am telling the truth."},{n:"Carl",e:"👨",clue:"Alex is the liar."}], answer_name:"Alex" },
+                        { q:"Exactly one person is the thief, and the thief is the ONLY one lying. Who is the thief?", clues:[ {n:"David",e:"👦",clue:"It was not Emma."},{n:"Emma",e:"👩",clue:"Francis is the thief."},{n:"Francis",e:"👨‍💼",clue:"I am innocent."}], answer_name:"Emma" },
+                        { q:"If the blue marble is in box 1, then the red marble is in box 2. The blue marble is NOT in box 1. Which statement MUST be true?", clues:[ {n:"Red is in Box 2",e:"🔴",clue:"It must be true."},{n:"Blue is in Box 2",e:"🔵",clue:"It must be true."},{n:"Red is in Box 3",e:"🔴",clue:"It is undetermined."},{n:"Cannot be determined",e:"❓",clue:"It must be true."}], answer_name:"Cannot be determined" }
+                    ];
+                    const sc = scenarios[levelIndex % scenarios.length];
+                    const cluesHtml = sc.clues.map(s=>`<p class="text-gray-700">${s.e} ${s.n}: "${s.clue}"</p>`).join('');
+                    const options = sc.clues.map(s=>s.n);
+                    return { question_ar: sc.q, answer: sc.answer_name, type:'WhoIsIt', options: options.sort(()=>Math.random()-0.5), clues: cluesHtml };
+                }
+                case 2: {
+                    const animals = [{name:"Lion 🦁",sound:"Roar"},{name:"Cat 🐈",sound:"Meow"},{name:"Dog 🐕",sound:"Bark"},{name:"Cow 🐄",sound:"Moo"},{name:"Rooster 🐓",sound:"Crow"}];
+                    const selected = animals[levelIndex % animals.length];
+                    const question_en = `What sound does the ${selected.name} make?`;
+                    const options = new Set([selected.sound]);
+                    while(options.size<4){ options.add(animals[getRandomInt(0,animals.length-1)].sound); }
+                    return { question_ar: question_en, answer: selected.sound, type:'Matching', options: Array.from(options).sort(()=>Math.random()-0.5) };
+                }
+                case 3: {
+                    const targetCount = getRandomInt(3,8);
+                    const emoji = ["🍎","🎈","⭐️","🐳","🚗"][levelIndex % 5];
+                    const question_en = `How many ${emoji} are in this sentence? ${new Array(targetCount).fill(emoji).join('')}`;
+                    const options = new Set([String(targetCount)]);
+                    while(options.size<4){ const incorrect = targetCount+getRandomInt(-2,2); if(incorrect>0 && incorrect!==targetCount) options.add(String(incorrect)); }
+                    return { question_ar: question_en, answer: String(targetCount), type:'Count', options: Array.from(options).sort(()=>Math.random()-0.5) };
+                }
+                case 4: {
+                    const scenarios = [{category:"Colors",oddOne:"Cat 🐱",others:["Blue 🟦","Red 🟥","Green 🟩"]},{category:"Shapes",oddOne:"Sleeping 😴",others:["Circle ⚪","Square ⬜","Triangle 🔺"]},{category:"Clothes",oddOne:"Ice Cream 🍦",others:["Shirt 👕","Pants 👖","Shoe 👟"]}];
+                    const sc = scenarios[levelIndex % scenarios.length];
+                    const options = [sc.oddOne, sc.others[0], sc.others[1], sc.others[2]].sort(()=>Math.random()-0.5);
+                    return { question_ar: `Which item is the odd one out and does not belong to the ${sc.category} group?`, answer: sc.oddOne, type:'OddOneOut', options: options };
+                }
+                case 5: {
+                    let num1,num2,answer,question_en;
+                    const mathType = levelIndex % 3;
+                    if(mathType===0){ num1=getRandomInt(1,10); num2=getRandomInt(1,10); answer=num1+num2; question_en=`What is the result of: ${num1} + ${num2}?`; }
+                    else if(mathType===1){ num1=getRandomInt(10,20); num2=getRandomInt(1,num1-1); answer=num1-num2; question_en=`What is the result of: ${num1} - ${num2}?`; }
+                    else { num1=getRandomInt(2,5); num2=getRandomInt(2,5); answer=num1*num2; question_en=`What is the result of: ${num1} × ${num2}?`; }
+                    const options = new Set([String(answer)]);
+                    while(options.size<4){ const incorrect = answer + getRandomInt(-2,2); if(!options.has(String(incorrect)) && incorrect>=0) options.add(String(incorrect)); }
+                    return { question_ar: question_en, answer: String(answer), type:'SimpleMath', options: Array.from(options).sort(()=>Math.random()-0.5) };
+                }
+                case 6: {
+                    const sentences = [
+                        "How much wood would a woodchuck chuck if a woodchuck could chuck wood?",
+                        "The quick brown fox jumps over the lazy dog.",
+                        "Sphinx of black quartz, judge my vow.",
+                        "Traveling across the country requires careful planning.",
+                        "Programming logic is always fascinating and complex.",
+                        "Why do we forget the words we knew the moment we open our mouths?",
+                        "You only live once, but if you do it right, once is enough.",
+                        "The greatest danger for most of us is not that our aim is too high and we miss it, but that it is too low and we reach it."
+                    ];
+                    const targetChars = ['o','u','e','a','i','s','t','r'];
+                    const sentence = sentences[levelIndex % sentences.length];
+                    const targetChar = targetChars[Math.floor(levelIndex / sentences.length) % targetChars.length];
+                    const regex = new RegExp(targetChar, 'gi');
+                    const match = sentence.match(regex);
+                    const answer = match ? match.length : 0;
+                    const question_en = `In the sentence, "${sentence}", how many times does the letter '${targetChar.toUpperCase()}' appear?`;
+                    const options = new Set([String(answer)]);
+                    while(options.size<4){ const incorrect = answer + getRandomInt(-2,2); if(!options.has(String(incorrect)) && incorrect>=0) options.add(String(incorrect)); }
+                    return { question_ar: question_en, answer: String(answer), type:'CharCount', options: Array.from(options).sort(()=>Math.random()-0.5) };
+                }
+                default: return { question_ar:"Error", answer:"Error", type:"Error", options:["Error"] };
+            }
+        } catch(e){ console.warn(e); return { question_ar:"Error generating puzzle", answer:"Error", type:"Error", options:["Error"] }; }
+    }
+
+    // Local storage
+    function loadProgress(){
+        try {
+            const stored = localStorage.getItem('puzzleMaxLevel');
+            maxUnlockedLevel = parseInt(stored) || 1;
+            document.getElementById('start-max-level').textContent = maxUnlockedLevel;
+            document.getElementById('start-current-level-display').textContent = maxUnlockedLevel;
+            document.getElementById('max-level-display').textContent = maxUnlockedLevel;
+            // start screen visible by default; update debug
+            var dbg = document.getElementById('debug-line');
+            if (dbg) dbg.textContent = 'Ready. Max unlocked: ' + maxUnlockedLevel;
+        } catch(e){ console.warn(e); }
+    }
+    async function saveProgress(level){
+        try {
+            if (level > maxUnlockedLevel) {
+                maxUnlockedLevel = level;
+                localStorage.setItem('puzzleMaxLevel', maxUnlockedLevel);
+                var el = document.getElementById('max-level-display');
+                if (el) el.textContent = maxUnlockedLevel;
+            }
+        } catch(e){ console.warn(e); }
+        return Promise.resolve();
+    }
+
+    // UI elements
+    const feedbackMessage = document.getElementById('feedback-message');
+    const levelDisplay = document.getElementById('level-display');
+    const puzzleQuestion = document.getElementById('puzzle-question');
+    const selectionArea = document.getElementById('selection-area');
+    const startScreen = document.getElementById('start-screen');
+    const gameContainer = document.getElementById('game-container');
+    const winOverlay = document.getElementById('win-overlay');
+
+    function showStartScreen(){ try { gameContainer.classList.add('hidden'); startScreen.classList.remove('hidden'); } catch(e){ console.warn(e); } }
+    function showGameScreen(level){ try { startScreen.classList.add('hidden'); gameContainer.classList.remove('hidden'); loadLevel(level); } catch(e){ console.warn(e); } }
+
+    document.getElementById('start-button').addEventListener('click', ()=> { showGameScreen(maxUnlockedLevel); });
+
+    let currentPuzzle = null;
+
+    function loadLevel(level){
+        try {
+            if (level > totalLevels) {
+                levelDisplay.textContent = 'Congratulations!';
+                puzzleQuestion.textContent = `You completed all ${totalLevels} levels.`;
+                selectionArea.classList.add('hidden');
+                feedbackMessage.textContent = 'Game Over.';
+                return;
+            }
+            if (level < 1) level = 1;
+            currentLevel = level;
+            currentPuzzle = getPuzzle(currentLevel);
+            levelDisplay.textContent = `Level: ${currentLevel}`;
+            let questionHTML = currentPuzzle.question_ar || '';
+            if (currentPuzzle.type === 'WhoIsIt' && currentPuzzle.clues) {
+                questionHTML += `<div class="mt-4 text-sm space-y-2 text-left border-t pt-4">${currentPuzzle.clues}</div>`;
+            }
+            puzzleQuestion.innerHTML = questionHTML;
+            feedbackMessage.textContent = '';
+            selectionArea.innerHTML = '';
+            selectionArea.classList.remove('hidden');
+
+            let gridClass = 'grid gap-4 ';
+            if (['Sequence','Count','SimpleMath','CharCount'].includes(currentPuzzle.type)) gridClass += 'grid-cols-2 sm:grid-cols-4';
+            else gridClass += 'grid-cols-2 lg:grid-cols-3';
+            selectionArea.className = gridClass;
+
+            (currentPuzzle.options || []).forEach((optionName)=>{
+                try {
+                    const button = document.createElement('button');
+                    button.textContent = optionName;
+                    button.className = 'selection-button py-3 px-3 rounded-lg font-bold bg-white text-primary-blue border-2 border-primary-blue/30 hover:bg-primary-blue hover:text-white transition duration-150 shadow-md text-lg';
+                    button.onclick = handleButtonClick.bind(null, optionName);
+                    selectionArea.appendChild(button);
+                } catch(e){ console.warn(e); }
+            });
+
+            // lock if level > unlocked
+            if (currentLevel > maxUnlockedLevel){
+                puzzleQuestion.textContent = `Level ${currentLevel} is locked. Complete Level ${currentLevel-1} to proceed.`;
+                document.querySelectorAll('#selection-area button').forEach(b=>b.disabled=true);
+            } else {
+                document.querySelectorAll('#selection-area button').forEach(b=>b.disabled=false);
+            }
+        } catch(e){ console.error('loadLevel error', e); }
+    }
+
+    async function handleButtonClick(clickedAnswer){
+        try {
+            feedbackMessage.textContent = '';
+            await checkAnswer(clickedAnswer);
+        } catch(e){ console.warn(e); }
+    }
+
+    async function checkAnswer(userAnswer){
+        try {
+            const correctAnswer = currentPuzzle && currentPuzzle.answer;
+            const normUser = String(userAnswer || '').replace(/\s/g,'').toLowerCase();
+            const normCorrect = String(correctAnswer || '').replace(/\s/g,'').toLowerCase();
+            if (normUser === normCorrect){
+                playWinSound();
+                feedbackMessage.textContent = 'Correct Answer! 🎉';
+                feedbackMessage.classList.remove('text-danger-red');
+                feedbackMessage.classList.add('text-secondary-green');
+
+                const nextLevel = currentLevel + 1;
+                if (nextLevel <= totalLevels){
+                    await saveProgress(nextLevel);
+                    winOverlay.classList.remove('hidden');
+
+                    // decide ad display
+                    window.levelsUntilNextAd -= 1;
+                    if (window.levelsUntilNextAd <= 0){
+                        // schedule ad, delay loading until ad finishes (SDK will call resume)
+                        window.__gm_pendingNextLevel = nextLevel;
+                        window.__gm_waitingForAd = true;
+                        window.levelsUntilNextAd = getRandomInt(3,5);
+                        const shown = showAd({pref:'interstitial'});
+                        if (!shown){
+                            // fallback: continue after short timeout
+                            setTimeout(()=>{
+                                try { winOverlay.classList.add('hidden'); window.__gm_waitingForAd = false; loadLevel(nextLevel); } catch(e){ console.warn(e); }
+                            }, 900);
+                        }
+                    } else {
+                        // no ad this time
+                        setTimeout(()=>{ try { winOverlay.classList.add('hidden'); loadLevel(nextLevel); } catch(e){ console.warn(e); } }, 1200);
+                    }
+                } else {
+                    loadLevel(totalLevels+1);
+                }
+            } else {
+                playLoseSound();
+                feedbackMessage.textContent = 'Incorrect Answer. Try again.';
+                feedbackMessage.classList.remove('text-secondary-green');
+                feedbackMessage.classList.add('text-danger-red');
+            }
+        } catch(e){ console.error('checkAnswer error', e); }
+    }
+
+    // init
+    function initApp(){
+        try {
+            loadProgress();
+            initAudio();
+            // If SDK exists already, mark ready (defensive)
+            try { if (window.sdk) { window.__gm_sdk_ready = true; console.log('sdk object exists at init'); } } catch(e){}
+        } catch(e){ console.warn(e); }
+    }
+    window.onload = initApp;
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,1677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Flappy Blitz: Intercept</title>
+    <style>
+        /* Font and Color Theme */
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+
+        :root {
+            --primary: #00FFC0;
+            /* Cyber Green */
+            --secondary: #FFFFFF;
+            --ui-bg: rgba(0, 0, 0, 0.95);
+            /* Darker, opaque UI */
+            --accent: #FF4757;
+            /* Alert Red */
+            --menu-bg-color: #0f172a;
+            /* Deep Blue/Black */
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: var(--menu-bg-color);
+            font-family: 'Share Tech Mono', monospace;
+            touch-action: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            height: 100dvh;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            max-width: 500px;
+            max-height: 900px;
+            background: #000;
+            box-shadow: 0 0 40px rgba(0, 255, 192, 0.3);
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* UI Overlay Styles */
+        .ui-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            z-index: 20;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 20px;
+            box-sizing: border-box;
+            color: var(--primary);
+        }
+
+        .ui-screen.active {
+            opacity: 1;
+            pointer-events: all;
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3.5rem;
+            line-height: 1.0;
+            color: var(--primary);
+            text-shadow: 0 0 15px var(--primary), 0 0 5px rgba(0, 255, 192, 0.8);
+            margin: 0 0 20px 0;
+            text-align: center;
+            letter-spacing: 5px;
+            animation: glitch 1.5s infinite;
+        }
+
+        @keyframes glitch {
+            0% {
+                transform: translate(0);
+            }
+
+            20% {
+                transform: translate(-2px, 2px);
+            }
+
+            40% {
+                transform: translate(-1px, -1px);
+            }
+
+            60% {
+                transform: translate(3px, 0);
+            }
+
+            80% {
+                transform: translate(1px, -1px);
+            }
+
+            100% {
+                transform: translate(0);
+            }
+        }
+
+        h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+            color: var(--primary);
+            text-shadow: 0 0 5px var(--primary);
+            margin-bottom: 20px;
+        }
+
+        .score-panel,
+        .menu-list {
+            background: var(--ui-bg);
+            padding: 10px;
+            border-radius: 10px;
+            border: 2px solid var(--primary);
+            box-shadow: 0 0 20px rgba(0, 255, 192, 0.4);
+            text-align: center;
+            margin-bottom: 10px;
+            min-width: 220px;
+            transform: scale(0.9);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            color: var(--secondary);
+        }
+
+        .ui-screen.active .score-panel,
+        .ui-screen.active .menu-list {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        .score-display {
+            font-size: 2.8rem;
+            font-weight: 900;
+            color: var(--primary);
+            text-shadow: 0 0 5px var(--primary);
+            margin: 5px 0;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .label {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: #94a3b8;
+            font-weight: 700;
+        }
+
+        /* Buttons */
+        button {
+            border: none;
+            border-radius: 6px;
+            padding: 12px 30px;
+            color: #000;
+            /* Black text for contrast */
+            font-size: 1rem;
+            font-weight: 700;
+            font-family: 'Share Tech Mono', monospace;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 0.1s;
+            margin: 5px 0;
+            position: relative;
+            overflow: hidden;
+            width: 250px;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            border: 2px solid var(--primary);
+            background-color: var(--primary);
+            box-shadow: 0 4px 0 #009973;
+        }
+
+        button:active {
+            transform: translateY(4px);
+            box-shadow: none;
+        }
+
+        .btn-main-menu {
+            background-color: #1e293b;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+            box-shadow: 0 4px 0 #005642;
+        }
+
+        .btn-main-menu:active {
+            box-shadow: none;
+            background-color: #0d1218;
+        }
+
+        .btn-back {
+            background-color: #475569;
+            color: var(--secondary);
+            border: 2px solid #94a3b8;
+            box-shadow: 0 4px 0 #334155;
+            width: 150px;
+            margin-top: 20px;
+        }
+
+        .btn-danger {
+            background-color: var(--accent);
+            color: white;
+            border: 2px solid var(--accent);
+            box-shadow: 0 4px 0 #922b21;
+        }
+
+        .btn-retry {
+            background: linear-gradient(135deg, #FFD700, #ffae00);
+            color: #000;
+            border: 2px solid #FFD700;
+            box-shadow: 0 4px 0 #a38900;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+            box-shadow: 0 4px 0 #1e40af;
+            font-size: 0.9rem;
+            padding: 10px 30px;
+            width: 250px;
+        }
+
+        /* Menu List and Settings Styles */
+       .menu-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 auto; /* центр по горизонталі */
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    max-width: 300px;
+    align-items: center; /* <-- головне центрування */
+}
+
+
+        .settings-list li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+        }
+
+        .settings-label {
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .settings-value {
+            color: var(--secondary);
+            font-weight: bold;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            text-align: left;
+        }
+
+        .stat-item {
+            padding: 10px;
+            border: 1px solid #334155;
+            border-radius: 5px;
+            background-color: rgba(15, 23, 42, 0.5);
+        }
+
+        /* HUD */
+        #hud {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: calc(100% - 20px);
+            text-align: center;
+            pointer-events: none;
+            z-index: 10;
+            display: none;
+        }
+
+        #hud-score {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3rem;
+            color: var(--primary);
+            text-shadow: 0 0 10px var(--primary);
+            -webkit-text-stroke: 1px black;
+            float: left;
+        }
+
+        #hud-shield {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1.2rem;
+            color: #3b82f6;
+            /* Blue for shield */
+            text-shadow: 0 0 5px #3b82f6;
+            margin-top: 5px;
+            float: right;
+            display: none;
+            /* Initially hidden */
+        }
+
+        #hud-combo {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1.5rem;
+            color: #ffaa00;
+            /* Orange for combo */
+            text-shadow: 0 0 5px #ffaa00;
+            position: absolute;
+            top: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: none;
+        }
+
+        /* Bird Color Picker */
+        .color-picker {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .color-option {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: border-color 0.1s;
+        }
+
+        .color-option.selected {
+            border-color: var(--primary);
+            box-shadow: 0 0 10px var(--primary);
+        }
+
+        /* Utility/Info Text */
+        .info-text {
+            color: #94a3b8;
+            font-size: 0.8rem;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .info-text a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        /* Flag and Support Ukraine */
+        .ukraine-support {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .flag {
+            width: 60px;
+            height: 40px;
+            border: 2px solid white;
+            margin-bottom: 10px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .flag-yellow {
+            background-color: #FFD700;
+            height: 50%;
+        }
+
+        .flag-blue {
+            background-color: #0057B8;
+            height: 50%;
+        }
+
+        /* Responsive Design Tweaks */
+        @media (max-width: 380px) {
+            h1 {
+                font-size: 3rem;
+                margin-bottom: 10px;
+            }
+
+            #hud-score {
+                font-size: 2.5rem;
+            }
+
+            button {
+                width: 100%;
+                padding: 10px;
+                font-size: 0.9rem;
+            }
+
+            .score-panel,
+            .menu-list {
+                min-width: auto;
+                width: 100%;
+                padding: 15px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .donate-links {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+}
+
+.donate-btn {
+    display: block;
+    padding: 12px;
+    text-align: center;
+    font-size: 1rem;
+    font-weight: 700;
+    background-color: #0057B8;
+    color: #fff;
+    border-radius: 8px;
+    text-decoration: none;
+    border: 2px solid #FFD700;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+}
+
+.donate-btn:hover {
+    background-color: #0045A0;
+}
+/* Medal Styles */
+.medal-container {
+    height: 60px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.medal {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    position: relative;
+    box-sizing: border-box;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 10px;
+    font-weight: 900;
+    color: #000;
+}
+
+.medal::after {
+    content: '★';
+    position: absolute;
+    font-size: 30px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.bronze {
+    background: #cd7f32;
+    border: 3px solid #e0b078;
+    box-shadow: 0 0 15px rgba(205, 127, 50, 0.7);
+}
+
+.silver {
+    background: #c0c0c0;
+    border: 3px solid #e5e5e5;
+    box-shadow: 0 0 15px rgba(192, 192, 192, 0.7);
+}
+
+.gold {
+    background: #ffc72c;
+    border: 3px solid #ffd700;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.7);
+}
+
+.platinum {
+    background: #e5e4e2;
+    border: 3px solid #f2f2f2;
+    box-shadow: 0 0 15px rgba(229, 228, 226, 0.9);
+}
+
+.diamond {
+    background: radial-gradient(circle at top left, #3b82f6, #1d4ed8);
+    border: 3px solid #bfdbfe;
+    box-shadow: 0 0 20px rgba(59, 130, 246, 1);
+    color: white;
+}
+
+.diamond::after {
+    content: '💎';
+    font-size: 20px;
+}
+</style>
+</head>
+
+<body>
+
+    <div id="game-container">
+        <div id="tap-start-screen" class="ui-screen">
+    <h2>TAP TO START</h2>
+</div>
+
+        <canvas id="gameCanvas"></canvas>
+
+        <div id="hud">
+            <div id="hud-score">0</div>
+            <div id="hud-shield">SHIELD: <span id="shield-timer">0</span>s</div>
+            <div id="hud-combo">COMBO x<span id="combo-count">1</span>!</div>
+        </div>
+
+        <div id="menu-screen" class="ui-screen active">
+            <h1>FLAPPY<br>BLITZ</h1>
+            <div class="score-panel">
+                <div class="label">BEST RUN</div>
+                <div class="score-display" id="home-best-score">0</div>
+            </div>
+
+            <div class="menu-list">
+                <button onclick="showScreen('difficulty-screen')" class="btn-main-menu">START INTERCEPT</button>
+                <button onclick="showScreen('stats-screen')" class="btn-main-menu">STATS</button>
+                <button onclick="showScreen('settings-screen')" class="btn-main-menu">SETTINGS</button>
+                <button onclick="showScreen('support-screen')" class="btn-main-menu">SUPPORT UKRAINE🇺🇦</button>
+                <button onclick="showScreen('about-screen')" class="btn-main-menu">ABOUT</button>
+            </div>
+        </div>
+
+        <div id="difficulty-screen" class="ui-screen">
+            <h2>SELECT ZONE</h2>
+            <div class="label" style="margin-bottom: 15px;">DIFFICULTY</div>
+            <div class="menu-list">
+                <button class="btn-easy" onclick="initGame('EASY')">EASY ZONE</button>
+                <button class="btn-normal" onclick="initGame('NORMAL')">NORMAL ZONE</button>
+                <button class="btn-hard" onclick="initGame('HARD')">HARD ZONE</button>
+                <button class="btn-back" onclick="showScreen('menu-screen')">BACK</button>
+            </div>
+        </div>
+
+        <div id="stats-screen" class="ui-screen">
+            <h2>STATISTICS</h2>
+            <div class="score-panel">
+                <div class="stats-grid" id="stats-content">
+                    </div>
+            </div>
+            <button class="btn-back" onclick="showScreen('menu-screen')">BACK</button>
+        </div>
+
+        <div id="settings-screen" class="ui-screen">
+            <h2>SETTINGS</h2>
+            <div class="score-panel" style="min-width: 300px;">
+                <ul class="settings-list">
+                    <li>
+                        <span class="settings-label">Sound Effects</span>
+                        <button id="toggle-sfx" class="btn-main-menu" style="width: 100px; padding: 5px;">ON</button>
+                    </li>
+                    <li>
+                        <span class="settings-label">Fullscreen</span>
+                        <button id="toggle-fullscreen" class="btn-main-menu"
+                            style="width: 100px; padding: 5px;">OFF</button>
+                    </li>
+                    <li>
+                        <span class="settings-label">Graphics Quality</span>
+                        <select id="select-quality" class="btn-main-menu" style="width: 100px; padding: 5px; color: black; background-color: var(--primary);">
+                            <option value="HIGH">HIGH</option>
+                            <option value="LOW">LOW</option>
+                        </select>
+                    </li>
+                </ul>
+
+                <h3 style="color: var(--secondary); font-size: 1.2rem; margin: 20px 0 10px 0;">BIRD COLOR</h3>
+                <div class="color-picker" id="bird-color-picker">
+                    </div>
+            </div>
+            <button class="btn-back" onclick="showScreen('menu-screen')">BACK</button>
+        </div>
+
+        <div id="support-screen" class="ui-screen">
+    <h2>SUPPORT UKRAINE 🇺🇦</h2>
+
+    <div class="score-panel" style="max-width: 350px; text-align: center;">
+
+        A portion of the ad revenue from this game goes to support humanitarian aid for Ukraine.
+                        <br>Glory to Ukraine!<br>
+        <div class="donate-links">
+            <a href="https://savelife.in.ua/en/donate-en/" 
+               target="_blank" rel="noopener noreferrer" class="donate-btn">
+                🏥 Donate via Save Life in UA
+            </a>
+
+            <a href="https://www.sternenkofund.org/en/donate" 
+               target="_blank" rel="noopener noreferrer" class="donate-btn">
+                ⭐ Donate via Sternenko Fund
+            </a>
+        </div>
+    </div>
+
+    <button class="btn-back" onclick="showScreen('menu-screen')">BACK</button>
+</div>
+
+
+        <div id="about-screen" class="ui-screen">
+            <h2>ABOUT GAME</h2>
+            <div class="score-panel" style="max-width: 350px;">
+                <p><strong>Flappy Blitz: Intercept v2.0</strong></p>
+                <p>Developed by Ihor Khodakivskyi. The objective is to navigate the fast-moving 'Interceptor' (the bird) through the pipe 'Zones' (obstacles) using precise taps for speed and lift. Master the combo system for higher scores.</p>
+
+               
+            </div>
+            <button class="btn-back" onclick="showScreen('menu-screen')">BACK</button>
+        </div>
+
+        <div id="game-over-screen" class="ui-screen">
+            <h1 style="font-size: 3rem; margin-bottom: 10px; color: var(--accent); animation: none; text-shadow: 0 0 15px var(--accent);">
+                SYSTEM FAILURE!
+            </h1>
+
+            <div class="score-panel" style="padding: 20px 40px;">
+                <div class="medal-container" id="medal-slot">
+                    </div>
+                <div class="label" id="medal-label">NO MEDAL</div>
+
+                <div style="margin: 15px 0; border-top: 1px solid rgba(255,255,255,0.1);"></div>
+
+                <div class="label">SCORE</div>
+                <div class="score-display" id="final-score" style="font-size: 2.5rem;">0</div>
+
+                <div class="label" style="margin-top: 5px;">BEST: <span id="final-best-score">0</span> | COMBO MAX:
+                    <span id="final-max-combo">0</span>
+                </div>
+            </div>
+
+            <button id="btn-continue" class="btn-secondary" style="display:none; margin-bottom: 10px;">📺 REBOOT (AD)</button>
+            <button id="btn-retry" class="btn-retry">RETRY ZONE</button>
+            <button id="btn-exit-menu" class="btn-main-menu" style="margin-top:10px;">MAIN MENU</button>
+        </div>
+
+        <div id="ad-modal">
+            <div class="ad-content">
+                <h2 style="color: var(--primary);">SYSTEM PAUSE</h2>
+                <p>Loading Sponsor Message...</p>
+                <div id="ad-progress">
+                    <div id="ad-bar"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * CONFIGURATION V2.0
+         */
+
+        const DEFAULT_SETTINGS = {
+            sfxOn: true,
+            birdColor: '#00FFC0',
+            graphicsQuality: 'HIGH',
+            maxCombo: 0,
+            totalRuns: 0,
+            totalScore: 0
+        };
+
+        const CONFIG = {
+            physics: {
+                gravity: 0.45,
+                flapForce: -6.5,
+                terminalVelocity: 9.5,
+                rotationSpeed: 0.15,
+                tapWindowMs: 150,
+                boostMultiplier: 1.15
+            },
+            gameplay: {
+                pipeSpawnDist: 180,
+                shieldDuration: 5.0, // seconds
+                comboWindowMs: 700,
+                comboThreshold: 3, // Score needed for first combo level (x2)
+            }
+        };
+
+        // Strict Difficulty Settings
+        const DIFFICULTIES = {
+            'EASY': {
+                speed: 2.0,
+                gap: 200,
+                theme: {
+                    pipe: '#1abc9c', dark: '#16a085', highlight: '#48c9b0',
+                    sky: { top: '#0047b3', bottom: '#3498db' }
+                }
+            },
+            'NORMAL': {
+                speed: 2.5,
+                gap: 170,
+                theme: {
+                    pipe: '#3498db', dark: '#2980b9', highlight: '#5dade2',
+                    sky: { top: '#4A90E2', bottom: '#2c3e50' }
+                }
+            },
+           'HARD': {
+    baseSpeed: 2.0,
+    maxSpeed: 4.5,
+    baseGap: 160,
+    minGap: 95,
+    chaosShift: 22,
+    chaosFrequency: 0.25,
+    miniGapChance: 0.08,
+    theme: {
+        pipe: '#e74c3c', dark: '#c0392b', highlight: '#ec7063',
+        sky: { top: '#2c3e50', bottom: '#1f2937' }
+    }
+}
+
+            
+        };
+
+        const MEDALS = [
+            { name: 'bronze', score: 10, class: 'bronze', label: 'BRONZE INTERCEPT' },
+            { name: 'silver', score: 30, class: 'silver', label: 'SILVER INTERCEPT' },
+            { name: 'gold', score: 70, class: 'gold', label: 'GOLD BLITZ' },
+            { name: 'platinum', score: 150, class: 'platinum', label: 'PLATINUM BLITZ' },
+            { name: 'diamond', score: 300, class: 'diamond', label: 'DIAMOND ACE' }
+        ];
+
+        const BIRD_COLORS = {
+            'CYBER_GREEN': '#00FFC0',
+            'PHOENIX_RED': '#FF4757',
+            'COBALT_BLUE': '#3B82F6',
+            'VOID_PURPLE': '#8B5CF6'
+        };
+
+
+        /**
+         * AUDIO SYSTEM V2.0
+         */
+        class AudioController {
+            constructor() {
+                this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                this.masterGain = this.ctx.createGain();
+                this.masterGain.gain.value = 0.3;
+                this.masterGain.connect(this.ctx.destination);
+            }
+
+            playTone(freq, type, duration, vol = 1, slide = 0) {
+                if (!game.settings.sfxOn) return;
+                if (this.ctx.state === 'suspended') this.ctx.resume();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                if (slide !== 0) {
+                    osc.frequency.linearRampToValueAtTime(freq + slide, this.ctx.currentTime + duration);
+                }
+
+                gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+
+                osc.connect(gain);
+                gain.connect(this.masterGain);
+                osc.start();
+                osc.stop(this.ctx.currentTime + duration);
+            }
+
+            playFlap() {
+                this.playTone(200, 'triangle', 0.08, 0.4, -50);
+            }
+
+            playScore(combo = 0) {
+                const base = 800;
+                const pitch = base + (combo * 100);
+                this.playTone(pitch, 'sine', 0.05, 0.6);
+            }
+
+            playCrash() {
+                this.playTone(150, 'sawtooth', 0.3, 0.8, -100);
+            }
+
+            playShield() {
+                this.playTone(400, 'square', 0.1, 0.7);
+                setTimeout(() => this.playTone(600, 'square', 0.2, 0.5), 50);
+            }
+        }
+
+        /**
+         * GAME ENGINE V2.0
+         */
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const audio = new AudioController();
+
+        // State & Settings Loading
+        function loadSettings() {
+            const storedSettings = JSON.parse(localStorage.getItem('skytap_settings'));
+            return { ...DEFAULT_SETTINGS, ...storedSettings };
+        }
+
+        function saveSettings() {
+            localStorage.setItem('skytap_settings', JSON.stringify(game.settings));
+        }
+
+        const game = {
+            state: 'HOME',
+            score: 0,
+            bestScore: parseInt(localStorage.getItem('skytap_best')) || 0,
+            pipes: [],
+            particles: [],
+            clouds: [],
+            shieldTime: 0,
+            comboCount: 1,
+            lastScoreTime: 0,
+
+            // Settings loaded from localStorage
+            settings: loadSettings(),
+
+            // Difficulty Settings
+            selectedMode: 'NORMAL',
+            speed: 3.5,
+            gapSize: 170,
+            theme: DIFFICULTIES['NORMAL'].theme,
+
+            lastTapTime: 0,
+            deathCount: 0,
+            shake: 0
+        };
+
+        // UI Initialization and Persistence
+        function initUI() {
+            document.getElementById('home-best-score').innerText = game.bestScore;
+            // SFX Toggle
+            const sfxBtn = document.getElementById('toggle-sfx');
+            sfxBtn.innerText = game.settings.sfxOn ? 'ON' : 'OFF';
+            sfxBtn.onclick = () => {
+                game.settings.sfxOn = !game.settings.sfxOn;
+                sfxBtn.innerText = game.settings.sfxOn ? 'ON' : 'OFF';
+                saveSettings();
+            };
+
+            // Fullscreen Toggle
+            const fsBtn = document.getElementById('toggle-fullscreen');
+            const updateFsBtn = () => {
+                const isFs = document.fullscreenElement || document.webkitFullscreenElement;
+                fsBtn.innerText = isFs ? 'ON' : 'OFF';
+            };
+            fsBtn.onclick = () => {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(err => {
+                        console.error(`Error attempting to enable fullscreen mode: ${err.message}`);
+                    });
+                } else {
+                    document.exitFullscreen();
+                }
+                setTimeout(updateFsBtn, 100); // Wait a bit for transition
+            };
+            document.addEventListener('fullscreenchange', updateFsBtn);
+
+            // Graphics Quality
+            const qualitySelect = document.getElementById('select-quality');
+            qualitySelect.value = game.settings.graphicsQuality;
+            qualitySelect.onchange = (e) => {
+                game.settings.graphicsQuality = e.target.value;
+                saveSettings();
+                // Re-initialize elements that depend on quality (e.g., clouds)
+                initClouds();
+            };
+
+            // Bird Color Picker
+            const colorPicker = document.getElementById('bird-color-picker');
+            Object.entries(BIRD_COLORS).forEach(([name, color]) => {
+                const div = document.createElement('div');
+                div.className = 'color-option';
+                div.style.backgroundColor = color;
+                div.title = name.replace('_', ' ');
+                if (color === game.settings.birdColor) div.classList.add('selected');
+
+                div.onclick = () => {
+                    document.querySelectorAll('.color-option').forEach(el => el.classList.remove('selected'));
+                    div.classList.add('selected');
+                    game.settings.birdColor = color;
+                    saveSettings();
+                };
+                colorPicker.appendChild(div);
+            });
+        }
+
+        // Cloud/Particle Quality Implementation
+        function initClouds() {
+            game.clouds = [];
+            if (game.settings.graphicsQuality === 'HIGH') {
+                for (let i = 0; i < 3; i++) game.clouds.push(createCloud(0.2, '#E0FFFF', 0.3));
+                for (let i = 0; i < 4; i++) game.clouds.push(createCloud(0.4, '#B0E0E6', 0.5));
+            } else {
+                // Low Graphics: only 2 clouds, less opacity, faster movement
+                for (let i = 0; i < 2; i++) game.clouds.push(createCloud(0.5, '#B0E0E6', 0.2));
+            }
+        }
+
+        function createCloud(speedMult, color, opacity) {
+            return {
+                x: Math.random() * canvas.logicalWidth,
+                y: Math.random() * (canvas.logicalHeight * 0.6),
+                w: 60 + Math.random() * 80,
+                h: 30 + Math.random() * 30,
+                speed: speedMult,
+                color: color,
+                opacity: opacity
+            };
+        }
+
+        const bird = {
+            x: 0, y: 0, vel: 0, rot: 0, radius: 14,
+            reset: function () {
+                this.x = canvas.logicalWidth * 0.25;
+                this.y = canvas.logicalHeight / 2;
+                this.vel = 0;
+                this.rot = 0;
+            },
+            update: function () {
+                this.vel += CONFIG.physics.gravity;
+                if (this.vel > CONFIG.physics.terminalVelocity) this.vel = CONFIG.physics.terminalVelocity;
+                this.y += this.vel;
+
+                const targetRot = Math.min(Math.PI / 4, Math.max(-Math.PI / 4, (this.vel * 0.1)));
+                this.rot += (targetRot - this.rot) * CONFIG.physics.rotationSpeed;
+
+                // Update combo timer
+                const now = performance.now(); // набагато швидше Date.now()
+
+if (now - game.lastScoreTime > CONFIG.gameplay.comboWindowMs) {
+                    game.comboCount = 1;
+                    document.getElementById('hud-combo').style.display = 'none';
+                }
+
+                // Update shield timer
+                if (game.shieldTime > 0) {
+                    game.shieldTime -= 1 / 60; // Assuming ~60fps
+                    document.getElementById('shield-timer').innerText = Math.max(0, game.shieldTime).toFixed(1);
+                    document.getElementById('hud-shield').style.display = 'inline-block';
+                } else {
+                    document.getElementById('hud-shield').style.display = 'none';
+                    game.shieldTime = 0;
+                }
+            },
+            flap: function () {
+                const now = Date.now();
+                let force = CONFIG.physics.flapForce;
+
+                if (now - game.lastTapTime < CONFIG.physics.tapWindowMs) {
+                    force *= CONFIG.physics.boostMultiplier;
+                    createParticles(this.x, this.y, 'boost');
+                } else {
+                    createParticles(this.x - 10, this.y + 5, 'flap');
+                }
+
+                this.vel = force;
+                this.rot = -Math.PI / 4;
+                game.lastTapTime = now;
+                audio.playFlap();
+            }
+        };
+
+        function createParticles(x, y, type) {
+            if (game.settings.graphicsQuality === 'LOW' && type !== 'crash') return;
+
+            let count = type === 'crash' ? 30 : (type === 'score' ? 10 : 5);
+            for (let i = 0; i < count; i++) {
+                game.particles.push({
+                    x: x, y: y,
+                    vx: (Math.random() - 0.5) * (type === 'crash' ? 10 : 4),
+                    vy: (Math.random() - 0.5) * (type === 'crash' ? 10 : 4),
+                    life: 1.0,
+                    type: type,
+                    color: type === 'score' ? '#FFD700' : (type === 'boost' ? '#3B82F6' : '#FFF')
+                });
+            }
+        }
+
+        function updatePhysics() {
+            if (game.pipes.length === 0 || canvas.logicalWidth - game.pipes[game.pipes.length - 1].x >= CONFIG.gameplay.pipeSpawnDist) {
+                spawnPipe();
+            }
+
+           for (let i = game.pipes.length - 1; i >= 0; i--) {
+    const p = game.pipes[i];
+    if (!p) continue;
+    // Динамічне наростання складності у HARD
+if (game.selectedMode === 'HARD') {
+    // Chaos-wave: зміщує всі труби вгору-вниз хвилею
+if (Math.random() < game.chaos.chaosFrequency * 0.005) {
+    const waveShift = (Math.random() - 0.5) * game.chaos.chaosShift;
+
+    game.pipes.forEach(pipe => {
+        pipe.topH += waveShift;
+        pipe.topH = Math.max(70, Math.min(pipe.topH, canvas.logicalHeight - 150));
+    });
+}
+
+    game.chaosTimer += 0.016;
+
+    // Збільшення швидкості з часом (до maxSpeed)
+    game.speed = Math.min(
+        game.speed + 0.0009,
+        game.chaos.maxSpeed
+    );
+
+    // Зменшення gap (до minGap)
+    game.gapSize = Math.max(
+        game.gapSize - 0.015,
+        game.chaos.minGap
+    );
+}
+
+p.x -= game.speed;
+
+
+
+                const birdLeft = bird.x - bird.radius + 4;
+                const birdRight = bird.x + bird.radius - 4;
+                const birdTop = bird.y - bird.radius + 4;
+                const birdBottom = bird.y + bird.radius - 4;
+                const pipeLeft = p.x;
+                const pipeRight = p.x + p.w;
+
+                if (birdRight > pipeLeft && birdLeft < pipeRight) {
+                    if (birdTop < p.topH || birdBottom > p.topH + p.gap) {
+                        // Collision Detected
+                        if (game.shieldTime > 0) {
+                            // Shield saves the day!
+                            game.shieldTime = 0;
+                            game.shake = 10;
+                            audio.playShield();
+                            // Push the pipe off-screen instantly
+                            p.x = -p.w;
+                            continue;
+                        } else {
+                            // No shield, game over
+                            return gameOver();
+                        }
+                    }
+                }
+
+                if (!p.passed && birdLeft > pipeRight) {
+                    p.passed = true;
+
+                    // Combo Check
+                    if (Date.now() - game.lastScoreTime < CONFIG.gameplay.comboWindowMs) {
+                        if (game.score >= CONFIG.gameplay.comboThreshold) {
+                            game.comboCount++;
+                            document.getElementById('hud-combo').style.display = 'block';
+                            document.getElementById('combo-count').innerText = game.comboCount;
+                        }
+                    } else {
+                        game.comboCount = 1;
+                        document.getElementById('hud-combo').style.display = 'none';
+                    }
+
+                    game.score += game.comboCount;
+                    game.lastScoreTime = Date.now();
+
+                    audio.playScore(game.comboCount);
+                    document.getElementById('hud-score').innerText = game.score;
+                    createParticles(bird.x, bird.y - 30, 'score');
+
+                    const hud = document.getElementById('hud-score');
+                    hud.style.transform = 'scale(1.4)';
+                    setTimeout(() => hud.style.transform = 'scale(1)', 100);
+
+                    // Shield Power-up Logic (Random chance on high score)
+                    if (game.score > 10 && Math.random() < 0.08) {
+                        game.shieldTime = CONFIG.gameplay.shieldDuration;
+                        audio.playShield();
+                    }
+
+                    // Update max combo stat
+                    if (game.comboCount > game.settings.maxCombo) {
+                        game.settings.maxCombo = game.comboCount;
+                    }
+                }
+
+                if (p.x + p.w < -50) game.pipes.splice(i, 1);
+            }
+
+            if (bird.y + bird.radius > canvas.logicalHeight || bird.y - bird.radius < 0) {
+                gameOver();
+            }
+        }
+
+        function spawnPipe() {
+            const minH = 80;
+            const maxH = canvas.logicalHeight - minH - game.gapSize;
+            let h = Math.floor(Math.random() * (maxH - minH + 1)) + minH;
+
+// хаотичне вертикальне зміщення труби
+if (game.selectedMode === 'HARD') {
+    h += (Math.random() - 0.5) * game.chaos.chaosShift;
+    h = Math.max(minH, Math.min(h, maxH));
+}
+
+// mini-gap шанс
+let gap = game.gapSize;
+if (game.selectedMode === 'HARD' && Math.random() < game.chaos.miniGapChance) {
+    gap *= 0.65;
+}
+
+game.pipes.push({
+    x: canvas.logicalWidth,
+    w: 52,
+    topH: h,
+    gap: gap,
+    passed: false
+});
+
+        }
+
+        function drawBird(x, y, rot, radius, color) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(rot);
+
+            // Bird Body (Simple stylized circle/capsule)
+            ctx.beginPath();
+            ctx.arc(0, 0, radius, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.fill();
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = game.shieldTime > 0 ? 5 : 2;
+            ctx.strokeStyle = game.shieldTime > 0 ? '#3B82F6' : '#fff';
+            ctx.shadowColor = game.shieldTime > 0 ? '#3B82F6' : 'transparent';
+            ctx.shadowBlur = game.shieldTime > 0 ? 15 : 0;
+            ctx.stroke();
+
+            // Cockpit/Eye (White dot)
+            ctx.beginPath();
+            ctx.arc(radius * 0.4, -radius * 0.4, radius * 0.3, 0, Math.PI * 2);
+            ctx.fillStyle = 'white';
+            ctx.fill();
+
+            // Thruster Exhaust (Simple light ellipse)
+            ctx.beginPath();
+            ctx.ellipse(-radius * 0.8, radius * 0.2, radius * 0.6, radius * 0.4, 0.2, Math.PI, Math.PI * 2);
+            ctx.fillStyle = '#ffaa00';
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.logicalWidth, canvas.logicalHeight);
+
+            const sky = game.theme.sky;
+            const grad = ctx.createLinearGradient(0, 0, 0, canvas.logicalHeight);
+            grad.addColorStop(0, sky.top);
+            grad.addColorStop(1, sky.bottom);
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, canvas.logicalWidth, canvas.logicalHeight);
+
+            // Clouds/Asteroids (simplified graphics for LOW quality)
+            game.clouds.forEach(c => {
+                if (game.state === 'PLAYING') {
+                    c.x -= c.speed * (game.speed * 0.5);
+                    if (c.x + c.w < 0) {
+                        c.x = canvas.logicalWidth;
+                        c.y = Math.random() * (canvas.logicalHeight * 0.6);
+                    }
+                }
+                ctx.fillStyle = c.color;
+                ctx.globalAlpha = c.opacity;
+                ctx.beginPath();
+                // Simple rectangles for low-res feel
+               if (ctx.roundRect) {
+    ctx.roundRect(c.x, c.y, c.w, c.h, game.settings.graphicsQuality === 'HIGH' ? 20 : 5);
+} else {
+    ctx.beginPath();
+    ctx.rect(c.x, c.y, c.w, c.h);
+}
+ctx.fill();
+
+            });
+            ctx.globalAlpha = 1.0;
+
+            ctx.save();
+            if (game.shake > 0) {
+                ctx.translate((Math.random() - 0.5) * game.shake, (Math.random() - 0.5) * game.shake);
+                game.shake *= 0.85;
+                if (game.shake < 0.5) game.shake = 0;
+            }
+
+            // Draw Pipes (Styled as futuristic zone gates)
+            const t = game.theme;
+            game.pipes.forEach(p => {
+                ctx.fillStyle = t.pipe;
+                ctx.shadowColor = t.highlight;
+                ctx.shadowBlur = 10;
+
+                // Top Pipe Body
+                ctx.fillRect(p.x, 0, p.w, p.topH);
+                // Bottom Pipe Body
+                ctx.fillRect(p.x, p.topH + p.gap, p.w, canvas.logicalHeight - (p.topH + p.gap));
+
+                ctx.shadowBlur = 0; // Disable blur for details
+
+                // Top Cap
+                ctx.fillStyle = t.dark;
+                ctx.fillRect(p.x - 3, p.topH - 18, p.w + 6, 18);
+                // Bottom Cap
+                ctx.fillRect(p.x - 3, p.topH + p.gap, p.w + 6, 18);
+
+                // Highlight/Power Lines
+                ctx.fillStyle = t.highlight;
+                ctx.fillRect(p.x + 5, 0, 2, p.topH - 18);
+                ctx.fillRect(p.x + 5, p.topH + p.gap + 18, 2, canvas.logicalHeight);
+                ctx.fillRect(p.x + p.w - 7, 0, 2, p.topH - 18);
+                ctx.fillRect(p.x + p.w - 7, p.topH + p.gap + 18, 2, canvas.logicalHeight);
+            });
+
+            // Draw Bird
+            drawBird(bird.x, bird.y, bird.rot, bird.radius, game.settings.birdColor);
+
+            // Particles
+            game.particles.forEach((p, index) => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life -= 0.02;
+                if (p.type === 'score' || p.type === 'boost') p.y -= 1;
+
+                if (p.life <= 0) {
+                    game.particles.splice(index, 1);
+                } else {
+                    ctx.globalAlpha = p.life;
+                    ctx.fillStyle = p.color;
+                    ctx.beginPath();
+                    // Score particle is square/diamond for cyber look
+                    if (p.type === 'score') {
+                        ctx.save();
+                        ctx.translate(p.x, p.y);
+                        ctx.rotate(Math.PI / 4);
+                        ctx.fillRect(-3, -3, 6, 6);
+                        ctx.restore();
+                    } else {
+                        ctx.arc(p.x, p.y, p.type === 'crash' ? Math.random() * 5 : 3, 0, Math.PI * 2);
+                    }
+                    ctx.fill();
+                    ctx.globalAlpha = 1.0;
+                }
+            });
+
+            ctx.restore();
+        }
+
+        /**
+         * GAME FLOW V2.0
+         */
+
+        function loop() {
+            if (game.state === 'PLAYING') {
+                bird.update();
+                updatePhysics();
+            }
+            draw();
+            requestAnimationFrame(loop);
+        }
+
+        function initGame(difficulty) {
+    audio.ctx.resume().then(() => {
+        game.selectedMode = difficulty;
+        const settings = DIFFICULTIES[difficulty] || {};
+
+        // Theme (fallback на попередню тему якщо не задано)
+        game.theme = settings.theme || game.theme || DIFFICULTIES['NORMAL'].theme;
+
+        // Підтримка обох форматів: legacy {speed,gap} та новий {baseSpeed,baseGap}
+        game.speed = (settings.baseSpeed !== undefined) ? settings.baseSpeed : (settings.speed !== undefined ? settings.speed : game.speed);
+        game.gapSize = (settings.baseGap !== undefined) ? settings.baseGap : (settings.gap !== undefined ? settings.gap : game.gapSize);
+
+        // Ініціалізація chaos-параметрів лише для HARD (або коли задані поля new-style)
+        if (difficulty === 'HARD' || settings.baseSpeed !== undefined || settings.baseGap !== undefined) {
+            game.chaos = {
+                maxSpeed: settings.maxSpeed ?? (settings.speed ? settings.speed * 1.5 : 6.0),
+                minGap: settings.minGap ?? Math.max(90, (settings.gap || game.gapSize) * 0.6),
+                chaosShift: settings.chaosShift ?? 22,
+                chaosFrequency: settings.chaosFrequency ?? 0.25,
+                miniGapChance: settings.miniGapChance ?? 0.08
+            };
+            game.chaosTimer = 0;
+        } else {
+            game.chaos = null;
+            game.chaosTimer = 0;
+        }
+
+        startGame();
+    }).catch(err => {
+        console.warn('Audio resume failed or initGame error:', err);
+        // fallback — все одно стартуємо гру без аудіо
+        const settings = DIFFICULTIES[difficulty] || {};
+        game.selectedMode = difficulty;
+        game.theme = settings.theme || game.theme;
+        game.speed = (settings.baseSpeed !== undefined) ? settings.baseSpeed : (settings.speed !== undefined ? settings.speed : game.speed);
+        game.gapSize = (settings.baseGap !== undefined) ? settings.baseGap : (settings.gap !== undefined ? settings.gap : game.gapSize);
+        if (difficulty === 'HARD' || settings.baseSpeed !== undefined || settings.baseGap !== undefined) {
+            game.chaos = {
+                maxSpeed: settings.maxSpeed ?? (settings.speed ? settings.speed * 1.5 : 6.0),
+                minGap: settings.minGap ?? Math.max(90, (settings.gap || game.gapSize) * 0.6),
+                chaosShift: settings.chaosShift ?? 22,
+                chaosFrequency: settings.chaosFrequency ?? 0.25,
+                miniGapChance: settings.miniGapChance ?? 0.08
+            };
+            game.chaosTimer = 0;
+        } else {
+            game.chaos = null;
+            game.chaosTimer = 0;
+        }
+        startGame();
+    });
+}
+
+
+        window.initGame = initGame;
+
+        function startGame() {
+            game.score = 0;
+            game.pipes = [];
+            game.particles = [];
+            game.comboCount = 1;
+            game.lastScoreTime = 0;
+            game.shieldTime = 0;
+
+            document.getElementById('hud-score').innerText = '0';
+            document.getElementById('hud').style.display = 'block';
+            document.getElementById('hud-combo').style.display = 'none';
+
+            bird.reset();
+            bird.flap();
+
+            game.state = 'PLAYING';
+            document.querySelectorAll('.ui-screen').forEach(el => el.classList.remove('active'));
+
+            // Update stats
+            game.settings.totalRuns++;
+            saveSettings();
+        }
+
+        function gameOver() {
+    if (game.state === 'GAMEOVER') return;
+    game.state = 'GAMEOVER';
+showGameMonetizeAd(); // ⭐ ADDED: Show banner ad on Game Over screen
+            audio.playCrash();
+            game.shake = 20;
+            createParticles(bird.x, bird.y, 'crash');
+
+            // Update stats
+            game.settings.totalScore += game.score;
+            saveSettings();
+            
+            game.deathCount++; // Used for ad frequency
+
+            if (game.score > game.bestScore) {
+                game.bestScore = game.score;
+                localStorage.setItem('skytap_best', game.bestScore);
+            }
+
+            setTimeout(() => {
+                const screen = document.getElementById('game-over-screen');
+                document.getElementById('final-score').innerText = game.score;
+                document.getElementById('final-best-score').innerText = game.bestScore;
+                document.getElementById('final-max-combo').innerText = game.settings.maxCombo; // Display max combo
+
+                const medalSlot = document.getElementById('medal-slot');
+                const medalLabel = document.getElementById('medal-label');
+                medalSlot.innerHTML = '';
+
+                let earnedMedal = null;
+                for (let i = MEDALS.length - 1; i >= 0; i--) {
+                    if (game.score >= MEDALS[i].score) {
+                        earnedMedal = MEDALS[i];
+                        break;
+                    }
+                }
+
+                if (earnedMedal) {
+                    const mDiv = document.createElement('div');
+                    mDiv.className = `medal ${earnedMedal.class}`;
+                    medalSlot.appendChild(mDiv);
+                    medalLabel.innerText = earnedMedal.label;
+                    medalLabel.style.color = earnedMedal.class === 'gold' ? '#f1c40f' : '#aaa';
+                } else {
+                    medalLabel.innerText = 'NO INTERCEPT';
+                    medalLabel.style.color = '#555';
+                }
+
+                const btnContinue = document.getElementById('btn-continue');
+                if (game.deathCount % 3 === 0) {
+                    btnContinue.style.display = 'inline-block';
+                } else {
+                    btnContinue.style.display = 'none';
+                }
+
+                document.getElementById('hud').style.display = 'none';
+                screen.classList.add('active');
+            }, 600);
+        }
+
+// New code for the handleInput function:
+
+function handleInput(e) {
+    const isButton = e.target.closest && e.target.closest('button');
+    const isSelect = e.target.tagName === 'SELECT';
+    // --- ADDED: Check if the click is on a color option for the bird ---
+    const isColorOption = e.target.closest && e.target.closest('.color-option'); 
+    // -------------------------------------------------------------------
+
+    if (e.type === 'keydown') {
+        if (e.code === 'Space') {
+            // Prevent default spacebar action (scrolling)
+            e.preventDefault();
+            if (game.state === 'PLAYING') bird.flap();
+        } else {
+            return; // Ignore other keys
+        }
+    } else { // mousedown or touchstart
+        // --- UPDATED: Include the color option in the elements to ignore ---
+        if (!isButton && !isSelect && !isColorOption) {
+            e.preventDefault();
+            if (game.state === 'PLAYING') bird.flap();
+            else if (game.state === 'HOME' && e.type === 'mousedown') {
+                // Allows a tap on the home screen to go to the difficulty screen
+                showScreen('difficulty-screen');
+            }
+        }
+    }
+}
+
+        // Screen Management
+        function showScreen(screenId) {
+            document.querySelectorAll('.ui-screen').forEach(el => el.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+
+            if (screenId === 'menu-screen') {
+                document.getElementById('home-best-score').innerText = game.bestScore;
+            } else if (screenId === 'stats-screen') {
+                updateStatsScreen();
+            }
+            else if (screenId === 'support-screen') {
+    // nothing needed, but block must exist
+}
+        }
+        window.showScreen = showScreen;
+
+
+        function updateStatsScreen() {
+            const statsContent = document.getElementById('stats-content');
+            const avgScore = game.settings.totalRuns > 0 ? (game.settings.totalScore / game.settings.totalRuns).toFixed(1) : '0';
+
+            statsContent.innerHTML = `
+                <div class="stat-item">
+                    <div class="label">BEST SCORE</div>
+                    <div class="score-display" style="font-size: 1.5rem;">${game.bestScore}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="label">MAX COMBO</div>
+                    <div class="score-display" style="font-size: 1.5rem;">${game.settings.maxCombo}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="label">TOTAL RUNS</div>
+                    <div class="score-display" style="font-size: 1.5rem;">${game.settings.totalRuns}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="label">AVG SCORE</div>
+                    <div class="score-display" style="font-size: 1.5rem;">${avgScore}</div>
+                </div>
+            `;
+        }
+
+
+        // Resize Handler
+        function resize() {
+            const container = document.getElementById('game-container');
+            const rect = container.getBoundingClientRect();
+
+            const dpr = window.devicePixelRatio || 1;
+
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+
+            ctx.scale(dpr, dpr);
+
+            canvas.style.width = `${rect.width}px`;
+            canvas.style.height = `${rect.height}px`;
+
+// --- NEW CODE BLOCK: Define Canvas Logical Properties Once ---
+Object.defineProperty(canvas, 'logicalWidth', {
+    configurable: true, // Allow redefinition for safety, though we define only once
+    get: function () { return this.width / (window.devicePixelRatio || 1); }
+});
+Object.defineProperty(canvas, 'logicalHeight', {
+    configurable: true,
+    get: function () { return this.height / (window.devicePixelRatio || 1); }
+});
+// -----------------------------------------------------------
+
+
+            initClouds();
+            if (game.state === 'HOME' || game.state === 'GAMEOVER') bird.reset();
+
+            draw();
+        }
+        window.addEventListener('resize', resize);
+
+        // Initial setup
+        resize();
+        initUI(); // Initialize all UI elements and settings
+
+        // Start game loop
+        loop();
+
+        // Input Handling
+        window.addEventListener('keydown', handleInput);
+        window.addEventListener('mousedown', handleInput);
+        window.addEventListener('touchstart', handleInput, { passive: false });
+
+        document.getElementById('btn-retry').onclick = (e) => {
+            e.stopPropagation();
+            startGame();
+        };
+
+        document.getElementById('btn-exit-menu').onclick = (e) => {
+    e.stopPropagation();
+    // Приховуємо GameOver
+    document.getElementById('game-over-screen').classList.remove('active');
+
+    // Повертаємо HUD в початковий стан
+    document.getElementById('hud').style.display = 'none';
+
+    // Повертаємось у головне меню
+    showScreen('menu-screen');
+
+    // Скидуємо стан гри
+    game.state = 'HOME';
+    bird.reset();
+};
+
+
+
+
+        // Continue Button Logic
+ document.getElementById('btn-continue').onclick = () => {
+    
+
+        // готуємо гру, але НЕ запускаємо рух
+        game.state = 'WAITING';
+        bird.y = canvas.logicalHeight / 2;
+        bird.vel = 0;
+        game.pipes = [];
+        game.shieldTime = CONFIG.gameplay.shieldDuration;
+        audio.playShield();
+
+        // ховаємо game-over
+        document.getElementById('game-over-screen').classList.remove('active');
+
+        // показуємо TAP TO START
+        document.getElementById('tap-start-screen').classList.add('active');
+
+        // HUD не показуємо поки не стартувало
+        document.getElementById('hud').style.display = 'none';
+    
+};
+
+// TAP TO START
+document.getElementById('tap-start-screen').addEventListener('mousedown', startAfterTap);
+document.getElementById('tap-start-screen').addEventListener('touchstart', startAfterTap);
+
+function startAfterTap(e) {
+    e.preventDefault();
+
+    if (game.state !== 'WAITING') return;
+
+    document.getElementById('tap-start-screen').classList.remove('active');
+
+    
+    document.getElementById('hud').style.display = 'block';
+    bird.flap();
+    game.state = 'PLAYING';
+}
+
+    </script>
+<script>
+    // --- GameMonetize SDK Implementation ---
+    
+    // 1. SDK Configuration: IMPORTANT - Your Game ID is retained here.
+    const GAME_ID = "t4oj8lz7bkon6p6evtftnahw8mlt4wj2"; 
+
+    window.SDK_OPTIONS = {
+        gameId: GAME_ID,
+        onEvent: function (event) {
+            console.log("SDK Event:", event.name, event);
+
+            // You must pause the game and mute audio on SDK_GAME_PAUSE.
+            // You must resume the game and unmute audio on SDK_GAME_START.
+            if (typeof game !== 'undefined' && typeof audio !== 'undefined') {
+                switch (event.name) {
+                    case "SDK_GAME_PAUSE":
+                        // Pause game logic and mute audio
+                        game.stateBeforeAd = game.state; 
+                        game.state = 'PAUSED_AD';
+                        if (audio.masterGain) audio.masterGain.gain.value = 0;
+                        console.log("Game Paused for Ad.");
+                        break;
+
+                    case "SDK_GAME_START":
+                        // Advertisement done, resume game logic and unmute audio
+                        if (game.state === 'PAUSED_AD') {
+                            game.state = game.stateBeforeAd; 
+                        }
+                        if (audio.masterGain) audio.masterGain.gain.value = 0.3; // Restore volume
+                        console.log("Game Resumed after Ad.");
+                        break;
+
+                    case "SDK_READY":
+                        // SDK is ready, you can show a banner ad now
+                     
+                        console.log("SDK Ready.");
+                        break;
+                }
+            }
+        }
+    };
+
+    // 2. SDK Loader Script: Inserts the gamemonetize-sdk script dynamically
+    (function (a, b, c) {
+        var d = a.getElementsByTagName(b)[0];
+        a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+    })(document, "script", "gamemonetize-sdk");
+
+    // 3. Ad Invocation Functions: Call these from your game code (e.g., 'Continue' button)
+
+    /**
+     * Shows a banner ad. Called automatically from SDK_READY event.
+     */
+
+    function showGameMonetizeAd() {
+            if (typeof sdk !== 'undefined' && typeof sdk.showBanner !== 'undefined') {
+                try {
+                    sdk.showBanner();
+                    console.log('GameMonetize ad requested');
+                } catch (error) {
+                    console.error('Error showing GameMonetize ad:', error);
+                }
+            } else {
+                console.log('GameMonetize SDK not ready yet');
+            }
+        }
+
+    window.SdkInit = function () { };
+</script>
+</body>
+</html>

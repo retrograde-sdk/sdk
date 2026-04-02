@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>True or False Game 26</title>
+<script type="text/javascript">
+    // --- SETTINGS ---
+    const GAME_ID = "z5whrqhi6brf1s2e621o0ig077o68jl5"; // REPLACE WITH YOUR GAME ID
+    const AD_INTERVAL = 90000; // Interval between ads (90 sec)
+
+    window.AdManager = {
+        lastAdTime: 0,
+        adCallback: null,
+        isAdPlaying: false,
+        isAdLoading: false, // Prevents spam clicks while SDK loads
+
+        // Game callbacks (assigned in game.js)
+        onPause: function() { console.log("Game Paused"); },
+        onResume: function() { console.log("Game Resumed"); },
+
+        // Function to show Interstitial Ad
+        showInterstitial: function(callback) {
+            // If ad is already loading, ignore
+            if (this.isAdLoading) return; 
+            
+            this.adCallback = callback;
+            const currentTime = Date.now();
+
+            // Check 90 sec cooldown
+            if (currentTime - this.lastAdTime >= AD_INTERVAL) {
+                console.log("Showing Interstitial Ad...");
+                if (typeof sdk !== 'undefined' && typeof sdk.showBanner !== 'undefined') {
+                    this.isAdLoading = true; // Block interface
+                    this.lastAdTime = currentTime;
+                    sdk.showBanner();
+                } else {
+                    console.log("SDK not loaded yet");
+                    this.completeAd();
+                }
+            } else {
+                console.log("Ad on cooldown. Time left: " + Math.ceil((AD_INTERVAL - (currentTime - this.lastAdTime)) / 1000) + "s");
+                this.completeAd();
+            }
+        },
+
+        // Function to show Rewarded Ad
+        showRewarded: function(callback) {
+            // Block repeated clicks
+            if (this.isAdLoading) return;
+
+            this.adCallback = callback;
+            console.log("Showing Rewarded Ad...");
+            if (typeof sdk !== 'undefined' && typeof sdk.showBanner !== 'undefined') {
+                this.isAdLoading = true; // Block interface
+                sdk.showBanner(); 
+            } else {
+                console.log("SDK not loaded");
+                this.completeAd();
+            }
+        },
+
+        // Technical function to complete ad process
+        completeAd: function() {
+            this.isAdLoading = false; // Unblock
+            if (this.adCallback) {
+                this.adCallback();
+                this.adCallback = null;
+            }
+        }
+    };
+
+    window.SDK_OPTIONS = {
+        gameId: GAME_ID,
+        onEvent: function (a) {
+            switch (a.name) {
+                case "SDK_GAME_PAUSE":
+                    window.AdManager.isAdPlaying = true;
+                    window.AdManager.onPause(); // Pause game logic/audio
+                    break;
+                case "SDK_GAME_START":
+                    window.AdManager.isAdPlaying = false;
+                    window.AdManager.onResume(); // Resume game logic/audio
+                    window.AdManager.completeAd(); // Run logic after ad
+                    break;
+                case "SDK_READY":
+                    console.log("GameMonetize SDK Ready");
+                    break;
+            }
+        }
+    };
+
+    (function (a, b, c) {
+        var d = a.getElementsByTagName(b)[0];
+        a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+    })(document, "script", "gamemonetize-sdk");
+</script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body oncontextmenu="return false;" onselectstart="return false;" ondragstart="return false;">
+    <div id="game-container">
+        <div id="start-screen" class="screen">
+            <h1 class="title" id="main-title">True or False<br>Game 26</h1>
+            <button id="btn-start" class="btn btn-primary">START</button>
+        </div>
+
+        <div id="game-screen" class="screen hidden">
+            <div class="top-panel">
+                <div class="stat"><span id="lbl-level">Level</span>: <span id="level-display">1</span></div>
+                <div class="stat lives" id="lives-display">❤️❤️❤️</div>
+                <div class="stat"><span id="lbl-score">Score</span>: <span id="score-display">0</span></div>
+            </div>
+            
+            <div class="question-container">
+                <p id="question-text">Loading...</p>
+            </div>
+            
+            <div class="controls">
+                <button id="btn-yes" class="btn btn-yes">YES</button>
+                <button id="btn-no" class="btn btn-no">NO</button>
+            </div>
+        </div>
+
+        <div id="popup-overlay" class="overlay hidden">
+            <div class="popup">
+                <h2 id="popup-title">Result</h2>
+                <button id="btn-popup" class="btn btn-primary">Next</button>
+                
+                <button id="btn-reward" class="btn btn-reward hidden">
+                    <span id="txt-reward">Get</span> ❤️❤️❤️ 🎬
+                </button>
+            </div>
+        </div>
+
+        <div id="pause-overlay" class="overlay hidden">
+            <div class="popup">
+                <h2 id="lbl-pause">PAUSE</h2>
+            </div>
+        </div>
+    </div>
+
+    <script src="questions.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>

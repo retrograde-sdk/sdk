@@ -1,0 +1,680 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Sudoku</title>
+  <style>
+    :root{
+      --bg:#0b1220;
+      --card:#0f1b33;
+      --border:#22355f;
+      --text:#eaf0ff;
+      --muted:#9fb2e6;
+      --accent:#4ea1ff;
+      --danger:#ff5c7a;
+      --ok:#3ddc97;
+      --cell:#0c1730;
+      --cell2:#0d1a34;
+    }
+    *{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
+    body{margin:0;background:radial-gradient(1200px 700px at 20% 10%, #152a5a, var(--bg));color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:18px}
+    .app{width:min(980px,100%);display:grid;grid-template-columns: 1fr 320px;gap:16px}
+    @media (max-width: 880px){.app{grid-template-columns:1fr}}
+    .panel, .boardWrap{background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.10);border-radius:16px;box-shadow:0 20px 50px rgba(0,0,0,.35)}
+    .boardWrap{padding:16px;position:relative}
+    h1{margin:0 0 10px;font-size:22px;letter-spacing:.4px}
+    .sub{color:var(--muted);font-size:13px;line-height:1.5;margin:0 0 12px}
+
+    .board{
+      width:min(560px,100%);
+      aspect-ratio:1/1;
+      display:grid;
+      grid-template-columns:repeat(9,1fr);
+      border:2px solid rgba(255,255,255,.25);
+      border-radius:12px;
+      overflow:hidden;
+      margin:auto;
+      background:rgba(0,0,0,.18);
+    }
+    .cell{
+      border:1px solid rgba(255,255,255,.10);
+      display:flex;align-items:center;justify-content:center;
+      position:relative;
+      background:rgba(0,0,0,.14);
+    }
+    .cell:nth-child(odd){background:rgba(0,0,0,.18)}
+    .cell input{
+      width:100%;height:100%;
+      border:0;outline:0;
+      text-align:center;
+      font-size:clamp(16px, 3.5vw, 22px);
+      background:transparent;
+      color:var(--text);
+      caret-color:var(--accent);
+    }
+    .cell.fixed input{color:#d5e4ff;opacity:.95;font-weight:700}
+    .cell.fixed{background:rgba(78,161,255,.10)}
+    .cell.selected{outline:2px solid rgba(78,161,255,.75);outline-offset:-2px}
+    .cell.error{background:rgba(255,92,122,.18)}
+    .cell.ok{background:rgba(61,220,151,.12)}
+    .cell.thick-r{border-right:2px solid rgba(255,255,255,.25)}
+    .cell.thick-b{border-bottom:2px solid rgba(255,255,255,.25)}
+
+    .panel{padding:16px}
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+    button, select{
+      background:rgba(255,255,255,.08);
+      color:var(--text);
+      border:1px solid rgba(255,255,255,.14);
+      border-radius:12px;
+      padding:10px 12px;
+      cursor:pointer;
+      transition:.15s transform, .15s background;
+      font-weight:650;
+    }
+    button:hover{background:rgba(255,255,255,.12)}
+    button:active{transform:translateY(1px)}
+    button.primary{background:rgba(78,161,255,.20);border-color:rgba(78,161,255,.35)}
+    button.danger{background:rgba(255,92,122,.16);border-color:rgba(255,92,122,.35)}
+    .stat{
+      margin-top:12px;
+      padding:12px;
+      background:rgba(0,0,0,.22);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:14px;
+    }
+    .stat .k{color:var(--muted);font-size:12px}
+    .stat .v{font-size:18px;font-weight:800;margin-top:4px}
+    .line{height:1px;background:rgba(255,255,255,.12);margin:12px 0}
+    .help{font-size:12px;color:var(--muted);line-height:1.55}
+    .badge{display:inline-block;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:800}
+    .badge.ok{background:rgba(61,220,151,.18);border:1px solid rgba(61,220,151,.35)}
+    .badge.warn{background:rgba(255,209,92,.14);border:1px solid rgba(255,209,92,.35)}
+    .badge.err{background:rgba(255,92,122,.14);border:1px solid rgba(255,92,122,.35)}
+
+    .overlay{
+      position:absolute;inset:0;
+      display:none;
+      align-items:center;justify-content:center;
+      background:rgba(0,0,0,.55);
+      border-radius:16px;
+      backdrop-filter: blur(4px);
+      z-index:10;
+    }
+    .overlay.show{display:flex}
+    .overlayCard{
+      width:min(420px,92%);
+      background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.05));
+      border:1px solid rgba(255,255,255,.16);
+      border-radius:16px;
+      padding:16px;
+      text-align:center;
+      box-shadow:0 25px 60px rgba(0,0,0,.5);
+    }
+    .overlayCard h2{margin:6px 0 8px;font-size:18px}
+    .overlayCard p{margin:0;color:var(--muted);font-size:13px;line-height:1.5}
+    .toast{
+      position:fixed;
+      left:50%;transform:translateX(-50%);
+      bottom:16px;
+      padding:10px 12px;
+      border-radius:999px;
+      background:rgba(0,0,0,.55);
+      border:1px solid rgba(255,255,255,.16);
+      color:var(--text);
+      font-weight:700;
+      font-size:13px;
+      display:none;
+      z-index:50;
+      backdrop-filter: blur(6px);
+    }
+    .toast.show{display:block}
+  </style>
+
+  <!-- GameMonetize HTML5 SDK - Implementation -->
+  <script type="text/javascript">
+    window.SDK_OPTIONS = {
+      gameId: "g7lmh7ajnq66in7fpkya8rfha02lj9rk", // <-- PUT YOUR GameId HERE
+      onEvent: function (a) {
+        switch (a.name) {
+          case "SDK_GAME_PAUSE":
+            // pause game logic / mute audio
+            window.__GM_PAUSE__ && window.__GM_PAUSE__();
+            break;
+          case "SDK_GAME_START":
+            // advertisement done, resume game logic and unmute audio
+            window.__GM_RESUME__ && window.__GM_RESUME__();
+            break;
+          case "SDK_READY":
+            // when sdk is ready
+            window.__GM_READY__ && window.__GM_READY__();
+            break;
+        }
+      }
+    };
+    (function (a, b, c) {
+      var d = a.getElementsByTagName(b)[0];
+      a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+    })(document, "script", "gamemonetize-sdk");
+  </script>
+</head>
+
+<body>
+  <div class="app">
+    <div class="boardWrap">
+      <h1>Sudoku</h1>
+      <p class="sub">Fill the grid so each row, column, and 3×3 box contains numbers 1–9.</p>
+
+      <div id="board" class="board" aria-label="Sudoku board"></div>
+
+      <div id="overlay" class="overlay" aria-hidden="true">
+        <div class="overlayCard">
+          <div class="badge warn">Paused</div>
+          <h2>Ad is playing</h2>
+          <p>The game is paused and muted while the advertisement runs.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="row" style="align-items:center;justify-content:space-between">
+        <div>
+          <div class="k" style="color:var(--muted);font-size:12px">Difficulty</div>
+          <select id="difficulty" title="Difficulty">
+            <option value="easy">Easy</option>
+            <option value="medium" selected>Medium</option>
+            <option value="hard">Hard</option>
+          </select>
+        </div>
+        <div class="row" style="gap:8px;justify-content:flex-end">
+          <button class="primary" id="newGameBtn">New Game</button>
+          <button id="checkBtn">Check</button>
+          <button class="danger" id="clearBtn">Clear Mistakes</button>
+        </div>
+      </div>
+
+      <div class="stat">
+        <div class="k">Status</div>
+        <div class="v" id="statusText">Ready</div>
+      </div>
+
+      <div class="stat">
+        <div class="k">Mistakes</div>
+        <div class="v"><span id="mistakes">0</span></div>
+      </div>
+
+      <div class="line"></div>
+
+      <div class="row" style="gap:8px">
+        <button id="hintBtn">Hint</button>
+        <button id="solveBtn">Solve</button>
+        <button id="showAdBtn">Show Ad</button>
+      </div>
+
+      <div class="line"></div>
+      <div class="help">
+        <strong>Tips</strong><br/>
+        • Click a cell and type 1–9. Use Backspace to clear.<br/>
+        • “Check” highlights conflicts.<br/>
+        • “Hint” shows an ad first, then gives a correct cell.<br/>
+        • Ads pause the game automatically using the SDK events.
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    /***********************
+     * Game state & helpers
+     ***********************/
+    const boardEl = document.getElementById('board');
+    const overlayEl = document.getElementById('overlay');
+    const statusText = document.getElementById('statusText');
+    const mistakesEl = document.getElementById('mistakes');
+    const toastEl = document.getElementById('toast');
+
+    const difficultyEl = document.getElementById('difficulty');
+    const newGameBtn = document.getElementById('newGameBtn');
+    const checkBtn = document.getElementById('checkBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const hintBtn = document.getElementById('hintBtn');
+    const solveBtn = document.getElementById('solveBtn');
+    const showAdBtn = document.getElementById('showAdBtn');
+
+    let solution = makeEmpty9();
+    let puzzle = makeEmpty9();
+    let fixed = makeEmpty9();
+    let paused = false;
+
+    // Hint after ad
+    let pendingHint = false;
+    let hintCooldown = false;
+
+    let mistakes = 0;
+    let selected = { r: -1, c: -1 };
+
+    // Audio mute stub (MANDATORY: mute during ads)
+    const audio = {
+      muted: false,
+      setMuted(v){
+        this.muted = !!v;
+        document.querySelectorAll('audio').forEach(a => a.muted = this.muted);
+      }
+    };
+
+    function makeEmpty9(){
+      return Array.from({length:9}, () => Array(9).fill(0));
+    }
+
+    function clone9(grid){
+      return grid.map(row => row.slice());
+    }
+
+    function showToast(msg){
+      toastEl.textContent = msg;
+      toastEl.classList.add('show');
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => toastEl.classList.remove('show'), 1600);
+    }
+
+    function setStatus(text, kind=""){
+      statusText.textContent = text;
+      statusText.style.color =
+        kind === "ok" ? "var(--ok)" :
+        kind === "err" ? "var(--danger)" :
+        "var(--text)";
+    }
+
+    function setPaused(v){
+      paused = !!v;
+      overlayEl.classList.toggle('show', paused);
+      overlayEl.setAttribute('aria-hidden', paused ? 'false' : 'true');
+      boardEl.querySelectorAll('input').forEach(inp => inp.disabled = paused);
+    }
+
+    /***********************
+     * Sudoku generator
+     ***********************/
+    function isValid(grid, r, c, n){
+      for(let x=0;x<9;x++) if(grid[r][x] === n) return false;
+      for(let y=0;y<9;y++) if(grid[y][c] === n) return false;
+      const br = Math.floor(r/3)*3;
+      const bc = Math.floor(c/3)*3;
+      for(let y=br;y<br+3;y++){
+        for(let x=bc;x<bc+3;x++){
+          if(grid[y][x] === n) return false;
+        }
+      }
+      return true;
+    }
+
+    function findEmpty(grid){
+      for(let r=0;r<9;r++){
+        for(let c=0;c<9;c++){
+          if(grid[r][c] === 0) return {r,c};
+        }
+      }
+      return null;
+    }
+
+    function shuffle(arr){
+      for(let i=arr.length-1;i>0;i--){
+        const j = Math.floor(Math.random()*(i+1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function solveBacktrack(grid){
+      const spot = findEmpty(grid);
+      if(!spot) return true;
+      const nums = shuffle([1,2,3,4,5,6,7,8,9]);
+      for(const n of nums){
+        if(isValid(grid, spot.r, spot.c, n)){
+          grid[spot.r][spot.c] = n;
+          if(solveBacktrack(grid)) return true;
+          grid[spot.r][spot.c] = 0;
+        }
+      }
+      return false;
+    }
+
+    function generateSolved(){
+      const grid = makeEmpty9();
+      solveBacktrack(grid);
+      return grid;
+    }
+
+    function makePuzzleFromSolution(sol, difficulty){
+      const grid = clone9(sol);
+      const removals = difficulty === 'easy' ? 38 : difficulty === 'hard' ? 56 : 47;
+      let removed = 0;
+
+      const positions = [];
+      for(let r=0;r<9;r++) for(let c=0;c<9;c++) positions.push({r,c});
+      shuffle(positions);
+
+      for(const pos of positions){
+        if(removed >= removals) break;
+        const backup = grid[pos.r][pos.c];
+        grid[pos.r][pos.c] = 0;
+
+        const test = clone9(grid);
+        if(!solveBacktrack(test)){
+          grid[pos.r][pos.c] = backup;
+        } else {
+          removed++;
+        }
+      }
+      return grid;
+    }
+
+    /***********************
+     * UI rendering
+     ***********************/
+    function buildBoardUI(){
+      boardEl.innerHTML = '';
+      for(let r=0;r<9;r++){
+        for(let c=0;c<9;c++){
+          const cell = document.createElement('div');
+          cell.className = 'cell';
+
+          if(c === 2 || c === 5) cell.classList.add('thick-r');
+          if(r === 2 || r === 5) cell.classList.add('thick-b');
+
+          const inp = document.createElement('input');
+          inp.inputMode = 'numeric';
+          inp.maxLength = 1;
+          inp.dataset.r = r;
+          inp.dataset.c = c;
+
+          const v = puzzle[r][c];
+          const isFixed = fixed[r][c] === 1;
+
+          if(isFixed){
+            cell.classList.add('fixed');
+            inp.value = String(v);
+            inp.readOnly = true;
+          } else {
+            inp.value = v ? String(v) : '';
+            inp.readOnly = false;
+          }
+
+          inp.addEventListener('focus', () => selectCell(r,c));
+          inp.addEventListener('pointerdown', () => selectCell(r,c));
+
+          inp.addEventListener('keydown', (e) => {
+            if(paused) { e.preventDefault(); return; }
+            if(fixed[r][c] === 1) { e.preventDefault(); return; }
+
+            const allowed = ['Backspace','Delete','Tab','ArrowLeft','ArrowRight','ArrowUp','ArrowDown'];
+            if(allowed.includes(e.key)) return;
+
+            if(!/^[1-9]$/.test(e.key)){
+              e.preventDefault();
+            }
+          });
+
+          inp.addEventListener('input', (e) => {
+            if(paused) return;
+            if(fixed[r][c] === 1) return;
+
+            let val = e.target.value.replace(/[^1-9]/g,'');
+            if(val.length > 1) val = val[0];
+            e.target.value = val;
+
+            puzzle[r][c] = val ? Number(val) : 0;
+            clearCellMarks();
+
+            if(val){
+              const correct = solution[r][c] === Number(val);
+              if(!correct){
+                mistakes++;
+                mistakesEl.textContent = String(mistakes);
+                markCell(r,c,'error');
+              } else {
+                markCell(r,c,'ok');
+              }
+              updateWinState();
+            }
+          });
+
+          cell.appendChild(inp);
+          boardEl.appendChild(cell);
+        }
+      }
+      setPaused(paused);
+    }
+
+    function selectCell(r,c){
+      selected = {r,c};
+      boardEl.querySelectorAll('.cell').forEach((cell, idx) => {
+        const rr = Math.floor(idx/9), cc = idx%9;
+        cell.classList.toggle('selected', rr===r && cc===c);
+      });
+    }
+
+    function cellDiv(r,c){
+      return boardEl.children[r*9 + c];
+    }
+
+    function markCell(r,c,kind){
+      const d = cellDiv(r,c);
+      d.classList.remove('error','ok');
+      if(kind) d.classList.add(kind);
+    }
+
+    function clearCellMarks(){
+      boardEl.querySelectorAll('.cell').forEach(d => d.classList.remove('error','ok'));
+    }
+
+    function checkConflicts(){
+      clearCellMarks();
+      let conflicts = 0;
+
+      for(let r=0;r<9;r++){
+        for(let c=0;c<9;c++){
+          const val = puzzle[r][c];
+          if(!val) continue;
+
+          puzzle[r][c] = 0;
+          const ok = isValid(puzzle, r, c, val);
+          puzzle[r][c] = val;
+
+          if(!ok){
+            conflicts++;
+            markCell(r,c,'error');
+          }
+        }
+      }
+
+      if(conflicts === 0){
+        setStatus("No conflicts found.", "ok");
+        showToast("No conflicts!");
+      } else {
+        setStatus(`Conflicts: ${conflicts}`, "err");
+        showToast(`${conflicts} conflict(s)`);
+      }
+    }
+
+    function clearMistakes(){
+      clearCellMarks();
+      let cleared = 0;
+      for(let r=0;r<9;r++){
+        for(let c=0;c<9;c++){
+          if(fixed[r][c] === 1) continue;
+          const val = puzzle[r][c];
+          if(val && val !== solution[r][c]){
+            puzzle[r][c] = 0;
+            const inp = cellDiv(r,c).querySelector('input');
+            inp.value = '';
+            cleared++;
+          }
+        }
+      }
+      setStatus(cleared ? `Cleared ${cleared} wrong cell(s).` : "Nothing to clear.");
+      showToast(cleared ? "Wrong cells cleared" : "Nothing to clear");
+    }
+
+    function giveHint(){
+      const candidates = [];
+      for(let r=0;r<9;r++){
+        for(let c=0;c<9;c++){
+          if(fixed[r][c] === 1) continue;
+          const val = puzzle[r][c];
+          if(val === 0 || val !== solution[r][c]) candidates.push({r,c});
+        }
+      }
+      if(candidates.length === 0){
+        setStatus("No hint available.", "ok");
+        showToast("No hint");
+        return;
+      }
+      const pick = candidates[Math.floor(Math.random()*candidates.length)];
+      puzzle[pick.r][pick.c] = solution[pick.r][pick.c];
+      const inp = cellDiv(pick.r,pick.c).querySelector('input');
+      inp.value = String(solution[pick.r][pick.c]);
+      markCell(pick.r,pick.c,'ok');
+      setStatus("Hint applied.", "ok");
+      showToast("Hint");
+      updateWinState();
+    }
+
+    function solveNow(){
+      for(let r=0;r<9;r++){
+        for(let c=0;c<9;c++){
+          puzzle[r][c] = solution[r][c];
+          const inp = cellDiv(r,c).querySelector('input');
+          inp.value = String(solution[r][c]);
+        }
+      }
+      setStatus("Solved!", "ok");
+      showToast("Solved");
+      clearCellMarks();
+      boardEl.querySelectorAll('.cell').forEach(d => d.classList.add('ok'));
+    }
+
+    function updateWinState(){
+      for(let r=0;r<9;r++){
+        for(let c=0;c<9;c++){
+          if(puzzle[r][c] !== solution[r][c]) return;
+        }
+      }
+      setStatus("You win! 🎉", "ok");
+      showToast("You win!");
+      requestBannerAd();
+    }
+
+    /***********************
+     * GameMonetize SDK calls
+     ***********************/
+    function requestBannerAd(){
+      if (typeof sdk !== 'undefined' && typeof sdk.showBanner === 'function') {
+        try { sdk.showBanner(); } catch(e){}
+      }
+    }
+
+    // Show ad first, then give hint after ad ends (SDK_GAME_START)
+    function showAdThenHint(){
+      if (paused) return;
+
+      if (hintCooldown) {
+        showToast("Please wait...");
+        return;
+      }
+
+      pendingHint = true;
+      hintCooldown = true;
+      setTimeout(() => hintCooldown = false, 2000);
+
+      if (typeof sdk !== 'undefined' && typeof sdk.showBanner === 'function') {
+        try {
+          sdk.showBanner();
+          showToast("Ad requested...");
+          // SDK will call SDK_GAME_PAUSE then SDK_GAME_START
+          // After SDK_GAME_START -> __GM_RESUME__ -> giveHint()
+        } catch (e) {
+          pendingHint = false;
+          giveHint();
+        }
+      } else {
+        // SDK not ready: give hint immediately (or you can block hints)
+        pendingHint = false;
+        giveHint();
+      }
+    }
+
+    // SDK events -> these functions
+    window.__GM_PAUSE__ = function(){
+      audio.setMuted(true);
+      setPaused(true);
+      setStatus("Paused (Ad)", "");
+    };
+
+    window.__GM_RESUME__ = function(){
+      audio.setMuted(false);
+      setPaused(false);
+      setStatus("Ready", "");
+
+      // Give hint after ad finishes
+      if (pendingHint) {
+        pendingHint = false;
+        giveHint();
+      }
+    };
+
+    window.__GM_READY__ = function(){
+      setStatus("Ready", "");
+      requestBannerAd();
+    };
+
+    /***********************
+     * New game
+     ***********************/
+    function newGame(){
+      setStatus("Generating...", "");
+      clearCellMarks();
+      mistakes = 0;
+      mistakesEl.textContent = "0";
+
+      solution = generateSolved();
+      puzzle = makePuzzleFromSolution(solution, difficultyEl.value);
+
+      fixed = makeEmpty9();
+      for(let r=0;r<9;r++){
+        for(let c=0;c<9;c++){
+          fixed[r][c] = puzzle[r][c] ? 1 : 0;
+        }
+      }
+
+      buildBoardUI();
+      setStatus("Ready", "");
+      showToast("New game");
+      requestBannerAd();
+    }
+
+    /***********************
+     * Events
+     ***********************/
+    newGameBtn.addEventListener('click', () => newGame());
+    checkBtn.addEventListener('click', () => { if(!paused) checkConflicts(); });
+    clearBtn.addEventListener('click', () => { if(!paused) clearMistakes(); });
+
+    // Hint: show ad first, then hint after ad ends
+    hintBtn.addEventListener('click', () => showAdThenHint());
+
+    solveBtn.addEventListener('click', () => { if(!paused) solveNow(); });
+
+    // Manual ad trigger for testing
+    showAdBtn.addEventListener('click', () => {
+      requestBannerAd();
+      showToast("Ad requested");
+    });
+
+    // Start
+    newGame();
+  </script>
+</body>
+</html>

@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kids Mahjong Connect</title>
+    <script type="text/javascript">
+   window.SDK_OPTIONS = {
+      gameId: "7iv1ztz3hx9xnzq19f8kadpp4eptrkrv",
+      onEvent: function (a) {
+         switch (a.name) {
+            case "SDK_GAME_PAUSE":
+               // pause game logic / mute audio
+               break;
+            case "SDK_GAME_START":
+               // advertisement done, resume game logic and unmute audio
+               break;
+            case "SDK_READY":
+               // when sdk is ready
+               break;
+         }
+      }
+   };
+(function (a, b, c) {
+   var d = a.getElementsByTagName(b)[0];
+   a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+})(document, "script", "gamemonetize-sdk"); 
+</script>
+    <script src="browser.js"></script>
+    <style>
+        @import url('css2.css');
+        
+        :root {
+            --tile-size: 55px;
+            --tile-font: 32px;
+            --tile-gap: 6px;
+            --board-padding: 20px;
+        }
+        
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 8px;
+        }
+        
+        h1, h2, .game-title {
+            font-family: 'Fredoka One', cursive;
+        }
+        
+        .tile {
+            width: var(--tile-size);
+            height: var(--tile-size);
+            background: linear-gradient(145deg, #ffffff, #f0f0f0);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: var(--tile-font);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.06);
+  -webkit-user-select: none; /* Pour Safari et Chrome */
+  -moz-user-select: none;    /* Pour Firefox */
+  -ms-user-select: none;     /* Pour IE/Edge */
+  user-select: none;
+            border: 3px solid #e0e0e0;
+        }
+        
+        .tile:hover:not(.empty):not(.matched) {
+            transform: scale(1.1) rotate(3deg);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+            border-color: #fbbf24;
+        }
+        
+        .tile.selected {
+            background: linear-gradient(145deg, #fef3c7, #fde68a);
+            border-color: #f59e0b;
+            transform: scale(1.15);
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.6);
+            animation: pulse 0.5s ease infinite alternate;
+        }
+        
+        .tile.empty {
+            background: transparent;
+            box-shadow: none;
+            border: none;
+            cursor: default;
+        }
+        
+        .tile.matched {
+            animation: matchPop 0.4s ease forwards;
+        }
+        
+        .tile.hint {
+            animation: hintGlow 0.5s ease infinite alternate;
+        }
+        
+        @keyframes pulse {
+            from { box-shadow: 0 0 15px rgba(245, 158, 11, 0.4); }
+            to { box-shadow: 0 0 25px rgba(245, 158, 11, 0.8); }
+        }
+        
+        @keyframes matchPop {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.3); opacity: 0.5; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+        
+        @keyframes hintGlow {
+            from { box-shadow: 0 0 10px #22c55e, 0 0 20px #22c55e; border-color: #22c55e; }
+            to { box-shadow: 0 0 20px #22c55e, 0 0 40px #22c55e; border-color: #4ade80; }
+        }
+        
+        @keyframes celebrate {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            25% { transform: scale(1.1) rotate(-5deg); }
+            75% { transform: scale(1.1) rotate(5deg); }
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .btn {
+            transition: all 0.2s ease;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .game-board {
+            display: grid;
+            gap: var(--tile-gap);
+            padding: var(--board-padding);
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+        
+        .stars {
+            position: fixed;
+            pointer-events: none;
+            z-index: 100;
+        }
+        
+        .star {
+            position: absolute;
+            animation: fall 1s ease forwards;
+        }
+        
+        @keyframes fall {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100px) rotate(360deg); opacity: 0; }
+        }
+        
+        .confetti {
+            position: fixed;
+            pointer-events: none;
+            z-index: 100;
+        }
+        
+        .path-line {
+            position: absolute;
+            background: linear-gradient(90deg, #f59e0b, #ef4444);
+            border-radius: 5px;
+            z-index: 50;
+            animation: pathFade 0.5s ease forwards;
+        }
+        
+        @keyframes pathFade {
+            0% { opacity: 1; }
+            70% { opacity: 0.5; }
+            100% { opacity: 0; }
+        }
+        
+        .win-modal {
+            animation: modalPop 0.5s ease;
+        }
+        
+        @keyframes modalPop {
+            0% { transform: scale(0); opacity: 0; }
+            70% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            :root {
+                --tile-size: 9vw;
+                --tile-font: 5vw;
+                --tile-gap: 1vw;
+                --board-padding: 10px;
+            }
+            
+            .game-title {
+                font-size: 1.5rem !important;
+            }
+            
+            body {
+                padding: 4px;
+            }
+            
+            .stats-bar, .buttons-bar {
+                flex-wrap: wrap;
+            }
+            
+            .btn {
+                padding: 8px 12px !important;
+                font-size: 0.85rem !important;
+            }
+            
+            .bg-white\\/20 {
+                padding: 8px 12px !important;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            :root {
+                --tile-size: 10.5vw;
+                --tile-font: 6vw;
+                --tile-gap: 1vw;
+                --board-padding: 8px;
+            }
+            
+            .game-title {
+                font-size: 1.2rem !important;
+            }
+            
+            .tile {
+                border-radius: 8px;
+                border-width: 2px;
+            }
+            
+            .btn {
+                padding: 6px 10px !important;
+                font-size: 0.75rem !important;
+            }
+            
+            .game-board {
+                border-radius: 12px;
+            }
+        }
+        
+        @media (max-width: 380px) {
+            :root {
+                --tile-size: 11.5vw;
+                --tile-font: 6.5vw;
+            }
+        }
+        
+        @media (min-height: 700px) and (min-width: 769px) {
+            :root {
+                --tile-size: 60px;
+                --tile-font: 36px;
+            }
+        }
+    </style>
+</head>
+<body class="overflow-hidden">
+    <div class="h-screen flex flex-col max-w-4xl mx-auto px-2 sm:px-4 py-2">
+        <!-- Header -->
+        <div class="text-center flex-shrink-0">
+            <h1 class="game-title text-2xl sm:text-3xl md:text-4xl text-white drop-shadow-lg" style="text-shadow: 2px 2px 0 rgba(0,0,0,0.2);">
+                Kids Mahjong Connect
+            </h1>
+            <p class="text-white/90 text-xs sm:text-sm">Match tiles with up to 2 turns!</p>
+        </div>
+        
+        <!-- Stats Bar -->
+        <div class="stats-bar flex flex-wrap justify-center gap-2 sm:gap-4 my-2 flex-shrink-0">
+            <div class="bg-white/20 backdrop-blur rounded-lg px-3 py-1 sm:px-4 sm:py-2 text-white flex items-center">
+                <span class="text-sm sm:text-lg">⭐</span>
+                <span id="score" class="font-bold text-lg sm:text-2xl ml-1">0</span>
+            </div>
+            <div class="bg-white/20 backdrop-blur rounded-lg px-3 py-1 sm:px-4 sm:py-2 text-white flex items-center">
+                <span class="text-sm sm:text-lg">⏱️</span>
+                <span id="timer" class="font-bold text-lg sm:text-2xl ml-1">0:00</span>
+            </div>
+            <div class="bg-white/20 backdrop-blur rounded-lg px-3 py-1 sm:px-4 sm:py-2 text-white flex items-center">
+                <span class="text-sm sm:text-lg">🎯</span>
+                <span id="pairs" class="font-bold text-lg sm:text-2xl ml-1">0</span>/<span id="totalPairs" class="text-lg sm:text-2xl">0</span>
+            </div>
+        </div>
+        
+        <!-- Control Buttons -->
+        <div class="buttons-bar flex flex-wrap justify-center gap-2 my-2 flex-shrink-0">
+            <button onclick="startGame()" class="btn bg-gradient-to-r from-green-400 to-green-500 text-white font-bold px-3 py-1 sm:px-5 sm:py-2 rounded-full text-xs sm:text-base shadow-lg">
+                🎮 New
+            </button>
+            <button onclick="showHint()" class="btn bg-gradient-to-r from-yellow-400 to-orange-400 text-white font-bold px-3 py-1 sm:px-5 sm:py-2 rounded-full text-xs sm:text-base shadow-lg">
+                💡 Hint
+            </button>
+            <button onclick="shuffleTiles()" class="btn bg-gradient-to-r from-purple-400 to-pink-400 text-white font-bold px-3 py-1 sm:px-5 sm:py-2 rounded-full text-xs sm:text-base shadow-lg">
+                🔀 Shuffle
+            </button>
+        </div>
+        
+        <!-- Game Board Container -->
+        <div class="flex-1 flex items-center justify-center min-h-0">
+            <div id="gameBoard" class="game-board"></div>
+        </div>
+        
+        <!-- Instructions (hidden on very small screens) -->
+        <div class="hidden sm:block bg-white/20 backdrop-blur rounded-xl p-2 text-white/90 text-center flex-shrink-0 mt-2">
+            <p class="text-xs sm:text-sm">Click matching tiles to do a <a style="color:purple" href="https://www.smartjeux.com/mahjong-connect-2" target="_blank">mahjong connect</a>! Path can turn 2 times max.</p>
+        </div>
+    </div>
+    
+    <!-- Win Modal -->
+    <div id="winModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="win-modal bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-8 text-center max-w-sm mx-4 shadow-2xl">
+            <div class="text-4xl sm:text-6xl mb-2 sm:mb-4">🎉</div>
+            <h2 class="game-title text-xl sm:text-3xl text-purple-600 mb-1 sm:mb-2">You Win!</h2>
+            <p class="text-gray-600 text-sm sm:text-base mb-3 sm:mb-4">Amazing job, little superstar!</p>
+            <div class="bg-gradient-to-r from-yellow-100 to-orange-100 rounded-xl p-3 sm:p-4 mb-4 sm:mb-6">
+                <p class="text-sm sm:text-lg">⭐ Score: <span id="finalScore" class="font-bold text-xl sm:text-2xl text-orange-500">0</span></p>
+                <p class="text-sm sm:text-lg">⏱️ Time: <span id="finalTime" class="font-bold text-xl sm:text-2xl text-purple-500">0:00</span></p>
+            </div>
+            <button onclick="closeModal(); startGame();" class="btn bg-gradient-to-r from-green-400 to-green-500 text-white font-bold px-4 sm:px-8 py-2 sm:py-3 rounded-full text-base sm:text-xl shadow-lg">
+                🎮 Play Again
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Kid-friendly emoji tiles
+        const EMOJIS = ['🐶', '🐱', '🐰', '🦊', '🐻', '🐼', '🐨', '🦁', '🐹', '🦄', '🐸', '🐙', '🦋', '🌸', '🌈', '⭐', '🌙', '☀️', '🍎', '🍊', '🍋', '🍇', '🍓', '🍕', '🎈', '🎁', '🧸', '🚀', '⚽', '🎨'];
+        
+        const ROWS = 8;
+        const COLS = 10;
+        
+        // Dynamic tile sizing based on viewport
+        function updateTileSize() {
+            const vw = window.innerWidth;
+            const vh = window.innerHeight;
+            const maxWidth = vw - 32; // padding
+            const maxHeight = vh - 200; // space for header, stats, buttons
+            
+            const boardPadding = 20;
+            const tileGap = 6;
+            
+            // Calculate max tile size that fits
+            const maxTileWidth = (maxWidth - boardPadding * 2 - tileGap * (COLS - 1)) / COLS;
+            const maxTileHeight = (maxHeight - boardPadding * 2 - tileGap * (ROWS - 1)) / ROWS;
+            
+            const tileSize = Math.min(maxTileWidth, maxTileHeight, 60); // max 60px
+            const fontSize = tileSize * 0.58;
+            
+            document.documentElement.style.setProperty('--tile-size', tileSize + 'px');
+            document.documentElement.style.setProperty('--tile-font', fontSize + 'px');
+            document.documentElement.style.setProperty('--board-padding', Math.max(10, boardPadding * tileSize / 55) + 'px');
+            document.documentElement.style.setProperty('--tile-gap', Math.max(3, tileGap * tileSize / 55) + 'px');
+        }
+        
+        // Update on resize
+        window.addEventListener('resize', updateTileSize);
+        updateTileSize();
+        let board = [];
+        let selectedTile = null;
+        let score = 0;
+        let pairsMatched = 0;
+        let totalPairs = 0;
+        let timer = null;
+        let seconds = 0;
+        let gameStarted = false;
+        
+        function initGame() {
+            const gameBoard = document.getElementById('gameBoard');
+            gameBoard.style.gridTemplateColumns = `repeat(${COLS}, var(--tile-size))`;
+            
+            // Create pairs
+            const totalTiles = ROWS * COLS;
+            const pairsNeeded = totalTiles / 2;
+            totalPairs = pairsNeeded;
+            document.getElementById('totalPairs').textContent = totalPairs;
+            
+            let tiles = [];
+            for (let i = 0; i < pairsNeeded; i++) {
+                const emoji = EMOJIS[i % EMOJIS.length];
+                tiles.push(emoji, emoji);
+            }
+            
+            // Shuffle tiles
+            for (let i = tiles.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [tiles[i], tiles[j]] = [tiles[j], tiles[i]];
+            }
+            
+            // Create board with empty borders
+            board = [];
+            for (let r = 0; r < ROWS + 2; r++) {
+                board[r] = [];
+                for (let c = 0; c < COLS + 2; c++) {
+                    if (r === 0 || r === ROWS + 1 || c === 0 || c === COLS + 1) {
+                        board[r][c] = null; // Border
+                    } else {
+                        board[r][c] = tiles[(r - 1) * COLS + (c - 1)];
+                    }
+                }
+            }
+            
+            renderBoard();
+        }
+        
+        function renderBoard() {
+            const gameBoard = document.getElementById('gameBoard');
+            gameBoard.innerHTML = '';
+            
+            for (let r = 1; r <= ROWS; r++) {
+                for (let c = 1; c <= COLS; c++) {
+                    const tile = document.createElement('div');
+                    tile.className = 'tile';
+                    tile.dataset.row = r;
+                    tile.dataset.col = c;
+                    
+                    if (board[r][c]) {
+                        tile.textContent = board[r][c];
+                        tile.onclick = () => selectTile(r, c);
+                    } else {
+                        tile.classList.add('empty');
+                    }
+                    
+                    gameBoard.appendChild(tile);
+                }
+            }
+        }
+        
+        function selectTile(row, col) {
+            if (!board[row][col]) return;
+            
+            if (!gameStarted) {
+                startTimer();
+                gameStarted = true;
+            }
+            
+            const tileEl = getTileElement(row, col);
+            
+            if (selectedTile) {
+                if (selectedTile.row === row && selectedTile.col === col) {
+                    // Deselect
+                    tileEl.classList.remove('selected');
+                    selectedTile = null;
+                } else if (board[row][col] === board[selectedTile.row][selectedTile.col]) {
+                    // Check if can connect
+                    const path = findPath(selectedTile.row, selectedTile.col, row, col);
+                    if (path) {
+                        // Match found!
+                        drawPath(path);
+                        matchTiles(selectedTile.row, selectedTile.col, row, col);
+                        selectedTile = null;
+                    } else {
+                        // Can't connect, select new
+                        getTileElement(selectedTile.row, selectedTile.col).classList.remove('selected');
+                        tileEl.classList.add('selected');
+                        selectedTile = { row, col };
+                    }
+                } else {
+                    // Different tile, select new
+                    getTileElement(selectedTile.row, selectedTile.col).classList.remove('selected');
+                    tileEl.classList.add('selected');
+                    selectedTile = { row, col };
+                }
+            } else {
+                tileEl.classList.add('selected');
+                selectedTile = { row, col };
+            }
+        }
+        
+        function getTileElement(row, col) {
+            return document.querySelector(`.tile[data-row="${row}"][data-col="${col}"]`);
+        }
+        
+        function findPath(r1, c1, r2, c2) {
+            // Try direct line
+            if (canConnectDirect(r1, c1, r2, c2)) {
+                return [{ r: r1, c: c1 }, { r: r2, c: c2 }];
+            }
+            
+            // Try 1 turn
+            let path = findOneTurn(r1, c1, r2, c2);
+            if (path) return path;
+            
+            // Try 2 turns
+            path = findTwoTurns(r1, c1, r2, c2);
+            if (path) return path;
+            
+            return null;
+        }
+        
+        function canConnectDirect(r1, c1, r2, c2) {
+            if (r1 === r2) {
+                const minC = Math.min(c1, c2);
+                const maxC = Math.max(c1, c2);
+                for (let c = minC + 1; c < maxC; c++) {
+                    if (board[r1][c]) return false;
+                }
+                return true;
+            }
+            if (c1 === c2) {
+                const minR = Math.min(r1, r2);
+                const maxR = Math.max(r1, r2);
+                for (let r = minR + 1; r < maxR; r++) {
+                    if (board[r][c1]) return false;
+                }
+                return true;
+            }
+            return false;
+        }
+        
+        function findOneTurn(r1, c1, r2, c2) {
+            // Try corner (r1, c2)
+            if (!board[r1][c2] && canConnectDirect(r1, c1, r1, c2) && canConnectDirect(r1, c2, r2, c2)) {
+                return [{ r: r1, c: c1 }, { r: r1, c: c2 }, { r: r2, c: c2 }];
+            }
+            // Try corner (r2, c1)
+            if (!board[r2][c1] && canConnectDirect(r1, c1, r2, c1) && canConnectDirect(r2, c1, r2, c2)) {
+                return [{ r: r1, c: c1 }, { r: r2, c: c1 }, { r: r2, c: c2 }];
+            }
+            return null;
+        }
+        
+        function findTwoTurns(r1, c1, r2, c2) {
+            // Try all points in same row as r1
+            for (let c = 0; c <= COLS + 1; c++) {
+                if (c === c1) continue;
+                if (!board[r1][c] && canConnectDirect(r1, c1, r1, c)) {
+                    // From (r1, c) to (r2, c2) with one turn
+                    if (!board[r2][c] && canConnectDirect(r1, c, r2, c) && canConnectDirect(r2, c, r2, c2)) {
+                        return [{ r: r1, c: c1 }, { r: r1, c: c }, { r: r2, c: c }, { r: r2, c: c2 }];
+                    }
+                }
+            }
+            
+            // Try all points in same column as c1
+            for (let r = 0; r <= ROWS + 1; r++) {
+                if (r === r1) continue;
+                if (!board[r][c1] && canConnectDirect(r1, c1, r, c1)) {
+                    if (!board[r][c2] && canConnectDirect(r, c1, r, c2) && canConnectDirect(r, c2, r2, c2)) {
+                        return [{ r: r1, c: c1 }, { r: r, c: c1 }, { r: r, c: c2 }, { r: r2, c: c2 }];
+                    }
+                }
+            }
+            
+            return null;
+        }
+        
+        function drawPath(path) {
+            const gameBoard = document.getElementById('gameBoard');
+            const boardRect = gameBoard.getBoundingClientRect();
+            const computedStyle = getComputedStyle(document.documentElement);
+            const tileSize = parseFloat(computedStyle.getPropertyValue('--tile-size')) || 55;
+            const tileGap = parseFloat(computedStyle.getPropertyValue('--tile-gap')) || 6;
+            const boardPadding = parseFloat(computedStyle.getPropertyValue('--board-padding')) || 20;
+            const cellSize = tileSize + tileGap;
+            
+            for (let i = 0; i < path.length - 1; i++) {
+                const start = path[i];
+                const end = path[i + 1];
+                
+                // Adjust for 1-indexed board
+                const x1 = (start.c - 1) * cellSize + boardPadding + tileSize / 2;
+                const y1 = (start.r - 1) * cellSize + boardPadding + tileSize / 2;
+                const x2 = (end.c - 1) * cellSize + boardPadding + tileSize / 2;
+                const y2 = (end.r - 1) * cellSize + boardPadding + tileSize / 2;
+                
+                const line = document.createElement('div');
+                line.className = 'path-line';
+                
+                if (x1 === x2) {
+                    line.style.left = (boardRect.left + x1 - 5) + 'px';
+                    line.style.top = (boardRect.top + Math.min(y1, y2)) + 'px';
+                    line.style.width = '10px';
+                    line.style.height = Math.abs(y2 - y1) + 'px';
+                } else {
+                    line.style.left = (boardRect.left + Math.min(x1, x2)) + 'px';
+                    line.style.top = (boardRect.top + y1 - 5) + 'px';
+                    line.style.width = Math.abs(x2 - x1) + 'px';
+                    line.style.height = '10px';
+                }
+                
+                document.body.appendChild(line);
+                setTimeout(() => line.remove(), 500);
+            }
+        }
+        
+        function matchTiles(r1, c1, r2, c2) {
+            const tile1 = getTileElement(r1, c1);
+            const tile2 = getTileElement(r2, c2);
+            
+            tile1.classList.remove('selected');
+            tile2.classList.remove('selected');
+            tile1.classList.add('matched');
+            tile2.classList.add('matched');
+            
+            createStars(tile1);
+            createStars(tile2);
+            
+            setTimeout(() => {
+                board[r1][c1] = null;
+                board[r2][c2] = null;
+                tile1.classList.add('empty');
+                tile2.classList.add('empty');
+                tile1.classList.remove('matched');
+                tile2.classList.remove('matched');
+                tile1.textContent = '';
+                tile2.textContent = '';
+                
+                score += 100;
+                pairsMatched++;
+                updateStats();
+                
+                if (pairsMatched === totalPairs) {
+                    winGame();
+                }
+            }, 400);
+        }
+        
+        function createStars(element) {
+            const rect = element.getBoundingClientRect();
+            for (let i = 0; i < 5; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.textContent = ['⭐', '✨', '🌟', '💫'][Math.floor(Math.random() * 4)];
+                star.style.left = (rect.left + Math.random() * rect.width) + 'px';
+                star.style.top = rect.top + 'px';
+                document.body.appendChild(star);
+                setTimeout(() => star.remove(), 1000);
+            }
+        }
+        
+        function updateStats() {
+            document.getElementById('score').textContent = score;
+            document.getElementById('pairs').textContent = pairsMatched;
+        }
+        
+        function startTimer() {
+            seconds = 0;
+            timer = setInterval(() => {
+                seconds++;
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                document.getElementById('timer').textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+            }, 1000);
+        }
+        
+        function stopTimer() {
+            clearInterval(timer);
+        }
+        
+        function showHint() {
+            // Clear previous hints
+            document.querySelectorAll('.tile.hint').forEach(t => t.classList.remove('hint'));
+            
+            // Find a valid match
+            for (let r1 = 1; r1 <= ROWS; r1++) {
+                for (let c1 = 1; c1 <= COLS; c1++) {
+                    if (!board[r1][c1]) continue;
+                    
+                    for (let r2 = r1; r2 <= ROWS; r2++) {
+                        const startC = (r2 === r1) ? c1 + 1 : 1;
+                        for (let c2 = startC; c2 <= COLS; c2++) {
+                            if (!board[r2][c2]) continue;
+                            if (board[r1][c1] === board[r2][c2]) {
+                                if (findPath(r1, c1, r2, c2)) {
+                                    getTileElement(r1, c1).classList.add('hint');
+                                    getTileElement(r2, c2).classList.add('hint');
+                                    score = Math.max(0, score - 20); // Small penalty for hint
+                                    updateStats();
+                                    setTimeout(() => {
+                                        document.querySelectorAll('.tile.hint').forEach(t => t.classList.remove('hint'));
+                                    }, 2000);
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        function shuffleTiles() {
+            // Collect remaining tiles
+            let tiles = [];
+            for (let r = 1; r <= ROWS; r++) {
+                for (let c = 1; c <= COLS; c++) {
+                    if (board[r][c]) {
+                        tiles.push(board[r][c]);
+                    }
+                }
+            }
+            
+            // Shuffle
+            for (let i = tiles.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [tiles[i], tiles[j]] = [tiles[j], tiles[i]];
+            }
+            
+            // Place back
+            let idx = 0;
+            for (let r = 1; r <= ROWS; r++) {
+                for (let c = 1; c <= COLS; c++) {
+                    if (board[r][c]) {
+                        board[r][c] = tiles[idx++];
+                    }
+                }
+            }
+            
+            // Clear selection
+            selectedTile = null;
+            score = Math.max(0, score - 50);
+            updateStats();
+            renderBoard();
+        }
+        
+        function winGame() {
+            stopTimer();
+            
+            // Add bonus for time
+            const timeBonus = Math.max(0, 1000 - seconds * 2);
+            score += timeBonus;
+            updateStats();
+            
+            // Show confetti
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.textContent = ['🎉', '⭐', '🎊', '🌟', '✨', '💖'][Math.floor(Math.random() * 6)];
+                    confetti.style.left = Math.random() * window.innerWidth + 'px';
+                    confetti.style.top = '-20px';
+                    confetti.style.fontSize = (20 + Math.random() * 20) + 'px';
+                    confetti.style.animation = `fall ${1 + Math.random()}s ease forwards`;
+                    document.body.appendChild(confetti);
+                    setTimeout(() => confetti.remove(), 2000);
+                }, i * 50);
+            }
+            
+            // Show win modal
+            setTimeout(() => {
+                document.getElementById('finalScore').textContent = score;
+                document.getElementById('finalTime').textContent = document.getElementById('timer').textContent;
+                document.getElementById('winModal').classList.remove('hidden');
+                document.getElementById('winModal').classList.add('flex');
+            }, 500);
+        }
+        
+        function closeModal() {
+            document.getElementById('winModal').classList.add('hidden');
+            document.getElementById('winModal').classList.remove('flex');
+        }
+        
+        function startGame() {
+            stopTimer();
+            score = 0;
+            pairsMatched = 0;
+            seconds = 0;
+            gameStarted = false;
+            selectedTile = null;
+            updateStats();
+            document.getElementById('timer').textContent = '0:00';
+            initGame();
+            if (typeof sdk !== 'undefined' && sdk.showBanner !== 'undefined') {
+sdk.showBanner();
+}
+        }
+        
+        // Start game on load
+        
+    </script>
+        <script type='text/javascript'>		
+        function downloadJSAtOnload() {
+startGame();
+
+        } 
+        if (window.addEventListener)
+        window.addEventListener("load", downloadJSAtOnload, false);
+        else if (window.attachEvent)
+        window.attachEvent("onload", downloadJSAtOnload);
+        else window.onload = downloadJSAtOnload;
+       </script>
+</body>
+</html>

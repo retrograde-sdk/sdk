@@ -1,0 +1,1636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Harbor Breakout</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Russo+One&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #000;
+            overflow: hidden;
+            font-family: 'Orbitron', 'Segoe UI', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            touch-action: none;
+        }
+        
+        #gameContainer {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            max-width: 900px;
+            max-height: 700px;
+        }
+        
+        #gameCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            background: #0a0f1a;
+        }
+        
+        .menu {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(180deg, #0a0a12 0%, #141828 40%, #1a2035 100%);
+            z-index: 10;
+        }
+        
+        .menu::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(ellipse at 50% 20%, rgba(255, 140, 50, 0.15) 0%, transparent 60%);
+            pointer-events: none;
+        }
+        
+        .menu.hidden {
+            display: none;
+        }
+        
+        .title-container {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .menu h1 {
+            font-family: 'Russo One', sans-serif;
+            font-size: clamp(2.5rem, 10vw, 5rem);
+            color: #e8e8e8;
+            text-shadow: 
+                0 0 10px rgba(255, 140, 50, 0.8),
+                0 0 30px rgba(255, 100, 30, 0.5),
+                0 4px 0 #1a1a1a,
+                0 6px 10px rgba(0,0,0,0.8);
+            margin-bottom: 0;
+            letter-spacing: 4px;
+            background: linear-gradient(180deg, #ffffff 0%, #ff9944 50%, #ff6622 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.8));
+        }
+        
+        .menu h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(0.8rem, 2.5vw, 1.2rem);
+            color: #8899aa;
+            margin-top: 15px;
+            font-weight: 400;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+        
+        .btn-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .menu-btn {
+            width: 240px;
+            padding: 18px 40px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .menu-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .menu-btn:hover::before {
+            left: 100%;
+        }
+        
+        .btn-easy {
+            background: linear-gradient(180deg, #2a8a4a 0%, #1d6b35 100%);
+            color: #d0ffd8;
+            box-shadow: 0 4px 20px rgba(42, 138, 74, 0.4), inset 0 1px 0 rgba(255,255,255,0.2);
+            border: 1px solid #3aa85a;
+        }
+        
+        .btn-normal {
+            background: linear-gradient(180deg, #d48520 0%, #b86a10 100%);
+            color: #fff5e0;
+            box-shadow: 0 4px 20px rgba(212, 133, 32, 0.4), inset 0 1px 0 rgba(255,255,255,0.2);
+            border: 1px solid #e8a030;
+        }
+        
+        .btn-hard {
+            background: linear-gradient(180deg, #c83030 0%, #8a1818 100%);
+            color: #ffd0d0;
+            box-shadow: 0 4px 20px rgba(200, 48, 48, 0.4), inset 0 1px 0 rgba(255,255,255,0.2);
+            border: 1px solid #e04040;
+        }
+        
+        .menu-btn:hover {
+            transform: translateY(-3px) scale(1.02);
+            filter: brightness(1.15);
+        }
+        
+        .menu-btn:active {
+            transform: translateY(0) scale(0.98);
+        }
+        
+        #hud {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            right: 15px;
+            display: flex;
+            justify-content: space-between;
+            color: white;
+            font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+            z-index: 5;
+            pointer-events: none;
+        }
+        
+        #hud.hidden {
+            display: none;
+        }
+        
+        .score-display {
+            background: linear-gradient(180deg, rgba(20, 30, 50, 0.9), rgba(10, 15, 25, 0.95));
+            padding: 12px 25px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 140, 50, 0.4);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
+        }
+        
+        .score-display span {
+            color: #ff9944;
+            font-weight: 700;
+        }
+        
+        #gameOverScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: radial-gradient(ellipse at center, rgba(30, 10, 10, 0.98), rgba(5, 5, 10, 0.99));
+            z-index: 20;
+        }
+        
+        #gameOverScreen.hidden {
+            display: none;
+        }
+        
+        #gameOverScreen h1 {
+            font-family: 'Russo One', sans-serif;
+            font-size: clamp(2.5rem, 10vw, 4rem);
+            color: #ff3333;
+            text-shadow: 0 0 30px rgba(255, 50, 50, 0.8), 0 0 60px rgba(255, 0, 0, 0.4);
+            margin-bottom: 30px;
+            letter-spacing: 5px;
+        }
+        
+        #gameOverScreen .final-score {
+            font-size: clamp(1.3rem, 4vw, 2rem);
+            color: #fff;
+            margin-bottom: 10px;
+        }
+        
+        #gameOverScreen .final-score span {
+            color: #ff9944;
+        }
+        
+        #gameOverScreen .best-score {
+            font-size: clamp(1rem, 3vw, 1.4rem);
+            color: #ffd700;
+            margin-bottom: 40px;
+        }
+        
+        .restart-btn {
+            padding: 18px 50px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 700;
+            background: linear-gradient(180deg, #ff8833 0%, #cc5500 100%);
+            color: white;
+            border: 1px solid #ff9944;
+            border-radius: 8px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            box-shadow: 0 4px 25px rgba(255, 136, 51, 0.5), inset 0 1px 0 rgba(255,255,255,0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .restart-btn:hover {
+            transform: translateY(-3px) scale(1.05);
+            filter: brightness(1.2);
+        }
+        
+        #pauseOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 15;
+        }
+        
+        #pauseOverlay.hidden {
+            display: none;
+        }
+        
+        #pauseOverlay h2 {
+            font-family: 'Russo One', sans-serif;
+            font-size: clamp(2.5rem, 8vw, 4rem);
+            color: #fff;
+            text-shadow: 0 0 30px rgba(255, 140, 50, 0.8);
+            letter-spacing: 8px;
+        }
+        
+        #mobileControls {
+            position: absolute;
+            bottom: 30px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 30px;
+            z-index: 5;
+        }
+        
+        #mobileControls.hidden {
+            display: none;
+        }
+        
+        .control-btn {
+            width: 90px;
+            height: 90px;
+            background: radial-gradient(circle at 30% 30%, rgba(255, 140, 50, 0.3), rgba(255, 100, 30, 0.1));
+            border: 2px solid rgba(255, 140, 50, 0.5);
+            border-radius: 50%;
+            color: rgba(255, 200, 150, 0.9);
+            font-size: 2.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            user-select: none;
+            -webkit-user-select: none;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5), inset 0 2px 10px rgba(255,140,50,0.2);
+            transition: all 0.15s ease;
+        }
+        
+        .control-btn:active {
+            background: radial-gradient(circle at 30% 30%, rgba(255, 140, 50, 0.5), rgba(255, 100, 30, 0.3));
+            transform: scale(0.95);
+            border-color: rgba(255, 180, 80, 0.8);
+        }
+        
+        @media (min-width: 800px) {
+            #mobileControls {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+        
+        <div id="mainMenu" class="menu">
+            <div class="title-container">
+                <h1>HARBOR BREAKOUT</h1>
+                <h2>Escape the closing port</h2>
+            </div>
+            <div class="btn-container">
+                <button class="menu-btn btn-easy" onclick="startGame('easy')">Easy</button>
+                <button class="menu-btn btn-normal" onclick="startGame('normal')">Normal</button>
+                <button class="menu-btn btn-hard" onclick="startGame('hard')">Hard</button>
+            </div>
+        </div>
+        
+        <div id="hud" class="hidden">
+            <div class="score-display">
+                SCORE: <span id="currentScore">0</span>
+            </div>
+            <div class="score-display">
+                BEST: <span id="bestScore">0</span>
+            </div>
+        </div>
+        
+        <div id="pauseOverlay" class="hidden">
+            <h2>PAUSED</h2>
+        </div>
+        
+        <div id="gameOverScreen" class="hidden">
+            <h1>GAME OVER</h1>
+            <div class="final-score">Score: <span id="finalScore">0</span></div>
+            <div class="best-score">Best: <span id="finalBest">0</span></div>
+            <button class="restart-btn" onclick="returnToMenu()">MENU</button>
+        </div>
+        
+        <div id="mobileControls" class="hidden">
+            <div class="control-btn" id="leftBtn">◀</div>
+            <div class="control-btn" id="rightBtn">▶</div>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        window.SDK_OPTIONS = {
+            gameId: "your_game_id_here",
+            onEvent: function (a) {
+                switch (a.name) {
+                    case "SDK_GAME_PAUSE":
+                        if (typeof pauseForAd === 'function') pauseForAd();
+                        break;
+                    case "SDK_GAME_START":
+                        if (typeof resumeFromAd === 'function') resumeFromAd();
+                        break;
+                    case "SDK_READY":
+                        break;
+                }
+            }
+        };
+        (function (a, b, c) {
+            var d = a.getElementsByTagName(b)[0];
+            a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+        })(document, "script", "gamemonetize-sdk");
+    </script>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const mainMenu = document.getElementById('mainMenu');
+        const hud = document.getElementById('hud');
+        const pauseOverlay = document.getElementById('pauseOverlay');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        const mobileControls = document.getElementById('mobileControls');
+        const currentScoreEl = document.getElementById('currentScore');
+        const bestScoreEl = document.getElementById('bestScore');
+        const finalScoreEl = document.getElementById('finalScore');
+        const finalBestEl = document.getElementById('finalBest');
+
+        let gameWidth = 900;
+        let gameHeight = 700;
+        let scale = 1;
+
+        const GameState = {
+            MENU: 'menu',
+            PLAYING: 'playing',
+            PAUSED: 'paused',
+            GAME_OVER: 'gameOver'
+        };
+
+        let state = GameState.MENU;
+        let difficulty = 'normal';
+        let score = 0;
+        let bestScore = parseInt(localStorage.getItem('harborBreakoutBest')) || 0;
+        let gameTime = 0;
+        let lastAdTime = 0;
+        let nextAdInterval = 0;
+        let isPausedForAd = false;
+        let animationId = null;
+        let lastTime = 0;
+
+        let player = null;
+        let obstacles = [];
+        let enemies = [];
+        let docks = [];
+        let particles = [];
+        let splashes = [];
+        let cityLights = [];
+        let waveOffset = 0;
+        let distanceTraveled = 0;
+        let flashTime = 0;
+
+        const keys = {
+            left: false,
+            right: false
+        };
+
+        const difficultySettings = {
+            easy: {
+                playerSpeed: 3,
+                enemySpeed: 1.5,
+                obstacleFrequency: 0.012,
+                enemyFrequency: 0.006,
+                mineFrequency: 0.008,
+                dockFrequency: 0.018
+            },
+            normal: {
+                playerSpeed: 4,
+                enemySpeed: 2.5,
+                obstacleFrequency: 0.02,
+                enemyFrequency: 0.012,
+                mineFrequency: 0.015,
+                dockFrequency: 0.022
+            },
+            hard: {
+                playerSpeed: 5,
+                enemySpeed: 4,
+                obstacleFrequency: 0.035,
+                enemyFrequency: 0.02,
+                mineFrequency: 0.028,
+                dockFrequency: 0.028
+            }
+        };
+
+        let settings = difficultySettings.normal;
+
+        window.onload = function () {
+            showAd();
+        };
+
+        // Generate city skyline
+        let skylineBuildings = [];
+        function generateSkyline() {
+            skylineBuildings = [];
+            let x = 0;
+            while (x < gameWidth + 100) {
+                const width = 30 + Math.random() * 60;
+                const height = 40 + Math.random() * 80;
+                const hasCrane = Math.random() > 0.7;
+                skylineBuildings.push({
+                    x: x,
+                    width: width,
+                    height: height,
+                    hasCrane: hasCrane,
+                    craneHeight: hasCrane ? 30 + Math.random() * 40 : 0,
+                    windows: []
+                });
+                // Generate windows
+                for (let wy = 10; wy < height - 10; wy += 12) {
+                    for (let wx = 5; wx < width - 5; wx += 10) {
+                        if (Math.random() > 0.3) {
+                            skylineBuildings[skylineBuildings.length - 1].windows.push({
+                                x: wx, y: wy,
+                                lit: Math.random() > 0.4,
+                                flicker: Math.random()
+                            });
+                        }
+                    }
+                }
+                x += width + Math.random() * 20;
+            }
+        }
+
+        // Generate harbor lights
+        function generateCityLights() {
+            cityLights = [];
+            for (let i = 0; i < 25; i++) {
+                cityLights.push({
+                    x: Math.random() * gameWidth,
+                    baseY: 60 + Math.random() * 40,
+                    intensity: 0.3 + Math.random() * 0.7,
+                    color: Math.random() > 0.3 ? 
+                        `rgba(255, ${140 + Math.random() * 60}, ${20 + Math.random() * 40}, ` : 
+                        `rgba(255, ${200 + Math.random() * 55}, ${150 + Math.random() * 50}, `,
+                    phase: Math.random() * Math.PI * 2
+                });
+            }
+        }
+
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        let isMuted = false;
+        let musicGain = null;
+        let sfxGain = null;
+        let musicSource = null;
+        let musicBuffer = null;
+
+        function initAudio() {
+            musicGain = audioContext.createGain();
+            musicGain.gain.value = 0.25;
+            musicGain.connect(audioContext.destination);
+            
+            sfxGain = audioContext.createGain();
+            sfxGain.gain.value = 0.4;
+            sfxGain.connect(audioContext.destination);
+            
+            generateMusic();
+        }
+
+        function generateMusic() {
+            const sampleRate = audioContext.sampleRate;
+            const duration = 8;
+            const numSamples = sampleRate * duration;
+            musicBuffer = audioContext.createBuffer(1, numSamples, sampleRate);
+            const data = musicBuffer.getChannelData(0);
+            
+            const bassFreqs = [82.41, 82.41, 110, 98];
+            const melodyFreqs = [329.63, 392, 440, 392, 329.63, 293.66, 261.63, 293.66];
+            
+            for (let i = 0; i < numSamples; i++) {
+                const t = i / sampleRate;
+                const beat = Math.floor(t * 2) % 8;
+                const bassFreq = bassFreqs[beat % 4];
+                const melodyFreq = melodyFreqs[beat];
+                
+                let sample = 0;
+                // Deep bass
+                sample += Math.sin(2 * Math.PI * bassFreq * t) * 0.25;
+                sample += Math.sin(2 * Math.PI * bassFreq * 0.5 * t) * 0.15;
+                // Melody with decay
+                const melodyEnv = Math.max(0, 1 - (t % 0.5) * 2);
+                sample += Math.sin(2 * Math.PI * melodyFreq * t) * 0.12 * melodyEnv;
+                // Subtle pad
+                sample += Math.sin(2 * Math.PI * 165 * t) * 0.05;
+                // Kick drum
+                const kickPhase = t % 0.5;
+                if (kickPhase < 0.08) {
+                    const kickFreq = 150 * (1 - kickPhase * 10);
+                    sample += Math.sin(2 * Math.PI * kickFreq * t) * 0.35 * (1 - kickPhase * 12);
+                }
+                // Hi-hat
+                if ((t % 0.25) < 0.02) {
+                    sample += (Math.random() * 2 - 1) * 0.08 * (1 - (t % 0.25) * 50);
+                }
+                
+                data[i] = sample * 0.5;
+            }
+        }
+
+        function playMusic() {
+            if (musicSource) {
+                try { musicSource.stop(); } catch(e) {}
+            }
+            musicSource = audioContext.createBufferSource();
+            musicSource.buffer = musicBuffer;
+            musicSource.loop = true;
+            musicSource.connect(musicGain);
+            musicSource.start();
+        }
+
+        function stopMusic() {
+            if (musicSource) {
+                try { musicSource.stop(); } catch(e) {}
+                musicSource = null;
+            }
+        }
+
+        function playSound(type) {
+            if (isMuted) return;
+            
+            const osc = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+            osc.connect(gain);
+            gain.connect(sfxGain);
+            
+            switch(type) {
+                case 'splash':
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(180, audioContext.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(40, audioContext.currentTime + 0.25);
+                    gain.gain.setValueAtTime(0.25, audioContext.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.25);
+                    osc.start();
+                    osc.stop(audioContext.currentTime + 0.25);
+                    break;
+                case 'collision':
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(120, audioContext.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(25, audioContext.currentTime + 0.6);
+                    gain.gain.setValueAtTime(0.4, audioContext.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.6);
+                    osc.start();
+                    osc.stop(audioContext.currentTime + 0.6);
+                    break;
+            }
+        }
+
+        function muteAudio() {
+            isMuted = true;
+            if (musicGain) musicGain.gain.value = 0;
+            if (sfxGain) sfxGain.gain.value = 0;
+        }
+
+        function unmuteAudio() {
+            isMuted = false;
+            if (musicGain) musicGain.gain.value = 0.25;
+            if (sfxGain) sfxGain.gain.value = 0.4;
+        }
+
+        function resizeCanvas() {
+            const container = document.getElementById('gameContainer');
+            const containerWidth = container.clientWidth;
+            const containerHeight = container.clientHeight;
+            
+            const scaleX = containerWidth / gameWidth;
+            const scaleY = containerHeight / gameHeight;
+            scale = Math.min(scaleX, scaleY);
+            
+            canvas.width = gameWidth;
+            canvas.height = gameHeight;
+        }
+
+        function initPlayer() {
+            player = {
+                x: gameWidth / 2,
+                y: gameHeight - 120,
+                width: 40,
+                height: 70,
+                angle: 0,
+                steerSpeed: 4.5,
+                wakeTimer: 0
+            };
+        }
+
+        function spawnObstacle() {
+            const type = Math.random();
+            if (type < 0.4) {
+                obstacles.push({
+                    type: 'mine',
+                    x: Math.random() * (gameWidth - 120) + 60,
+                    y: -60,
+                    radius: 22,
+                    rotation: 0,
+                    bobPhase: Math.random() * Math.PI * 2
+                });
+            } else if (type < 0.7) {
+                obstacles.push({
+                    type: 'barrel',
+                    x: Math.random() * (gameWidth - 100) + 50,
+                    y: -50,
+                    width: 35,
+                    height: 45,
+                    rotation: Math.random() * 0.3 - 0.15
+                });
+            } else {
+                const width = 100 + Math.random() * 150;
+                obstacles.push({
+                    type: 'barrier',
+                    x: Math.random() * (gameWidth - width - 40) + 20,
+                    y: -35,
+                    width: width,
+                    height: 25
+                });
+            }
+        }
+
+        function spawnEnemy() {
+            const side = Math.random() > 0.5 ? -1 : 1;
+            enemies.push({
+                x: side === -1 ? -60 : gameWidth + 60,
+                y: Math.random() * (gameHeight * 0.4) + 80,
+                width: 45,
+                height: 75,
+                direction: side,
+                speed: settings.enemySpeed * (0.8 + Math.random() * 0.4),
+                patrolY: 0,
+                patrolPhase: Math.random() * Math.PI * 2,
+                lightPhase: Math.random() * Math.PI * 2,
+                spotlightAngle: 0
+            });
+        }
+
+        function spawnDock() {
+            const side = Math.random() > 0.5 ? 0 : 1;
+            const width = 70 + Math.random() * 50;
+            docks.push({
+                x: side === 0 ? 0 : gameWidth - width,
+                y: -120,
+                width: width,
+                height: 100 + Math.random() * 80,
+                side: side,
+                hasContainer: Math.random() > 0.5,
+                containerColor: ['#cc3333', '#3366cc', '#33aa33', '#ccaa33'][Math.floor(Math.random() * 4)]
+            });
+        }
+
+        function spawnSplash(x, y, intensity) {
+            for (let i = 0; i < intensity * 8; i++) {
+                splashes.push({
+                    x: x + (Math.random() - 0.5) * 30,
+                    y: y + (Math.random() - 0.5) * 20,
+                    vx: (Math.random() - 0.5) * 4,
+                    vy: -Math.random() * 3 - 1,
+                    life: 1,
+                    size: 2 + Math.random() * 4
+                });
+            }
+        }
+
+        function spawnParticle(x, y, type) {
+            particles.push({
+                x: x,
+                y: y,
+                vx: (Math.random() - 0.5) * 2,
+                vy: Math.random() * 2 + 1,
+                life: 1,
+                type: type,
+                size: 3 + Math.random() * 5
+            });
+        }
+
+        function updatePlayer(dt) {
+            const prevX = player.x;
+            
+            if (keys.left) {
+                player.x -= player.steerSpeed * dt * 60;
+                player.angle = Math.max(player.angle - 0.15 * dt * 60, -0.25);
+            } else if (keys.right) {
+                player.x += player.steerSpeed * dt * 60;
+                player.angle = Math.min(player.angle + 0.15 * dt * 60, 0.25);
+            } else {
+                player.angle *= 0.92;
+            }
+
+            player.x = Math.max(50, Math.min(gameWidth - 50, player.x));
+
+            // Wake particles
+            player.wakeTimer += dt;
+            if (player.wakeTimer > 0.03) {
+                player.wakeTimer = 0;
+                spawnParticle(player.x + (Math.random() - 0.5) * 15, player.y + player.height / 2 + 5, 'wake');
+                if (Math.abs(player.x - prevX) > 0.5) {
+                    spawnSplash(player.x, player.y + player.height / 2, 0.5);
+                }
+            }
+        }
+
+        function updateObstacles(dt) {
+            const scrollSpeed = settings.playerSpeed * (1 + distanceTraveled / 12000);
+            
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                const obs = obstacles[i];
+                obs.y += scrollSpeed * dt * 60;
+                
+                if (obs.type === 'mine') {
+                    obs.rotation += 0.015 * dt * 60;
+                    obs.bobPhase += 0.05 * dt * 60;
+                }
+                
+                if (obs.y > gameHeight + 120) {
+                    obstacles.splice(i, 1);
+                }
+            }
+
+            if (Math.random() < settings.obstacleFrequency * dt * 60) {
+                spawnObstacle();
+            }
+        }
+
+        function updateEnemies(dt) {
+            const scrollSpeed = settings.playerSpeed * (1 + distanceTraveled / 12000);
+            
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                const enemy = enemies[i];
+                enemy.x += enemy.direction * enemy.speed * dt * 60;
+                enemy.y += scrollSpeed * 0.25 * dt * 60;
+                enemy.patrolPhase += 0.025 * dt * 60;
+                enemy.patrolY = Math.sin(enemy.patrolPhase) * 25;
+                enemy.lightPhase += 0.15 * dt * 60;
+                enemy.spotlightAngle = Math.sin(enemy.patrolPhase * 0.5) * 0.4;
+                
+                if (enemy.x < -120 || enemy.x > gameWidth + 120 || enemy.y > gameHeight + 120) {
+                    enemies.splice(i, 1);
+                }
+            }
+
+            if (Math.random() < settings.enemyFrequency * dt * 60) {
+                spawnEnemy();
+            }
+        }
+
+        function updateDocks(dt) {
+            const scrollSpeed = settings.playerSpeed * (1 + distanceTraveled / 12000);
+            
+            for (let i = docks.length - 1; i >= 0; i--) {
+                const dock = docks[i];
+                dock.y += scrollSpeed * dt * 60;
+                
+                if (dock.y > gameHeight + 180) {
+                    docks.splice(i, 1);
+                }
+            }
+
+            if (Math.random() < settings.dockFrequency * dt * 60) {
+                spawnDock();
+            }
+        }
+
+        function updateParticles(dt) {
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.x += p.vx * dt * 60;
+                p.y += p.vy * dt * 60;
+                p.life -= dt * 1.5;
+                
+                if (p.life <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
+            
+            for (let i = splashes.length - 1; i >= 0; i--) {
+                const s = splashes[i];
+                s.x += s.vx * dt * 60;
+                s.y += s.vy * dt * 60;
+                s.vy += 0.15 * dt * 60;
+                s.life -= dt * 2.5;
+                
+                if (s.life <= 0) {
+                    splashes.splice(i, 1);
+                }
+            }
+        }
+
+        function checkCollisions() {
+            const px = player.x;
+            const py = player.y;
+            const pw = player.width * 0.7;
+            const ph = player.height * 0.8;
+
+            for (const obs of obstacles) {
+                if (obs.type === 'mine') {
+                    const dx = px - obs.x;
+                    const dy = py - obs.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < obs.radius + pw / 2) {
+                        return true;
+                    }
+                } else {
+                    if (px - pw/2 < obs.x + obs.width &&
+                        px + pw/2 > obs.x &&
+                        py - ph/2 < obs.y + obs.height &&
+                        py + ph/2 > obs.y) {
+                        return true;
+                    }
+                }
+            }
+
+            for (const enemy of enemies) {
+                if (px - pw/2 < enemy.x + enemy.width/2 &&
+                    px + pw/2 > enemy.x - enemy.width/2 &&
+                    py - ph/2 < enemy.y + enemy.patrolY + enemy.height/2 &&
+                    py + ph/2 > enemy.y + enemy.patrolY - enemy.height/2) {
+                    return true;
+                }
+            }
+
+            for (const dock of docks) {
+                if (px - pw/2 < dock.x + dock.width &&
+                    px + pw/2 > dock.x &&
+                    py - ph/2 < dock.y + dock.height &&
+                    py + ph/2 > dock.y) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        function drawSkyline() {
+            // Sky gradient - dark night
+            const skyGrad = ctx.createLinearGradient(0, 0, 0, 120);
+            skyGrad.addColorStop(0, '#0a0a12');
+            skyGrad.addColorStop(0.5, '#101520');
+            skyGrad.addColorStop(1, '#1a2030');
+            ctx.fillStyle = skyGrad;
+            ctx.fillRect(0, 0, gameWidth, 120);
+
+            // City glow
+            const glowGrad = ctx.createRadialGradient(gameWidth / 2, 80, 0, gameWidth / 2, 80, 400);
+            glowGrad.addColorStop(0, 'rgba(255, 120, 40, 0.15)');
+            glowGrad.addColorStop(0.5, 'rgba(255, 80, 20, 0.08)');
+            glowGrad.addColorStop(1, 'transparent');
+            ctx.fillStyle = glowGrad;
+            ctx.fillRect(0, 0, gameWidth, 150);
+
+            // Buildings
+            for (const b of skylineBuildings) {
+                // Building silhouette
+                ctx.fillStyle = '#0a0c12';
+                ctx.fillRect(b.x, 100 - b.height, b.width, b.height + 20);
+                
+                // Windows
+                for (const w of b.windows) {
+                    if (w.lit) {
+                        const flicker = 0.7 + Math.sin(waveOffset * 0.02 + w.flicker * 10) * 0.3;
+                        ctx.fillStyle = `rgba(255, ${180 + Math.random() * 40}, ${80 + Math.random() * 40}, ${flicker * 0.8})`;
+                        ctx.fillRect(b.x + w.x, 100 - b.height + w.y, 6, 8);
+                    }
+                }
+                
+                // Crane
+                if (b.hasCrane) {
+                    ctx.strokeStyle = '#1a1c22';
+                    ctx.lineWidth = 3;
+                    const craneX = b.x + b.width / 2;
+                    const craneBaseY = 100 - b.height;
+                    ctx.beginPath();
+                    ctx.moveTo(craneX, craneBaseY);
+                    ctx.lineTo(craneX, craneBaseY - b.craneHeight);
+                    ctx.lineTo(craneX + 40, craneBaseY - b.craneHeight);
+                    ctx.stroke();
+                    
+                    // Crane light
+                    ctx.fillStyle = Math.sin(waveOffset * 0.1) > 0 ? '#ff3333' : '#330000';
+                    ctx.beginPath();
+                    ctx.arc(craneX, craneBaseY - b.craneHeight, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+        }
+
+        function drawWater() {
+            // Deep water gradient
+            const waterGrad = ctx.createLinearGradient(0, 100, 0, gameHeight);
+            waterGrad.addColorStop(0, '#0c1420');
+            waterGrad.addColorStop(0.3, '#0a1828');
+            waterGrad.addColorStop(0.6, '#081420');
+            waterGrad.addColorStop(1, '#060c18');
+            ctx.fillStyle = waterGrad;
+            ctx.fillRect(0, 100, gameWidth, gameHeight - 100);
+
+            // Light reflections on water
+            for (const light of cityLights) {
+                const reflectionLength = 150 + Math.sin(waveOffset * 0.03 + light.phase) * 50;
+                const grad = ctx.createLinearGradient(light.x, light.baseY, light.x, light.baseY + reflectionLength);
+                const alpha = light.intensity * (0.3 + Math.sin(waveOffset * 0.02 + light.phase) * 0.1);
+                grad.addColorStop(0, light.color + alpha + ')');
+                grad.addColorStop(0.3, light.color + (alpha * 0.5) + ')');
+                grad.addColorStop(1, 'transparent');
+                
+                ctx.fillStyle = grad;
+                const width = 3 + Math.sin(waveOffset * 0.04 + light.phase) * 2;
+                ctx.fillRect(light.x - width, light.baseY, width * 2, reflectionLength);
+            }
+
+            // Animated wave lines
+            ctx.lineWidth = 1;
+            for (let y = 120; y < gameHeight; y += 35) {
+                const offsetY = (y + waveOffset * 0.5) % (gameHeight + 40);
+                const alpha = 0.05 + (y / gameHeight) * 0.05;
+                ctx.strokeStyle = `rgba(255, 180, 100, ${alpha})`;
+                ctx.beginPath();
+                for (let x = 0; x < gameWidth; x += 4) {
+                    const waveY = offsetY + Math.sin((x + waveOffset) * 0.015) * 4 + Math.sin((x * 0.5 + waveOffset * 0.7) * 0.02) * 2;
+                    if (x === 0) {
+                        ctx.moveTo(x, waveY);
+                    } else {
+                        ctx.lineTo(x, waveY);
+                    }
+                }
+                ctx.stroke();
+            }
+
+            // Subtle foam patches
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
+            for (let i = 0; i < 15; i++) {
+                const x = (i * 120 + waveOffset * 0.3) % (gameWidth + 80) - 40;
+                const y = 150 + (i * 90 + waveOffset * 0.2) % (gameHeight - 150);
+                ctx.beginPath();
+                ctx.ellipse(x, y, 30 + Math.sin(waveOffset * 0.05 + i) * 10, 12, 0, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function drawDocks() {
+            for (const dock of docks) {
+                // Dock shadow
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+                ctx.fillRect(dock.x + 5, dock.y + 5, dock.width, dock.height);
+                
+                // Main dock structure
+                const dockGrad = ctx.createLinearGradient(dock.x, dock.y, dock.x, dock.y + dock.height);
+                dockGrad.addColorStop(0, '#3d3028');
+                dockGrad.addColorStop(0.5, '#2a2018');
+                dockGrad.addColorStop(1, '#1a1410');
+                ctx.fillStyle = dockGrad;
+                ctx.fillRect(dock.x, dock.y, dock.width, dock.height);
+
+                // Planks
+                ctx.strokeStyle = '#1a1208';
+                ctx.lineWidth = 1;
+                for (let i = 0; i < dock.width; i += 12) {
+                    ctx.beginPath();
+                    ctx.moveTo(dock.x + i, dock.y);
+                    ctx.lineTo(dock.x + i, dock.y + dock.height);
+                    ctx.stroke();
+                }
+
+                // Edge highlight
+                ctx.fillStyle = '#4a3828';
+                ctx.fillRect(dock.x, dock.y, dock.width, 6);
+                
+                // Metal edge
+                ctx.fillStyle = '#2a2a30';
+                const edgeX = dock.side === 0 ? dock.x + dock.width - 4 : dock.x;
+                ctx.fillRect(edgeX, dock.y, 4, dock.height);
+
+                // Container
+                if (dock.hasContainer && dock.height > 60) {
+                    const contX = dock.x + (dock.side === 0 ? 10 : dock.width - 50);
+                    const contY = dock.y + 20;
+                    ctx.fillStyle = dock.containerColor;
+                    ctx.fillRect(contX, contY, 40, 25);
+                    ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+                    ctx.strokeRect(contX, contY, 40, 25);
+                }
+
+                // Bollard / pole
+                const poleX = dock.side === 0 ? dock.x + dock.width - 12 : dock.x + 8;
+                ctx.fillStyle = '#1a1a20';
+                ctx.beginPath();
+                ctx.arc(poleX, dock.y + dock.height - 5, 8, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#ffa500';
+                ctx.beginPath();
+                ctx.arc(poleX, dock.y + dock.height - 5, 3, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function drawPlayer() {
+            ctx.save();
+            ctx.translate(player.x, player.y);
+            ctx.rotate(player.angle);
+
+            // Wake/spray behind boat
+            const wakeAlpha = 0.4 + Math.sin(waveOffset * 0.3) * 0.1;
+            ctx.fillStyle = `rgba(255, 255, 255, ${wakeAlpha})`;
+            ctx.beginPath();
+            ctx.moveTo(-8, player.height / 2);
+            ctx.quadraticCurveTo(-25, player.height / 2 + 30, -40, player.height / 2 + 50);
+            ctx.quadraticCurveTo(0, player.height / 2 + 35, 40, player.height / 2 + 50);
+            ctx.quadraticCurveTo(25, player.height / 2 + 30, 8, player.height / 2);
+            ctx.fill();
+
+            // Boat hull - sleek speedboat shape
+            const hullGrad = ctx.createLinearGradient(-player.width/2, 0, player.width/2, 0);
+            hullGrad.addColorStop(0, '#c0c0c8');
+            hullGrad.addColorStop(0.3, '#f0f0f5');
+            hullGrad.addColorStop(0.5, '#ffffff');
+            hullGrad.addColorStop(0.7, '#f0f0f5');
+            hullGrad.addColorStop(1, '#c0c0c8');
+            ctx.fillStyle = hullGrad;
+            
+            ctx.beginPath();
+            ctx.moveTo(0, -player.height / 2);
+            ctx.bezierCurveTo(-8, -player.height / 3, -player.width / 2 + 5, 0, -player.width / 2, player.height / 3);
+            ctx.lineTo(-player.width / 2 + 3, player.height / 2 - 5);
+            ctx.lineTo(-player.width / 4, player.height / 2);
+            ctx.lineTo(player.width / 4, player.height / 2);
+            ctx.lineTo(player.width / 2 - 3, player.height / 2 - 5);
+            ctx.lineTo(player.width / 2, player.height / 3);
+            ctx.bezierCurveTo(player.width / 2 - 5, 0, 8, -player.height / 3, 0, -player.height / 2);
+            ctx.closePath();
+            ctx.fill();
+
+            // Hull outline
+            ctx.strokeStyle = '#888890';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            // Deck detail
+            ctx.fillStyle = '#1a1a22';
+            ctx.beginPath();
+            ctx.moveTo(0, -player.height / 2 + 12);
+            ctx.bezierCurveTo(-6, -player.height / 4, -player.width / 3, 5, -player.width / 3, player.height / 6);
+            ctx.lineTo(player.width / 3, player.height / 6);
+            ctx.bezierCurveTo(player.width / 3, 5, 6, -player.height / 4, 0, -player.height / 2 + 12);
+            ctx.closePath();
+            ctx.fill();
+
+            // Windshield
+            const windshieldGrad = ctx.createLinearGradient(0, -player.height/3, 0, 5);
+            windshieldGrad.addColorStop(0, 'rgba(100, 180, 255, 0.6)');
+            windshieldGrad.addColorStop(1, 'rgba(50, 100, 150, 0.8)');
+            ctx.fillStyle = windshieldGrad;
+            ctx.beginPath();
+            ctx.moveTo(0, -player.height / 3 + 5);
+            ctx.lineTo(-player.width / 4, 0);
+            ctx.lineTo(player.width / 4, 0);
+            ctx.closePath();
+            ctx.fill();
+
+            // Cockpit
+            ctx.fillStyle = '#0a0a12';
+            ctx.fillRect(-player.width / 5, 2, player.width / 2.5, player.height / 5);
+
+            // Red tail lights
+            ctx.fillStyle = '#ff2020';
+            ctx.shadowColor = '#ff0000';
+            ctx.shadowBlur = 10;
+            ctx.fillRect(-player.width / 2 + 5, player.height / 2 - 10, 6, 4);
+            ctx.fillRect(player.width / 2 - 11, player.height / 2 - 10, 6, 4);
+            ctx.shadowBlur = 0;
+
+            // Chrome trim
+            ctx.strokeStyle = '#888';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(-player.width / 3, player.height / 6);
+            ctx.lineTo(player.width / 3, player.height / 6);
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
+        function drawObstacles() {
+            for (const obs of obstacles) {
+                if (obs.type === 'mine') {
+                    const bobOffset = Math.sin(obs.bobPhase) * 3;
+                    
+                    ctx.save();
+                    ctx.translate(obs.x, obs.y + bobOffset);
+                    ctx.rotate(obs.rotation);
+
+                    // Mine shadow
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                    ctx.beginPath();
+                    ctx.ellipse(3, 5, obs.radius, obs.radius * 0.4, 0, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Main mine body
+                    const mineGrad = ctx.createRadialGradient(-5, -5, 0, 0, 0, obs.radius);
+                    mineGrad.addColorStop(0, '#3a3a40');
+                    mineGrad.addColorStop(0.7, '#1a1a20');
+                    mineGrad.addColorStop(1, '#0a0a10');
+                    ctx.fillStyle = mineGrad;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, obs.radius, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Spikes
+                    ctx.fillStyle = '#2a2a30';
+                    for (let i = 0; i < 8; i++) {
+                        const angle = (i / 8) * Math.PI * 2;
+                        const sx = Math.cos(angle) * (obs.radius + 4);
+                        const sy = Math.sin(angle) * (obs.radius + 4);
+                        ctx.beginPath();
+                        ctx.arc(sx, sy, 6, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+
+                    // Warning light
+                    const blink = Math.sin(waveOffset * 0.2 + obs.rotation * 5) > 0;
+                    ctx.fillStyle = blink ? '#ff0000' : '#440000';
+                    ctx.shadowColor = blink ? '#ff0000' : 'transparent';
+                    ctx.shadowBlur = blink ? 15 : 0;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, 6, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+
+                    ctx.restore();
+                } else if (obs.type === 'barrel') {
+                    ctx.save();
+                    ctx.translate(obs.x + obs.width/2, obs.y + obs.height/2);
+                    ctx.rotate(obs.rotation + Math.sin(waveOffset * 0.05) * 0.1);
+
+                    // Shadow
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                    ctx.fillRect(-obs.width/2 + 3, -obs.height/2 + 5, obs.width, obs.height);
+
+                    // Barrel body
+                    const barrelGrad = ctx.createLinearGradient(-obs.width/2, 0, obs.width/2, 0);
+                    barrelGrad.addColorStop(0, '#654321');
+                    barrelGrad.addColorStop(0.3, '#8B5A2B');
+                    barrelGrad.addColorStop(0.5, '#A0522D');
+                    barrelGrad.addColorStop(0.7, '#8B5A2B');
+                    barrelGrad.addColorStop(1, '#654321');
+                    ctx.fillStyle = barrelGrad;
+                    ctx.fillRect(-obs.width/2, -obs.height/2, obs.width, obs.height);
+                    
+                    // Metal bands
+                    ctx.fillStyle = '#3a3a40';
+                    ctx.fillRect(-obs.width/2 - 1, -obs.height/2 + 5, obs.width + 2, 4);
+                    ctx.fillRect(-obs.width/2 - 1, obs.height/2 - 9, obs.width + 2, 4);
+
+                    ctx.restore();
+                } else if (obs.type === 'barrier') {
+                    // Shadow
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+                    ctx.fillRect(obs.x + 4, obs.y + 4, obs.width, obs.height);
+
+                    // Main barrier
+                    ctx.fillStyle = '#dd4400';
+                    ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+                    
+                    // Stripes
+                    ctx.fillStyle = '#ffffff';
+                    const stripeWidth = 25;
+                    for (let i = 0; i < obs.width; i += stripeWidth * 2) {
+                        ctx.beginPath();
+                        ctx.moveTo(obs.x + i, obs.y);
+                        ctx.lineTo(obs.x + i + stripeWidth, obs.y);
+                        ctx.lineTo(obs.x + i + stripeWidth + obs.height, obs.y + obs.height);
+                        ctx.lineTo(obs.x + i + obs.height, obs.y + obs.height);
+                        ctx.closePath();
+                        ctx.fill();
+                    }
+
+                    // Reflectors
+                    ctx.fillStyle = '#ffff00';
+                    ctx.shadowColor = '#ffff00';
+                    ctx.shadowBlur = 5;
+                    ctx.beginPath();
+                    ctx.arc(obs.x + 10, obs.y + obs.height/2, 4, 0, Math.PI * 2);
+                    ctx.arc(obs.x + obs.width - 10, obs.y + obs.height/2, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                }
+            }
+        }
+
+        function drawEnemies() {
+            for (const enemy of enemies) {
+                ctx.save();
+                ctx.translate(enemy.x, enemy.y + enemy.patrolY);
+                ctx.rotate(enemy.direction * 0.15);
+
+                // Spotlight beam
+                const spotlightGrad = ctx.createRadialGradient(0, -enemy.height/2, 0, 0, -enemy.height/2 - 100, 150);
+                spotlightGrad.addColorStop(0, 'rgba(255, 255, 200, 0.3)');
+                spotlightGrad.addColorStop(0.5, 'rgba(255, 255, 150, 0.1)');
+                spotlightGrad.addColorStop(1, 'transparent');
+                ctx.fillStyle = spotlightGrad;
+                ctx.save();
+                ctx.rotate(enemy.spotlightAngle);
+                ctx.beginPath();
+                ctx.moveTo(-10, -enemy.height/2);
+                ctx.lineTo(-60, -enemy.height/2 - 150);
+                ctx.lineTo(60, -enemy.height/2 - 150);
+                ctx.lineTo(10, -enemy.height/2);
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+
+                // Wake
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+                ctx.beginPath();
+                ctx.ellipse(0, enemy.height/2 + 15, 15, 25 + Math.sin(waveOffset * 0.3) * 5, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Hull
+                const hullGrad = ctx.createLinearGradient(-enemy.width/2, 0, enemy.width/2, 0);
+                hullGrad.addColorStop(0, '#1a1a22');
+                hullGrad.addColorStop(0.5, '#2a2a35');
+                hullGrad.addColorStop(1, '#1a1a22');
+                ctx.fillStyle = hullGrad;
+                
+                ctx.beginPath();
+                ctx.moveTo(0, -enemy.height / 2);
+                ctx.bezierCurveTo(-10, -enemy.height / 3, -enemy.width / 2, 0, -enemy.width / 2, enemy.height / 3);
+                ctx.lineTo(-enemy.width / 3, enemy.height / 2);
+                ctx.lineTo(enemy.width / 3, enemy.height / 2);
+                ctx.lineTo(enemy.width / 2, enemy.height / 3);
+                ctx.bezierCurveTo(enemy.width / 2, 0, 10, -enemy.height / 3, 0, -enemy.height / 2);
+                ctx.closePath();
+                ctx.fill();
+
+                // Cabin
+                ctx.fillStyle = '#0a0a12';
+                ctx.fillRect(-enemy.width / 4, -enemy.height / 6, enemy.width / 2, enemy.height / 3);
+
+                // Police lights
+                const redOn = Math.sin(enemy.lightPhase) > 0;
+                const blueOn = Math.sin(enemy.lightPhase + Math.PI) > 0;
+                
+                // Red light
+                ctx.fillStyle = redOn ? '#ff0000' : '#440000';
+                ctx.shadowColor = redOn ? '#ff0000' : 'transparent';
+                ctx.shadowBlur = redOn ? 20 : 0;
+                ctx.fillRect(-enemy.width / 4 - 2, -enemy.height / 6 - 8, 10, 6);
+                
+                // Blue light
+                ctx.fillStyle = blueOn ? '#0066ff' : '#000044';
+                ctx.shadowColor = blueOn ? '#0066ff' : 'transparent';
+                ctx.shadowBlur = blueOn ? 20 : 0;
+                ctx.fillRect(enemy.width / 4 - 8, -enemy.height / 6 - 8, 10, 6);
+                ctx.shadowBlur = 0;
+
+                // Spotlight housing
+                ctx.fillStyle = '#3a3a40';
+                ctx.beginPath();
+                ctx.arc(0, -enemy.height / 2 + 5, 8, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#ffffcc';
+                ctx.beginPath();
+                ctx.arc(0, -enemy.height / 2 + 5, 5, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.restore();
+            }
+        }
+
+        function drawParticles() {
+            // Wake particles
+            for (const p of particles) {
+                ctx.fillStyle = `rgba(255, 255, 255, ${p.life * 0.4})`;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            // Splash particles
+            for (const s of splashes) {
+                ctx.fillStyle = `rgba(255, 255, 255, ${s.life * 0.6})`;
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.size * s.life, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, gameWidth, gameHeight);
+            
+            drawSkyline();
+            drawWater();
+            drawDocks();
+            drawParticles();
+            drawObstacles();
+            drawEnemies();
+            drawPlayer();
+        }
+
+        function updateScore(dt) {
+            const scrollSpeed = settings.playerSpeed * (1 + distanceTraveled / 12000);
+            distanceTraveled += scrollSpeed * dt * 60;
+            score = Math.floor(distanceTraveled / 10 + gameTime / 100);
+            
+            currentScoreEl.textContent = score.toLocaleString();
+            bestScoreEl.textContent = bestScore.toLocaleString();
+        }
+
+        function gameLoop(timestamp) {
+            if (state !== GameState.PLAYING) {
+                return;
+            }
+
+            const dt = Math.min((timestamp - lastTime) / 1000, 0.1);
+            lastTime = timestamp;
+
+            gameTime += dt * 1000;
+            waveOffset += dt * 50;
+            flashTime += dt;
+
+            updatePlayer(dt);
+            updateObstacles(dt);
+            updateEnemies(dt);
+            updateDocks(dt);
+            updateParticles(dt);
+            updateScore(dt);
+
+            if (checkCollisions()) {
+                gameOver();
+                return;
+            }
+
+            checkAdTimer();
+
+            draw();
+            animationId = requestAnimationFrame(gameLoop);
+        }
+
+        function checkAdTimer() {
+            if (gameTime - lastAdTime > nextAdInterval) {
+                showAd();
+                lastAdTime = gameTime;
+                nextAdInterval = (60 + Math.random() * 30) * 1000;
+            }
+        }
+
+        function showAd() {
+            if (typeof sdk !== 'undefined' && sdk.showBanner !== 'undefined') {
+                sdk.showBanner();
+            }
+        }
+
+        function pauseForAd() {
+            if (state === GameState.PLAYING) {
+                isPausedForAd = true;
+                state = GameState.PAUSED;
+                muteAudio();
+                pauseOverlay.classList.remove('hidden');
+            }
+        }
+
+        function resumeFromAd() {
+            if (isPausedForAd) {
+                isPausedForAd = false;
+                state = GameState.PLAYING;
+                unmuteAudio();
+                pauseOverlay.classList.add('hidden');
+                lastTime = performance.now();
+                animationId = requestAnimationFrame(gameLoop);
+            }
+        }
+
+        function startGame(diff) {
+            difficulty = diff;
+            settings = difficultySettings[diff];
+            
+            
+            mainMenu.classList.add('hidden');
+            hud.classList.remove('hidden');
+            mobileControls.classList.remove('hidden');
+            gameOverScreen.classList.add('hidden');
+            pauseOverlay.classList.add('hidden');
+
+            initPlayer();
+            obstacles = [];
+            enemies = [];
+            docks = [];
+            particles = [];
+            splashes = [];
+            score = 0;
+            gameTime = 0;
+            distanceTraveled = 0;
+            lastAdTime = 0;
+            nextAdInterval = (60 + Math.random() * 30) * 1000;
+            waveOffset = 0;
+
+            generateSkyline();
+            generateCityLights();
+
+            bestScoreEl.textContent = bestScore.toLocaleString();
+            currentScoreEl.textContent = '0';
+
+            state = GameState.PLAYING;
+            lastTime = performance.now();
+            
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+            playMusic();
+            unmuteAudio();
+            
+            animationId = requestAnimationFrame(gameLoop);
+        }
+
+        function gameOver() {
+            state = GameState.GAME_OVER;
+            
+            playSound('collision');
+            stopMusic();
+            
+            if (score > bestScore) {
+                bestScore = score;
+                localStorage.setItem('harborBreakoutBest', bestScore);
+            }
+
+            finalScoreEl.textContent = score.toLocaleString();
+            finalBestEl.textContent = bestScore.toLocaleString();
+            
+            hud.classList.add('hidden');
+            mobileControls.classList.add('hidden');
+            gameOverScreen.classList.remove('hidden');
+
+            showAd();
+        }
+
+        function returnToMenu() {
+            state = GameState.MENU;
+            
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+            }
+            
+            gameOverScreen.classList.add('hidden');
+            hud.classList.add('hidden');
+            mobileControls.classList.add('hidden');
+            mainMenu.classList.remove('hidden');
+
+            bestScoreEl.textContent = bestScore.toLocaleString();
+        }
+
+        function pauseGame() {
+            if (state === GameState.PLAYING && !isPausedForAd) {
+                state = GameState.PAUSED;
+                muteAudio();
+                pauseOverlay.classList.remove('hidden');
+            }
+        }
+
+        function resumeGame() {
+            if (state === GameState.PAUSED && !isPausedForAd) {
+                state = GameState.PLAYING;
+                unmuteAudio();
+                pauseOverlay.classList.add('hidden');
+                lastTime = performance.now();
+                animationId = requestAnimationFrame(gameLoop);
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+                keys.left = true;
+            }
+            if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+                keys.right = true;
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+                keys.left = false;
+            }
+            if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+                keys.right = false;
+            }
+        });
+
+        const leftBtn = document.getElementById('leftBtn');
+        const rightBtn = document.getElementById('rightBtn');
+
+        leftBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            keys.left = true;
+            if (audioContext.state === 'suspended') audioContext.resume();
+        });
+        leftBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            keys.left = false;
+        });
+        leftBtn.addEventListener('mousedown', () => keys.left = true);
+        leftBtn.addEventListener('mouseup', () => keys.left = false);
+        leftBtn.addEventListener('mouseleave', () => keys.left = false);
+
+        rightBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            keys.right = true;
+            if (audioContext.state === 'suspended') audioContext.resume();
+        });
+        rightBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            keys.right = false;
+        });
+        rightBtn.addEventListener('mousedown', () => keys.right = true);
+        rightBtn.addEventListener('mouseup', () => keys.right = false);
+        rightBtn.addEventListener('mouseleave', () => keys.right = false);
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                pauseGame();
+            } else {
+                resumeGame();
+            }
+        });
+
+        window.addEventListener('blur', () => {
+            pauseGame();
+        });
+
+        window.addEventListener('focus', () => {
+            resumeGame();
+        });
+
+        window.addEventListener('resize', resizeCanvas);
+
+        function init() {
+            resizeCanvas();
+            initAudio();
+            generateSkyline();
+            generateCityLights();
+            bestScoreEl.textContent = bestScore.toLocaleString();
+            
+            // Draw initial background
+            ctx.fillStyle = '#0a0f1a';
+            ctx.fillRect(0, 0, gameWidth, gameHeight);
+        }
+
+        init();
+    </script>
+</body>
+</html>

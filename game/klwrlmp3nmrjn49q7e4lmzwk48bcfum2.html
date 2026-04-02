@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Basic</title>
+
+    <!-- Pixel Font Import -->
+    <style>
+        /* @font-face {
+            font-family: 'PixelFont';
+            src: url('assets/fonts/PixelFont.ttf') format('truetype');
+        } */
+        #full_screen {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+        body {
+            margin: 0;
+            background-color: #222;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'PixelFont', sans-serif;
+            overflow: hidden; /* Remove barras de rolagem */
+        }
+
+        canvas {
+        /*    image-rendering: pixelated; /**/
+            max-width: 800px;
+            max-height:600px; /**/
+            width: 100%; /* Ajusta dinamicamente à largura */
+            height: auto; /* Mantém a proporção */    
+            image-rendering: pixelated; 
+        }
+        .divleft{
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            margin-left: 2em;
+        }
+        .divright{
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            margin-right: 2em;
+        }
+        .directions, .buttons {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .directions div, .buttons div {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 60px;
+            height: 60px;
+            background-color: #333;
+            border-radius: 50%;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .directions img, .buttons img {
+            width: 30px;
+            height: 30px;
+        }
+
+        .directions div:hover, .buttons div:hover {
+            background-color: #555;
+            cursor: pointer;
+        }
+
+        .directions div:active, .buttons div:active {
+            background-color: #777;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+    </style>
+</head>
+<body>
+    <div id="full_screen" onclick="toggleFullscreen()" ><img src="assets/img/full_screen.png" ></div>
+    <div class="divleft">
+        <div class="directions">
+            <div id="divButtonLeft"><img src="assets/img/arrow-left.png"></div>
+            <div id="divButtonRight"><img src="assets/img/arrow-right.png"></div>
+        </div>
+    </div>
+    <div id="divCanvas">
+    <div class="divright">
+        <div class="buttons">
+            <div id="divButtonA"><img src="assets/img/a.png"></div>
+            <div id="divButtonS"><img src="assets/img/s.png"></div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.js"></script>
+    <script src="assets/scripts/script.js"></script>
+    <script type="text/javascript">
+   window.SDK_OPTIONS = {
+      gameId: "klwrlmp3nmrjn49q7e4lmzwk48bcfum2",
+      onEvent: function (a) {
+         switch (a.name) {
+            case "SDK_GAME_PAUSE":
+               game.scene.pause();
+               break;
+            case "SDK_GAME_START":
+               game.scene.resume();
+               break;
+            case "SDK_READY":
+               // when sdk is ready
+               break;
+         }
+      }
+   };
+(function (a, b, c) {
+   var d = a.getElementsByTagName(b)[0];
+   a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+})(document, "script", "gamemonetize-sdk"); 
+</script>
+</body>
+</html>

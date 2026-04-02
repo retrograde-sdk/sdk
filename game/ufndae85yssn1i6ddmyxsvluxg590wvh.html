@@ -1,0 +1,2189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Doodle Jump 4 - Ultra Edition</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap');
+        /* ========= THIN SCROLLBARS ========= */
+
+/* WebKit browsers */
+*::-webkit-scrollbar {
+  height: 8px;   /* horizontal */
+  width: 8px;    /* vertical */
+}
+
+*::-webkit-scrollbar-track {
+  background: rgba(255,255,255,0.04);
+  border-radius: 8px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.12);
+  border-radius: 8px;
+  border: 2px solid transparent; /* gives a little padding look */
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,255,255,0.18);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.12) rgba(255,255,255,0.04);
+}
+
+/* If you want to apply to a specific scrollable area (recommended), replace `*` with selector:
+   .menu-content, .some-scrollable { ... }
+*/
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #0a0e27;
+            overflow: hidden;
+            touch-action: none;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        #gameContainer {
+            position: relative;
+            width: 100%;
+            max-width: 450px;
+            height: 100vh;
+            max-height: 800px;
+            background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+            overflow: hidden;
+            box-shadow: 0 0 50px rgba(102, 126, 234, 0.5);
+        }
+        
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        
+        #ui {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        
+        #hud {
+            position: absolute;
+            top: 15px;
+            left: 0;
+            /* MODIFIED: Remove right: 0 to allow the third item */
+            right: auto; 
+            display: flex;
+            /* MODIFIED: Change to start alignment and add gap */
+            justify-content: flex-start; 
+            padding: 0 20px;
+            gap: 15px; 
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        #hud.visible {
+            opacity: 1;
+        }
+        
+        .hud-item {
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 15px;
+            padding: 8px 15px;
+            color: white;
+            font-weight: 800;
+            font-size: 18px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .hud-label {
+            font-size: 10px;
+            opacity: 0.7;
+            text-transform: uppercase;
+        }
+
+        /* NEW PAUSE BUTTON STYLE */
+        #pauseBtn {
+            background: rgba(184, 151, 6, 0.5); /* secondary color for pause */
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 800;
+            cursor: pointer;
+            pointer-events: all;
+            box-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
+            transition: transform 0.1s;
+        }
+
+        #pauseBtn:active {
+            transform: scale(0.95);
+        }
+
+        /* NEW FPS COUNTER STYLE */
+        #fpsCounter { 
+            position: absolute;
+            top: 65px;
+            right: 10px;
+            color: #fbbf24;
+            font-weight: 800;
+            font-size: 16px;
+            background: rgba(0,0,0,0.5);
+            padding: 5px 10px;
+            border-radius: 10px;
+            pointer-events: none;
+            display: none;
+            backdrop-filter: blur(5px);
+        }
+        
+        .menu {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            background: linear-gradient(135deg, rgba(88, 28, 135, 0.98), rgba(59, 7, 100, 0.98));
+            pointer-events: all;
+            transition: opacity 0.3s;
+            padding: 25px 15px 20px;
+            backdrop-filter: blur(20px);
+        }
+        
+        .menu.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .logo {
+            text-align: center;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+        }
+        
+        h1 {
+            font-size: clamp(30px, 12vw, 50px);
+            font-weight: 800;
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+            filter: drop-shadow(0 4px 10px rgba(251, 191, 36, 0.3));
+        }
+        
+        .subtitle {
+            font-size: 16px;
+            color: #a78bfa;
+            font-weight: 600;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+        
+   .menu-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 15px;
+    overflow-y: auto;
+    padding-top: 5px;
+    padding-bottom: 10px;
+}
+        
+        button {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: #1a0b2e;
+            border: none;
+            padding: 18px 40px;
+            font-size: 18px;
+            font-weight: 800;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Poppins', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            box-shadow: 0 6px 20px rgba(251, 191, 36, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s;
+        }
+        
+        button:hover::before {
+            left: 100%;
+        }
+        
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(251, 191, 36, 0.5);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        button.secondary {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
+            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+        }
+        
+        .info {
+            text-align: center;
+            color: rgba(255,255,255,0.8);
+            font-size: 13px;
+            line-height: 1.8;
+        }
+        
+        #aboutMenu, #settingsMenu, #statsMenu, #gameOver, #pauseMenu, #supportMenu {
+            display: none;
+        }
+        
+        .about-content, .stats {
+            background: rgba(0,0,0,0.4);
+            border: 2px solid rgba(167, 139, 250, 0.3);
+            border-radius: 20px;
+            padding: 10px;
+            margin: 5px 0;
+            backdrop-filter: blur(10px);
+        }
+        
+        .about-content h2 {
+            color: #fbbf24;
+            font-size: 20px;
+            margin-bottom: 6px;
+        }
+        
+        .about-content p {
+            color: white;
+            font-size: 14px;
+            line-height: 1.8;
+            margin-bottom: 4px;
+        }
+        
+        .developer {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(217, 70, 239, 0.3));
+            border: 2px solid rgba(167, 139, 250, 0.5);
+            border-radius: 15px;
+            padding: 10px;
+            margin: 5px 0;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+        
+        .developer-name {
+            font-size: 22px;
+            font-weight: 800;
+            color: #fbbf24;
+            margin-bottom: 5px;
+        }
+        
+        .developer-role {
+            font-size: 13px;
+            color: #a78bfa;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .stat-row:last-child {
+            border-bottom: none;
+        }
+        
+        .stat-label {
+            color: rgba(255,255,255,0.8);
+            font-weight: 600;
+            font-size: 15px;
+        }
+        
+        .stat-value {
+            color: #fbbf24;
+            font-weight: 800;
+            font-size: 18px;
+        }
+        
+        .touch-controls {
+            position: absolute;
+            bottom: 30px;
+            left: 0;
+            right: 0;
+            display: none;
+            justify-content: space-between;
+            padding: 0 40px;
+            pointer-events: all;
+        }
+        
+        .touch-controls.visible {
+            display: flex;
+        }
+        
+        .touch-btn {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.4), rgba(217, 70, 239, 0.4));
+            border: 3px solid rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            color: white;
+            user-select: none;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+            transition: all 0.2s;
+        }
+        
+        .touch-btn:active {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.6), rgba(217, 70, 239, 0.6));
+            transform: scale(0.95);
+        }
+        
+        .notification {
+            position: absolute;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%) scale(0);
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: #1a0b2e;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-weight: 800;
+            font-size: 16px;
+            box-shadow: 0 4px 15px rgba(251, 191, 36, 0.5);
+            animation: popNotification 2s ease;
+            pointer-events: none;
+            z-index: 1000;
+        }
+        
+        @keyframes popNotification {
+            0% { transform: translateX(-50%) scale(0); }
+            10% { transform: translateX(-50%) scale(1.1); }
+            15% { transform: translateX(-50%) scale(1); }
+            85% { transform: translateX(-50%) scale(1); opacity: 1; }
+            100% { transform: translateX(-50%) scale(0); opacity: 0; }
+        }
+        
+        #particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        /* NEW SETTINGS STYLES */
+        .settings-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .settings-item:last-of-type {
+            border-bottom: none;
+        }
+        
+        .settings-label {
+            color: white;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        
+        .toggle-switch {
+            width: 50px;
+            height: 25px;
+            background: #a78bfa;
+            border-radius: 15px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .toggle-switch.active {
+            background: #4ade80;
+        }
+        
+        .toggle-slider {
+            width: 21px;
+            height: 21px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.3s;
+        }
+        
+        .toggle-switch.active .toggle-slider {
+            transform: translateX(25px);
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        /* New smaller radio group style for quality setting */
+        .radio-group-sm {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .radio-button {
+            padding: 8px 15px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            border: 2px solid rgba(255,255,255,0.3);
+            color: rgba(255,255,255,0.7);
+            transition: all 0.2s;
+        }
+
+        .radio-button-sm {
+            padding: 6px 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            border: 2px solid rgba(255,255,255,0.3);
+            color: rgba(255,255,255,0.7);
+            transition: all 0.2s;
+        }
+        
+        .radio-button.selected, .radio-button-sm.selected {
+            background: #fbbf24;
+            color: #1a0b2e;
+            border-color: #f59e0b;
+        }
+
+        .select-doodle {
+            /* MODIFIED to support 5 doodles */
+            display: grid;
+            grid-template-columns: repeat(5, 1fr); 
+            gap: 15px;
+            padding: 15px;
+            background: rgba(0,0,0,0.4);
+            border: 2px solid rgba(167, 139, 250, 0.3);
+            border-radius: 20px;
+            margin-top: 20px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .doodle-option {
+            text-align: center;
+            padding: 10px;
+            border-radius: 15px;
+            border: 3px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .doodle-option.selected {
+            border-color: #fbbf24;
+            background: rgba(255,255,255,0.1);
+        }
+        
+        .doodle-preview {
+            width: 40px;
+            height: 40px;
+            background-color: #4ade80; /* Base color */
+            border-radius: 50%;
+            margin: 0 auto 5px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .doodle-option[data-doodle="alien"] .doodle-preview { background-color: #f87171; }
+        .doodle-option[data-doodle="robot"] .doodle-preview { background-color: #60a5fa; }
+        /* NEW DOODLE STYLES */
+        .doodle-option[data-doodle="santa"] .doodle-preview { background-color: #ef4444; } 
+        .doodle-option[data-doodle="ninja"] .doodle-preview { background-color: #374151; }
+        
+        .doodle-name {
+            font-size: 12px;
+            color: white;
+        }
+
+        /* SUPPORT MENU STYLES */
+        .donation-link {
+            text-decoration: none;
+            display: block;
+        }
+        .donation-link button {
+            background: linear-gradient(135deg, #1d4ed8, #3b82f6);
+            color: white;
+            box-shadow: 0 6px 20px rgba(29, 78, 216, 0.4);
+        }
+
+        #pauseMenu {
+            display: flex;
+            background: rgba(0,0,0,0.8);
+            z-index: 999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        @media (max-width: 450px) {
+            #gameContainer {
+                border-radius: 0;
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="canvas"></canvas>
+        <canvas id="particles"></canvas>
+        
+        <div id="ui">
+            <div id="hud">
+                <div class="hud-item">
+                    <div class="hud-label">Score</div>
+                    <div id="score">0</div>
+                </div>
+                <div class="hud-item">
+                    <div class="hud-label">Best</div>
+                    <div id="bestScore">0</div>
+                </div>
+
+            </div>
+                <div id="pauseBtn" onclick="togglePause()" style="position: absolute; right: 10px; top: 10px; display: none;">
+                    ||
+                </div>
+            <div id="fpsCounter">FPS: 0</div>
+            
+            <div id="mainMenu" class="menu">
+                <div class="logo">
+                    <h1>DOODLE<br>JUMP</h1>
+                    <div class="subtitle">Ultra Edition v4</div>
+                </div>
+                
+                <div class="menu-content">
+                    <button onclick="startGame()">▶ START GAME</button>
+                    <button class="secondary" onclick="showSettings()">⚙️ SETTINGS</button>
+                    <button class="secondary" onclick="showStats()">📊 STATISTICS</button>
+                    <!--<button class="secondary" onclick="showSupport()">🇺🇦 SUPPORT UKRAINE</button> -->
+                    <button class="secondary" onclick="showAbout()">ℹ ABOUT</button>
+                </div>
+                
+                <div class="info">
+                    🎮 Arrow Keys or A/D to move<br>
+                    📱 Mobile: Tilt device to control (if enabled)<br>
+                    🎯 Jump on platforms • Avoid falling
+                </div>
+            </div>
+
+            <div id="supportMenu" class="menu">
+                <div class="logo">
+                    <h1>SUPPORT<br>UKRAINE</h1>
+                </div>
+                <div class="menu-content">
+                    <div class="about-content">
+                        <h2>Help Save Lives</h2>
+                        <p>Your donation directly supports the defense and humanitarian efforts in Ukraine.</p>
+                    </div>
+                    
+                    <a href="https://savelife.in.ua/en/" target="_blank" class="donation-link">
+                        <button>🏥 DONATE via Save Life in UA</button>
+                    </a>
+                    <a href="https://www.sternenkofund.org/en/donate" target="_blank" class="donation-link">
+                        <button>⭐ DONATE via Sternenko Fund</button>
+                    </a>
+                </div>
+                <button onclick="hideSupport()">← BACK</button>
+            </div>
+            
+            <div id="settingsMenu" class="menu">
+                <div class="logo">
+                    <h1>SETTINGS</h1>
+                </div>
+                
+                <div class="menu-content">
+                    <div class="settings-item">
+                        <div class="settings-label">🔊 Sound</div>
+                        <div class="toggle-switch" id="soundToggleSwitch" onclick="toggleSoundSetting()">
+                            <div class="toggle-slider"></div>
+                        </div>
+                    </div>
+
+                    <div class="settings-item">
+                        <div class="settings-label">✨ Graphics Quality</div>
+                        <div class="radio-group-sm" id="qualityRadioGroup">
+                            <span class="radio-button-sm selected" data-quality="2" onclick="setGraphicsQuality(2)">HIGH</span>
+                            <span class="radio-button-sm" data-quality="1" onclick="setGraphicsQuality(1)">MEDIUM</span>
+                            <span class="radio-button-sm" data-quality="0.5" onclick="setGraphicsQuality(0.5)">LOW</span>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-item">
+                        <div class="settings-label">⛶ Fullscreen</div>
+                        <div class="toggle-switch" id="fullscreenToggle" onclick="toggleFullscreen()">
+                            <div class="toggle-slider"></div>
+                        </div>
+                    </div>
+
+                    <div class="settings-item">
+                        <div class="settings-label">💻 Show FPS Counter</div>
+                        <div class="toggle-switch" id="fpsToggle" onclick="toggleFpsCounter()">
+                            <div class="toggle-slider"></div>
+                        </div>
+                    </div>
+
+                    <div class="settings-item">
+                        <div class="settings-label">🗺️ Show Map</div>
+                        <div class="toggle-switch" id="mapToggle" onclick="toggleMap()">
+                            <div class="toggle-slider"></div>
+                        </div>
+                    </div> 
+
+                    <div class="settings-item">
+                        <div class="settings-label">📱 Mobile Tilt Controls</div>
+                        <div class="toggle-switch" id="mobileControlsToggle" onclick="toggleMobileControls()">
+                            <div class="toggle-slider"></div>
+                        </div>
+                    </div>
+
+                    <div class="settings-item">
+                        <div class="settings-label">⚡ Game Speed</div>
+                        <div class="radio-group" id="speedRadioGroup">
+                            <span class="radio-button" data-speed="0.8" onclick="setGameSpeed(0.8)">SLOW</span>
+                            <span class="radio-button selected" data-speed="1.0" onclick="setGameSpeed(1.0)">MEDIUM</span>
+                            <span class="radio-button" data-speed="1.2" onclick="setGameSpeed(1.2)">FAST</span>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-item" style="border-bottom: none; display: block;">
+                        <div class="settings-label" style="margin-bottom: 15px;">👤 Choose Doodle</div>
+                        <div class="select-doodle" id="doodleSelection">
+                            <div class="doodle-option selected" data-doodle="green" onclick="setDoodle('green')">
+                                <div class="doodle-preview"></div>
+                                <div class="doodle-name">CLASSIC</div>
+                            </div>
+                            <div class="doodle-option" data-doodle="alien" onclick="setDoodle('alien')">
+                                <div class="doodle-preview"></div>
+                                <div class="doodle-name">ALIEN</div>
+                            </div>
+                            <div class="doodle-option" data-doodle="robot" onclick="setDoodle('robot')">
+                                <div class="doodle-preview"></div>
+                                <div class="doodle-name">ROBOT</div>
+                            </div>
+                            <div class="doodle-option" data-doodle="santa" onclick="setDoodle('santa')">
+                                <div class="doodle-preview"></div>
+                                <div class="doodle-name">SANTA</div>
+                            </div>
+                            <div class="doodle-option" data-doodle="ninja" onclick="setDoodle('ninja')">
+                                <div class="doodle-preview"></div>
+                                <div class="doodle-name">NINJA</div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                
+                <button onclick="hideSettings()">← BACK</button>
+            </div>
+            
+            <div id="aboutMenu" class="menu">
+                <div class="logo">
+                    <h1>ABOUT</h1>
+                </div>
+                
+                <div class="menu-content">
+                    <div class="about-content">
+                        <h2>🎮 How to Play</h2>
+                        <p>Jump on platforms to climb higher! Each platform gives you a bounce. Avoid falling off the bottom!</p>
+                        
+                        <h2>🎯 Platform Types</h2>
+                        <p>🟢 <strong>Green</strong> - Normal platform
+                        🔵 <strong>Blue</strong> - Moving platform
+                        🔴 <strong>Red</strong> - Breakable (one use!)
+                        🟡 <strong>Yellow</strong> - Spring boost!
+                        🟣 <strong>Purple</strong> - Mega spring!</p>
+                        
+                        <h2>⚡ Power-ups</h2>
+                        <p>🚀 <strong>Rocket</strong> - Fly higher!
+                        🛡️ <strong>Shield</strong> - Protection boost</p>
+                    </div>
+                    
+                    <div class="developer">
+                        <div class="developer-name">Ihor Khodakivskyi</div>
+                        <div class="developer-role">Game Developer</div>
+                    </div>
+                </div>
+                
+                <button onclick="hideAbout()">← BACK</button>
+            </div>
+
+            <div id="statsMenu" class="menu">
+                <div class="logo">
+                    <h1>STATISTICS</h1>
+                </div>
+                
+                <div class="menu-content">
+                    <div class="stats">
+                        <div class="stat-row">
+                            <span class="stat-label">All-Time High Score:</span>
+                            <span class="stat-value" id="allTimeBest">0</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Total Jumps:</span>
+                            <span class="stat-value" id="totalJumps">0</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Games Played:</span>
+                            <span class="stat-value" id="gamesPlayed">0</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <button onclick="hideStats()">← BACK</button>
+            </div>
+            
+            <div id="gameOver" class="menu">
+                <div class="logo">
+                    <h1>GAME<br>OVER</h1>
+                </div>
+                
+                <div class="menu-content">
+                    <div class="stats">
+                        <div class="stat-row">
+                            <span class="stat-label">Score:</span>
+                            <span class="stat-value" id="finalScore">0</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Best Score:</span>
+                            <span class="stat-value" id="finalBest">0</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Height Reached:</span>
+                            <span class="stat-value" id="maxHeight">0m</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Platforms Jumped:</span>
+                            <span class="stat-value" id="platformCount">0</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <button onclick="restart()">🔄 PLAY AGAIN</button>
+                    <button class="secondary" onclick="backToMenu()">🏠 MENU</button>
+                </div>
+            </div>
+
+            <div id="pauseMenu" class="menu hidden">
+                <div class="logo">
+                    <h1>PAUSED</h1>
+                </div>
+                
+                <div class="menu-content">
+                    <button onclick="unpauseGame()">▶ RESUME GAME</button>
+                    <!-- <button onclick="watchAdForBonus()">🎁 Get Bonus</button> -->
+                   <!-- <button class="secondary" onclick="showSettingsFromPause()">⚙️ SETTINGS</button>-->
+                    <button class="secondary" onclick="backToMenu()">🏠 EXIT TO MENU</button>
+                </div>
+
+                <div class="info">Press ESC or the Pause button to resume</div>
+            </div>
+            
+            <div class="touch-controls" id="touchControls">
+                <div class="touch-btn" id="leftBtn">◄</div>
+                <div class="touch-btn" id="rightBtn">►</div>
+            </div>
+        </div>
+    </div>
+<script type="text/javascript">
+   window.SDK_OPTIONS = {
+      gameId: "ufndae85yssn1i6ddmyxsvluxg590wvh",
+       onEvent: function (event) {
+            console.log("SDK Event:", event);
+switch (event) {
+
+                case "SDK_READY":
+                    console.log("✔ SDK READY");
+                    break;
+
+                case "SDK_ERROR":
+                    console.log("❌ SDK ERROR");
+                    break;
+
+                case "SDK_GAME_START":
+                    console.log("▶ GAME START (Showing Banner Ad)");
+                    break;
+
+                case "SDK_GAME_PAUSE":
+                    console.log("⏸ GAME PAUSE");
+                    break;
+
+                case "SDK_GAME_END":
+                    console.log("🏁 GAME END");
+                   
+                    // Interstitial ad logic is handled in your game's `gameOver()` function.
+                    break;
+            }
+        }
+   };
+   
+(function (a, b, c) {
+   var d = a.getElementsByTagName(b)[0];
+   a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+})(document, "script", "gamemonetize-sdk"); 
+</script>
+    <script>
+// --- GameMonetize SDK Integration ---
+
+let adsAreRunning = false;
+// Assuming you have 'gamePaused' defined globally for your game logic
+// let gamePaused = false; 
+
+
+function showGameMonetizeAd() {
+            if (typeof sdk !== 'undefined' && typeof sdk.showBanner !== 'undefined') {
+                try {
+                    sdk.showBanner();
+                    console.log('GameMonetize ad requested');
+                } catch (error) {
+                    console.error('Error showing GameMonetize ad:', error);
+                }
+            } else {
+                console.log('GameMonetize SDK not ready yet');
+            }
+        }
+
+
+        // --- Setup ---
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const particleCanvas = document.getElementById('particles');
+        const pCtx = particleCanvas.getContext('2d');
+        const fpsCounter = document.getElementById('fpsCounter');
+        
+        let width, height;
+        const dpr = window.devicePixelRatio || 1;
+        
+        function resizeCanvas() {
+    const container = document.getElementById('gameContainer');
+    width = container.clientWidth;
+    height = container.clientHeight;
+
+    // встановлюємо розмір у фізичних пікселях
+    canvas.width = Math.round(width * dpr);
+    canvas.height = Math.round(height * dpr);
+
+    // Скидаємо трансформ і встановлюємо один раз масштаб відповідно до DPR
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.imageSmoothingEnabled = false; // (опціонально) чіткіші пікселі
+
+    particleCanvas.width = Math.round(width * dpr);
+    particleCanvas.height = Math.round(height * dpr);
+    pCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    pCtx.imageSmoothingEnabled = false;
+}
+
+        
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        
+        // --- Game State & Settings ---
+        let player, ground, platforms = [], particles = [], powerups = [];
+        let score = 0, maxHeight = 0, platformsJumped = 0;
+        let gameRunning = false;
+        let gamePaused = false;
+        let keys = {};
+        let tilt = 0;
+        let stars = [];
+        let powerupActive = null;
+        let powerupTimer = 0;
+
+        // FPS calculation variables
+        let lastTime = 0;
+        let fps = 0;
+
+        // Settings variables from localStorage
+        let soundEnabled = localStorage.getItem('doodleSoundEnabled') !== 'false';
+        let isFullscreen = false;
+        let gameSpeedMultiplier = parseFloat(localStorage.getItem('doodleGameSpeed')) || 1.0;
+        let doodleType = localStorage.getItem('doodleDoodleType') || 'green';
+        // MODIFIED: Set mobile controls to off by default if not explicitly set to 'true'
+        let mobileControlsEnabled = localStorage.getItem('doodleMobileControls') === 'true'; 
+        let totalJumps = parseInt(localStorage.getItem('doodleTotalJumps')) || 0;
+        let gamesPlayed = parseInt(localStorage.getItem('doodleGamesPlayed')) || 0;
+        let highScore = parseInt(localStorage.getItem('doodleHighScore')) || 0;
+        
+        // NEW SETTINGS VARIABLES
+        let graphicsQuality = parseFloat(localStorage.getItem('doodleGraphicsQuality')) || 2; // 2=HIGH, 1=MEDIUM, 0.5=LOW
+        let showFps = localStorage.getItem('doodleShowFps') === 'true';
+        let showMap = localStorage.getItem('doodleShowMap') === 'true';
+        // END NEW SETTINGS VARIABLES
+
+        const BASE_GRAVITY = 0.45;
+        const BASE_JUMP_POWER = -12;
+        const BASE_MOVE_SPEED = 7;
+
+        // CALCULATED VARIABLES must use 'let' for reassignment in init()
+        let GRAVITY;
+        let JUMP_POWER;
+        let MOVE_SPEED;
+        
+
+        // --- Audio System ---
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playSound(frequency, duration, type = 'sine') {
+            if (!soundEnabled) return;
+            try {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                oscillator.frequency.value = frequency;
+                oscillator.type = type;
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + duration);
+            } catch (e) {
+                console.log('Audio error:', e);
+            }
+        }
+        
+        // --- Settings Functions ---
+        
+        function applySettings() {
+            // Apply Sound Setting
+            document.getElementById('soundToggleSwitch').classList.toggle('active', soundEnabled);
+            
+            // Apply Fullscreen state
+            updateFullscreenToggle();
+
+            // Apply Mobile Controls Setting
+            document.getElementById('mobileControlsToggle').classList.toggle('active', mobileControlsEnabled);
+
+            // NEW SETTINGS APPLICATION
+            // Apply Graphics Quality
+            document.querySelectorAll('#qualityRadioGroup .radio-button-sm').forEach(btn => {
+                btn.classList.toggle('selected', parseFloat(btn.dataset.quality) === graphicsQuality);
+            });
+
+            // Apply FPS Counter
+            document.getElementById('fpsToggle').classList.toggle('active', showFps);
+            fpsCounter.style.display = showFps && gameRunning && !gamePaused ? 'block' : 'none';
+
+            // Apply Map
+            document.getElementById('mapToggle').classList.toggle('active', showMap);
+            // END NEW SETTINGS APPLICATION
+
+            // Apply Speed Setting
+            document.querySelectorAll('#speedRadioGroup .radio-button').forEach(btn => {
+                btn.classList.toggle('selected', parseFloat(btn.dataset.speed) === gameSpeedMultiplier);
+            });
+
+            // Apply Doodle Setting
+            document.querySelectorAll('.doodle-option').forEach(opt => {
+                opt.classList.toggle('selected', opt.dataset.doodle === doodleType);
+            });
+
+            // Update displayed scores
+            document.getElementById('bestScore').textContent = highScore;
+            document.getElementById('allTimeBest').textContent = highScore;
+            document.getElementById('totalJumps').textContent = totalJumps;
+            document.getElementById('gamesPlayed').textContent = gamesPlayed;
+        }
+
+        function toggleSoundSetting() {
+            soundEnabled = !soundEnabled;
+            localStorage.setItem('doodleSoundEnabled', soundEnabled);
+            applySettings();
+            if (soundEnabled) playSound(523, 0.1);
+        }
+
+        function toggleMobileControls() {
+            mobileControlsEnabled = !mobileControlsEnabled;
+            localStorage.setItem('doodleMobileControls', mobileControlsEnabled);
+            applySettings();
+            showNotification(mobileControlsEnabled ? '📱 TILT CONTROLS ON' : '📱 TILT CONTROLS OFF');
+            // Update touch controls visibility if game is running
+            if (gameRunning && !gamePaused) {
+                document.getElementById('touchControls').classList.toggle('visible', mobileControlsEnabled);
+            }
+        }
+
+        function setGameSpeed(speed) {
+            gameSpeedMultiplier = speed;
+            localStorage.setItem('doodleGameSpeed', gameSpeedMultiplier);
+            applySettings();
+            showNotification(`⚡ SPEED: ${speed === 0.8 ? 'SLOW' : speed === 1.2 ? 'FAST' : 'MEDIUM'}`);
+        }
+
+        function setDoodle(type) {
+            doodleType = type;
+            localStorage.setItem('doodleDoodleType', doodleType);
+            applySettings();
+            showNotification(`👤 DOODLE: ${type.toUpperCase()}`);
+        }
+
+        // NEW SETTINGS FUNCTIONS
+        function setGraphicsQuality(quality) {
+            graphicsQuality = quality;
+            localStorage.setItem('doodleGraphicsQuality', graphicsQuality);
+            applySettings();
+            showNotification(`✨ GRAPHICS: ${quality === 2 ? 'HIGH' : quality === 1 ? 'MEDIUM' : 'LOW'}`);
+        }
+        
+        function toggleFpsCounter() {
+            showFps = !showFps;
+            localStorage.setItem('doodleShowFps', showFps);
+            applySettings();
+            showNotification(showFps ? '💻 FPS COUNTER ON' : '💻 FPS COUNTER OFF');
+        }
+
+        function toggleMap() {
+            showMap = !showMap;
+            localStorage.setItem('doodleShowMap', showMap);
+            applySettings();
+            showNotification(showMap ? '🗺️ MAP ON' : '🗺️ MAP OFF');
+        }
+        // END NEW SETTINGS FUNCTIONS
+        
+        function toggleFullscreen() {
+            const container = document.getElementById('gameContainer');
+            
+            if (!document.fullscreenElement) {
+                if (container.requestFullscreen) {
+                    container.requestFullscreen();
+                } else if (container.webkitRequestFullscreen) {
+                    container.webkitRequestFullscreen();
+                } else if (container.msRequestFullscreen) {
+                    container.msRequestFullscreen();
+                }
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+            }
+        }
+        
+        // Listen for fullscreen changes
+        document.addEventListener('fullscreenchange', updateFullscreenToggle);
+        document.addEventListener('webkitfullscreenchange', updateFullscreenToggle);
+        document.addEventListener('msfullscreenchange', updateFullscreenToggle);
+        
+        function updateFullscreenToggle() {
+            isFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement);
+            document.getElementById('fullscreenToggle').classList.toggle('active', isFullscreen);
+        }
+
+        // --- Particle System & Notifications (Optimized) ---
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 4 * gameSpeedMultiplier; // Slower speed for performance
+                this.vy = (Math.random() - 0.5) * 4 * gameSpeedMultiplier - 1;
+                this.life = 1;
+                this.color = color;
+                this.size = Math.random() * 3 + 1;
+            }
+            
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy += 0.15; // Lighter gravity on particles
+                this.life -= 0.03;
+                this.vx *= 0.98;
+            }
+            
+            draw() {
+                pCtx.globalAlpha = this.life;
+                pCtx.fillStyle = this.color;
+                pCtx.beginPath();
+                pCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                pCtx.fill();
+            }
+        }
+        
+        function createParticles(x, y, color, count = 10) { 
+            // MODIFIED: Scale particle count by quality setting
+            const effectiveCount = Math.floor(count * graphicsQuality);
+            for (let i = 0; i < effectiveCount; i++) {
+                particles.push(new Particle(x, y, color));
+            }
+        }
+        
+        function showNotification(text) {
+            const notif = document.createElement('div');
+            notif.className = 'notification';
+            notif.textContent = text;
+            document.getElementById('ui').appendChild(notif);
+            setTimeout(() => notif.remove(), 2000);
+        }
+        
+        // --- Game Objects (Classes) ---
+
+        class Ground {
+            constructor() {
+                this.width = width;
+                this.height = 40;
+                this.x = 0;
+                this.y = height - this.height;
+            }
+            // ... (draw and checkCollision methods are the same)
+            draw() {
+                const gradient = ctx.createLinearGradient(0, this.y, 0, this.y + this.height);
+                gradient.addColorStop(0, '#4ade80');
+                gradient.addColorStop(1, '#22c55e');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+                
+                ctx.fillStyle = 'rgba(255,255,255,0.4)';
+                ctx.fillRect(this.x, this.y, this.width, 6);
+                
+                ctx.fillStyle = 'rgba(0,0,0,0.2)';
+                ctx.fillRect(this.x, this.y + this.height - 3, this.width, 3);
+            }
+            
+            checkCollision(player) {
+                return player.vy > 0 &&
+                    player.y + player.height >= this.y &&
+                    player.y + player.height <= this.y + this.height + 5;
+            }
+        }
+        
+        class Player {
+            constructor() {
+                this.width = 50;
+                this.height = 50;
+                this.x = width / 2 - this.width / 2;
+                this.y = height - 180;
+                this.vx = 0;
+                this.vy = 0;
+                this.dir = 1; // 1 for right, -1 for left
+            }
+            
+            draw() {
+                ctx.save();
+                ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
+                if (this.dir < 0) ctx.scale(-1, 1);
+                
+                // Powerup glow
+                if (powerupActive) {
+                    ctx.shadowColor = powerupActive === 'rocket' ? '#ec4899' : '#06b6d4';
+                    ctx.shadowBlur = 20;
+                }
+                
+                // --- Body ---
+                let primaryColor, secondaryColor;
+                switch(doodleType) {
+                    case 'alien': primaryColor = '#f87171'; secondaryColor = '#dc2626'; break;
+                    case 'robot': primaryColor = '#60a5fa'; secondaryColor = '#3b82f6'; break;
+                    case 'santa': primaryColor = '#ef4444'; secondaryColor = '#dc2626'; break; // New Santa
+                    case 'ninja': primaryColor = '#374151'; secondaryColor = '#1f2937'; break; // New Ninja
+                    default: primaryColor = '#4ade80'; secondaryColor = '#22c55e'; break;
+                }
+
+                if (powerupActive) {
+                    primaryColor = '#a78bfa'; secondaryColor = '#8b5cf6';
+                }
+
+                const gradient = ctx.createRadialGradient(0, -5, 0, 0, 0, 20); // Reduced size slightly for drawing
+                gradient.addColorStop(0, primaryColor);
+                gradient.addColorStop(1, secondaryColor);
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(0, 0, 20, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.shadowBlur = 0;
+                
+                // --- Eyes & Mouth ---
+                if (doodleType === 'ninja') {
+                    // Ninja mask - no eyes/mouth drawn
+                    ctx.fillStyle = '#1f2937';
+                    ctx.fillRect(-18, -10, 36, 15);
+                    ctx.fillStyle = 'white';
+                    ctx.fillRect(-18, -10, 36, 2);
+                } else if (doodleType === 'santa') {
+                    // Santa Hat and Beard
+                    // Beard
+                    ctx.fillStyle = 'white';
+                    ctx.beginPath();
+                    ctx.arc(0, 5, 12, 0, Math.PI);
+                    ctx.fill();
+
+                    // Hat
+                    ctx.fillStyle = '#ef4444';
+                    ctx.beginPath();
+                    ctx.moveTo(-10, -20);
+                    ctx.lineTo(10, -20);
+                    ctx.lineTo(0, -35);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    // Hat trim and pompom
+                    ctx.fillStyle = 'white';
+                    ctx.fillRect(-15, -20, 30, 5);
+                    ctx.beginPath();
+                    ctx.arc(0, -35, 5, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Eyes (Santa eyes are simple dots)
+                    ctx.fillStyle = 'white';
+                    ctx.beginPath();
+                    ctx.arc(-7, -5, 4, 0, Math.PI * 2);
+                    ctx.arc(7, -5, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.fillStyle = 'black';
+                    ctx.beginPath();
+                    ctx.arc(-7 + this.vx * 0.1, -5, 1.5, 0, Math.PI * 2);
+                    ctx.arc(7 + this.vx * 0.1, -5, 1.5, 0, Math.PI * 2);
+                    ctx.fill();
+                } else {
+                    // --- Eyes (Simplified for performance, using just circles) ---
+                    ctx.fillStyle = 'white';
+                    ctx.beginPath();
+                    ctx.arc(-7, -5, 6, 0, Math.PI * 2);
+                    ctx.arc(7, -5, 6, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.fillStyle = 'black';
+                    ctx.beginPath();
+                    ctx.arc(-7 + this.vx * 0.1, -5, 3, 0, Math.PI * 2);
+                    ctx.arc(7 + this.vx * 0.1, -5, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // --- Mouth ---
+                    ctx.strokeStyle = 'rgba(0,0,0,0.6)';
+                    ctx.lineWidth = 2.5;
+                    ctx.lineCap = 'round';
+                    ctx.beginPath();
+                    ctx.arc(0, 3, 9, 0.1, Math.PI - 0.1);
+                    ctx.stroke();
+                }
+
+                // --- Doodle Type Decorations (Existing) ---
+                if (doodleType === 'alien') {
+                    // Antennae
+                    ctx.fillStyle = primaryColor;
+                    ctx.beginPath();
+                    ctx.fillRect(-10, -25, 4, 8);
+                    ctx.fillRect(6, -25, 4, 8);
+                    ctx.arc(-8, -26, 3, 0, Math.PI * 2);
+                    ctx.arc(8, -26, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (doodleType === 'robot') {
+                    // Bolt/rivet eyes
+                    ctx.fillStyle = '#1a0b2e';
+                    ctx.beginPath();
+                    ctx.arc(-9, -7, 1.5, 0, Math.PI * 2);
+                    ctx.arc(9, -7, 1.5, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Mouth grill
+                    ctx.strokeStyle = 'rgba(0,0,0,0.6)';
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    ctx.moveTo(-5, 5); ctx.lineTo(5, 5);
+                    ctx.moveTo(-5, 7); ctx.lineTo(5, 7);
+                    ctx.stroke();
+                }
+
+                // --- Rocket flames ---
+                if (powerupActive === 'rocket') {
+                    // Simplified flames
+                    for (let i = 0; i < 3; i++) {
+                        ctx.fillStyle = i === 1 ? '#fbbf24' : '#f59e0b';
+                        ctx.beginPath();
+                        ctx.moveTo(-8 + i * 8, 18);
+                        ctx.lineTo(-10 + i * 8, 25 + Math.random() * 5);
+                        ctx.lineTo(-6 + i * 8, 25 + Math.random() * 5);
+                        ctx.closePath();
+                        ctx.fill();
+                    }
+                }
+                
+                ctx.restore();
+            }
+            
+            update() {
+                // Movement
+                let effectiveTilt = mobileControlsEnabled ? tilt : 0;
+
+             // --- Improved WASD movement ---
+const ACCEL = 0.6;        // прискорення
+const FRICTION = 0.85;    // гальмування
+const MAX_SPEED = MOVE_SPEED * 1.2; // трішки швидше від старого
+
+let left  = keys['ArrowLeft'] || keys['a'] || keys['A'];
+let right = keys['ArrowRight'] || keys['d'] || keys['D'];
+
+// Mobile tilt support stays:
+if (effectiveTilt < -10) left = true;
+if (effectiveTilt > 10) right = true;
+
+if (left) {
+    this.vx -= ACCEL;
+    this.dir = -1;
+} else if (right) {
+    this.vx += ACCEL;
+    this.dir = 1;
+} else {
+    this.vx *= FRICTION; // плавне гальмування
+}
+
+// Limit max speed
+if (this.vx >  MAX_SPEED) this.vx =  MAX_SPEED;
+if (this.vx < -MAX_SPEED) this.vx = -MAX_SPEED;
+
+// Apply movement
+this.x += this.vx;
+
+                
+                this.x += this.vx;
+                
+                // Wrap
+                if (this.x > width) this.x = -this.width;
+                if (this.x < -this.width) this.x = width;
+                
+                // Gravity
+                this.vy += (powerupActive === 'rocket' ? GRAVITY * 0.5 : GRAVITY);
+                this.y += this.vy;
+                
+                // Ground collision
+                if (ground && ground.checkCollision(this)) {
+                    this.y = ground.y - this.height;
+                    this.jump();
+                    playSound(440, 0.1);
+                }
+                
+                // Platform collision
+                if (this.vy > 0) {
+                    platforms.forEach(platform => {
+                        if (platform.checkCollision(this)) {
+                            // Check if platform is available for a bounce
+                            let canBounce = true;
+                            if (platform.type === 'breakable' && platform.broken) {
+                                canBounce = false;
+                            }
+
+                            if (canBounce) {
+                                this.jump(platform.type); // Pass type for special jumps
+                                platformsJumped++;
+                                totalJumps++;
+                                localStorage.setItem('doodleTotalJumps', totalJumps);
+
+                                if (platform.type === 'breakable') {
+                                    platform.broken = true;
+                                    playSound(200, 0.15);
+                                    createParticles(platform.x + platform.width / 2, platform.y, platform.color, 20);
+                                } else if (platform.type === 'mega') {
+                                    playSound(880, 0.2);
+                                    createParticles(this.x + this.width / 2, this.y + this.height, '#a78bfa', 30);
+                                    showNotification('🚀 MEGA JUMP!');
+                                } else if (platform.type === 'spring') {
+                                    playSound(660, 0.15);
+                                    createParticles(this.x + this.width / 2, this.y + this.height, '#fbbf24', 25);
+                                } else {
+                                    playSound(523, 0.1);
+                                }
+                            }
+                        }
+                    });
+                }
+                
+                // Powerup collision
+                powerups.forEach((powerup, index) => {
+                    const dx = (this.x + this.width / 2) - (powerup.x + powerup.size / 2);
+                    const dy = (this.y + this.height / 2) - (powerup.y + powerup.size / 2);
+                    if (Math.sqrt(dx * dx + dy * dy) < this.width / 2 + powerup.size / 2) {
+                        activatePowerup(powerup.type);
+                        powerups.splice(index, 1);
+                        playSound(784, 0.2, 'square');
+                        createParticles(powerup.x + powerup.size / 2, powerup.y + powerup.size / 2, powerup.color, 25);
+                    }
+                });
+                
+                // Update powerup
+                if (powerupActive) {
+                    powerupTimer--;
+                    if (powerupTimer <= 0) {
+                        powerupActive = null;
+                        showNotification('Powerup Ended');
+                    }
+                }
+                
+                // Scroll
+                if (this.y < height / 2) {
+                    const diff = height / 2 - this.y;
+                    this.y = height / 2;
+                    
+                    if (ground) {
+                        ground.y += diff;
+                        if (ground.y > height) ground = null;
+                    }
+                    
+                    platforms.forEach(p => p.y += diff);
+                    powerups.forEach(p => p.y += diff);
+                    
+                    score += Math.floor(diff);
+                    const currentHeight = Math.floor(score / 10);
+                    if (currentHeight > maxHeight) {
+                        maxHeight = currentHeight;
+                    }
+                }
+                
+                // Game over
+                if (this.y > height + 100) {
+                    // Only game over if shield is NOT active or powerup is off
+                    if (powerupActive !== 'shield') {
+                        gameOver();
+                    } else {
+                        // Shield blocks the fall death, but expires after
+                        powerupActive = null;
+                        powerupTimer = 0;
+                        this.y = height - 100; // Place player back on screen
+                        this.jump(); // Give a starting jump
+                        showNotification('🛡️ SHIELD SAVED YOU!');
+                        playSound(400, 0.5, 'square');
+                    }
+                }
+            }
+            
+            jump(platformType = 'normal') {
+                if (platformType === 'mega') {
+                    this.vy = JUMP_POWER * 2;
+                } else if (platformType === 'spring') {
+                    this.vy = JUMP_POWER * 1.5;
+                } else {
+                    this.vy = JUMP_POWER;
+                }
+                this.vy *= gameSpeedMultiplier; // Scale jump power by speed
+            }
+        }
+        
+        class Platform {
+            constructor(y, type) {
+                this.type = type || this.randomType();
+                this.width = 80;
+                this.height = 15;
+                this.x = Math.random() * (width - this.width);
+                this.y = y;
+                // Scale moving platform speed by game speed
+                this.vx = this.type === 'moving' ? (Math.random() > 0.5 ? 2.5 : -2.5) * gameSpeedMultiplier : 0;
+                this.broken = false;
+                this.bounceAnim = 0;
+                this.setColor();
+            }
+            // ... (randomType, setColor, getDarkerColor, draw methods are the same)
+            
+            randomType() {
+    const rand = Math.random();
+
+    if (score < 500) return rand < 0.85 ? 'normal' : 'moving';
+
+    if (score < 1500) {
+        if (rand < 0.55) return 'normal';
+        if (rand < 0.75) return 'moving';
+        return 'breakable';
+    }
+
+    if (score < 4000) {
+        if (rand < 0.40) return 'normal';
+        if (rand < 0.60) return 'moving';
+        if (rand < 0.80) return 'breakable';
+        return 'spring';
+    }
+
+    if (rand < 0.30) return 'normal';
+    if (rand < 0.50) return 'moving';
+    if (rand < 0.70) return 'breakable';
+    if (rand < 0.85) return 'spring';
+    return 'mega';
+}
+
+            
+            setColor() {
+                const colors = {
+                    normal: '#4ade80',
+                    moving: '#60a5fa',
+                    breakable: '#f87171',
+                    spring: '#fbbf24',
+                    mega: '#a78bfa'
+                };
+                this.color = colors[this.type];
+            }
+
+            getDarkerColor() {
+                const colors = {
+                    normal: '#22c55e',
+                    moving: '#3b82f6',
+                    breakable: '#dc2626',
+                    spring: '#f59e0b',
+                    mega: '#8b5cf6'
+                };
+                return colors[this.type];
+            }
+
+            draw() {
+                if (this.broken) return;
+                
+                const y = this.y - this.bounceAnim;
+                
+                // Shadow
+                ctx.fillStyle = 'rgba(0,0,0,0.2)';
+                ctx.beginPath();
+                ctx.ellipse(this.x + this.width / 2, y + this.height + 2, this.width / 2, 4, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Platform gradient
+                const gradient = ctx.createLinearGradient(this.x, y, this.x, y + this.height);
+                gradient.addColorStop(0, this.color);
+                gradient.addColorStop(1, this.getDarkerColor());
+                ctx.fillStyle = gradient;
+                ctx.fillRect(this.x, y, this.width, this.height);
+                
+                // Highlight
+                ctx.fillStyle = 'rgba(255,255,255,0.4)';
+                ctx.fillRect(this.x, y, this.width, 5);
+                
+                // Type-specific decorations (Simplified spring for performance)
+                if (this.type === 'spring' || this.type === 'mega') {
+                    ctx.fillStyle = this.type === 'spring' ? '#f59e0b' : '#fbbf24';
+                    ctx.fillRect(this.x + this.width/2 - 10, y - 10, 20, 10);
+                }
+                
+                if (this.type === 'breakable') {
+                    ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+                    ctx.lineWidth = 2;
+                    for (let i = 1; i < 3; i++) {
+                        ctx.beginPath();
+                        ctx.moveTo(this.x + (this.width / 3) * i, y);
+                        ctx.lineTo(this.x + (this.width / 3) * i, y + this.height);
+                        ctx.stroke();
+                    }
+                }
+                
+                if (this.type === 'moving') {
+                    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+                    const dir = this.vx > 0 ? 1 : -1;
+                    ctx.beginPath();
+                    ctx.moveTo(this.x + this.width / 2 + dir * 10, y + this.height / 2);
+                    ctx.lineTo(this.x + this.width / 2 + dir * 5, y + this.height / 2 - 4);
+                    ctx.lineTo(this.x + this.width / 2 + dir * 5, y + this.height / 2 + 4);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+                
+                if (this.bounceAnim > 0) {
+                    this.bounceAnim -= 0.5;
+                }
+            }
+            
+            update() {
+                if (this.type === 'moving') {
+                    this.x += this.vx;
+                    if (this.x <= 0 || this.x + this.width >= width) {
+                        this.vx *= -1;
+                    }
+                }
+            }
+            
+            checkCollision(player) {
+                return !this.broken &&
+                    player.x + player.width > this.x &&
+                    player.x < this.x + this.width &&
+                    player.y + player.height > this.y &&
+                    player.y + player.height < this.y + this.height + 10;
+            }
+        }
+        
+        class Powerup {
+            constructor(y) {
+                this.size = 35;
+                this.x = Math.random() * (width - this.size);
+                this.y = y;
+                this.type = Math.random() > 0.5 ? 'rocket' : 'shield';
+                this.rotation = 0;
+                this.pulse = 0;
+                this.color = this.type === 'rocket' ? '#ec4899' : '#06b6d4';
+            }
+            
+            draw() {
+                // ... (draw method is the same, but simplified drawing to remove some complexity)
+                ctx.save();
+                ctx.translate(this.x + this.size / 2, this.y + this.size / 2);
+                
+                // Glow
+                const pulseSize = 0.9 + Math.sin(this.pulse) * 0.1; // Reduced pulse
+                ctx.shadowColor = this.color;
+                ctx.shadowBlur = 10; // Reduced blur
+                ctx.scale(pulseSize, pulseSize);
+                ctx.rotate(this.rotation);
+                
+                if (this.type === 'rocket') {
+                    ctx.fillStyle = this.color;
+                    ctx.beginPath();
+                    ctx.moveTo(0, -15);
+                    ctx.lineTo(8, 5);
+                    ctx.lineTo(5, 12);
+                    ctx.lineTo(-5, 12);
+                    ctx.lineTo(-8, 5);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    ctx.fillStyle = '#fbbf24';
+                    ctx.beginPath();
+                    ctx.arc(0, -10, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.fillStyle = '#f59e0b';
+                    ctx.fillRect(-3, 12, 6, 6); // Simplified flame
+                } else {
+                    ctx.strokeStyle = this.color;
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, 15, 0, Math.PI * 2);
+                    ctx.stroke();
+                    
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(-5, 0);
+                    ctx.lineTo(5, 0);
+                    ctx.moveTo(0, -5);
+                    ctx.lineTo(0, 5);
+                    ctx.stroke();
+                }
+                
+                ctx.restore();
+                
+                this.rotation += 0.02;
+                this.pulse += 0.08;
+            }
+        }
+        
+        function activatePowerup(type) {
+            powerupActive = type;
+            powerupTimer = 300 * gameSpeedMultiplier; // Powerup duration scaled by speed
+            showNotification(type === 'rocket' ? '🚀 ROCKET BOOST!' : '🛡️ SHIELD ACTIVE!');
+        }
+        
+        // --- Game Flow Functions ---
+
+        function init() {
+            // Re-calculate derived constants based on current speed setting
+            GRAVITY = BASE_GRAVITY * gameSpeedMultiplier;
+            JUMP_POWER = BASE_JUMP_POWER * Math.sqrt(gameSpeedMultiplier);
+            MOVE_SPEED = BASE_MOVE_SPEED * gameSpeedMultiplier;
+
+            player = new Player();
+            ground = new Ground();
+            platforms = [];
+            powerups = [];
+            particles = [];
+            score = 0;
+            maxHeight = 0;
+            platformsJumped = 0;
+            powerupActive = null;
+            gamePaused = false;
+            
+            // Create initial platforms
+            let y = height - 150;
+            for (let i = 0; i < 8; i++) {
+                platforms.push(new Platform(y, 'normal'));
+                y -= 80 + Math.random() * 30;
+            }
+        }
+        
+        function drawBackground() {
+            const gradient = ctx.createLinearGradient(0, 0, 0, height);
+            gradient.addColorStop(0, '#667eea');
+            gradient.addColorStop(1, '#764ba2');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, width, height);
+            
+            // Stars (Simplified to just draw, no complex update logic)
+            ctx.fillStyle = 'rgba(255,255,255,0.6)';
+            stars.forEach(star => {
+                // Update position (simplified for less CPU)
+                star.y = (star.y + star.speed) % height;
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+
+        // NEW MAP DRAWING FUNCTION
+        function drawMap() {
+            if (!showMap || !player) return;
+
+            const mapWidth = 40;
+            const mapHeight = height - 40;
+            const mapX = width - mapWidth - 10;
+            const mapY = 10;
+            const viewHeight = maxHeight * 10 + height;
+            const mapScale = mapHeight / Math.max(viewHeight, height);
+
+            // Draw Map Background
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+            ctx.fillRect(mapX, mapY, mapWidth, mapHeight);
+            
+            // Draw Platforms on Map
+            platforms.forEach(p => {
+                // Calculate platform position relative to the maximum height reached
+                const platformYFromBottom = height - p.y + score;
+                const platformMapY = mapY + mapHeight - (platformYFromBottom * mapScale);
+                
+                if (platformMapY > mapY && platformMapY < mapY + mapHeight) {
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(mapX + 2, platformMapY, mapWidth - 4, 2);
+                }
+            });
+            
+            // Draw Player icon (a bright dot) - Player is always near the center of the screen vertically
+            // Player's actual position relative to the center of the game container
+            const playerMapY = mapY + (height / 2) * mapScale; 
+            
+            ctx.fillStyle = '#fbbf24';
+            ctx.beginPath();
+            ctx.arc(mapX + mapWidth / 2, player.y * mapScale + mapY, 4, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Draw Score marker
+            const scoreMapY = mapY + mapHeight - (score * mapScale);
+            if (scoreMapY > mapY && scoreMapY < mapY + mapHeight) {
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(mapX, scoreMapY);
+                ctx.lineTo(mapX + mapWidth, scoreMapY);
+                ctx.stroke();
+                
+                ctx.fillStyle = 'white';
+                ctx.font = '8px Poppins';
+                ctx.fillText('SCORE', mapX + 5, scoreMapY - 5);
+            }
+        }
+        // END NEW MAP DRAWING FUNCTION
+        
+        function update(currentTime) {
+            if (!gameRunning) return;
+            
+            // NEW: FPS Calculation
+            if (showFps) {
+                const delta = currentTime - lastTime;
+                fps = Math.round(1000 / delta);
+                lastTime = currentTime;
+                fpsCounter.textContent = `FPS: ${fps}`;
+            }
+            fpsCounter.style.display = showFps && !gamePaused ? 'block' : 'none';
+            // END NEW: FPS Calculation
+
+            if (gamePaused) {
+                // Draw a simple dark overlay to show pause state
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+                ctx.fillRect(0, 0, width, height);
+                // Draw map overlay (optional)
+                drawMap(); 
+                requestAnimationFrame(update);
+                return;
+            }
+            
+            drawBackground();
+            
+            if (ground) ground.draw();
+            
+            platforms.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            
+            powerups.forEach(p => p.draw());
+            
+            // Remove off-screen platforms
+            platforms = platforms.filter(p => p.y < height + 50);
+            powerups = powerups.filter(p => p.y < height + 50);
+            
+            // Add new platforms
+            while (platforms.length < 12) {
+                const lastPlatform = platforms[platforms.length - 1];
+                const gap = (
+    70 + Math.random() * 70 + Math.min(score / 50, 80)
+) / gameSpeedMultiplier;
+                const newY = lastPlatform.y - gap;
+                platforms.push(new Platform(newY));
+                
+                // Add powerups (Scale powerup rate by quality setting)
+                if (Math.random() < 0.08 * graphicsQuality && score > 500) { 
+                    powerups.push(new Powerup(newY - 60));
+                }
+            }
+            
+            player.update();
+            player.draw();
+            
+            // Update particles
+            pCtx.clearRect(0, 0, width, height);
+            particles = particles.filter(p => p.life > 0);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+
+            // NEW: Draw Map
+            drawMap();
+            // END NEW: Draw Map
+            
+            // Update score display
+            document.getElementById('score').textContent = score;
+            
+            // Update high score
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('doodleHighScore', highScore);
+                document.getElementById('bestScore').textContent = highScore;
+            }
+            
+            requestAnimationFrame(update);
+        }
+        
+        // --- Menu Handlers ---
+        
+        function startGame() {
+            document.getElementById('mainMenu').classList.add('hidden');
+            document.getElementById('hud').classList.add('visible');
+            // MODIFIED: Use mobileControlsEnabled setting for touch controls visibility
+            if (mobileControlsEnabled) {
+                document.getElementById('touchControls').classList.add('visible');
+            } else {
+                document.getElementById('touchControls').classList.remove('visible');
+            }
+            document.getElementById('pauseBtn').style.display = 'flex'; // Show new pause button
+            // END MODIFIED
+
+            gamesPlayed++;
+            localStorage.setItem('doodleGamesPlayed', gamesPlayed);
+            showGameMonetizeAd();
+            init();
+            gameRunning = true;
+            playSound(523, 0.1);
+            requestAnimationFrame(update);
+        }
+
+        function togglePause() {
+            if (!gameRunning) return;
+            gamePaused = !gamePaused;
+            const menu = document.getElementById('pauseMenu');
+            menu.style.display = gamePaused ? 'flex' : 'none';
+            if (gamePaused) {
+                menu.classList.remove('hidden');
+                document.getElementById('touchControls').classList.remove('visible');
+                document.getElementById('hud').classList.remove('visible');
+                document.getElementById('pauseBtn').style.display = 'none'; // Hide when paused
+            } else {
+                menu.classList.add('hidden');
+                // MODIFIED: Check mobileControlsEnabled for touch controls visibility
+                if (mobileControlsEnabled) {
+                    document.getElementById('touchControls').classList.add('visible');
+                }
+                // END MODIFIED
+                document.getElementById('hud').classList.add('visible');
+                document.getElementById('pauseBtn').style.display = 'flex'; // Show when unpaused
+               if (showFps) fpsCounter.textContent = 'FPS: --'; // Reset FPS text on unpause
+            }
+        }
+
+        function unpauseGame() {
+            if (!gamePaused) return;
+           
+            togglePause();
+            // The update loop will automatically resume
+        }
+
+ 
+
+        
+        function gameOver() {
+            gameRunning = false;
+          showGameMonetizeAd();
+            playSound(220, 0.5, 'sawtooth');
+            document.getElementById('hud').classList.remove('visible');
+            document.getElementById('touchControls').classList.remove('visible');
+            document.getElementById('pauseBtn').style.display = 'none'; // Hide pause button
+            fpsCounter.style.display = 'none'; // Hide FPS counter
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('finalBest').textContent = highScore;
+            document.getElementById('maxHeight').textContent = maxHeight + 'm';
+            document.getElementById('platformCount').textContent = platformsJumped;
+            document.getElementById('gameOver').style.display = 'flex';
+            setTimeout(() => {
+                document.getElementById('gameOver').classList.remove('hidden');
+            }, 100);
+        }
+        
+        function restart() {
+            document.getElementById('gameOver').classList.add('hidden');
+          //  showGameMonetizeAd();
+            setTimeout(() => {
+                document.getElementById('gameOver').style.display = 'none';
+                startGame();
+            }, 300);
+        }
+        
+        function backToMenu() {
+            // Hide all menus
+            document.querySelectorAll('.menu').forEach(menu => {
+                menu.classList.add('hidden');
+                setTimeout(() => menu.style.display = 'none', 300);
+            });
+            document.getElementById('hud').classList.remove('visible');
+            document.getElementById('touchControls').classList.remove('visible');
+            document.getElementById('pauseBtn').style.display = 'none'; // Ensure pause button is hidden
+            fpsCounter.style.display = 'none'; // Hide FPS counter
+            gameRunning = false;
+            gamePaused = false;
+
+            // Show main menu
+            setTimeout(() => {
+                document.getElementById('mainMenu').style.display = 'flex';
+                document.getElementById('mainMenu').classList.remove('hidden');
+                applySettings(); // Re-apply settings on menu load
+            }, 300);
+        }
+
+        // --- Settings Menu ---
+        function showSettings() {
+            document.getElementById('mainMenu').classList.add('hidden');
+            document.getElementById('settingsMenu').style.display = 'flex';
+            setTimeout(() => {
+                document.getElementById('settingsMenu').classList.remove('hidden');
+            }, 10);
+        }
+        
+        function hideSettings() {
+            const returnTarget = document.getElementById('settingsMenu').getAttribute('data-return');
+            document.getElementById('settingsMenu').classList.add('hidden');
+            
+            setTimeout(() => {
+                document.getElementById('settingsMenu').style.display = 'none';
+                document.getElementById('settingsMenu').removeAttribute('data-return');
+                
+                if (returnTarget === 'pause') {
+                    document.getElementById('pauseMenu').classList.remove('hidden');
+                } else {
+                    document.getElementById('mainMenu').classList.remove('hidden');
+                }
+            }, 300);
+        }
+
+        function showSettingsFromPause() {
+            document.getElementById('pauseMenu').classList.add('hidden');
+            document.getElementById('settingsMenu').style.display = 'flex';
+            document.getElementById('settingsMenu').setAttribute('data-return', 'pause');
+            setTimeout(() => {
+                document.getElementById('settingsMenu').classList.remove('hidden');
+            }, 10);
+        }
+        
+        // --- About Menu ---
+        function showAbout() {
+            document.getElementById('mainMenu').classList.add('hidden');
+            document.getElementById('aboutMenu').style.display = 'flex';
+            setTimeout(() => {
+                document.getElementById('aboutMenu').classList.remove('hidden');
+            }, 10);
+        }
+        
+        function hideAbout() {
+            document.getElementById('aboutMenu').classList.add('hidden');
+            setTimeout(() => {
+                document.getElementById('aboutMenu').style.display = 'none';
+                document.getElementById('mainMenu').classList.remove('hidden');
+            }, 300);
+        }
+
+        // --- Stats Menu ---
+        function showStats() {
+            document.getElementById('mainMenu').classList.add('hidden');
+            document.getElementById('statsMenu').style.display = 'flex';
+            applySettings(); // Update stats before showing
+            setTimeout(() => {
+                document.getElementById('statsMenu').classList.remove('hidden');
+            }, 10);
+        }
+        
+        function hideStats() {
+            document.getElementById('statsMenu').classList.add('hidden');
+            setTimeout(() => {
+                document.getElementById('statsMenu').style.display = 'none';
+                document.getElementById('mainMenu').classList.remove('hidden');
+            }, 300);
+        }
+
+        // --- Support Menu ---
+        function showSupport() {
+            document.getElementById('mainMenu').classList.add('hidden');
+            document.getElementById('supportMenu').style.display = 'flex';
+            setTimeout(() => {
+                document.getElementById('supportMenu').classList.remove('hidden');
+            }, 10);
+        }
+        
+        function hideSupport() {
+            document.getElementById('supportMenu').classList.add('hidden');
+            setTimeout(() => {
+                document.getElementById('supportMenu').style.display = 'none';
+                document.getElementById('mainMenu').classList.remove('hidden');
+            }, 300);
+        }
+
+        // --- Controls ---
+        
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                togglePause();
+                return;
+            }
+
+            keys[e.key] = true;
+            if ((e.key === ' ' || e.key === 'Enter') && !gameRunning) {
+                e.preventDefault();
+                const mainMenu = document.getElementById('mainMenu');
+                if (!mainMenu.classList.contains('hidden')) {
+                    startGame();
+                }
+            }
+        });
+        
+        document.addEventListener('keyup', (e) => {
+            keys[e.key] = false;
+        });
+        
+        // Touch controls
+        function addTouchControl(element, key) {
+            const press = (e) => {
+                e.preventDefault();
+                if (gameRunning && !gamePaused) {
+                    keys[key] = true;
+                }
+            };
+            const release = (e) => {
+                e.preventDefault();
+                keys[key] = false;
+            };
+
+            element.addEventListener('touchstart', press, { passive: false });
+            element.addEventListener('touchend', release, { passive: false });
+            element.addEventListener('mousedown', press);
+            element.addEventListener('mouseup', release);
+            element.addEventListener('mouseleave', () => keys[key] = false);
+        }
+        
+        addTouchControl(document.getElementById('leftBtn'), 'ArrowLeft');
+        addTouchControl(document.getElementById('rightBtn'), 'ArrowRight');
+        
+// --- FULLSCREEN TOUCH MOVEMENT ---
+let screenTouch = false;
+
+function handleScreenTouch(e) {
+    if (!gameRunning || gamePaused) return;
+
+    const touch = e.touches[0];
+    if (!touch) return;
+
+    const x = touch.clientX;
+    const screenWidth = window.innerWidth;
+
+    if (x < screenWidth / 2) {
+        keys['ArrowLeft'] = true;
+        keys['ArrowRight'] = false;
+    } else {
+        keys['ArrowRight'] = true;
+        keys['ArrowLeft'] = false;
+    }
+
+    screenTouch = true;
+}
+
+function stopScreenTouch() {
+    screenTouch = false;
+    keys['ArrowLeft'] = false;
+    keys['ArrowRight'] = false;
+}
+
+window.addEventListener('touchstart', handleScreenTouch, { passive: false });
+window.addEventListener('touchmove', handleScreenTouch, { passive: false });
+window.addEventListener('touchend', stopScreenTouch, { passive: false });
+
+
+        // Device tilt
+        if (window.DeviceOrientationEvent) {
+            window.addEventListener('deviceorientation', (e) => {
+                if (e.gamma !== null) {
+                    tilt = e.gamma;
+                }
+            });
+        }
+        
+        // Prevent context menu
+        canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+        
+        // Apply settings on initial load
+        applySettings();
+
+        
+    </script>
+</body>
+</html>

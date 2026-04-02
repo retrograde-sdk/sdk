@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0, user-scalable=no"
+        />
+        <title>Escape Maze</title>
+        <link rel="stylesheet" href="style.css" />
+    </head>
+    <body>
+        <div id="splash-screen">
+            <h1 class="game-title">Escape Maze</h1>
+            <div class="loading-bar-container">
+                <div class="loading-bar"></div>
+            </div>
+        </div>
+
+        <div id="level-container">
+            <div id="level-display">Level: 1</div>
+        </div>
+
+        <canvas id="gameCanvas"></canvas>
+
+        <div id="music-container">
+            <div id="music-toggle" class="music-on"></div>
+        </div>
+
+        <!-- Guide Panel for Level 1 -->
+        <div id="guide-panel" class="hidden">
+            <h2>How to Play</h2>
+            <div class="guide-visual">
+                <div class="arrow up"></div>
+                <div class="arrow left"></div>
+                <div class="cube"></div>
+                <div class="arrow right"></div>
+                <div class="arrow down"></div>
+            </div>
+            <p>
+                Tap an arrow on the cube to move. The cube will slide until it
+                reaches the next junction.
+            </p>
+            <button id="close-guide-btn">Got It!</button>
+        </div>
+
+        <script src="game.js"></script>
+
+        <!-- START OF GAMEMONETIZE SDK IMPLEMENTATION -->
+        <script type="text/javascript">
+            window.SDK_OPTIONS = {
+                gameId: 'dbtfo7n2j64ac27jv7276k5jjgq2qplk',
+                onEvent: function (a) {
+                    switch (a.name) {
+                        case 'SDK_GAME_PAUSE':
+                            // Use the global pause function from game.js
+                            if (window.pauseGame) window.pauseGame();
+                            break;
+                        case 'SDK_GAME_START':
+                            // Use the global resume function from game.js
+                            if (window.resumeGame) window.resumeGame();
+                            break;
+                        case 'SDK_READY':
+                            // --- EDIT: Notify the game script that the SDK is ready ---
+                            if (window.onSdkReady) window.onSdkReady();
+                            break;
+                    }
+                },
+            };
+            (function (a, b, c) {
+                var d = a.getElementsByTagName(b)[0];
+                a.getElementById(c) ||
+                    ((a = a.createElement(b)),
+                    (a.id = c),
+                    (a.src = 'https://api.gamemonetize.com/sdk.js'),
+                    d.parentNode.insertBefore(a, d));
+            })(document, 'script', 'gamemonetize-sdk');
+        </script>
+        <!-- END OF GAMEMONETIZE SDK IMPLEMENTATION -->
+    </body>
+</html>

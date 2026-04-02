@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="data:,">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    
+    
+    <style type="text/css">@font-face {font-family:Archivo Black;font-style:normal;font-weight:400;src:url(/cf-fonts/s/archivo-black/5.0.18/latin/400/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Archivo Black;font-style:normal;font-weight:400;src:url(/cf-fonts/s/archivo-black/5.0.18/latin-ext/400/normal.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}</style>
+    <title>PolyRush</title>
+  <script type="module" crossorigin src="./assets/index-fKNiSJ2s.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-3HlzxbZe.css">
+</head>
+
+<body>
+    <!-- 游戏容器 -->
+    <div id="game-container">
+        <canvas id="renderCanvas"></canvas>
+        <!-- Score & Rank Gauge (Top Right) -->
+        <div id="scoreGaugeContainer" class="score-gauge-container hidden">
+            <div class="hud-score-text" id="scoreValue">0</div>
+            <div class="rank-bar-bg">
+                <div class="rank-bar-fill" id="rankBarFill"></div>
+                <!-- Markers for B (Unlock), A, S -->
+                <div class="rank-marker marker-b" data-label="B"></div>
+                <div class="rank-marker marker-a" data-label="A"></div>
+                <div class="rank-marker marker-s" data-label="S"></div>
+            </div>
+            <!-- Rank Label (appears when reached) -->
+            <div id="hudRankLabel" class="hud-rank-label"></div>
+        </div>
+        <!-- 关卡显示 (顶部中间) -->
+        <div id="currLevelDisplay" class="hud-level hidden">LEVEL 1</div>
+        <div id="distanceDisplay" class="hud-distance hidden">0m</div>
+
+        <!-- Coin Display (Top Left) -->
+        <div id="coinDisplay" class="coin-display hidden">
+            <div class="coin-icon"></div>
+            <div id="coinValue" class="coin-value">0</div>
+        </div>
+
+        <!-- 连击条容器 (位于分数下方，右上角) -->
+        <div id="comboBarContainer" class="combo-bar-container hidden">
+            <div id="comboBarFill" class="combo-bar-fill"></div>
+        </div>
+
+        <!-- 新增：冲刺条容器 (屏幕底部居中) -->
+        <div id="dashBarContainer" class="dash-bar-container hidden">
+            <div class="dash-icon">⚡</div>
+            <div id="dashBarFill" class="dash-bar-fill"></div>
+        </div>
+
+        <!-- FPS Display -->
+        <div id="fpsDisplay">FPS: 60</div>
+
+        <!-- 这里的提示改一下，告诉大家可以用 P 暂停 -->
+        <div class="debug-hint">按 "I" 键调试 | 按 "P" 键暂停</div>
+
+        <button id="debugWinBtn" class="debug-btn">DEBUG: WIN</button>
+        <button id="debugFuelBtn" class="debug-btn">DEBUG: FUEL</button>
+        <button id="debugClearBtn" class="debug-btn">DEBUG: CLEAR DATA</button>
+        <button id="debugUnlockBtn" class="debug-btn">DEBUG: UNLOCK ALL</button>
+        <button id="debugResetMissionsBtn" class="debug-btn">DEBUG: RESET MISSIONS</button>
+
+        <!-- 左下角设置按钮 (游戏进行中显示) -->
+        <button id="hudSettingsBtn" class="btn-flat icon-only">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4"
+                stroke-linecap="round" stroke-linejoin="round">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+        </button>
+
+        <!-- Main Menu Corner Icons (New) -->
+        <div id="mainMenuIcons" class="menu-icons-container">
+            <button id="settingsBtnMain" class="icon-btn-plain gear-btn" title="Settings">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path
+                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                    </path>
+                </svg>
+            </button>
+            <button id="leaderboardBtnMain" class="icon-btn-plain ranking-btn" title="Ranking">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="20" x2="18" y2="10"></line>
+                    <line x1="12" y1="20" x2="12" y2="4"></line>
+                    <line x1="6" y1="20" x2="6" y2="14"></line>
+                </svg>
+            </button>
+            <button id="shopBtnMain" class="icon-btn-plain shop-btn" title="Shop">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path>
+                    <path d="M3 6h18"></path>
+                    <path d="M16 10a4 4 0 0 1-8 0"></path>
+                </svg>
+            </button>
+            <button id="missionBtnMain" class="icon-btn-plain mission-btn" title="Daily Missions">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 11l3 3L22 4"></path>
+                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                </svg>
+                <div id="missionNotification" class="notification-badge hidden">!</div>
+            </button>
+        </div>
+
+        <div id="uiLayer">
+            <!-- 主界面 (Now cleaner) -->
+            <div id="mainMenu" class="menu-container-flat">
+                <div class="logo-area">
+                    <h1 class="game-title-flat">POLY<span class="highlight">RUSH</span></h1>
+                </div>
+
+                <div class="main-actions">
+                    <!-- 大大的开始按钮 -->
+                    <button id="startBtn" class="btn-flat primary">
+                        <span class="icon">▶</span> START
+                    </button>
+                    <!-- LEVELS 作为唯二次要文字按钮 -->
+                    <button id="levelsBtn" class="btn-flat secondary">LEVELS</button>
+                </div>
+
+                <p class="footer-hint">TAP TO JUMP</p>
+            </div>
+
+            <!-- Levels Menu -->
+            <div id="levelsMenu" class="menu-container-flat hidden overlay">
+                <h1 class="paused-text">LEVELS</h1>
+                <div class="levels-grid">
+                    <!-- Items generated dynamically by UIManager -->
+                </div>
+
+                <div class="main-actions">
+                    <button id="levelsBackBtn" class="btn-flat primary">BACK</button>
+                </div>
+            </div>
+
+            <div id="gameOverMenu" class="menu-container-flat hidden">
+                <h1 class="game-title-flat small">FAILED</h1>
+
+                <!-- Rank Display (For Victory) -->
+                <div id="rankDisplay" class="rank-display hidden">S</div>
+
+                <div class="score-box">
+                    <span class="score-label">SCORE</span>
+                    <span id="finalScore" class="score-val">0</span>
+                </div>
+
+                <!-- High Score Display -->
+                <div class="high-score-container">
+                    <span class="best-label">BEST: </span>
+                    <span id="highScoreVal">0</span>
+                    <span id="newRecordTag" class="new-tag hidden">NEW!</span>
+                </div>
+
+                <!-- [New] Coin Summary (Victory Only) -->
+                <div id="victoryCoinSummary" class="coin-summary hidden">
+                    <div class="coin-icon icon-large"></div>
+                    <div class="coin-animated-group">
+                        <span id="victoryTotalCoins" class="victory-total">0</span>
+                        <span id="victorySessionCoins" class="victory-session hidden">+0</span>
+                    </div>
+                    <!-- [New] Double Reward Button -->
+                    <button id="doubleRewardBtn" class="btn-double-reward hidden">
+                        <span class="btn-text">DOUBLE REWARD</span>
+                        <span class="x2-badge">x2</span>
+                    </button>
+                </div>
+
+                <div class="main-actions">
+                    <button id="reviveBtn" class="btn-flat accent hidden">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;">
+                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                        </svg>
+                        <span class="btn-text">REVIVE & CONTINUE</span>
+                    </button>
+                    <button id="restartBtn" class="btn-flat primary">RETRY</button>
+                    <!-- 返回主菜单按钮 (文字风格) -->
+                    <button id="homeBtn" class="btn-flat secondary">HOME</button>
+                </div>
+            </div>
+
+            <!-- 倒计时显示 -->
+            <div id="countdownDisplay" class="countdown-text hidden">3</div>
+
+            <!-- Altitude Warning Overlay -->
+            <div id="altitudeWarning" class="altitude-warning"></div>
+
+            <div id="pauseMenu" class="menu-container-flat hidden overlay">
+                <h1 class="paused-text">PAUSED</h1>
+
+                <div class="settings-group">
+                    <div class="setting-row">
+                        <span id="labelSound" class="setting-label">SOUND</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="soundToggle" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-row">
+                        <span id="labelVibration" class="setting-label">VIBRATION</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="vibrationToggle" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-row">
+                        <span id="labelLanguage" class="setting-label">LANGUAGE</span>
+                        <select id="languageSelect" class="settings-select">
+                            <option value="en">ENGLISH</option>
+                            <option value="zh">中文</option>
+                            <option value="ja">日本語</option>
+                            <option value="ko">한국어</option>
+                            <option value="es">ESPAÑOL</option>
+                            <option value="pt">PORTUGUÊS</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="settings-group-name">
+                    <h3>PILOT NAME</h3>
+                    <input type="text" id="usernameInput" maxlength="12" placeholder="TYPE YOUR NAME">
+                    <p>(Max 12 characters)</p>
+                </div>
+
+                <div class="settings-group credits-section">
+                    <button id="creditsBtn" class="btn-flat secondary small">CREDITS</button>
+                </div>
+
+                <button id="resumeBtn" class="btn-flat primary">RESUME</button>
+            </div>
+
+            <!-- Credits Menu -->
+            <div id="creditsMenu" class="menu-container-flat hidden overlay">
+                <h1 class="paused-text">CREDITS</h1>
+
+                <div class="credits-content">
+                    <div class="credit-item">
+                        <h3 class="credit-label">DEVELOPER</h3>
+                        <p class="credit-val">KAIYOU</p>
+                    </div>
+
+                    <div class="credit-item">
+                        <h3 class="credit-label">ENGINE</h3>
+                        <p class="credit-val">BABYLON.JS</p>
+                    </div>
+
+                    <div class="credit-item">
+                        <h3 class="credit-label">FONT</h3>
+                        <p class="credit-val">ARCHIVO BLACK</p>
+                    </div>
+
+                    <div class="credit-item">
+                        <h3 class="credit-label">VERSION</h3>
+                        <p class="credit-val">v0.0.1</p>
+                    </div>
+                </div>
+
+                <div class="main-actions">
+                    <button id="creditsBackBtn" class="btn-flat primary">BACK</button>
+                </div>
+            </div>
+
+            <!-- Shop Menu ( Hangar ) -->
+            <div id="shopMenu" class="menu-container-flat hidden overlay shop-menu-container">
+                <div class="shop-header">
+                    <h1 class="paused-text">HANGAR</h1>
+                    <div id="shopCoinDisplay" class="coin-display inline">
+                        <div class="coin-icon"></div>
+                        <div id="shopCoinValue" class="coin-value">0</div>
+                    </div>
+                </div>
+
+                <div class="shop-tabs">
+                    <button class="shop-tab-btn active" data-tab="PLANE">PLANES</button>
+                    <button class="shop-tab-btn" data-tab="TRAIL">TRAILS</button>
+                </div>
+
+                <!-- NEW: Rewarded Ad Banner -->
+                <div class="shop-ad-banner">
+                    <div class="ad-content">
+                        <span class="ad-icon">🎁</span>
+                        <div class="ad-text">
+                            <span class="ad-title">FREE REWARD</span>
+                            <span class="ad-desc">Watch a short video to get 500 Coins!</span>
+                        </div>
+                    </div>
+                    <button id="shopGetRewardBtn" class="btn-flat secondary ad-btn">WATCH AD</button>
+                </div>
+
+                <div id="shopItemsGrid" class="shop-grid">
+                    <!-- Cards generated dynamically -->
+                    <div class="loading-ranks">PREPARING HANGAR...</div>
+                </div>
+
+                <div class="main-actions">
+                    <button id="shopBackBtn" class="btn-flat primary">BACK</button>
+                </div>
+            </div>
+
+            <!-- Leaderboard Menu -->
+            <div id="leaderboardMenu" class="menu-container-flat hidden overlay">
+                <h1 class="paused-text">GLOBAL RANKING</h1>
+
+                <!-- Level Selector -->
+                <div id="leaderboardTabs" class="tabs-container">
+                    <!-- Dynamically filled -->
+                </div>
+
+
+
+                <!-- Ranking List -->
+                <div id="leaderboardList" class="ranking-list">
+                    <div class="loading-ranks">LOADING...</div>
+                </div>
+
+                <div class="main-actions">
+                    <button id="leaderboardBackBtn" class="btn-flat primary">BACK</button>
+                </div>
+            </div>
+
+            <!-- Daily Missions Menu -->
+            <div id="missionMenu" class="menu-container-flat hidden overlay">
+                <h1 class="paused-text">DAILY MISSIONS</h1>
+
+                <div id="missionList" class="mission-list">
+                    <!-- Missions generated dynamically -->
+                    <div class="loading-ranks">FETCHING MISSIONS...</div>
+                </div>
+
+                <div class="main-actions">
+                    <button id="missionBackBtn" class="btn-flat primary">BACK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay (Professional Splash Screen) -->
+    <div id="loading-overlay"
+        style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #0d0d0d; z-index: 999999; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.8s ease-in-out;">
+        <div id="loading-content">
+            <h1>POLY<span class="highlight-yellow">RUSH</span></h1>
+            <p class="status-msg">PREPARING ASSETS...</p>
+
+            <div class="loading-bar-container">
+                <div id="loading-bar-fill"></div>
+            </div>
+
+            <div id="loading-percentage">0%</div>
+        </div>
+
+        <div class="powered-by">
+            <p>POWERED BY BABYLON.JS</p>
+        </div>
+    </div>
+
+    <!-- Ad Overlay (Required for GD/Platform Compliance) -->
+    <div id="adOverlay" class="hidden">
+        <div class="ad-content-overlay">
+            <h2>ADVERTISEMENT</h2>
+            <p>Your game is paused. Game will resume shortly...</p>
+        </div>
+    </div>
+
+    <!-- Main Entry Point -->
+</body>
+
+</html>

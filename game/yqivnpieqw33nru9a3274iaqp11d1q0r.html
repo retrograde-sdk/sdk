@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Color Match Game</title>
+    
+    <style>
+        :root {
+            --bg: #f8f9fa;
+            --white: #ffffff;
+            --dark: #2d3436;
+        }
+
+        * { 
+            box-sizing: border-box; 
+            -webkit-tap-highlight-color: transparent; 
+            margin: 0;
+            padding: 0;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg);
+            font-family: 'Segoe UI', 'Quicksand', system-ui, sans-serif;
+            user-select: none;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+            margin: 0;
+            overflow: auto; /* Allow scrolling jika perlu */
+        }
+
+        /* HAPUS aspect ratio dari body - ini penyebab gelap di PC */
+        /* body {
+            aspect-ratio: 16/9;
+            max-height: 100%;
+        } */
+
+        /* Container utama untuk desktop */
+        .game-wrapper {
+            width: 100%;
+            max-width: 900px;
+            height: auto;
+            min-height: 506px; /* Minimum height untuk 16:9 */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            margin: 0 auto;
+            background: var(--bg);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border: 2px solid #e0e0e0;
+        }
+
+        /* Untuk desktop besar */
+        @media (min-width: 1024px) {
+            body {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                padding: 40px;
+            }
+            
+            .game-wrapper {
+                padding: 30px;
+                box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+                border: 3px solid white;
+            }
+        }
+
+        header { 
+            padding: 10px 0; 
+            text-align: center; 
+            width: 100%; 
+            margin-bottom: 5px;
+            flex-shrink: 0;
+        }
+        
+        h1 { 
+            color: #574b90; 
+            margin: 0 0 5px 0; 
+            font-size: 2.2rem; 
+            text-shadow: 2px 2px white; 
+            font-weight: 900; 
+        }
+        
+        p { 
+            margin: 0; 
+            color: #636e72; 
+            font-size: 1.2rem; 
+            font-weight: 600; 
+        }
+
+        /* Game area container */
+        .game-container {
+            width: 100%;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+        }
+
+        .source-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            width: 100%;
+            max-width: 550px;
+            margin: 0 auto 15px;
+            padding: 20px;
+            background: #ffffff;
+            border-radius: 20px;
+            border: 5px solid #dfe6e9;
+            justify-items: center;
+            flex-shrink: 0;
+        }
+
+        .color-card {
+            width: 100%;
+            max-width: 100px;
+            aspect-ratio: 1/1;
+            border-radius: 15px;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.1);
+            cursor: grab;
+            z-index: 10;
+            border: 3px solid white;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .color-card:active { cursor: grabbing; transform: scale(0.95); }
+
+        .target-container {
+            width: 100%;
+            max-width: 550px;
+            background: #dfe6e9;
+            border-radius: 20px;
+            padding: 20px;
+            box-sizing: border-box;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            border: 5px solid #b2bec3;
+            box-shadow: 0 6px 0 #95a5a6;
+            flex-shrink: 0;
+        }
+
+        .target-label {
+            grid-column: span 3;
+            text-align: center;
+            font-weight: 900;
+            color: #2d3436;
+            margin-bottom: 15px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            background: rgba(255, 255, 255, 0.7);
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-size: 1rem;
+        }
+
+        .target {
+            aspect-ratio: 1/1;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border: 3px dashed #636e72;
+            position: relative;
+            transition: background 0.3s, border-color 0.3s;
+        }
+
+        .target.hover { background: rgba(255, 255, 255, 0.8); border-color: #2d3436; }
+        .object-icon { font-size: 2.2rem; filter: grayscale(100%) brightness(50%); transition: all 0.5s ease; }
+        .target.correct { background: var(--white); border: none; box-shadow: 0 3px 0 rgba(0,0,0,0.1); animation: popIn 0.5s ease; }
+
+        @keyframes popIn {
+            0% { transform: scale(0.8); }
+            70% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .target.correct .object-icon { filter: grayscale(0%) brightness(100%); transform: scale(1.2); }
+
+        #win-screen {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%;
+            max-width: 500px;
+            background: rgba(255,255,255,0.98);
+            border-radius: 30px;
+            padding: 30px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+            z-index: 1000;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .btn-container { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 12px; 
+            width: 100%; 
+            align-items: center; 
+            margin-top: 20px; 
+        }
+
+        button {
+            padding: 18px 30px;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-family: inherit;
+            font-size: 1.3rem;
+            font-weight: 900;
+            width: 100%;
+            max-width: 300px;
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.1s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-play { 
+            background: linear-gradient(135deg, #6c5ce7, #3f37c9); 
+            box-shadow: 0 5px 0 #2d278f; 
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 0 #2d278f;
+        }
+
+        button:active {
+            transform: translateY(0);
+            box-shadow: 0 3px 0 #2d278f;
+        }
+
+        /* FIX MOBILE SCREEN */
+        @media (max-width: 767px) {
+            body {
+                padding: 10px;
+                background: var(--bg);
+            }
+            
+            .game-wrapper {
+                width: 100%;
+                max-width: 100%;
+                min-height: auto;
+                padding: 10px;
+                box-shadow: none;
+                border: none;
+                border-radius: 0;
+            }
+            
+            .source-container, .target-container {
+                max-width: 95%;
+                margin: 10px auto;
+            }
+            
+            .color-card { 
+                max-width: 80px; 
+            }
+            
+            h1 { 
+                font-size: 1.5rem; 
+            }
+            
+            p {
+                font-size: 1rem;
+            }
+            
+            .object-icon { 
+                font-size: 1.6rem; 
+            }
+            
+            button {
+                padding: 14px 25px;
+                font-size: 1.1rem;
+                max-width: 250px;
+            }
+        }
+
+        /* Untuk landscape mobile */
+        @media (max-width: 900px) and (orientation: landscape) {
+            body {
+                padding: 5px;
+            }
+            
+            .game-wrapper {
+                max-height: 95vh;
+            }
+            
+            .game-container {
+                flex-direction: row;
+                justify-content: space-around;
+                align-items: center;
+                gap: 20px;
+            }
+            
+            .source-container {
+                max-width: 45%;
+                margin: 0;
+                padding: 15px;
+            }
+            
+            .target-container {
+                max-width: 45%;
+                padding: 15px;
+            }
+            
+            .color-card { 
+                max-width: 70px; 
+            }
+            
+            header {
+                padding: 5px 0;
+                margin-bottom: 5px;
+            }
+            
+            h1 { 
+                font-size: 1.5rem; 
+                margin-bottom: 3px;
+            }
+            
+            p { 
+                font-size: 0.9rem; 
+            }
+            
+            .object-icon { 
+                font-size: 1.5rem; 
+            }
+            
+            .target-label {
+                padding: 8px 15px;
+                margin-bottom: 10px;
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Efek hover untuk desktop */
+        @media (hover: hover) {
+            .color-card:hover {
+                transform: scale(1.05);
+                box-shadow: 0 6px 0 rgba(0,0,0,0.15);
+            }
+            
+            button:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 8px 0 #2d278f;
+            }
+        }
+
+        /* Untuk layar sangat kecil */
+        @media (max-width: 350px) {
+            .color-card { 
+                max-width: 60px; 
+            }
+            
+            h1 { 
+                font-size: 1.2rem; 
+            }
+            
+            p {
+                font-size: 0.9rem;
+            }
+            
+            .object-icon { 
+                font-size: 1.3rem; 
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-wrapper">
+        <header>
+            <h1>COLOR MATCH! 🎨</h1>
+            <p>Match the color to the object!</p>
+        </header>
+
+        <div class="game-container">
+            <div id="source-area" class="source-container"></div>
+
+            <div class="target-container">
+                <div class="target-label">MATCH THE OBJECTS BELOW</div>
+                <div id="target-area-grid" style="display: contents;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="win-screen">
+        <h2 style="color: #6c5ce7; font-size: 2.5rem; margin: 0; text-shadow: 2px 2px white;">GREAT JOB! 🌈</h2>
+        <p style="font-size: 1.1rem; color: #555; margin: 10px 0 20px;">You are a color expert!</p>
+        <div class="btn-container">
+            <button class="btn-play" onclick="playAgain()">PLAY AGAIN</button>
+        </div>
+    </div>
+
+    <!-- Script dan SDK tetap sama seperti sebelumnya -->
+    <script>
+        const colorData = [
+            { name: 'red', hex: '#e74c3c', objects: ['🍎', '🍓', '🚗', '🎈'] },
+            { name: 'blue', hex: '#3498db', objects: ['🐳', '🐬', '🦋', '🐟'] },
+            { name: 'green', hex: '#2ecc71', objects: ['🌳', '🐸', '🐢', '🥦'] },
+            { name: 'yellow', hex: '#f1c40f', objects: ['🍌', '☀️', '🐤', '🍋'] },
+            { name: 'purple', hex: '#9b59b6', objects: ['🍇', '🍆', '🔮', '🐙'] },
+            { name: 'orange', hex: '#e67e22', objects: ['🥕', '🍊', '🏀', '🦊'] },
+            { name: 'pink', hex: '#fd79a8', objects: ['🌸', '🦩', '🍧', '🎀'] },
+            { name: 'brown', hex: '#8d6e63', objects: ['🐻', '🐵', '🍫', '🪵'] }
+        ];
+
+        let score = 0;
+        const totalPerRound = 6;
+        let audioCtx;
+        let gameStarted = false;
+
+        function playSound(type) {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const now = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+
+            if (type === 'correct') {
+                osc.frequency.setValueAtTime(523.25, now);
+                osc.frequency.exponentialRampToValueAtTime(880, now + 0.1);
+                gain.gain.setValueAtTime(0, now);
+                gain.gain.linearRampToValueAtTime(0.2, now + 0.05);
+                gain.gain.linearRampToValueAtTime(0, now + 0.2);
+                osc.start(now); osc.stop(now + 0.2);
+            } else if (type === 'wrong') {
+                osc.frequency.setValueAtTime(150, now);
+                gain.gain.setValueAtTime(0, now);
+                gain.gain.linearRampToValueAtTime(0.1, now + 0.05);
+                gain.gain.linearRampToValueAtTime(0, now + 0.3);
+                osc.start(now); osc.stop(now + 0.3);
+            } else if (type === 'win') {
+                [523.25, 659.25, 783.99, 1046.50].forEach((f, i) => {
+                    const o = audioCtx.createOscillator();
+                    const g = audioCtx.createGain();
+                    o.connect(g); g.connect(audioCtx.destination);
+                    o.frequency.setValueAtTime(f, now + (i * 0.1));
+                    g.gain.setValueAtTime(0, now + (i * 0.1));
+                    g.gain.linearRampToValueAtTime(0.1, now + (i * 0.1) + 0.05);
+                    g.gain.linearRampToValueAtTime(0, now + (i * 0.1) + 0.3);
+                    o.start(now + (i * 0.1)); o.stop(now + (i * 0.1) + 0.3);
+                });
+            }
+        }
+
+        let activeCard = null;
+        let startX, startY;
+
+        // Show ad when user clicks PLAY AGAIN
+        function playAgain() {
+            if (typeof sdk !== 'undefined' && sdk.showRewardedAd) {
+                sdk.showRewardedAd();
+            }
+            restartGame();
+        }
+
+        function showWinScreen() {
+            document.getElementById('win-screen').style.display = 'flex';
+            playSound('win');
+            
+            // Auto-reload after 5 seconds if user doesn't click
+            setTimeout(() => {
+                if (document.getElementById('win-screen').style.display === 'flex') {
+                    playAgain();
+                }
+            }, 5000);
+        }
+
+        function restartGame() { 
+            init(); 
+        }
+
+        function init() {
+            score = 0;
+            activeCard = null;
+            gameStarted = true;
+            
+            const selectedColors = [...colorData].sort(() => 0.5 - Math.random()).slice(0, totalPerRound);
+            const sourceArea = document.getElementById('source-area');
+            const targetGrid = document.getElementById('target-area-grid');
+            sourceArea.innerHTML = ''; targetGrid.innerHTML = '';
+
+            [...selectedColors].sort(() => 0.5 - Math.random()).forEach(color => {
+                const card = document.createElement('div');
+                card.className = 'color-card';
+                card.style.backgroundColor = color.hex;
+                card.dataset.color = color.name;
+                card.addEventListener('mousedown', startDrag);
+                card.addEventListener('touchstart', startDrag, {passive: false});
+                sourceArea.appendChild(card);
+            });
+
+            selectedColors.forEach(color => {
+                const target = document.createElement('div');
+                target.className = 'target';
+                target.dataset.color = color.name;
+                const randomObj = color.objects[Math.floor(Math.random() * color.objects.length)];
+                target.innerHTML = `<div class="object-icon">${randomObj}</div>`;
+                targetGrid.appendChild(target);
+            });
+            document.getElementById('win-screen').style.display = 'none';
+        }
+
+        function startDrag(e) {
+            if (activeCard) return;
+            e.preventDefault();
+            activeCard = e.target.closest('.color-card');
+            const t = e.type === 'touchstart' ? e.touches[0] : e;
+            const rect = activeCard.getBoundingClientRect();
+            startX = t.clientX - rect.left;
+            startY = t.clientY - rect.top;
+            activeCard.style.position = 'fixed';
+            activeCard.style.zIndex = '1000';
+            activeCard.style.width = rect.width + 'px';
+            activeCard.style.height = rect.height + 'px';
+            activeCard.style.transform = 'scale(1.1)';
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('touchmove', drag, {passive: false});
+            document.addEventListener('mouseup', stopDrag);
+            document.addEventListener('touchend', stopDrag);
+        }
+
+        function drag(e) {
+            if (!activeCard) return;
+            const t = e.type === 'touchmove' ? e.touches[0] : e;
+            activeCard.style.left = (t.clientX - startX) + 'px';
+            activeCard.style.top = (t.clientY - startY) + 'px';
+            const target = getTarget(t.clientX, t.clientY);
+            document.querySelectorAll('.target').forEach(el => el.classList.remove('hover'));
+            if (target && !target.classList.contains('correct')) target.classList.add('hover');
+        }
+
+        function stopDrag(e) {
+            if (!activeCard) return;
+            const t = e.type === 'touchend' ? e.changedTouches[0] : e;
+            const target = getTarget(t.clientX, t.clientY);
+            
+            if (target && target.dataset.color === activeCard.dataset.color && !target.classList.contains('correct')) {
+                target.classList.add('correct');
+                score++;
+                playSound('correct');
+                activeCard.style.opacity = '0';
+                setTimeout(() => { if (activeCard && activeCard.parentNode) activeCard.parentNode.removeChild(activeCard); }, 200);
+                if(score === totalPerRound) setTimeout(showWinScreen, 500);
+            } else {
+                activeCard.style.position = 'static';
+                activeCard.style.transform = 'scale(1)';
+                activeCard.style.width = ''; activeCard.style.height = '';
+                playSound('wrong');
+            }
+            document.querySelectorAll('.target').forEach(el => el.classList.remove('hover'));
+            document.removeEventListener('mousemove', drag);
+            document.removeEventListener('touchmove', drag);
+            document.removeEventListener('mouseup', stopDrag);
+            document.removeEventListener('touchend', stopDrag);
+            activeCard = null;
+        }
+
+        function getTarget(x, y) {
+            return document.elementsFromPoint(x, y).find(el => el.classList && el.classList.contains('target'));
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            init();
+        });
+        
+        document.addEventListener('click', () => { 
+            if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); 
+        });
+    </script>
+
+    <!-- GAMEMONETIZE SDK - FIXED FOR COVER ADS -->
+    <script type="text/javascript">
+        window.SDK_OPTIONS = {
+            gameId: "yqivnpieqw33nru9a3274iaqp11d1q0r",
+            onEvent: function (event) {
+                switch (event.name) {
+                    case "SDK_GAME_PAUSE":
+                        if (audioCtx) audioCtx.suspend();
+                        break;
+                    case "SDK_GAME_START":
+                        if (audioCtx) audioCtx.resume();
+                        break;
+                    case "SDK_READY":
+                        console.log("Gamemonetize SDK Ready");
+                        // Show banner ad when SDK is ready - FIXED POSITION
+                        if (typeof sdk !== 'undefined') {
+                            // Hide any existing banners first
+                            if (sdk.hideBanner) sdk.hideBanner();
+                            
+                            // Show banner at bottom - cover ads setup
+                            setTimeout(() => {
+                                if (sdk.showBanner) {
+                                    sdk.showBanner();
+                                }
+                            }, 1000);
+                            
+                            // Preload rewarded ad for better performance
+                            if (sdk.preloadRewardedAd) {
+                                sdk.preloadRewardedAd();
+                            }
+                        }
+                        break;
+                    case "SDK_REWARDED_WATCH_COMPLETE":
+                        // User watched rewarded ad, restart game
+                        restartGame();
+                        break;
+                    case "SDK_BANNER_SHOW":
+                        console.log("Banner ad showing - adjusting layout");
+                        adjustForBannerAd();
+                        break;
+                    case "SDK_BANNER_HIDE":
+                        console.log("Banner ad hidden - restoring layout");
+                        restoreLayout();
+                        break;
+                }
+            }
+        };
+        
+        // Function to adjust layout when banner ad shows
+        function adjustForBannerAd() {
+            // Add padding to body to accommodate banner ad
+            document.body.style.paddingBottom = '50px';
+        }
+        
+        // Function to restore layout when banner ad hides
+        function restoreLayout() {
+            // Remove padding
+            document.body.style.paddingBottom = '';
+        }
+        
+        // Load Gamemonetize SDK
+        (function (doc, scriptTag, elementId) {
+            var firstScript = doc.getElementsByTagName(scriptTag)[0];
+            if (!doc.getElementById(elementId)) {
+                var script = doc.createElement(scriptTag);
+                script.id = elementId;
+                script.src = "https://api.gamemonetize.com/sdk.js";
+                firstScript.parentNode.insertBefore(script, firstScript);
+            }
+        })(document, "script", "gamemonetize-sdk");
+    </script>
+</body>
+</html>

@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Wordly - Word Puzzle Game</title>
+    
+    <script type="text/javascript">
+        window.SDK_OPTIONS = {
+            gameId: "vy809reourjzmnf76c7l3b2sj7k2la96",
+            onEvent: function (a) {
+                switch (a.name) {
+                    case "SDK_GAME_PAUSE":
+                        // Pause game logic and mute audio
+                        if (window.gameInstance) {
+                            window.gameInstance.pauseForAd();
+                        }
+                        break;
+                    case "SDK_GAME_START":
+                        // Advertisement done, resume game logic and unmute audio
+                        if (window.gameInstance) {
+                            window.gameInstance.resumeFromAd();
+                        }
+                        break;
+                    case "SDK_READY":
+                        // SDK is ready
+                        console.log('GameMonetize SDK ready');
+                        break;
+                }
+            }
+        };
+        (function (a, b, c) {
+            var d = a.getElementsByTagName(b)[0];
+            a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+        })(document, "script", "gamemonetize-sdk");
+    </script>
+    
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        .bottom-credits {
+            text-align: center;
+            position: relative;
+            margin-top: 20px;
+        }
+
+        /* Stile comune per MAPI GAMES e MORE GAMES per avere la stessa dimensione */
+        .credit-text {
+            display: block;
+            font-weight: bold;
+            font-size: 1.5rem;
+            text-decoration: none;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7); /* Effetto ombra 3D */
+            transition: transform 0.1s ease-out, text-shadow 0.1s ease-out;
+        }
+
+        /* Stile per MAPI GAMES */
+        .mapi-logo-bottom.credit-text {
+            color: #ff3b3b;
+            -webkit-text-stroke: 1.5px #a10000;
+            margin-bottom: 20px; /* Aumentato lo spazio per distanziarli di più */
+        }
+        
+        /* Stile per MORE GAMES */
+        .more-games-link.credit-text {
+            color: white; /* Colore del testo cambiato in BIANCO */
+            -webkit-text-stroke: 1.5px #333; /* Bordo scuro per effetto 3D */
+        }
+
+        /* Effetto al passaggio del mouse */
+        .more-games-link.credit-text:hover {
+            transform: scale(1.05);
+        }
+
+        /* Effetto "pressione" quando si clicca */
+        .more-games-link.credit-text:active {
+            transform: scale(0.95) translateY(2px);
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+        }
+    </style>
+    </head>
+<body>
+    <div class="falling-letters" id="fallingLetters"></div>
+    
+    <div class="game-wrapper">
+        <div class="game-container">
+            
+            <div class="scene active" id="splashScreen">
+                <div class="splash-screen">
+                    <div class="splash-logo">WORDLY</div>
+                    <div class="click-to-play" id="clickToPlay">CLICK TO PLAY</div>
+                    <div class="mapi-logo-bottom">MAPI GAMES</div>
+                </div>
+            </div>
+
+            <div class="scene" id="mainMenu">
+                <div class="main-menu">
+                    <div class="menu-logo">WORDLY</div>
+                    <div class="menu-buttons">
+                        <button class="menu-btn" id="playBtn">PLAY</button>
+                        <button class="menu-btn" id="leaderboardBtn">LEADERBOARD</button>
+                        <button class="menu-btn" id="howToPlayBtn">HOW TO PLAY</button>
+                        <button class="menu-btn" id="controlsBtn">CONTROLS</button>
+                    </div>
+                    <div class="bottom-credits">
+                        <div class="mapi-logo-bottom credit-text">MAPI GAMES</div>
+                        <a href="https://www.giugames.com/" target="_blank" class="more-games-link credit-text">MORE GAMES</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="scene" id="modeSelectionScreen">
+                <div class="mode-selection">
+                    <div class="screen-title">SELECT MODE</div>
+                    <div class="mode-buttons">
+                        <button class="mode-btn arcade" id="arcadeModeBtn">
+                            <div class="mode-icon">🎯</div>
+                            <div class="mode-name">ARCADE</div>
+                            <div class="mode-desc">50 levels challenge</div>
+                        </button>
+                        <button class="mode-btn endless" id="endlessModeBtn">
+                            <div class="mode-icon">♾️</div>
+                            <div class="mode-name">ENDLESS</div>
+                            <div class="mode-desc">Survive as long as you can</div>
+                        </button>
+                        <button class="mode-btn daily" id="dailyModeBtn">
+                            <div class="mode-icon">📅</div>
+                            <div class="mode-name">DAILY WORD</div>
+                            <div class="mode-desc" id="dailyDesc">Bonus word of the day</div>
+                        </button>
+                    </div>
+                    <button class="back-btn" id="backFromMode">BACK TO MENU</button>
+                </div>
+            </div>
+
+            <div class="scene" id="dailyWordScreen">
+                <div class="daily-word-container">
+                    <div class="screen-title">DAILY WORD</div>
+                    
+                    <div class="streak-display">
+                        <div class="streak-icon">🔥</div>
+                        <div class="streak-info">
+                            <div class="streak-label">STREAK</div>
+                            <div class="streak-count" id="streakCount">0 DAYS</div>
+                        </div>
+                    </div>
+                    
+                    <div class="daily-reward-box">
+                        <div class="reward-label">COMPLETE FOR</div>
+                        <div class="reward-amount">+200 COINS</div>
+                        <div class="reward-attempts">3 ATTEMPTS ONLY</div>
+                    </div>
+                    
+                    <div class="target-container">
+                        <div class="target-word" id="dailyTargetWord"></div>
+                    </div>
+
+                    <div class="current-word" id="dailyCurrentWord">TAP THE LETTERS!</div>
+
+                    <div class="letters-container">
+                        <div class="letters-grid" id="dailyLettersGrid"></div>
+                    </div>
+
+                    <div class="controls">
+                        <button class="btn btn-clear" id="dailyClearBtn">
+                            <span class="btn-icon">❌</span>
+                            <span class="btn-text">CLEAR</span>
+                        </button>
+                        <button class="btn btn-shuffle" id="dailyShuffleBtn">
+                            <span class="btn-icon">🔄</span>
+                            <span class="btn-text">SHUFFLE</span>
+                        </button>
+                    </div>
+                    
+                    <button class="back-btn" id="backFromDaily">BACK TO MENU</button>
+                </div>
+            </div>
+
+            <div class="scene" id="leaderboardScreen">
+                <div class="leaderboard-screen">
+                    <div class="screen-title">LEADERBOARD</div>
+                    
+                    <div class="mode-tabs">
+                        <button class="mode-tab active" id="arcadeTab">ARCADE</button>
+                        <button class="mode-tab" id="endlessTab">ENDLESS</button>
+                    </div>
+                    
+                    <div class="leaderboard-container" id="arcadeLeaderboard">
+                        <div class="leaderboard-header">
+                            <span class="rank-col">RANK</span>
+                            <span class="name-col">NAME</span>
+                            <span class="level-col">LEVEL</span>
+                            <span class="score-col">SCORE</span>
+                        </div>
+                        <div class="leaderboard-list" id="arcadeLeaderboardList">
+                            </div>
+                    </div>
+                    
+                    <div class="leaderboard-container hidden" id="endlessLeaderboard">
+                        <div class="leaderboard-header">
+                            <span class="rank-col">RANK</span>
+                            <span class="name-col">NAME</span>
+                            <span class="level-col">LEVEL</span>
+                            <span class="score-col">SCORE</span>
+                        </div>
+                        <div class="leaderboard-list" id="endlessLeaderboardList">
+                            </div>
+                    </div>
+                    
+                    <button class="back-btn" id="backFromLeaderboard">BACK TO MENU</button>
+                </div>
+            </div>
+
+            <div class="scene" id="howToPlayScreen">
+                <div class="how-to-play">
+                    <div class="screen-title">HOW TO PLAY</div>
+                    <div class="instructions">
+                        <div class="instruction-item">
+                            <span class="instruction-icon">🎯</span>
+                            <strong>Goal:</strong> Form the target word by tapping letters in the correct order.
+                        </div>
+                        <div class="instruction-item">
+                            <span class="instruction-icon">⭐</span>
+                            <strong>Stars:</strong> Earn stars by completing levels.
+                        </div>
+                        <div class="instruction-item">
+                            <span class="instruction-icon">💰</span>
+                            <strong>Coins:</strong> Earn +15 coins for correct answers. Lose 15 coins for wrong answers. Track your final score!
+                        </div>
+                        <div class="instruction-item">
+                            <span class="instruction-icon">❌</span>
+                            <strong>Attempts:</strong> You have 5 attempts per level. Game over if you fail 5 times on the same level!
+                        </div>
+                        <div class="instruction-item">
+                            <span class="instruction-icon">💡</span>
+                            <strong>Hints:</strong> Use hints (costs 15 coins) to reveal the first letter of the target word.
+                        </div>
+                        <div class="instruction-item">
+                            <span class="instruction-icon">🔄</span>
+                            <strong>Shuffle:</strong> Mix up the letter tiles if you need a fresh perspective!
+                        </div>
+                    </div>
+                    <button class="back-btn" id="backFromHowTo">BACK TO MENU</button>
+                </div>
+            </div>
+
+            <div class="scene" id="controlsScreen">
+                <div class="controls-screen">
+                    <div class="screen-title">CONTROLS</div>
+                    
+                    <div class="control-item">
+                        <div class="control-label">
+                            <span>🎵</span> MUSIC VOLUME
+                        </div>
+                        <div class="slider-container">
+                            <input type="range" min="0" max="100" value="50" class="volume-slider" id="musicSlider">
+                            <div class="volume-value" id="musicValue">50%</div>
+                        </div>
+                    </div>
+
+                    <div class="control-item">
+                        <div class="control-label">
+                            <span>🔊</span> SOUND EFFECTS
+                        </div>
+                        <div class="slider-container">
+                            <input type="range" min="0" max="100" value="70" class="volume-slider" id="sfxSlider">
+                            <div class="volume-value" id="sfxValue">70%</div>
+                        </div>
+                    </div>
+
+                    <button class="back-btn" id="backFromControls">BACK TO MENU</button>
+                </div>
+            </div>
+
+            <div class="scene" id="gameScreen">
+                <div class="logo-wordly">WORDLY</div>
+                
+                <div class="header">
+                    <div class="level-display">
+                        <span class="level-label">Level</span>
+                        <span class="level-number" id="levelNumber">1</span>
+                    </div>
+                    <div class="coins-display">
+                        <span class="coin-icon">💰</span>
+                        <span class="coin-count" id="coinCount">100</span>
+                    </div>
+                </div>
+
+                <div class="attempts-container">
+                    <div class="attempts-display">
+                        <span class="attempts-icon">❌</span>
+                        <span class="attempts-text">Attempts: </span>
+                        <span class="attempts-count" id="attemptsCount">0/5</span>
+                    </div>
+                </div>
+
+                <div class="target-container">
+                    <div class="target-word" id="targetWord"></div>
+                </div>
+
+                <div class="current-word" id="currentWord">Tap the letters!</div>
+
+                <div class="letters-container">
+                    <div class="letters-grid" id="lettersGrid"></div>
+                </div>
+
+                <div class="controls">
+                    <button class="btn btn-clear" id="clearBtn">
+                        <span class="btn-icon">❌</span>
+                        <span class="btn-text">Clear</span>
+                    </button>
+                    <button class="btn btn-hint" id="hintBtn">
+                        <span class="btn-icon">💡</span>
+                        <span class="btn-text">Hint</span>
+                        <span class="btn-cost">-15</span>
+                    </button>
+                    <button class="btn btn-shuffle" id="shuffleBtn">
+                        <span class="btn-icon">🔄</span>
+                        <span class="btn-text">Shuffle</span>
+                    </button>
+                </div>
+
+                <div class="progress-info">
+                    <div class="words-found">Words: <span id="wordsFound">0</span>/1</div>
+                </div>
+            </div>
+
+            <div class="scene" id="gameOverScreen">
+                <div class="game-over-screen">
+                    <div class="game-over-title">GAME OVER</div>
+                    <div class="game-over-subtitle">You ran out of coins!</div>
+                    <div class="game-over-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">Level Reached:</span>
+                            <span class="stat-value" id="finalLevel">0</span>
+                        </div>
+                    </div>
+                    <div class="game-over-buttons">
+                        <button class="menu-btn" id="playAgainBtn">PLAY AGAIN</button>
+                        <button class="menu-btn" id="backToMenuBtn">MAIN MENU</button>
+                    </div>
+                    <div class="mapi-logo-bottom">MAPI GAMES</div>
+                </div>
+            </div>
+
+            <div class="scene" id="victoryScreen">
+                <div class="victory-screen">
+                    <div class="victory-title">VICTORY!</div>
+                    <div class="victory-subtitle">You completed all 50 levels!</div>
+                    <div class="victory-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">Final Coins:</span>
+                            <span class="stat-value" id="finalCoins">0</span>
+                        </div>
+                    </div>
+                    <div class="victory-message">You are a WORDLY master!</div>
+                    <div class="game-over-buttons">
+                        <button class="menu-btn" id="playAgainVictoryBtn">PLAY AGAIN</button>
+                        <button class="menu-btn" id="backToMenuVictoryBtn">MAIN MENU</button>
+                    </div>
+                    <div class="mapi-logo-bottom">MAPI GAMES</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="message" id="messageBox"></div>
+
+    <div class="name-modal" id="nameModal">
+        <div class="name-modal-content">
+            <div class="name-modal-title">Enter Your Name</div>
+            <input type="text" id="playerNameInput" class="name-input" maxlength="15" placeholder="Your name...">
+            <button class="name-submit-btn" id="submitNameBtn">SAVE SCORE</button>
+        </div>
+    </div>
+
+    <div class="pause-overlay" id="pauseOverlay">
+        <div class="pause-menu">
+            <div class="pause-title">PAUSED</div>
+            <div class="pause-subtitle">Click to unpause game!</div>
+            <div class="pause-buttons">
+                <button class="pause-btn play" id="resumeBtn">▶ PLAY</button>
+                <button class="pause-btn home" id="homeBtn">🏠 HOME</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="database.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>

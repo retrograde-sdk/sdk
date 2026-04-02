@@ -1,0 +1,65 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>dings & so</title>
+</head>
+<body>
+<div id="pixicanvas_container">
+    <div id="pixicanvas"></div>
+</div>
+
+<style>
+    body, html {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background-color: #000000;
+        color: #000000;
+    }
+    #pixicanvas_container {
+        position: fixed;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+
+        width: 512px;
+        height: 600px;
+    }
+</style>
+<script>
+    let renderTime = 0;
+    const app_height = 600;
+    const app_width = 512;
+</script>
+
+<script type="module" src="js\game.js"></script>
+
+<script type="text/javascript">
+    window.SDK_OPTIONS = {
+        gameId: "fx7vj3w1obdhgji167by1g1eipsfj1f7",
+        onEvent: function (a) {
+            switch (a.name) {
+                case "SDK_GAME_PAUSE":
+                    Main.pauseGame();
+                    break;
+                case "SDK_GAME_START":
+                    Main.resumeGame();
+                    // advertisement done, resume game logic and unmute audio
+                    break;
+                case "SDK_READY":
+                    // Main.sdkReady();
+                    break;
+            }
+        }
+    };
+    (function (a, b, c) {
+        var d = a.getElementsByTagName(b)[0];
+        a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+    })(document, "script", "gamemonetize-sdk");
+
+</script>
+
+
+</body>
+</html>

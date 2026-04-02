@@ -1,0 +1,123 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+	<title>Tetris 24</title>
+	<link rel="manifest" href="appmanifest.json" />
+<meta name="developed-by" content="My Hidden Game" />
+<meta name="author" content="myhiddengame.com" />
+<meta name="description" content="Play for free the Teris game" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, minimal-ui" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+<link rel="apple-touch-icon" sizes="256x256" href="icon-256.png" />
+<meta name="HandheldFriendly" content="true" />
+<meta name="mobile-web-app-capable" content="yes" />
+<link rel="shortcut icon" sizes="256x256" href="icon-256.png" />
+
+<style type="text/css">
+  * {
+    padding: 0;
+    margin: 0;
+  }
+  html, body {
+    background: #000;
+    color: #fff;
+    overflow: hidden;
+    touch-action: none;
+    -ms-touch-action: none;
+  }
+  canvas {
+    touch-action-delay: none;
+    touch-action: none;
+    -ms-touch-action: none;
+  }
+</style>
+
+<script type="text/javascript">
+  window.SDK_OPTIONS = {
+    gameId: "454kfhhgb5xvblghku49qhsf63tyw37y", // <-- ID خاص بلعبتك
+    onEvent: function (a) {
+      switch (a.name) {
+        case "SDK_GAME_PAUSE":
+          // أوقف اللعبة / mute audio
+          break;
+        case "SDK_GAME_START":
+          // الإعلان سالى، رجّع اللعبة / unmute audio
+          break;
+        case "SDK_READY":
+          // SDK جاهز
+          break;
+      }
+    }
+  };
+
+  (function (a, b, c) {
+    var d = a.getElementsByTagName(b)[0];
+    if (!a.getElementById(c)) {
+      var s = a.createElement(b);
+      s.id = c;
+      s.src = "https://api.gamemonetize.com/sdk.js";
+      d.parentNode.insertBefore(s, d);
+    }
+  })(document, "script", "gamemonetize-sdk");
+
+  // استدعاء البانر بطريقة صحيحة
+  window.addEventListener("load", function () {
+    if (window.sdk && typeof window.sdk.showBanner === "function") {
+      window.sdk.showBanner();
+    }
+  });
+</script>
+
+</head> 
+<body> 
+	<div id="fb-root"></div>
+	<div id="c2canvasdiv">
+		<canvas id="c2canvas" width="720" height="1280">
+			<p>Your browser does not appear to support HTML5. Try upgrading your browser to the latest version.</p>
+		</canvas>
+	</div>
+	<script src="jquery-3.4.1.min.js"></script>
+
+	<script src="c2runtime.js"></script>
+    <script>
+		jQuery(document).ready(function ()
+		{			
+			cr_createRuntime("c2canvas");
+		});
+		function onVisibilityChanged() {
+			if (document.hidden || document.mozHidden || document.webkitHidden || document.msHidden)
+				cr_setSuspended(true);
+			else
+				cr_setSuspended(false);
+		};
+		document.addEventListener("visibilitychange", onVisibilityChanged, false);
+		document.addEventListener("mozvisibilitychange", onVisibilityChanged, false);
+		document.addEventListener("webkitvisibilitychange", onVisibilityChanged, false);
+		document.addEventListener("msvisibilitychange", onVisibilityChanged, false);
+		function OnRegisterSWError(e)
+		{
+			console.warn("Failed to register service worker: ", e);
+		};
+		window.C2_RegisterSW = function C2_RegisterSW()
+		{
+			if (!navigator.serviceWorker)
+				return;		// no SW support, ignore call
+			try {
+				navigator.serviceWorker.register("sw.js", { scope: "./" })
+				.then(function (reg)
+				{
+					console.log("Registered service worker on " + reg.scope);
+				})
+				.catch(OnRegisterSWError);
+			}
+			catch (e)
+			{
+				OnRegisterSWError(e);
+			}
+		};
+    </script>
+</body> 
+</html>

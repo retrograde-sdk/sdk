@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="it"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>MINI GOLF 3D</title>
+<link rel="stylesheet" href="style.css">
+<script type="text/javascript">
+window.SDK_OPTIONS = {
+  gameId: "e3iz4assj31kbmfzgq647codbozk956c",
+  onEvent: function(a) {
+    switch(a.name) {
+      case "SDK_GAME_PAUSE":
+        pauseGameForAd();
+        break;
+      case "SDK_GAME_START":
+        resumeGameFromAd();
+        break;
+      case "SDK_READY":
+        window._sdkReady = true;
+        break;
+      case "SDK_ERROR":
+        window._sdkReady = false;
+        break;
+    }
+  }
+};
+(function(a,b,c){
+  var d=a.getElementsByTagName(b)[0];
+  a.getElementById(c)||(a=a.createElement(b),a.id=c,
+  a.src="https://api.gamemonetize.com/sdk.js",d.parentNode.insertBefore(a,d))
+})(document,"script","gamemonetize-sdk");
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head><body>
+<canvas id="gameCanvas"></canvas>
+<div id="mapi-label">MAPI GAMES</div>
+<div id="splash-screen"><div id="tap-to-play">TAP TO PLAY</div></div>
+<div id="main-menu" class="screen hidden"><div id="gem-display">GEMS: <span id="menu-gems">0</span></div><div id="menu-logo">&#9971;</div><h1 id="menu-title">MINI<br>GOLF<br>3D</h1><div id="menu-btns"><button class="mbtn" id="btn-new-game">NEW GAME</button><button class="mbtn" id="btn-continue">CONTINUE</button><button class="mbtn" id="btn-levels">LEVEL SELECT</button><button class="mbtn" id="btn-balls">BALL SELECT</button><button class="mbtn danger" id="btn-reset">RESET ALL</button></div><p id="menu-mapi">MAPI GAMES</p></div>
+<div id="level-screen" class="screen hidden"><div class="topbar"><button class="back-btn" id="back-from-levels">BACK</button><h2>SELECT LEVEL</h2><div></div></div><div id="level-grid"></div></div>
+<div id="ball-screen" class="screen hidden"><div class="topbar"><button class="back-btn" id="back-from-balls">BACK</button><h2>BALL SELECT</h2><span id="ball-gems-display">GEMS: <span id="ball-gem-count">0</span></span></div><div id="ball-grid"></div></div>
+<div id="hud" class="hidden"><div id="hud-left"><div class="badge"><span class="blabel">LEVEL</span><span id="hud-level">1</span><span id="hud-par">PAR 2</span></div></div><div id="hud-center"><span id="hud-title">MINI GOLF 3D</span></div><div id="hud-right"><div class="badge"><span class="blabel">SHOTS</span><span id="hud-shots">0</span></div><div class="badge"><span class="blabel">GEMS</span><span id="hud-gems">0</span></div></div></div>
+<button id="pause-btn" class="hidden">PAUSE</button>
+<div id="powerbar" class="hidden"><span id="pow-label">POWER</span><div id="pow-track"><div id="pow-fill"></div></div></div>
+<div id="aim-hint" class="hidden">Drag to aim — release to shoot</div>
+<div id="terrain-msg" class="hidden"></div>
+<div id="pause-screen" class="screen hidden"><div class="popup"><h2>PAUSE</h2><button class="mbtn" id="btn-resume">RESUME</button><button class="mbtn secondary" id="btn-to-menu">HOME</button></div></div>
+<div id="result-screen" class="screen hidden"><div class="popup"><div id="res-icon">&#9971;</div><h2 id="res-title">PAR</h2><p id="res-sub">Great!</p><div id="res-stats"><span id="res-shots">Shots: 0</span><span id="res-gems">GEMS +0</span></div><button class="mbtn" id="btn-next">NEXT</button></div></div>
+
+<div id="endgame-screen" class="hidden">
+  <div id="endgame-inner">
+    <div id="endgame-trophy">🏆</div>
+    <div id="endgame-title">YOU DID IT!</div>
+    <div id="endgame-sub">Congratulations! You completed all 40 levels of Mini Golf 3D!</div>
+    <div id="endgame-stars"><span>⭐</span><span>⭐</span><span>⭐</span><span>⭐</span><span>⭐</span></div>
+    <div id="endgame-score">All courses completed — MAPI GAMES Champion!</div>
+    <button id="btn-endgame-menu">TAP TO MENU</button>
+  </div>
+</div>
+
+<div id="reset-confirm" class="hidden">
+  <div id="reset-box">
+    <div id="reset-icon">⚠️</div>
+    <h2 id="reset-title">RESET ALL?</h2>
+    <p id="reset-sub">This will delete ALL progress:<br>gems, unlocked levels and balls.<br><strong>This cannot be undone.</strong></p>
+    <div id="reset-btns">
+      <button class="mbtn danger" id="btn-reset-yes">YES, RESET</button>
+      <button class="mbtn" id="btn-reset-no">CANCEL</button>
+    </div>
+  </div>
+</div>
+<script src="game.js"></script></body></html>

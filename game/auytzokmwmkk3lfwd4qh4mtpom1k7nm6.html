@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NEON OVERDRIVE: DOOM CHASERS</title>
+    <style type="text/css">@font-face {font-family:Outfit;font-style:normal;font-weight:400;src:url(/cf-fonts/v/outfit/5.0.11/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Outfit;font-style:normal;font-weight:400;src:url(/cf-fonts/v/outfit/5.0.11/latin-ext/wght/normal.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:Outfit;font-style:normal;font-weight:900;src:url(/cf-fonts/v/outfit/5.0.11/latin-ext/wght/normal.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:Outfit;font-style:normal;font-weight:900;src:url(/cf-fonts/v/outfit/5.0.11/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}</style>
+    
+    <!-- GAMEMONETIZE SDK START -->
+    <script type="text/javascript">
+       window.SDK_OPTIONS = {
+          gameId: "auytzokmwmkk3lfwd4qh4mtpom1k7nm6",
+          onEvent: function (a) {
+             switch (a.name) {
+                case "SDK_GAME_PAUSE":
+                   // Hide all UI layers so they don't cover the ad
+                   document.body.classList.add('ad-playing');
+                   window.isAdPlaying = true;
+                   if (audio.ctx && audio.ctx.state !== 'closed') audio.ctx.suspend();
+                   break;
+                case "SDK_GAME_START":
+                   // Show UI layers again
+                   document.body.classList.remove('ad-playing');
+                   window.isAdPlaying = false;
+                   if (audio.ctx && audio.ctx.state !== 'closed') audio.ctx.resume();
+                   break;
+                case "SDK_READY":
+                   console.log("SDK Ready");
+                   break;
+                case "SDK_ERROR":
+                   console.log("SDK Error");
+                   break;
+             }
+          }
+       };
+       (function (a, b, c) {
+          var d = a.getElementsByTagName(b)[0];
+          a.getElementById(c) || (a = a.createElement(b), a.id = c, 
+          a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+       })(document, "script", "gamemonetize-sdk");
+
+       function showGameAd() {
+           if (typeof sdk !== 'undefined' && typeof sdk.showBanner === 'function') {
+               sdk.showBanner();
+           }
+       }
+    </script>
+    <!-- GAMEMONETIZE SDK END -->
+
+    <style>
+        :root { 
+            --neon: #00f2ff; --hazard: #ff0055; --bg: #030305; 
+            --star: #fff700; --glass: rgba(255, 255, 255, 0.05); 
+        }
+        body, html { margin: 0; padding: 0; overflow: hidden; background: var(--bg); font-family: 'Outfit', sans-serif; color: white; touch-action: none; width: 100%; height: 100%; }
+        
+        /* Hides all game UI when an ad is playing to meet approval requirements */
+        body.ad-playing .game-ui-layer { display: none !important; }
+
+        /* Ensure SDK container is always on top of everything */
+        #gamemonetize-sdk, iframe[id*="gamemonetize"] { z-index: 999999 !important; }
+
+        /* SCREENS */
+        .screen {
+            position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: rgba(3, 3, 5, 0.85); z-index: 100; transition: 0.4s cubic-bezier(0.2, 1, 0.2, 1);
+            backdrop-filter: blur(10px); padding: 20px; box-sizing: border-box;
+        }
+        .hidden { opacity: 0; pointer-events: none; transform: translateY(20px); }
+        
+        h1 { font-size: clamp(1.8rem, 8vw, 5rem); text-shadow: 0 0 30px var(--neon); letter-spacing: 5px; margin: 0; font-weight: 900; font-style: italic; text-align: center; }
+        .subtitle { color: var(--neon); letter-spacing: 3px; text-transform: uppercase; font-size: 0.8rem; margin-bottom: 20px; opacity: 0.7; text-align: center; }
+
+        .btn {
+            width: 100%; max-width: 280px; padding: 18px; background: var(--glass); border: 2px solid var(--neon); color: white;
+            cursor: pointer; font-size: 1.1rem; text-transform: uppercase; font-weight: 900;
+            transition: 0.3s; border-radius: 15px; text-align: center; backdrop-filter: blur(15px); margin-bottom: 15px;
+            box-sizing: border-box; position: relative; z-index: 110;
+        }
+        .btn:hover { background: var(--neon); color: black; box-shadow: 0 0 40px var(--neon); transform: scale(1.05); }
+
+        #mobile-controls {
+            position: absolute; bottom: 30px; left: 0; right: 0;
+            display: none; justify-content: space-between; padding: 0 30px;
+            z-index: 150; pointer-events: none;
+        }
+        .m-btn {
+            width: 75px; height: 75px; background: rgba(255,255,255,0.1); border: 2px solid var(--neon);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 2rem; color: white; pointer-events: auto; user-select: none;
+        }
+        
+        @media (max-width: 900px) { #mobile-controls { display: flex; } }
+
+        #tutorial-overlay {
+            position: absolute; top: 15%; left: 50%; transform: translateX(-50%);
+            text-align: center; pointer-events: none; z-index: 10; transition: 1s;
+        }
+        .key-hint { 
+            display: inline-block; padding: 10px 20px; border: 1px solid var(--neon); 
+            border-radius: 10px; background: rgba(0,0,0,0.5); margin: 5px;
+            font-weight: bold; font-size: 0.8rem; color: var(--neon);
+        }
+
+        #user-profile {
+            position: absolute; top: 20px; left: 20px; display: flex; align-items: center;
+            background: var(--glass); padding: 10px 20px; border-radius: 50px; border: 1px solid var(--neon);
+            z-index: 110; backdrop-filter: blur(10px);
+        }
+        #mini-skin { width: 35px; height: 35px; margin-right: 15px; border: 2px solid white; border-radius: 10px; }
+
+        #hud { position: absolute; top: 20px; right: 20px; z-index: 50; text-align: right; display: none; }
+        .hud-stars { color: var(--star); font-size: 2rem; text-shadow: 0 0 20px var(--star); }
+
+        #pause-trigger {
+            position: absolute; top: 20px; right: 180px; width: 50px; height: 50px;
+            background: var(--glass); border: 1px solid var(--neon); border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
+            z-index: 110; font-size: 1.2rem; display: none;
+        }
+
+        .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 10px; width: 100%; max-width: 500px; max-height: 45vh; overflow-y: auto; padding: 10px; box-sizing: border-box;}
+        .grid-item { height: 90px; background: var(--glass); border: 1px solid #333; border-radius: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s; }
+        .grid-item.locked { opacity: 0.2; cursor: not-allowed; }
+
+        .dash-container { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; display: none; }
+        .dash-bar { width: 40px; height: 6px; background: #222; border-radius: 10px; overflow: hidden; border: 1px solid #444; }
+        .dash-fill { width: 0%; height: 100%; background: var(--neon); box-shadow: 0 0 10px var(--neon); transition: 0.1s; }
+
+        .modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #0a0a0f; border: 2px solid var(--neon); padding: 40px; border-radius: 30px; z-index: 1000; text-align: center; width: 80%; max-width: 400px;}
+        .modal input { width: 100%; padding: 15px; background: #111; border: 1px solid var(--neon); color: white; border-radius: 10px; margin: 20px 0; outline: none; text-align: center; font-size: 1.2rem; box-sizing: border-box;}
+    </style>
+</head>
+<body>
+
+    <!-- ALL GAME UI WRAPPED IN THIS CLASS TO BE HIDDEN DURING ADS -->
+    <div class="game-ui-layer">
+        <div id="tutorial-overlay" class="hidden">
+            <div class="key-hint">A / D or TAP BUTTONS: MOVE</div>
+            <div class="key-hint">TAP SCREEN: JUMP</div>
+        </div>
+
+        <div id="pause-trigger" onclick="togglePause()">⏸</div>
+
+        <div id="user-profile">
+            <div id="mini-skin"></div>
+            <div>
+                <div id="player-name-display" onclick="openNameModal()" style="font-weight:900; cursor:pointer; font-size:1.1rem">Runner_1</div>
+                <div style="font-size:0.8rem; color: #aaa">🪙 <span id="coin-val">0</span> | ⭐ <span id="star-val">0</span></div>
+            </div>
+        </div>
+
+        <div id="name-modal" class="modal hidden">
+            <h2 style="margin:0; letter-spacing:2px">CHANGE IDENTITY</h2>
+            <input type="text" id="name-input" maxlength="12">
+            <div class="btn" style="width:100%" onclick="saveName()">UPDATE</div>
+            <p onclick="closeNameModal()" style="cursor:pointer; opacity:0.5">Cancel</p>
+        </div>
+
+        <div id="menu-screen" class="screen">
+            <h1>NEON OVERDRIVE</h1>
+            <p class="subtitle">Next-Gen Parkour Engine</p>
+            <div class="btn" onclick="showGameAd(); playCurrentLevel();">PLAY GAME</div>
+            <div class="btn" onclick="showScreen('level-screen')">LEVELS</div>
+            <div class="btn" onclick="showScreen('store-screen')">SKINS</div>
+        </div>
+
+        <div id="pause-screen" class="screen hidden">
+            <h1>PAUSED</h1>
+            <div class="btn" onclick="togglePause()">RESUME</div>
+            <div class="btn" onclick="retryLevel()">RESTART</div>
+            <div class="btn" onclick="showScreen('menu-screen')" style="border-color:#555">QUIT</div>
+        </div>
+
+        <div id="level-screen" class="screen hidden">
+            <h1>LEVELS</h1>
+            <div class="grid-container" id="level-grid"></div>
+            <div class="btn" onclick="showScreen('menu-screen')">BACK</div>
+        </div>
+
+        <div id="store-screen" class="screen hidden">
+            <h1>STORE</h1>
+            <div class="grid-container" id="skin-grid"></div>
+            <div class="btn" onclick="showScreen('menu-screen')">BACK</div>
+        </div>
+
+        <div id="win-screen" class="screen hidden">
+            <h1 style="color:#00ff88">CLEARED</h1>
+            <div id="win-stars" style="font-size:4rem; margin:20px 0">⭐⭐⭐</div>
+            <div class="btn" onclick="showGameAd(); nextLevel();">CONTINUE</div>
+            <div class="btn" onclick="showScreen('menu-screen')" style="border-color:#555">MENU</div>
+        </div>
+
+        <div id="death-screen" class="screen hidden">
+            <h1 style="color:var(--hazard)">Opps... YOU LOOSE!!</h1>
+            <p id="death-cause">System Failure</p>
+            <div class="btn" onclick="showGameAd(); retryLevel();">REBOOT</div>
+            <div class="btn" onclick="revive()" id="revive-btn" style="border-color:gold">REVIVE (50🪙)</div>
+            <div class="btn" onclick="showScreen('menu-screen')" style="border-color:#555">EXIT</div>
+        </div>
+
+        <div id="mobile-controls">
+            <div style="display:flex; gap:20px;">
+                <div class="m-btn" ontouchstart="keys['a']=true" ontouchend="keys['a']=false">←</div>
+                <div class="m-btn" ontouchstart="keys['d']=true" ontouchend="keys['d']=false">→</div>
+            </div>
+            <div class="m-btn" ontouchstart="doDash()" style="border-color:var(--hazard)">⚡</div>
+        </div>
+
+        <div id="hud">
+            <div id="hud-level" style="font-weight:900; color:var(--neon)">LEVEL 1</div>
+            <div class="hud-stars" id="hud-stars-count">☆☆☆</div>
+            <div id="hud-prog" style="font-family: monospace; font-size:1.2rem">0000m</div>
+        </div>
+
+        <div class="dash-container" id="dash-hud">
+            <div class="dash-bar"><div class="dash-fill" id="dash-1"></div></div>
+            <div class="dash-bar"><div class="dash-fill" id="dash-2"></div></div>
+        </div>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+<script>
+/** 
+ * SOUND ENGINE (Fixed Resume Crash)
+ */
+const audio = {
+    ctx: null,
+    init() { if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)(); },
+    play(freq, type, dur, vol, slide = 0) {
+        this.init(); 
+        if (window.isAdPlaying) return;
+        // Fixed: only resume if ctx exists and is suspended
+        if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+
+        const osc = this.ctx.createOscillator(); const g = this.ctx.createGain();
+        osc.type = type; osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+        if (slide) osc.frequency.exponentialRampToValueAtTime(slide, this.ctx.currentTime + dur);
+        g.gain.setValueAtTime(vol, this.ctx.currentTime);
+        g.gain.linearRampToValueAtTime(0, this.ctx.currentTime + dur);
+        osc.connect(g); g.connect(this.ctx.destination);
+        osc.start(); osc.stop(this.ctx.currentTime + dur);
+    },
+    ui() { this.play(800, 'sine', 0.05, 0.1); },
+    jump() { this.play(400, 'triangle', 0.15, 0.2, 700); },
+    dash() { this.play(200, 'sawtooth', 0.2, 0.1, 50); },
+    star() { this.play(1200, 'sine', 0.1, 0.2, 1600); },
+    death() { this.play(150, 'sawtooth', 0.6, 0.3, 10); },
+    win() {
+        this.play(523, 'sine', 0.1, 0.2); 
+        setTimeout(() => this.play(659, 'sine', 0.1, 0.2), 100);
+        setTimeout(() => this.play(783, 'sine', 0.3, 0.2), 200);
+    }
+};
+
+let particles = [];
+function createExplosion(x, y, color, count = 10) {
+    for(let i=0; i<count; i++) {
+        particles.push({ x, y, vx: (Math.random()-0.5) * 10, vy: (Math.random()-0.5) * 10, life: 1.0, color: color });
+    }
+}
+
+const SKINS = [
+    { id: 0, color: '#00f2ff', price: 0, shape: 'sq' },
+    { id: 1, color: '#ff0055', price: 100, shape: 'sq' },
+    { id: 2, color: '#00ff88', price: 250, shape: 'sq' },
+    { id: 3, color: '#ffff00', price: 500, shape: 'sq' },
+    { id: 4, color: '#8800ff', price: 1000, shape: 'sq' },
+    { id: 5, color: '#ffffff', price: 2000, shape: 'sq' },
+    { id: 6, color: 'linear-gradient(45deg, #00f2ff, #ff0055)', price: 5000, shape: 'circle', rare: true }
+];
+
+let userData = JSON.parse(localStorage.getItem('neon_ov_v4')) || {
+    name: "Runner_1", coins: 0, unlockedLevels: 1, unlockedSkins: [0], activeSkin: 0, currentLevel: 1, stars: {}, totalStars: 0
+};
+
+function saveData() {
+    let total = 0; for(let l in userData.stars) total += userData.stars[l];
+    userData.totalStars = total;
+    localStorage.setItem('neon_ov_v4', JSON.stringify(userData));
+    updateUI();
+}
+
+function updateUI() {
+    document.getElementById('player-name-display').innerText = userData.name;
+    document.getElementById('coin-val').innerText = userData.coins;
+    document.getElementById('star-val').innerText = userData.totalStars;
+    const skin = SKINS[userData.activeSkin];
+    const mini = document.getElementById('mini-skin');
+    mini.style.background = skin.color;
+    mini.style.borderRadius = skin.shape === 'circle' ? '50%' : '10px';
+}
+
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+let gameState = 'MENU';
+let platforms = [], stars = [], camera = { x: 0, y: 0, shake: 0 };
+let collectedStars = 0, keys = {}, laserX = -1000;
+
+const player = {
+    x: 100, y: 300, w: 30, h: 45, vx: 0, vy: 0,
+    speed: 0.9, jump: -16, grounded: false, coyote: 0, dJump: true,
+    dashCharges: 2, dashRecharge: [100, 100], isDashing: 0
+};
+
+function generateLevel(num) {
+    platforms = []; stars = [];
+    let curX = 0;
+    platforms.push({ x: -300, y: 450, w: 800, h: 500, type: 'norm' });
+    curX = 500;
+    laserX = (num >= 5) ? -800 : -5000; 
+    let seed = num * 555;
+    const rng = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
+    const difficulty = Math.min(num / 100, 1);
+    for (let i = 0; i < 20 + num; i++) {
+        let gap = 150 + (rng() * 200 * difficulty);
+        let w = 300 - (200 * difficulty) + (rng() * 100);
+        let y = 300 + (rng() * 300);
+        let type = 'norm';
+        let r = rng();
+        if (r < 0.15 * difficulty) type = 'hazard';
+        else if (r > 0.85) type = 'falling';
+        platforms.push({ x: curX + gap, y, w, h: 20, type, timer: 60 });
+        if (i % 8 === 0 && stars.length < 3) stars.push({ x: curX + gap + w/2, y: y - 80 - (rng() * 150), collected: false });
+        curX += gap + w;
+    }
+    platforms.push({ x: curX + 300, y: 400, w: 500, h: 500, type: 'goal' });
+}
+
+function showScreen(id) {
+    audio.ui();
+    document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+    if(id !== 'none') {
+        const target = document.getElementById(id);
+        if(target) target.classList.remove('hidden');
+    }
+    const isPlaying = (id === 'none');
+    const isPaused = (id === 'pause-screen');
+    document.getElementById('hud').style.display = isPlaying ? 'block' : 'none';
+    document.getElementById('dash-hud').style.display = isPlaying ? 'flex' : 'none';
+    document.getElementById('pause-trigger').style.display = (isPlaying || isPaused) ? 'flex' : 'none';
+    document.getElementById('tutorial-overlay').classList.toggle('hidden', id !== 'none' || userData.currentLevel > 3);
+    
+    document.getElementById('mobile-controls').style.opacity = isPlaying ? '1' : '0';
+    document.getElementById('mobile-controls').style.pointerEvents = isPlaying ? 'auto' : 'none';
+
+    if(id === 'level-screen') renderLevelGrid();
+    if(id === 'store-screen') renderStoreGrid();
+}
+
+function togglePause() {
+    if (gameState === 'PLAYING') { gameState = 'PAUSED'; showScreen('pause-screen'); } 
+    else if (gameState === 'PAUSED') { gameState = 'PLAYING'; showScreen('none'); }
+}
+
+function renderLevelGrid() {
+    const grid = document.getElementById('level-grid'); grid.innerHTML = '';
+    for(let i=1; i<=250; i++) {
+        const item = document.createElement('div');
+        const locked = i > 1 && userData.totalStars < (Math.floor(i/5) * 3);
+        item.className = `grid-item ${locked ? 'locked' : ''}`;
+        item.innerHTML = `<div>${i}</div><div class="star-mini">${"★".repeat(userData.stars[i]||0)}</div>`;
+        if(!locked) item.onclick = () => { showGameAd(); playLevel(i); };
+        grid.appendChild(item);
+    }
+}
+
+function renderStoreGrid() {
+    const grid = document.getElementById('skin-grid'); grid.innerHTML = '';
+    SKINS.forEach(s => {
+        const item = document.createElement('div');
+        item.className = `grid-item ${userData.activeSkin === s.id ? 'active' : ''}`;
+        item.style.background = s.color;
+        if(s.shape === 'circle') item.style.borderRadius = '50%';
+        if(!userData.unlockedSkins.includes(s.id)) {
+            item.innerHTML = `<span style="font-size:0.6rem; margin-top:35px">🪙${s.price}</span>`;
+            item.onclick = () => { if(userData.coins >= s.price) { userData.coins -= s.price; userData.unlockedSkins.push(s.id); userData.activeSkin = s.id; saveData(); renderStoreGrid(); } };
+        } else {
+            item.onclick = () => { userData.activeSkin = s.id; saveData(); renderStoreGrid(); };
+        }
+        grid.appendChild(item);
+    });
+}
+
+function playLevel(num) {
+    audio.init(); userData.currentLevel = num; gameState = 'PLAYING'; showScreen('none');
+    player.x = 100; player.y = 350; player.vx = 0; player.vy = 0;
+    collectedStars = 0; generateLevel(num);
+    camera.x = player.x - canvas.width / 3;
+    camera.y = player.y - canvas.height / 2;
+}
+
+function playCurrentLevel() { playLevel(userData.currentLevel); }
+function retryLevel() { playLevel(userData.currentLevel); }
+function nextLevel() { userData.currentLevel++; if(userData.currentLevel > userData.unlockedLevels) userData.unlockedLevels = userData.currentLevel; saveData(); playLevel(userData.currentLevel); }
+
+function revive() {
+    if(userData.coins >= 50) {
+        userData.coins -= 50; player.y = -100; player.vx = 0; player.vy = 0;
+        gameState = 'PLAYING'; showScreen('none'); saveData();
+    }
+}
+
+function doJump() {
+    if(player.coyote > 0) { player.vy = player.jump; player.coyote = 0; audio.jump(); createExplosion(player.x+15, player.y+45, '#fff', 5); }
+    else if(player.dJump) { player.vy = player.jump * 0.8; player.dJump = false; audio.jump(); createExplosion(player.x+15, player.y+22, varColor(), 8); }
+}
+
+function doDash() {
+    let dIdx = player.dashRecharge[0] >= 100 ? 0 : (player.dashRecharge[1] >= 100 ? 1 : -1);
+    if(dIdx !== -1) { player.isDashing = 12; player.dashRecharge[dIdx] = 0; audio.dash(); camera.shake = 8; createExplosion(player.x+15, player.y+22, varColor(), 12); }
+}
+
+function varColor() { return SKINS[userData.activeSkin].color.includes('linear') ? '#00f2ff' : SKINS[userData.activeSkin].color; }
+
+function update() {
+    if(gameState !== 'PLAYING' || window.isAdPlaying) return;
+    if (keys['ArrowRight'] || keys['d']) player.vx += player.speed;
+    if (keys['ArrowLeft'] || keys['a']) player.vx -= player.speed;
+    if (player.isDashing > 0) { player.vx = (player.vx >= 0 ? 25 : -25); player.vy = 0; player.isDashing--; }
+    else { player.vy += 0.8; }
+    player.vx *= 0.88; player.x += player.vx; player.y += player.vy;
+    for(let i=0; i<2; i++) {
+        if(player.dashRecharge[i] < 100) player.dashRecharge[i] += 0.8;
+        const dashBar = document.getElementById(`dash-${i+1}`);
+        if(dashBar) dashBar.style.width = player.dashRecharge[i] + '%';
+    }
+    if(userData.currentLevel >= 5) laserX += 2.5 + (userData.currentLevel * 0.1);
+    if(player.x < laserX) die("Caught by the Void");
+    player.grounded = false;
+    if(player.coyote > 0) player.coyote--;
+    platforms.forEach(p => {
+        if (player.x < p.x + p.w && player.x + player.w > p.x && player.y < p.y + p.h && player.y + player.h > p.y) {
+            if(p.type === 'hazard') die("Hazard Collision");
+            if(p.type === 'goal') win();
+            if (player.vy > 0 && player.y + player.h - player.vy <= p.y + 12) {
+                player.y = p.y - player.h; player.vy = 0; player.grounded = true; player.coyote = 6; player.dJump = true;
+                if(p.type === 'falling') p.startFalling = true;
+            }
+        }
+        if(p.startFalling) { p.timer--; if(p.timer < 0) p.y += 20; }
+    });
+    stars.forEach(s => {
+        if(!s.collected && Math.hypot(player.x - s.x, player.y - s.y) < 50) {
+            s.collected = true; collectedStars++; camera.shake = 15; audio.star();
+            createExplosion(s.x, s.y, '#fff700', 15);
+        }
+    });
+    if(player.y > 1100) die("The Void Claimed You");
+    camera.x += (player.x - canvas.width/3 - camera.x) * 0.1;
+    camera.y += (player.y - canvas.height/2 - camera.y) * 0.05;
+    if(camera.shake > 0) { camera.x += (Math.random()-0.5)*camera.shake; camera.shake *= 0.9; }
+    particles.forEach((p, i) => {
+        p.x += p.vx; p.y += p.vy; p.life -= 0.02;
+        if(p.life <= 0) particles.splice(i, 1);
+    });
+    document.getElementById('hud-prog').innerText = `${Math.floor(player.x)}m`;
+    document.getElementById('hud-stars-count').innerText = "★".repeat(collectedStars) + "☆".repeat(3-collectedStars);
+}
+
+function die(msg) { 
+    if(gameState === 'PLAYING') { audio.death(); createExplosion(player.x, player.y, varColor(), 30); camera.shake = 20; }
+    gameState = 'DEAD'; document.getElementById('death-cause').innerText = msg; showScreen('death-screen'); 
+}
+
+function win() {
+    if(gameState === 'PLAYING') audio.win();
+    gameState = 'WIN'; userData.coins += 10;
+    if(collectedStars > (userData.stars[userData.currentLevel] || 0)) userData.stars[userData.currentLevel] = collectedStars;
+    saveData();
+    document.getElementById('win-stars').innerText = "★".repeat(collectedStars) + "☆".repeat(3-collectedStars);
+    showScreen('win-screen');
+}
+
+function draw() {
+    ctx.fillStyle = '#030305'; ctx.fillRect(0,0, canvas.width, canvas.height);
+    if (window.isAdPlaying) { requestAnimationFrame(draw); return; }
+    ctx.save(); ctx.translate(-camera.x, -camera.y);
+    let glow = 20 + Math.random() * 20;
+    ctx.fillStyle = 'rgba(255, 0, 85, 0.2)';
+    ctx.fillRect(laserX - 60, -2000, 60, 4000);
+    ctx.shadowBlur = glow; ctx.shadowColor = '#ff0055';
+    ctx.fillStyle = '#ff0055'; ctx.fillRect(laserX, -2000, 6, 4000);
+    ctx.shadowBlur = 0;
+    platforms.forEach(p => {
+        if(p.type === 'hazard') { ctx.fillStyle = '#ff0055'; ctx.shadowBlur = 15; }
+        else if(p.type === 'goal') { ctx.fillStyle = '#00ff88'; ctx.shadowBlur = 15; }
+        else if(p.type === 'falling') { ctx.fillStyle = p.startFalling ? '#ffaa00' : '#444'; ctx.shadowBlur = 0; }
+        else { ctx.fillStyle = '#111'; ctx.strokeStyle = '#00f2ff'; ctx.shadowBlur = 10; ctx.strokeRect(p.x, p.y, p.w, p.h); }
+        ctx.fillRect(p.x, p.y, p.w, p.h); ctx.shadowBlur = 0;
+    });
+    stars.forEach(s => {
+        if(!s.collected) {
+            ctx.fillStyle = '#fff700'; ctx.shadowBlur = 15; ctx.beginPath();
+            for(let i=0; i<5; i++) {
+                ctx.lineTo(s.x + 18 * Math.cos((18+i*72)*Math.PI/180), s.y + 18 * Math.sin((18+i*72)*Math.PI/180));
+                ctx.lineTo(s.x + 9 * Math.cos((54+i*72)*Math.PI/180), s.y + 9 * Math.sin((54+i*72)*Math.PI/180));
+            }
+            ctx.closePath(); ctx.fill(); ctx.shadowBlur = 0;
+        }
+    });
+    particles.forEach(p => { ctx.globalAlpha = p.life; ctx.fillStyle = p.color; ctx.fillRect(p.x, p.y, 4, 4); });
+    ctx.globalAlpha = 1;
+    const skin = SKINS[userData.activeSkin]; ctx.fillStyle = skin.color; ctx.shadowBlur = 20;
+    if(skin.shape === 'circle') { ctx.beginPath(); ctx.arc(player.x+15, player.y+22, 18, 0, Math.PI*2); ctx.fill(); }
+    else { ctx.fillRect(player.x, player.y, player.w, player.h); }
+    ctx.restore(); update(); requestAnimationFrame(draw);
+}
+
+window.addEventListener('keydown', e => {
+    if (window.isAdPlaying) return;
+    keys[e.key] = true;
+    if (e.key.toLowerCase() === 'p' || e.key === 'Escape') togglePause();
+    if(gameState !== 'PLAYING') return;
+    if(e.key === ' ' || e.key === 'w' || e.key === 'ArrowUp') doJump();
+    if(e.key === 'Shift') doDash();
+});
+window.addEventListener('keyup', e => keys[e.key] = false);
+
+window.addEventListener('touchstart', e => {
+    if(gameState !== 'PLAYING' || window.isAdPlaying) return;
+    if (e.target.tagName === 'DIV' && (e.target.classList.contains('btn') || e.target.classList.contains('m-btn') || e.target.id === 'pause-trigger')) return;
+    doJump();
+});
+
+function openNameModal() { if(!window.isAdPlaying) document.getElementById('name-modal').classList.remove('hidden'); }
+function closeNameModal() { document.getElementById('name-modal').classList.add('hidden'); }
+function saveName() { const v = document.getElementById('name-input').value; if(v) { userData.name = v; saveData(); closeNameModal(); } }
+
+window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
+canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+saveData(); updateUI(); draw();
+</script>
+</body>
+</html>

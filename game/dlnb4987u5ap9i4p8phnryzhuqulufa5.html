@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MetaStack - MTC (Fixed Extra Width + Ads)</title>
+<style>
+:root{ --bg1:#87CEFA; --bg2:#1E90FF }
+html,body{ height:100%; margin:0; font-family:sans-serif; display:flex; justify-content:center; align-items:center; overflow:hidden; background:linear-gradient(180deg,var(--bg1),var(--bg2)); }
+
+#gameWrap{ position:relative; width:min(420px,95vw); height:calc(min(420px,95vw)*1.5); display:flex; align-items:center; justify-content:center; }
+
+#score{ position:absolute; top:12px; left:12px; font-size:20px; font-weight:bold; color:#fff; text-shadow:2px 2px 5px #000,0 0 10px gold; transition: transform 0.15s; z-index:1200; }
+
+canvas{ border-radius:10px; cursor:pointer; box-shadow:0 0 20px rgba(0,0,0,0.5); background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(0,0,0,0.03)); touch-action: manipulation; }
+
+#powerupContainer{ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); display:none; flex-wrap:wrap; justify-content:center; align-items:center; gap:12px; background:rgba(255,255,255,0.98); padding:18px; border-radius:14px; z-index:2000; box-shadow:0 10px 30px rgba(0,0,0,0.35); }
+
+.powerupBtn, .playAgainBtn{ min-width:110px; height:44px; border:none; border-radius:10px; font-weight:700; cursor:pointer; color:#fff; display:flex; align-items:center; justify-content:center; padding:6px 10px; transition: transform .12s, box-shadow .12s; font-size:13px; }
+.powerupBtn:hover, .playAgainBtn:hover{ transform:translateY(-4px); }
+.doublePoints{ background:#FFD700; color:#000; }
+.slowMotion{ background:#00BFFF; }
+.extraWidth{ background:#32CD32; }
+.scoreBoost{ background:#FF4500; }
+.freezeBlock{ background:#1E90FF; }
+.shrinkBlocks{ background:#FF69B4; }
+
+@media (max-width:360px){ #score{ font-size:16px; } }
+</style>
+</head>
+<body>
+<div id="gameWrap">
+    <div id="score">Score: 0</div>
+    <canvas id="gameCanvas" width="400" height="600"></canvas>
+    <div id="powerupContainer" role="dialog" aria-hidden="true"></div>
+</div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const powerupContainer = document.getElementById('powerupContainer');
+const scoreElem = document.getElementById('score');
+
+const BASE_W = 400, BASE_H = 600;
+
+// --------------------
+// Canvas scaling
+// --------------------
+function resizeCanvas(){
+    const wrap = document.getElementById('gameWrap');
+    const rect = wrap.getBoundingClientRect();
+    canvas.style.width = rect.width + 'px';
+    canvas.style.height = rect.height + 'px';
+    const scaleX = rect.width / BASE_W;
+    const scaleY = rect.height / BASE_H;
+    canvas._scale = Math.min(scaleX, scaleY);
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+// --------------------
+// Game state
+// --------------------
+const blockHeight = 30;
+let blocks = [];
+let currentBlock = null;
+let speed = 3;
+let level = 0;
+window.gameState = 'playing';
+let uiOpen = false;
+let activePowerUps = [];
+let particles = [];
+let cameraY = 0;
+
+// --------------------
+// Audio
+// --------------------
+let audio = new Audio();
+audio.loop = true;
+audio.volume = 0.45;
+audio.src = "https://freesound.org/data/previews/66/66717_931655-lq.mp3";
+window._audioInstance = audio;
+
+let soundPlace = new Audio("https://freesound.org/data/previews/66/66717_931655-lq.mp3");
+let soundPower = new Audio("https://freesound.org/data/previews/331/331912_3248244-lq.mp3");
+let soundShrink = new Audio("https://freesound.org/data/previews/170/170231_2437358-lq.mp3");
+
+function tryPlay(audioObj){ try{ audioObj.currentTime=0; audioObj.play(); }catch(e){} }
+
+let userInteracted = false;
+function ensureAudioOnUserGesture(){
+    if(userInteracted) return;
+    userInteracted = true;
+    tryPlay(audio);
+}
+window.addEventListener('pointerdown', ensureAudioOnUserGesture, { once:true });
+
+// --------------------
+// Powerups
+// --------------------
+const POWERUP_TEMPLATES = [
+    { type: 'doublePoints', duration: 7000, name: 'Double Points' },
+    { type: 'slowMotion', duration: 7000, name: 'Slow Motion' },
+    { type: 'extraWidth', duration: 0, name: 'Extra Width' },
+    { type: 'scoreBoost', duration: 0, name: 'Score Boost' },
+    { type: 'freezeBlock', duration: 5000, name: 'Freeze Block' },
+    { type: 'shrinkBlocks', duration: 0, name: 'Shrink Blocks' }
+];
+
+// --------------------
+// Clouds
+// --------------------
+let clouds = [];
+for(let i=0;i<10;i++) clouds.push({ x: Math.random()*BASE_W, y: Math.random()*BASE_H, size: Math.random()*50+30, speed: Math.random()*0.3+0.1 });
+function drawClouds(){ ctx.save(); ctx.globalAlpha=0.9; ctx.fillStyle='rgba(255,255,255,0.85)'; clouds.forEach(c=>{ ctx.beginPath(); ctx.ellipse(c.x,c.y+cameraY*0.05, c.size, c.size*0.6, 0, 0, Math.PI*2); ctx.fill(); c.x+=c.speed; if(c.x-c.size>BASE_W)c.x=-c.size; }); ctx.restore(); }
+
+// --------------------
+// Blocks & Particles
+// --------------------
+function getColor(i){ let hue=(i*30+Math.floor(i/10)*60)%360; return `hsl(${hue},80%,60%)`; }
+function drawBlock(b,isCurrent){ let idx=blocks.indexOf(b); if(idx===-1) idx=blocks.length; const grad=ctx.createLinearGradient(b.x,b.y+cameraY,b.x+b.width,b.y+cameraY+blockHeight); grad.addColorStop(0,getColor(idx)); grad.addColorStop(1,'white'); ctx.fillStyle=grad; ctx.beginPath(); ctx.rect(b.x,b.y+cameraY,b.width,blockHeight); ctx.fill(); ctx.strokeStyle='#000'; ctx.lineWidth=2; ctx.stroke(); if(isCurrent){ ctx.save(); ctx.globalAlpha=0.15; ctx.fillStyle='#fff'; ctx.fillRect(b.x,b.y+cameraY,b.width,blockHeight); ctx.restore(); } }
+function spawnParticles(x,y,color){ for(let i=0;i<12;i++) particles.push({ x,y,dx:(Math.random()-0.5)*4, dy:(Math.random()-1.5)*4, life:30, color }); }
+function drawParticles(){ for(let i=particles.length-1;i>=0;i--){ const p=particles[i]; ctx.beginPath(); ctx.arc(p.x,p.y+cameraY,3,0,Math.PI*2); ctx.fillStyle=p.color; ctx.fill(); p.dx*=0.98; p.dy+=0.12; p.x+=p.dx; p.y+=p.dy; p.life--; if(p.life<=0) particles.splice(i,1); } }
+
+// --------------------
+// Reset game
+// --------------------
+function resetGameState(){
+    blocks=[{x:(BASE_W-150)/2, y:BASE_H-blockHeight,width:150}];
+    currentBlock={x:(BASE_W-150)/2, y:blocks[0].y-blockHeight, width:150, direction:1};
+    activePowerUps=[]; particles=[]; cameraY=0; speed=3; level=0;
+    scoreElem.textContent='Score: 0';
+    window.gameState='playing';
+    uiOpen=false;
+}
+resetGameState();
+
+// --------------------
+// Powerup UI
+// --------------------
+function openPowerupsUI(){
+    if(window.gameState==='ended') return;
+    uiOpen=true;
+    powerupContainer.innerHTML='';
+    powerupContainer.style.display='flex';
+    powerupContainer.setAttribute('aria-hidden','false');
+    canvas.style.filter='blur(6px)';
+
+    const choices = POWERUP_TEMPLATES.slice().sort(()=>0.5-Math.random()).slice(0,3);
+    choices.forEach(t=>{
+        const btn=document.createElement('button');
+        btn.className='powerupBtn '+t.type;
+        btn.textContent=t.name;
+        btn.onclick=()=>{
+            applyPowerUpInstance(t);
+            closePowerupsUI();
+            tryPlay(soundPower);
+
+            // Fixed banner logic (retry system)
+            tryShowBannerDelayed();
+        };
+        powerupContainer.appendChild(btn);
+    });
+}
+
+function closePowerupsUI(){ uiOpen=false; powerupContainer.style.display='none'; canvas.style.filter='none'; powerupContainer.setAttribute('aria-hidden','true'); }
+
+function applyPowerUpInstance(p){
+    const copy=Object.assign({},p);
+    if(copy.duration>0) copy.end=Date.now()+copy.duration;
+    switch(copy.type){
+        case 'doublePoints': activePowerUps.push(copy); break;
+        case 'slowMotion': speed=Math.max(0.5,speed/2); activePowerUps.push(copy); break;
+        case 'extraWidth': {
+            const baseBlock=blocks[0];
+            currentBlock.width=baseBlock.width;
+            const top=blocks[blocks.length-1];
+            top.width=baseBlock.width;
+            currentBlock.x=top.x+(top.width/2)-(currentBlock.width/2);
+            if(currentBlock.x<0) currentBlock.x=0;
+            if(currentBlock.x+currentBlock.width>BASE_W) currentBlock.x=BASE_W-currentBlock.width;
+            break;
+        }
+        case 'scoreBoost': level+=5; scoreElem.textContent='Score:'+level; break;
+        case 'freezeBlock': activePowerUps.push(copy); break;
+        case 'shrinkBlocks':{
+            let removeCount=Math.floor(Math.random()*5)+1;
+            while(removeCount>0 && blocks.length>1){ const b=blocks.pop(); spawnParticles(b.x+b.width/2,b.y,getColor(blocks.length)); removeCount--; }
+            tryPlay(soundShrink); break;
+        }
+    }
+}
+
+// --------------------
+// Update active powerups
+// --------------------
+function updatePowerUps(){ 
+    const now=Date.now(); 
+    const remaining=[]; 
+    activePowerUps.forEach(p=>{
+        if(p.end && now>p.end){ 
+            if(p.type==='slowMotion') speed=Math.min(3,speed*2); 
+        } else remaining.push(p); 
+    }); 
+    activePowerUps=remaining; 
+    requestAnimationFrame(updatePowerUps); 
+}
+requestAnimationFrame(updatePowerUps);
+
+// --------------------
+// Gameplay
+// --------------------
+function placeBlock(){ 
+    if(window.gameState!=='playing' || uiOpen) return; 
+    currentBlock.direction=0; 
+    const last=blocks[blocks.length-1]; 
+    const left=Math.max(currentBlock.x,last.x); 
+    const right=Math.min(currentBlock.x+currentBlock.width,last.x+last.width); 
+    const overlap=right-left; 
+    if(overlap<=0){ window.gameState='ended'; showPlayAgain(); return; } 
+    currentBlock.width=overlap; 
+    currentBlock.x=left; 
+    currentBlock.y=last.y-blockHeight; 
+    blocks.push({x:currentBlock.x, y:currentBlock.y, width:currentBlock.width}); 
+    spawnParticles(currentBlock.x+currentBlock.width/2,currentBlock.y,getColor(level)); 
+    tryPlay(soundPlace); 
+    const double=activePowerUps.some(p=>p.type==='doublePoints'); 
+    level+=double?2:1; 
+    scoreElem.textContent='Score: '+level; 
+    scoreElem.style.transform='scale(1.25)'; 
+    setTimeout(()=>scoreElem.style.transform='scale(1)',120); 
+    speed=Math.min(6,speed+0.08); 
+    if(level%7===0) triggerPowerUps(); 
+    currentBlock={x:0, y:blocks[blocks.length-1].y-blockHeight, width:blocks[blocks.length-1].width, direction:1}; 
+}
+
+// --------------------
+// Powerup triggers
+// --------------------
+function triggerPowerUps(){ 
+    if(window.gameState==='ended') return; 
+    window.gameStateBeforeAd=window.gameState; 
+    window.gameState='paused'; 
+    canvas.style.filter='blur(6px)'; 
+    setTimeout(()=>{
+        if(window.gameState==='paused') window.gameState='playing'; 
+        openPowerupsUI(); 
+    },800); 
+}
+
+// --------------------
+// Show Play Again
+// --------------------
+function showPlayAgain(){
+    powerupContainer.innerHTML='';
+    powerupContainer.style.display='flex';
+    powerupContainer.setAttribute('aria-hidden','false');
+    canvas.style.filter='blur(6px)';
+
+    const btn=document.createElement('button');
+    btn.className='playAgainBtn';
+    btn.textContent='Play Again';
+    btn.onclick=()=>{
+        closePowerupsUI();
+        resetGameState();
+
+        // Fixed banner logic
+        tryShowBannerDelayed();
+    };
+    powerupContainer.appendChild(btn);
+}
+
+// --------------------
+// Input
+// --------------------
+canvas.addEventListener('pointerdown', e=>{ ensureAudioOnUserGesture(); placeBlock(); });
+document.addEventListener('keydown', e=>{ if(e.code==='Space') placeBlock(); });
+
+// --------------------
+// Game Loop
+// --------------------
+function gameLoop(ts){
+    ctx.setTransform(1,0,0,1,0,0);
+    ctx.clearRect(0,0,BASE_W,BASE_H);
+    drawClouds();
+    blocks.forEach(b=>drawBlock(b,false));
+    if(currentBlock) drawBlock(currentBlock,true);
+    drawParticles();
+
+    if(window.gameState==='playing' && !uiOpen){
+        if(!activePowerUps.some(p=>p.type==='freezeBlock')){
+            currentBlock.x+=currentBlock.direction*speed;
+            if(currentBlock.x+currentBlock.width>BASE_W){ currentBlock.x=BASE_W-currentBlock.width; currentBlock.direction*=-1; }
+            if(currentBlock.x<0){ currentBlock.x=0; currentBlock.direction*=-1; }
+        }
+    }
+
+    const topMargin=100;
+    if(currentBlock && currentBlock.y+cameraY<topMargin){ cameraY+=(topMargin-(currentBlock.y+cameraY))*0.12; }
+
+    requestAnimationFrame(gameLoop);
+}
+requestAnimationFrame(gameLoop);
+
+// ----------------------------------------------------
+// GAME MONETIZE SDK (with preload + banner retry patch)
+// ----------------------------------------------------
+window.sdkReady = false;
+
+// SDK Options
+window.SDK_OPTIONS = {
+    gameId: "dlnb4987u5ap9i4p8phnryzhuqulufa5",
+    onEvent: function (e) {
+        switch(e.name){
+            case "SDK_READY":
+                console.log("GameMonetize SDK ready");
+                window.sdkReady = true;
+                break;
+
+            case "SDK_GAME_PAUSE":
+                if(window.showingAd){
+                    window.gameStateBeforeAd = window.gameState;
+                    window.gameState = 'paused';
+                    if(window._audioInstance) window._audioInstance.muted = true;
+                }
+                break;
+
+            case "SDK_GAME_START":
+                if(window.showingAd){
+                    window.gameState = window.gameStateBeforeAd || 'playing';
+                    if(window._audioInstance) window._audioInstance.muted = false;
+                }
+                break;
+        }
+    }
+};
+
+// -----------------------------
+// Ad Preload + Banner Retry Fix
+// -----------------------------
+function tryShowBannerDelayed() {
+    let attempts = 0;
+
+    const interval = setInterval(() => {
+        attempts++;
+
+        if (window.sdkReady && typeof sdk !== "undefined" && typeof sdk.showBanner === "function") {
+            console.log("Banner Ready — Showing Now");
+            try {
+                sdk.showBanner();
+            } catch (err) {
+                console.warn('sdk.showBanner threw', err);
+            }
+            clearInterval(interval);
+        }
+
+        if (attempts > 20) {
+            console.warn("Banner failed to load after retries.");
+            clearInterval(interval);
+        }
+
+    }, 100);
+}
+
+// Preload ads as soon as SDK is ready
+window.addEventListener("DOMContentLoaded", () => {
+    const preloadCheck = setInterval(() => {
+        if (window.sdkReady && typeof sdk !== "undefined" && typeof sdk.preload === "function") {
+            try {
+                console.log("Preloading GameMonetize Ads...");
+                sdk.preload();
+            } catch (err) {
+                console.warn('sdk.preload threw', err);
+            }
+            clearInterval(preloadCheck);
+        }
+    }, 150);
+});
+
+// Load SDK Asynchronously
+(function(a,b,c){
+    var d=a.getElementsByTagName(b)[0];
+    if(!a.getElementById(c)){
+        a=a.createElement(b);
+        a.id=c;
+        a.src="https://api.gamemonetize.com/sdk.js";
+        d.parentNode.insertBefore(a,d);
+    }
+})(document,"script","gamemonetize-sdk");
+</script>
+</body>
+</html>

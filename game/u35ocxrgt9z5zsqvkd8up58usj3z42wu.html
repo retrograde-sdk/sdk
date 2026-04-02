@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=NO, maximum-scale=1.0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Pinball 3026</title>
+  <script type="text/javascript">
+    window.SDK_OPTIONS = {
+      gameId: "u35ocxrgt9z5zsqvkd8up58usj3z42wu",
+      onEvent: function(a) {
+        switch (a.name) {
+          case "SDK_GAME_PAUSE":
+            if (window.gmSDKPause) window.gmSDKPause();
+            break;
+          case "SDK_GAME_START":
+            if (window.gmSDKResume) window.gmSDKResume();
+            break;
+          case "SDK_READY":
+            break;
+        }
+      }
+    };
+    (function(a, b, c) {
+      var d = a.getElementsByTagName(b)[0];
+      a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src =
+        "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+    })(document, "script", "gamemonetize-sdk");
+  </script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Loading Screen -->
+<div id="loadingScreen" class="screen active">
+  <div class="loading-content">
+    <h1 class="game-title">PINBALL 3026</h1>
+    <div class="neon-line"></div>
+    <div class="loader">
+      <div class="loader-bar"></div>
+    </div>
+    <p class="loading-text">LOADING<span class="dots">...</span></p>
+  </div>
+</div>
+
+<!-- Main Menu Screen -->
+<div id="menuScreen" class="screen">
+  <div class="menu-content">
+    <h1 class="game-title">PINBALL 3026</h1>
+    <div class="neon-line"></div>
+    <p class="game-subtitle">Future Arcade Experience</p>
+    <button class="btn btn-primary" id="startBtn">START GAME</button>
+    <button class="btn btn-secondary" id="howToPlayBtn">HOW TO PLAY</button>
+    <div class="high-score">High Score: <span id="highScoreMenu">0</span></div>
+  </div>
+</div>
+
+<!-- How to Play Screen -->
+<div id="howToPlayScreen" class="screen">
+  <div class="menu-content howtoplay-content">
+    <h2 id="howToPlayTitle">HOW TO PLAY</h2>
+    <div class="instructions">
+      <p><strong id="desktopLabel">Desktop:</strong></p>
+      <p id="arrowKeysText">← → Arrow keys to move flippers</p>
+      <p id="spaceText">SPACE to launch the ball</p>
+      <p id="pauseText">P or ESC to pause</p>
+      <p><strong id="mobileLabel">Mobile:</strong></p>
+      <p id="tapFlippersText">Tap left/right buttons to move flippers</p>
+      <p id="tapLaunchText">Tap LAUNCH button to shoot the ball</p>
+      <p><strong id="goalLabel">Goal:</strong></p>
+      <p id="goalText1">Keep the ball in play and hit bumpers to score points!</p>
+      <p id="goalText2">You have 3 lives. Don't let the ball fall!</p>
+    </div>
+    <button class="btn btn-primary" id="backToMenuBtn">BACK TO MENU</button>
+  </div>
+</div>
+
+<!-- Game Screen -->
+<div id="gameScreen" class="screen">
+  <div class="game-container">
+    <div class="game-header">
+      <div class="score-display">SCORE: <span id="scoreDisplay">0</span></div>
+      <div class="lives-display">LIVES: <span id="livesDisplay">3</span></div>
+      <div class="level-display">LEVEL: <span id="levelDisplay">1</span></div>
+      <button class="btn-icon" id="pauseBtn">⏸</button>
+      <button class="btn-icon" id="soundBtn">🔊</button>
+    </div>
+    <div class="canvas-wrapper">
+      <canvas id="gameCanvas" width="500" height="700"></canvas>
+    </div>
+    <!-- Mobile Controls (visible only on mobile) -->
+    <div id="mobileControls" class="mobile-controls">
+      <button class="mobile-btn" id="leftBtn">◀</button>
+      <button class="mobile-btn" id="launchBtn">LAUNCH</button>
+      <button class="mobile-btn" id="rightBtn">▶</button>
+    </div>
+  </div>
+</div>
+
+<!-- Pause Screen -->
+<div id="pauseScreen" class="screen overlay">
+  <div class="menu-content">
+    <h2 id="pausedTitle">PAUSED</h2>
+    <div class="pause-stats">
+      <p id="pauseScoreLabel">Score: <span id="pauseScore">0</span></p>
+      <p id="pauseLivesLabel">Lives: <span id="pauseLives">3</span></p>
+      <p id="pauseLevelLabel">Level: <span id="pauseLevel">1</span></p>
+    </div>
+    <button class="btn btn-primary" id="resumeBtn">RESUME</button>
+    <button class="btn btn-secondary" id="restartBtn">RESTART</button>
+    <button class="btn btn-secondary" id="quitBtn">MAIN MENU</button>
+  </div>
+</div>
+
+<!-- Game Over Screen -->
+<div id="gameOverScreen" class="screen overlay">
+  <div class="menu-content">
+    <h2 class="game-over-title">GAME OVER</h2>
+    <div class="game-over-stats">
+      <p class="final-score" id="finalScoreLabel">FINAL SCORE: <span id="finalScore">0</span></p>
+      <p class="high-score-text" id="newHighScore" style="display:none;">🏆 NEW HIGH SCORE! 🏆</p>
+      <p id="highScoreLabel">High Score: <span id="highScoreGameOver">0</span></p>
+      <p id="levelReachedLabel">Level Reached: <span id="finalLevel">1</span></p>
+    </div>
+    <button class="btn btn-reward" id="watchAdBtn">
+      📺 WATCH AD FOR EXTRA LIFE
+    </button>
+    <button class="btn btn-primary" id="playAgainBtn">PLAY AGAIN</button>
+    <button class="btn btn-secondary" id="menuBtn">MAIN MENU</button>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>

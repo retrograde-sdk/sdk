@@ -1,0 +1,2378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Airplane Battle - Full Version</title>
+    
+    <!-- CSS Styles -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+        
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(to bottom, #0a0a2a, #1a1a3a);
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+        }
+        
+        #gameContainer {
+            position: relative;
+            width: 900px;
+            height: 650px;
+            margin: 20px auto;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 0 30px rgba(0, 150, 255, 0.5);
+            border: 2px solid #00aaff;
+        }
+        
+        #gameCanvas {
+            background-color: #000;
+            display: block;
+        }
+        
+        #uiOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        
+        #scoreDisplay {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            color: #fff;
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 0 0 5px #00aaff;
+            z-index: 10;
+        }
+        
+        #livesDisplay {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            color: #ff3366;
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 0 0 5px #ff3366;
+            z-index: 10;
+        }
+        
+        #gameTitle {
+            position: absolute;
+            top: 50px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            color: #fff;
+            font-size: 36px;
+            font-weight: bold;
+            text-shadow: 0 0 10px #00aaff, 0 0 20px #00aaff;
+            z-index: 10;
+        }
+        
+        #startScreen, #gameOverScreen, #modeScreen, #pauseScreen, #exitScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 30, 0.85);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 20;
+            color: white;
+        }
+        
+        #gameOverScreen, #modeScreen, #pauseScreen, #exitScreen {
+            display: none;
+        }
+        
+        .screenTitle {
+            font-size: 48px;
+            margin-bottom: 30px;
+            color: #00ccff;
+            text-shadow: 0 0 15px #00aaff;
+        }
+        
+        .screenText {
+            font-size: 20px;
+            margin-bottom: 20px;
+            max-width: 80%;
+            text-align: center;
+            line-height: 1.5;
+        }
+        
+        .highlight {
+            color: #ffcc00;
+            font-weight: bold;
+        }
+        
+        .danger {
+            color: #ff3366;
+            font-weight: bold;
+        }
+        
+        .btn {
+            margin: 15px;
+            padding: 15px 40px;
+            font-size: 22px;
+            background: linear-gradient(to bottom, #ff3366, #cc0044);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            pointer-events: auto;
+            transition: all 0.3s;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(255, 51, 102, 0.4);
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(255, 51, 102, 0.6);
+            background: linear-gradient(to bottom, #ff5588, #dd2255);
+        }
+        
+        .btn-mode {
+            background: linear-gradient(to bottom, #00aaff, #0066cc);
+            box-shadow: 0 5px 15px rgba(0, 170, 255, 0.4);
+        }
+        
+        .btn-mode:hover {
+            background: linear-gradient(to bottom, #33ccff, #0088ff);
+            box-shadow: 0 8px 20px rgba(0, 170, 255, 0.6);
+        }
+        
+        .btn-save {
+            background: linear-gradient(to bottom, #00cc66, #009944);
+            box-shadow: 0 5px 15px rgba(0, 204, 102, 0.4);
+        }
+        
+        .btn-save:hover {
+            background: linear-gradient(to bottom, #00ee77, #00bb55);
+            box-shadow: 0 8px 20px rgba(0, 204, 102, 0.6);
+        }
+        
+        .btn-exit {
+            background: linear-gradient(to bottom, #ff9900, #cc7700);
+            box-shadow: 0 5px 15px rgba(255, 153, 0, 0.4);
+        }
+        
+        .btn-exit:hover {
+            background: linear-gradient(to bottom, #ffbb44, #dd9900);
+            box-shadow: 0 8px 20px rgba(255, 153, 0, 0.6);
+        }
+        
+        #controlsInfo {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            color: #aaa;
+            font-size: 16px;
+            z-index: 10;
+        }
+        
+        #levelDisplay {
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #ffcc00;
+            font-size: 20px;
+            font-weight: bold;
+            text-shadow: 0 0 5px #ffcc00;
+            z-index: 10;
+        }
+        
+        #bossHealthBar {
+            position: absolute;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 400px;
+            height: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid #ff3300;
+            border-radius: 10px;
+            overflow: hidden;
+            display: none;
+            z-index: 10;
+        }
+        
+        #bossHealthFill {
+            height: 100%;
+            background: linear-gradient(to right, #ff3300, #ff9900);
+            width: 100%;
+            transition: width 0.3s;
+        }
+        
+        #bossHealthText {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            line-height: 20px;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            text-shadow: 0 0 3px #000;
+        }
+        
+        .explosion {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background: radial-gradient(circle, #ff9900, #ff3300);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 5;
+            opacity: 0;
+        }
+        
+        .powerUp {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background: radial-gradient(circle, #00ffaa, #0099ff);
+            border-radius: 50%;
+            z-index: 5;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 255, 170, 0.7); }
+            70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(0, 255, 170, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 255, 170, 0); }
+        }
+        
+        .player2-indicator {
+            color: #ff9900;
+            text-shadow: 0 0 5px #ff9900;
+        }
+        
+        .player-info {
+            display: flex;
+            justify-content: space-between;
+            width: 90%;
+            margin-bottom: 20px;
+        }
+        
+        .player-card {
+            background: rgba(0, 20, 40, 0.7);
+            padding: 15px;
+            border-radius: 10px;
+            width: 48%;
+            text-align: center;
+            border: 2px solid;
+        }
+        
+        .player1-card {
+            border-color: #00aaff;
+        }
+        
+        .player2-card {
+            border-color: #ff9900;
+        }
+        
+        .player-name {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        
+        .player-score {
+            font-size: 20px;
+            color: #ffcc00;
+        }
+        
+        .mode-buttons {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        
+        .controls-table {
+            width: 80%;
+            margin: 20px 0;
+            border-collapse: collapse;
+        }
+        
+        .controls-table th, .controls-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .controls-table th {
+            color: #00ccff;
+        }
+        
+        .key {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 5px 10px;
+            border-radius: 5px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            margin: 0 5px;
+            font-family: monospace;
+        }
+        
+        .bullet-cooldown-bar {
+            position: absolute;
+            bottom: 5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        
+        .bullet-cooldown-fill {
+            height: 100%;
+            background: linear-gradient(to right, #00ffaa, #00aaff);
+            width: 100%;
+            transition: width 0.1s;
+        }
+        
+        .level-progress {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 300px;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .level-progress-fill {
+            height: 100%;
+            background: linear-gradient(to right, #00ffaa, #00aaff);
+            width: 0%;
+            transition: width 0.5s;
+        }
+        
+        .boss-warning {
+            position: absolute;
+            top: 150px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            color: #ff3300;
+            font-size: 32px;
+            font-weight: bold;
+            text-shadow: 0 0 10px #ff3300;
+            z-index: 15;
+            display: none;
+            animation: warningFlash 0.5s infinite alternate;
+        }
+        
+        @keyframes warningFlash {
+            from { opacity: 0.3; }
+            to { opacity: 1; }
+        }
+        
+        .save-load-buttons {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        
+        .save-notification {
+            position: absolute;
+            top: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 200, 100, 0.9);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-weight: bold;
+            display: none;
+            z-index: 25;
+            animation: fadeOut 2s forwards;
+        }
+        
+        @keyframes fadeOut {
+            0% { opacity: 1; }
+            70% { opacity: 1; }
+            100% { opacity: 0; display: none; }
+        }
+        
+        .damage-text {
+            position: absolute;
+            color: #ff3300;
+            font-weight: bold;
+            font-size: 16px;
+            pointer-events: none;
+            z-index: 10;
+            animation: floatUp 1s forwards;
+        }
+        
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-30px); }
+        }
+        
+        .game-stats {
+            background: rgba(0, 20, 40, 0.7);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            width: 80%;
+            text-align: center;
+        }
+        
+        .stat-item {
+            margin: 10px 0;
+            font-size: 18px;
+        }
+        
+        .continue-btn {
+            background: linear-gradient(to bottom, #ffcc00, #cc9900);
+            box-shadow: 0 5px 15px rgba(255, 204, 0, 0.4);
+        }
+        
+        .continue-btn:hover {
+            background: linear-gradient(to bottom, #ffdd44, #ddbb00);
+            box-shadow: 0 8px 20px rgba(255, 204, 0, 0.6);
+        }
+        
+        .level-up-notification {
+            position: absolute;
+            top: 200px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: #ffcc00;
+            padding: 20px 40px;
+            border-radius: 10px;
+            font-size: 28px;
+            font-weight: bold;
+            text-align: center;
+            z-index: 30;
+            display: none;
+            animation: levelUpAnimation 2s forwards;
+            border: 3px solid #ffcc00;
+        }
+        
+        @keyframes levelUpAnimation {
+            0% { opacity: 0; transform: translateX(-50%) scale(0.5); }
+            20% { opacity: 1; transform: translateX(-50%) scale(1.1); }
+            40% { transform: translateX(-50%) scale(1); }
+            80% { opacity: 1; }
+            100% { opacity: 0; display: none; }
+        }
+        
+        .difficulty-indicator {
+            position: absolute;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #ff9900;
+            font-size: 18px;
+            font-weight: bold;
+            text-shadow: 0 0 5px #ff9900;
+            z-index: 10;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 5px 15px;
+            border-radius: 10px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="900" height="650"></canvas>
+        
+        <div id="uiOverlay">
+            <div id="scoreDisplay">Player 1: <span id="score">0</span></div>
+            <div id="livesDisplay">Lives: <span id="lives">3</span></div>
+            <div id="levelDisplay">Level: <span id="level">1</span></div>
+            <div id="bossHealthBar">
+                <div id="bossHealthFill"></div>
+                <div id="bossHealthText">BOSS HP: 100%</div>
+            </div>
+            <div id="bossWarning" class="boss-warning">⚠️ BOSS APPEARS! ⚠️</div>
+            <div id="difficultyIndicator" class="difficulty-indicator">Difficulty: Normal</div>
+            <div id="gameTitle">Airplane Battle</div>
+            <div id="player2ScoreDisplay" style="position: absolute; top: 50px; right: 15px; color: #ff9900; font-size: 22px; font-weight: bold; text-shadow: 0 0 5px #ff9900; display: none;">
+                Player 2: <span id="player2Score">0</span>
+            </div>
+            <div id="controlsInfo">Single Player: WASD move, Space shoot | Two Players: P1:WASD+Space, P2:Arrow Keys+Enter | P:Pause/Save | ESC:Exit Game</div>
+            <div class="level-progress">
+                <div id="levelProgress" class="level-progress-fill"></div>
+            </div>
+        </div>
+        
+        <div id="levelUpNotification" class="level-up-notification">Level <span id="newLevel">1</span>!</div>
+        <div id="saveNotification" class="save-notification">Game Saved!</div>
+        
+        <div id="startScreen">
+            <h1 class="screenTitle">Airplane Battle</h1>
+            <p class="screenText">Select game mode to start!</p>
+            <div class="mode-buttons">
+                <button class="btn btn-mode" id="singlePlayerBtn">Single Player</button>
+                <button class="btn btn-mode" id="twoPlayerBtn">Two Players</button>
+            </div>
+            <div class="save-load-buttons">
+                <button class="btn continue-btn" id="continueGameBtn" style="display: none;">Continue Game</button>
+                <button class="btn btn-save" id="loadGameBtn">Load Game</button>
+            </div>
+            <button class="btn" id="howToPlayBtn">How to Play</button>
+        </div>
+        
+        <div id="modeScreen">
+            <h1 class="screenTitle">How to Play</h1>
+            <div class="player-info">
+                <div class="player-card player1-card">
+                    <div class="player-name">Player 1</div>
+                    <div class="player-score">Blue Aircraft</div>
+                    <table class="controls-table">
+                        <tr><th>Action</th><th>Key</th></tr>
+                        <tr><td>Move Up</td><td><span class="key">W</span></td></tr>
+                        <tr><td>Move Down</td><td><span class="key">S</span></td></tr>
+                        <tr><td>Move Left</td><td><span class="key">A</span></td></tr>
+                        <tr><td>Move Right</td><td><span class="key">D</span></td></tr>
+                        <tr><td>Shoot</td><td><span class="key">Space</span></td></tr>
+                    </table>
+                </div>
+                <div class="player-card player2-card">
+                    <div class="player-name">Player 2</div>
+                    <div class="player-score">Orange Aircraft</div>
+                    <table class="controls-table">
+                        <tr><th>Action</th><th>Key</th></tr>
+                        <tr><td>Move Up</td><td><span class="key">↑</span></td></tr>
+                        <tr><td>Move Down</td><td><span class="key">↓</span></td></tr>
+                        <tr><td>Move Left</td><td><span class="key">←</span></td></tr>
+                        <tr><td>Move Right</td><td><span class="key">→</span></td></tr>
+                        <tr><td>Shoot</td><td><span class="key">Enter</span></td></tr>
+                    </table>
+                </div>
+            </div>
+            <p class="screenText">Objective: Destroy all enemies, challenge the <span class="danger">BOSS</span>!</p>
+            <p class="screenText">Collect <span class="highlight">blue energy orbs</span> to restore health, avoid enemy attacks.</p>
+            <p class="screenText">Destroy 10 enemies per level, <span class="danger">BOSS appears at the end of each level</span>!</p>
+            <p class="screenText" style="color: #ff9900;">Difficulty increases with levels, more and stronger enemies!</p>
+            <p class="screenText">Press <span class="key">P</span> to pause and save game</p>
+            <p class="screenText">Press <span class="key">ESC</span> to exit and auto-save</p>
+            <button class="btn" id="backToMenuBtn">Back to Main Menu</button>
+        </div>
+        
+        <div id="pauseScreen">
+            <h1 class="screenTitle">Game Paused</h1>
+            <div class="game-stats">
+                <div class="stat-item">Current Level: <span id="pauseLevel" class="highlight">1</span></div>
+                <div class="stat-item">Player 1 Score: <span id="pauseScore1" class="highlight">0</span></div>
+                <div class="stat-item" id="pauseScore2Item" style="display: none;">Player 2 Score: <span id="pauseScore2" class="highlight">0</span></div>
+                <div class="stat-item">Enemies Destroyed: <span id="pauseEnemies" class="highlight">0</span></div>
+                <div class="stat-item">Remaining Lives: <span id="pauseLives" class="highlight">3</span></div>
+                <div class="stat-item">Current Difficulty: <span id="pauseDifficulty" class="highlight">Normal</span></div>
+            </div>
+            <div class="mode-buttons">
+                <button class="btn" id="resumeBtn">Continue Game</button>
+                <button class="btn btn-save" id="saveGameBtn">Save Game</button>
+                <button class="btn btn-exit" id="exitGameBtn">Exit Game</button>
+            </div>
+        </div>
+        
+        <div id="exitScreen">
+            <h1 class="screenTitle">Exit Game</h1>
+            <p class="screenText">Do you want to exit the current game?</p>
+            <p class="screenText">Game progress will be saved automatically.</p>
+            <div class="game-stats">
+                <div class="stat-item">Current Level: <span id="exitLevel" class="highlight">1</span></div>
+                <div class="stat-item">Player 1 Score: <span id="exitScore1" class="highlight">0</span></div>
+                <div class="stat-item" id="exitScore2Item" style="display: none;">Player 2 Score: <span id="exitScore2" class="highlight">0</span></div>
+                <div class="stat-item">Current Difficulty: <span id="exitDifficulty" class="highlight">Normal</span></div>
+            </div>
+            <div class="mode-buttons">
+                <button class="btn btn-exit" id="confirmExitBtn">Exit and Save</button>
+                <button class="btn" id="cancelExitBtn">Cancel</button>
+            </div>
+        </div>
+        
+        <div id="gameOverScreen">
+            <h1 class="screenTitle">Game Over</h1>
+            <div class="player-info">
+                <div class="player-card player1-card">
+                    <div class="player-name">Player 1</div>
+                    <div class="player-score">Final Score: <span id="finalScore" class="highlight">0</span></div>
+                </div>
+                <div class="player-card player2-card" style="display: none;" id="player2FinalCard">
+                    <div class="player-name">Player 2</div>
+                    <div class="player-score">Final Score: <span id="player2FinalScore" class="highlight">0</span></div>
+                </div>
+            </div>
+            <p class="screenText">Highest Level: <span id="finalLevel" class="highlight">1</span></p>
+            <p class="screenText">Final Difficulty: <span id="finalDifficulty" class="highlight">Normal</span></p>
+            <div class="mode-buttons">
+                <button class="btn" id="restartBtn">Restart Game</button>
+                <button class="btn continue-btn" id="watchAdBtn" style="display: none;">Watch Ad for Extra Life</button>
+                <button class="btn" id="backToModeBtn">Back to Main Menu</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gamemonetize SDK Script -->
+    <script type="text/javascript">
+        // Global ad management functions
+        window.adManager = {
+            // Show banner ad
+            showBanner: function() {
+                if (typeof sdk !== 'undefined' && sdk.showBanner) {
+                    console.log("Showing banner ad");
+                    sdk.showBanner();
+                    return true;
+                }
+                return false;
+            },
+            
+            // Hide banner ad
+            hideBanner: function() {
+                if (typeof sdk !== 'undefined' && sdk.hideBanner) {
+                    console.log("Hiding banner ad");
+                    sdk.hideBanner();
+                    return true;
+                }
+                return false;
+            },
+            
+            // Show interstitial ad
+            showInterstitial: function() {
+                if (typeof sdk !== 'undefined' && sdk.showInterstitial) {
+                    console.log("Showing interstitial ad");
+                    sdk.showInterstitial();
+                    return true;
+                }
+                return false;
+            },
+            
+            // Show rewarded ad
+            showRewarded: function() {
+                if (typeof sdk !== 'undefined' && sdk.showRewarded) {
+                    console.log("Showing rewarded ad");
+                    sdk.showRewarded();
+                    return true;
+                }
+                return false;
+            }
+        };
+        
+        // Initialize SDK
+        window.SDK_OPTIONS = {
+            gameId: "az33r2vbdm7bi4ky7g6uihbs1qq2a2u7",
+            onEvent: function(event) {
+                console.log("SDK Event:", event.name);
+                
+                switch(event.name) {
+                    case "SDK_GAME_PAUSE":
+                        // Pause game when ad starts
+                        if (window.gameInstance && window.gameInstance.gameRunning && !window.gameInstance.paused) {
+                            window.gameInstance.pauseForAd();
+                        }
+                        break;
+                        
+                    case "SDK_GAME_START":
+                        // Resume game when ad ends
+                        if (window.gameInstance && window.gameInstance.gameRunning && window.gameInstance.adPaused) {
+                            window.gameInstance.resumeAfterAd();
+                        }
+                        break;
+                        
+                    case "SDK_READY":
+                        console.log("Gamemonetize SDK is ready");
+                        // Show banner after short delay
+                        setTimeout(() => {
+                            window.adManager.showBanner();
+                        }, 1000);
+                        break;
+                        
+                    case "SDK_REWARDED_WATCH_COMPLETE":
+                        console.log("Rewarded ad completed - rewarding player");
+                        if (window.gameInstance && window.gameInstance.gameRunning) {
+                            window.gameInstance.giveRewardForAd();
+                        }
+                        break;
+                        
+                    case "SDK_ERROR":
+                        console.error("SDK Error:", event.message);
+                        break;
+                }
+            }
+        };
+        
+        // Load SDK script
+        (function(d, t, id) {
+            var firstScript = d.getElementsByTagName(t)[0];
+            if (!d.getElementById(id)) {
+                var script = d.createElement(t);
+                script.id = id;
+                script.src = "https://api.gamemonetize.com/sdk.js";
+                firstScript.parentNode.insertBefore(script, firstScript);
+            }
+        })(document, "script", "gamemonetize-sdk");
+    </script>
+
+    <!-- Main Game Script -->
+    <script>
+        // Main game object
+        const game = {
+            canvas: null,
+            ctx: null,
+            players: [],
+            enemies: [],
+            bullets: [],
+            enemyBullets: [],
+            explosions: [],
+            powerUps: [],
+            boss: null,
+            keys: {},
+            keyStates: {},
+            scores: [0, 0],
+            lives: 3,
+            level: 1,
+            enemyCount: 0,
+            enemiesDestroyed: 0,
+            enemiesDestroyedThisLevel: 0,
+            enemiesPerLevel: 10,
+            bossSpawned: false,
+            gameRunning: false,
+            gameOver: false,
+            twoPlayerMode: false,
+            lastTime: 0,
+            enemySpawnTimer: 0,
+            powerUpTimer: 0,
+            maxBullets: 50,
+            bulletCount: 0,
+            paused: false,
+            levelComplete: false,
+            
+            // Ad-related properties
+            adPaused: false,
+            lastAdShown: 0,
+            adCooldown: 30000, // 30 seconds
+            
+            // Difficulty system
+            difficulty: 1,
+            difficultyLevels: ['Normal', 'Hard', 'Nightmare', 'Hell', 'Inferno'],
+            
+            // Save related
+            SAVE_KEY: 'airplane_game_save',
+            HAS_SAVE_KEY: 'airplane_game_has_save',
+            
+            // Damage text display
+            damageTexts: [],
+            
+            init: function() {
+                this.canvas = document.getElementById('gameCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                
+                // Store instance globally for SDK access
+                window.gameInstance = this;
+                
+                // Check for saved game
+                this.checkForSavedGame();
+                
+                // Setup event listeners
+                this.setupEventListeners();
+                
+                // Start game loop
+                requestAnimationFrame(this.gameLoop.bind(this));
+            },
+            
+            setupEventListeners: function() {
+                // Key down events
+                window.addEventListener('keydown', (e) => {
+                    // Prevent default behavior
+                    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' ', 'Enter', 'w', 'W', 'a', 'A', 's', 'S', 'd', 'D', 'p', 'P', 'Escape'].includes(e.key)) {
+                        e.preventDefault();
+                    }
+                    
+                    this.keyStates[e.code] = true;
+                    
+                    if (e.code === 'Space' || e.code === 'Enter') {
+                        this.keys[e.code] = this.keyStates[e.code];
+                    } else if (e.code === 'KeyP') {
+                        this.togglePause();
+                    } else if (e.code === 'Escape') {
+                        if (this.gameRunning && !this.gameOver && !this.paused) {
+                            this.showExitScreen();
+                        }
+                    } else {
+                        this.keys[e.code] = true;
+                    }
+                    
+                    if (e.key === 'Enter' && this.gameOver && e.code === 'Enter') {
+                        this.restartGame();
+                    }
+                });
+                
+                // Key up events
+                window.addEventListener('keyup', (e) => {
+                    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' ', 'Enter', 'w', 'W', 'a', 'A', 's', 'S', 'd', 'D', 'p', 'P', 'Escape'].includes(e.key)) {
+                        e.preventDefault();
+                    }
+                    
+                    this.keyStates[e.code] = false;
+                    this.keys[e.code] = false;
+                    
+                    if (e.code === 'Space' || e.code === 'Enter') {
+                        this.keys[e.code] = false;
+                    }
+                });
+                
+                // Reset all keys when window loses focus
+                window.addEventListener('blur', () => {
+                    this.keys = {};
+                    this.keyStates = {};
+                    for (let player of this.players) {
+                        player.movingLeft = false;
+                        player.movingRight = false;
+                        player.movingUp = false;
+                        player.movingDown = false;
+                    }
+                });
+                
+                // Auto-save before window closes
+                window.addEventListener('beforeunload', (e) => {
+                    if (this.gameRunning && !this.gameOver && !this.paused) {
+                        this.autoSaveGame();
+                    }
+                });
+                
+                // Button events
+                document.getElementById('singlePlayerBtn').addEventListener('click', () => {
+                    this.twoPlayerMode = false;
+                    this.startNewGame();
+                });
+                
+                document.getElementById('twoPlayerBtn').addEventListener('click', () => {
+                    this.twoPlayerMode = true;
+                    this.startNewGame();
+                });
+                
+                document.getElementById('continueGameBtn').addEventListener('click', () => {
+                    if (this.loadGame()) {
+                        this.startGame();
+                    }
+                });
+                
+                document.getElementById('howToPlayBtn').addEventListener('click', () => {
+                    document.getElementById('startScreen').style.display = 'none';
+                    document.getElementById('modeScreen').style.display = 'flex';
+                });
+                
+                document.getElementById('backToMenuBtn').addEventListener('click', () => {
+                    document.getElementById('modeScreen').style.display = 'none';
+                    document.getElementById('startScreen').style.display = 'flex';
+                });
+                
+                document.getElementById('restartBtn').addEventListener('click', () => {
+                    this.restartGame();
+                });
+                
+                document.getElementById('backToModeBtn').addEventListener('click', () => {
+                    document.getElementById('gameOverScreen').style.display = 'none';
+                    document.getElementById('startScreen').style.display = 'flex';
+                    this.resetGame();
+                });
+                
+                // Pause/save related buttons
+                document.getElementById('resumeBtn').addEventListener('click', () => {
+                    this.togglePause();
+                });
+                
+                document.getElementById('saveGameBtn').addEventListener('click', () => {
+                    this.saveGame();
+                });
+                
+                document.getElementById('exitGameBtn').addEventListener('click', () => {
+                    document.getElementById('pauseScreen').style.display = 'none';
+                    this.showExitScreen();
+                });
+                
+                document.getElementById('loadGameBtn').addEventListener('click', () => {
+                    if (this.loadGame()) {
+                        this.startGame();
+                    } else {
+                        alert('No save file found!');
+                    }
+                });
+                
+                // Exit screen buttons
+                document.getElementById('confirmExitBtn').addEventListener('click', () => {
+                    this.exitGame();
+                });
+                
+                document.getElementById('cancelExitBtn').addEventListener('click', () => {
+                    document.getElementById('exitScreen').style.display = 'none';
+                    if (this.paused) {
+                        document.getElementById('pauseScreen').style.display = 'flex';
+                    }
+                });
+                
+                // Watch ad button
+                const watchAdBtn = document.getElementById('watchAdBtn');
+                if (watchAdBtn) {
+                    watchAdBtn.addEventListener('click', () => {
+                        this.showRewardedAd();
+                    });
+                }
+            },
+            
+            checkForSavedGame: function() {
+                const hasSave = localStorage.getItem(this.HAS_SAVE_KEY);
+                if (hasSave === 'true') {
+                    document.getElementById('continueGameBtn').style.display = 'block';
+                } else {
+                    document.getElementById('continueGameBtn').style.display = 'none';
+                }
+            },
+            
+            startNewGame: function() {
+                this.clearSave();
+                this.startGame();
+            },
+            
+            startGame: function() {
+                document.getElementById('startScreen').style.display = 'none';
+                document.getElementById('modeScreen').style.display = 'none';
+                document.getElementById('exitScreen').style.display = 'none';
+                
+                // Hide banner during gameplay
+                window.adManager.hideBanner();
+                
+                this.keys = {};
+                this.keyStates = {};
+                
+                // Create players
+                this.players = [];
+                
+                // Player 1
+                this.players.push(new Player(
+                    this.canvas.width / 2 - 100, 
+                    this.canvas.height - 80,
+                    1,
+                    '#00aaff'
+                ));
+                
+                // If two-player mode, add player 2
+                if (this.twoPlayerMode) {
+                    this.players.push(new Player(
+                        this.canvas.width / 2 + 100, 
+                        this.canvas.height - 80,
+                        2,
+                        '#ff9900'
+                    ));
+                    
+                    document.getElementById('player2ScoreDisplay').style.display = 'block';
+                    document.getElementById('player2FinalCard').style.display = 'block';
+                    document.getElementById('pauseScore2Item').style.display = 'block';
+                    document.getElementById('exitScore2Item').style.display = 'block';
+                } else {
+                    document.getElementById('player2ScoreDisplay').style.display = 'none';
+                    document.getElementById('player2FinalCard').style.display = 'none';
+                    document.getElementById('pauseScore2Item').style.display = 'none';
+                    document.getElementById('exitScore2Item').style.display = 'none';
+                }
+                
+                this.gameRunning = true;
+                this.gameOver = false;
+                this.paused = false;
+                this.bossSpawned = false;
+                this.levelComplete = false;
+                this.boss = null;
+                this.damageTexts = [];
+                
+                if (!this.loadedFromSave) {
+                    this.scores = [0, 0];
+                    this.lives = 3;
+                    this.level = 1;
+                    this.enemiesDestroyed = 0;
+                    this.enemiesDestroyedThisLevel = 0;
+                    this.difficulty = 1;
+                } else {
+                    this.enemiesDestroyedThisLevel = this.enemiesDestroyed % this.enemiesPerLevel;
+                }
+                
+                this.loadedFromSave = false;
+                this.bulletCount = 0;
+                this.updateUI();
+                this.updateLevelProgress();
+                this.updateDifficulty();
+                
+                this.updatePauseScreen();
+                this.updateExitScreen();
+                
+                // Show watch ad button in game over screen
+                document.getElementById('watchAdBtn').style.display = 'block';
+            },
+            
+            restartGame: function() {
+                document.getElementById('gameOverScreen').style.display = 'none';
+                this.enemies = [];
+                this.bullets = [];
+                this.enemyBullets = [];
+                this.explosions = [];
+                this.powerUps = [];
+                this.boss = null;
+                this.bulletCount = 0;
+                this.bossSpawned = false;
+                this.levelComplete = false;
+                this.damageTexts = [];
+                
+                this.keys = {};
+                this.keyStates = {};
+                
+                this.players[0].x = this.canvas.width / 2 - 100;
+                this.players[0].y = this.canvas.height - 80;
+                this.players[0].health = 100;
+                
+                if (this.twoPlayerMode && this.players[1]) {
+                    this.players[1].x = this.canvas.width / 2 + 100;
+                    this.players[1].y = this.canvas.height - 80;
+                    this.players[1].health = 100;
+                }
+                
+                this.clearSave();
+                this.startGame();
+            },
+            
+            resetGame: function() {
+                this.enemies = [];
+                this.bullets = [];
+                this.enemyBullets = [];
+                this.explosions = [];
+                this.powerUps = [];
+                this.players = [];
+                this.boss = null;
+                this.scores = [0, 0];
+                this.lives = 3;
+                this.level = 1;
+                this.enemiesDestroyed = 0;
+                this.enemiesDestroyedThisLevel = 0;
+                this.difficulty = 1;
+                this.gameRunning = false;
+                this.gameOver = false;
+                this.bulletCount = 0;
+                this.bossSpawned = false;
+                this.levelComplete = false;
+                this.damageTexts = [];
+                this.keys = {};
+                this.keyStates = {};
+                this.paused = false;
+                
+                // Show banner on menu
+                setTimeout(() => {
+                    window.adManager.showBanner();
+                }, 500);
+            },
+            
+            gameLoop: function(timestamp) {
+                const deltaTime = timestamp - this.lastTime || 0;
+                this.lastTime = timestamp;
+                
+                // Clear canvas
+                this.ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Draw starry background
+                this.drawBackground();
+                
+                if (this.gameRunning && !this.gameOver && !this.paused && !this.adPaused) {
+                    this.update(deltaTime);
+                    this.checkCollisions();
+                    
+                    if (!this.bossSpawned && !this.levelComplete) {
+                        this.spawnEnemies(deltaTime);
+                    }
+                    
+                    this.spawnPowerUps(deltaTime);
+                    this.checkLevelProgress();
+                    this.checkGameOver();
+                }
+                
+                this.draw();
+                this.drawDamageTexts(deltaTime);
+                
+                requestAnimationFrame(this.gameLoop.bind(this));
+            },
+            
+            drawBackground: function() {
+                this.ctx.fillStyle = '#fff';
+                for (let i = 0; i < 100; i++) {
+                    const x = (i * 17) % this.canvas.width;
+                    const y = (i * 23) % this.canvas.height;
+                    const size = Math.random() * 2;
+                    const brightness = 0.5 + 0.5 * Math.sin(Date.now() / 1000 + i);
+                    this.ctx.globalAlpha = brightness;
+                    this.ctx.fillRect(x, y, size, size);
+                }
+                this.ctx.globalAlpha = 1;
+            },
+            
+            update: function(deltaTime) {
+                // Update all players
+                for (let i = 0; i < this.players.length; i++) {
+                    const player = this.players[i];
+                    player.update(this.keys, this.canvas.width, this.canvas.height, deltaTime, i + 1, this);
+                }
+                
+                // Update enemies
+                for (let i = this.enemies.length - 1; i >= 0; i--) {
+                    this.enemies[i].update(deltaTime, this.canvas.height, this.enemyBullets, this.level, this.difficulty);
+                    
+                    if (this.enemies[i].y > this.canvas.height + 50) {
+                        this.enemies.splice(i, 1);
+                    }
+                }
+                
+                // Update BOSS
+                if (this.boss) {
+                    this.boss.update(deltaTime, this.canvas.height, this.enemyBullets, this.difficulty);
+                    this.updateBossHealthBar();
+                }
+                
+                // Update player bullets
+                for (let i = this.bullets.length - 1; i >= 0; i--) {
+                    this.bullets[i].update(deltaTime);
+                    
+                    if (this.bullets[i].y < -10 || this.bullets[i].y > this.canvas.height + 10) {
+                        this.bullets.splice(i, 1);
+                        this.bulletCount--;
+                    }
+                }
+                
+                // Update enemy bullets
+                for (let i = this.enemyBullets.length - 1; i >= 0; i--) {
+                    this.enemyBullets[i].update(deltaTime);
+                    
+                    if (this.enemyBullets[i].y > this.canvas.height + 10) {
+                        this.enemyBullets.splice(i, 1);
+                    }
+                }
+                
+                // Update explosion effects
+                for (let i = this.explosions.length - 1; i >= 0; i--) {
+                    this.explosions[i].update(deltaTime);
+                    
+                    if (this.explosions[i].life <= 0) {
+                        this.explosions.splice(i, 1);
+                    }
+                }
+                
+                // Update power-ups
+                for (let i = this.powerUps.length - 1; i >= 0; i--) {
+                    this.powerUps[i].update(deltaTime);
+                    
+                    if (this.powerUps[i].y > this.canvas.height + 20) {
+                        this.powerUps.splice(i, 1);
+                    }
+                }
+                
+                // Update damage texts
+                for (let i = this.damageTexts.length - 1; i >= 0; i--) {
+                    this.damageTexts[i].life -= deltaTime * 0.001;
+                    if (this.damageTexts[i].life <= 0) {
+                        this.damageTexts.splice(i, 1);
+                    }
+                }
+            },
+            
+            draw: function() {
+                // Draw all players
+                for (const player of this.players) {
+                    player.draw(this.ctx);
+                }
+                
+                // Draw enemies
+                for (const enemy of this.enemies) {
+                    enemy.draw(this.ctx);
+                }
+                
+                // Draw BOSS
+                if (this.boss) {
+                    this.boss.draw(this.ctx);
+                }
+                
+                // Draw bullets
+                for (const bullet of this.bullets) {
+                    bullet.draw(this.ctx);
+                }
+                
+                // Draw enemy bullets
+                for (const bullet of this.enemyBullets) {
+                    bullet.draw(this.ctx);
+                }
+                
+                // Draw explosion effects
+                for (const explosion of this.explosions) {
+                    explosion.draw(this.ctx);
+                }
+                
+                // Draw power-ups
+                for (const powerUp of this.powerUps) {
+                    powerUp.draw(this.ctx);
+                }
+                
+                // Draw bullet count info
+                this.drawBulletInfo();
+            },
+            
+            drawDamageTexts: function(deltaTime) {
+                for (const damageText of this.damageTexts) {
+                    damageText.y -= 0.5;
+                    this.ctx.fillStyle = damageText.color;
+                    this.ctx.font = 'bold 18px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.globalAlpha = damageText.life;
+                    this.ctx.fillText(damageText.text, damageText.x, damageText.y);
+                    this.ctx.globalAlpha = 1;
+                }
+            },
+            
+            drawBulletInfo: function() {
+                this.ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+                this.ctx.font = '16px Arial';
+                this.ctx.textAlign = 'left';
+                this.ctx.fillText(`Bullets: ${this.bulletCount}/${this.maxBullets}`, 10, this.canvas.height - 10);
+            },
+            
+            spawnEnemies: function(deltaTime) {
+                this.enemySpawnTimer += deltaTime;
+                
+                const baseSpawnRate = 1500;
+                const levelFactor = Math.max(0.3, 1 - (this.level - 1) * 0.08);
+                const difficultyFactor = Math.max(0.2, 1 - (this.difficulty - 1) * 0.1);
+                const spawnRate = Math.max(400, baseSpawnRate * levelFactor * difficultyFactor);
+                
+                if (this.enemySpawnTimer > spawnRate) {
+                    let enemyType;
+                    const randomValue = Math.random();
+                    const advancedEnemyChance = Math.min(0.7, 0.2 + (this.level - 1) * 0.05 + (this.difficulty - 1) * 0.1);
+                    
+                    if (randomValue < advancedEnemyChance) {
+                        enemyType = 2;
+                    } else {
+                        enemyType = 1;
+                    }
+                    
+                    const enemy = new Enemy(
+                        Math.random() * (this.canvas.width - 40) + 20,
+                        -30,
+                        enemyType,
+                        this.level,
+                        this.difficulty
+                    );
+                    
+                    this.enemies.push(enemy);
+                    this.enemySpawnTimer = 0;
+                }
+            },
+            
+            spawnPowerUps: function(deltaTime) {
+                this.powerUpTimer += deltaTime;
+                
+                const powerUpRate = 10000 + (this.difficulty - 1) * 2000;
+                if (this.powerUpTimer > powerUpRate) {
+                    const powerUp = new PowerUp(
+                        Math.random() * (this.canvas.width - 30) + 15,
+                        -20
+                    );
+                    
+                    this.powerUps.push(powerUp);
+                    this.powerUpTimer = 0;
+                }
+            },
+            
+            spawnBoss: function() {
+                document.getElementById('bossWarning').style.display = 'block';
+                document.getElementById('bossHealthBar').style.display = 'block';
+                
+                setTimeout(() => {
+                    document.getElementById('bossWarning').style.display = 'none';
+                    
+                    this.boss = new Boss(
+                        this.canvas.width / 2,
+                        -100,
+                        this.level,
+                        this.difficulty
+                    );
+                    
+                    this.bossSpawned = true;
+                }, 3000);
+            },
+            
+            checkLevelProgress: function() {
+                const progressPercent = Math.min(100, this.enemiesDestroyedThisLevel / this.enemiesPerLevel * 100);
+                document.getElementById('levelProgress').style.width = progressPercent + '%';
+                
+                if (!this.bossSpawned && !this.levelComplete && 
+                    this.enemiesDestroyedThisLevel >= this.enemiesPerLevel) {
+                    
+                    if (this.enemies.length === 0) {
+                        this.levelComplete = true;
+                        this.spawnBoss();
+                    }
+                }
+                
+                if (this.boss && this.boss.health <= 0) {
+                    this.levelComplete = false;
+                    this.bossSpawned = false;
+                    this.boss = null;
+                    
+                    const bossScore = 1000 * this.level * this.difficulty;
+                    for (let i = 0; i < this.players.length; i++) {
+                        this.scores[i] += bossScore;
+                    }
+                    
+                    this.nextLevel();
+                }
+            },
+            
+            nextLevel: function() {
+                document.getElementById('newLevel').textContent = this.level + 1;
+                document.getElementById('levelUpNotification').style.display = 'block';
+                
+                // Show ad on level complete if cooldown passed
+                if (Date.now() - this.lastAdShown > this.adCooldown) {
+                    setTimeout(() => {
+                        window.adManager.showInterstitial();
+                        this.lastAdShown = Date.now();
+                    }, 500);
+                }
+                
+                setTimeout(() => {
+                    document.getElementById('levelUpNotification').style.display = 'none';
+                    
+                    this.level++;
+                    
+                    if (this.level % 3 === 0 && this.difficulty < this.difficultyLevels.length) {
+                        this.difficulty++;
+                        this.updateDifficulty();
+                    }
+                    
+                    this.enemiesDestroyedThisLevel = 0;
+                    document.getElementById('bossHealthBar').style.display = 'none';
+                    
+                    this.bullets = [];
+                    this.enemyBullets = [];
+                    this.bulletCount = 0;
+                    
+                    this.updateUI();
+                    this.updateLevelProgress();
+                }, 3000);
+            },
+            
+            updateDifficulty: function() {
+                const difficultyName = this.difficultyLevels[this.difficulty - 1] || this.difficultyLevels[this.difficultyLevels.length - 1];
+                document.getElementById('difficultyIndicator').textContent = `Difficulty: ${difficultyName}`;
+                
+                document.getElementById('difficultyIndicator').style.display = 'block';
+                setTimeout(() => {
+                    document.getElementById('difficultyIndicator').style.display = 'none';
+                }, 2000);
+            },
+            
+            checkCollisions: function() {
+                // Player bullets with enemies
+                for (let i = this.bullets.length - 1; i >= 0; i--) {
+                    // With normal enemies
+                    for (let j = this.enemies.length - 1; j >= 0; j--) {
+                        if (this.isColliding(this.bullets[i], this.enemies[j])) {
+                            const damage = this.bullets[i].damage;
+                            this.enemies[j].health -= damage;
+                            
+                            this.showDamage(this.enemies[j].x, this.enemies[j].y, damage);
+                            
+                            const playerIndex = this.bullets[i].owner - 1;
+                            if (playerIndex >= 0 && playerIndex < this.scores.length) {
+                                this.scores[playerIndex] += 10 * this.difficulty;
+                            }
+                            
+                            this.bullets.splice(i, 1);
+                            this.bulletCount--;
+                            
+                            if (this.enemies[j].health <= 0) {
+                                const scoreToAdd = this.enemies[j].type * 100 * this.difficulty;
+                                
+                                if (playerIndex >= 0 && playerIndex < this.scores.length) {
+                                    this.scores[playerIndex] += scoreToAdd;
+                                }
+                                
+                                this.enemiesDestroyed++;
+                                this.enemiesDestroyedThisLevel++;
+                                
+                                this.explosions.push(new Explosion(
+                                    this.enemies[j].x,
+                                    this.enemies[j].y
+                                ));
+                                
+                                this.enemies.splice(j, 1);
+                                
+                                this.updateUI();
+                                this.updateLevelProgress();
+                            }
+                            break;
+                        }
+                    }
+                    
+                    // With BOSS
+                    if (this.boss && this.isColliding(this.bullets[i], this.boss)) {
+                        const damage = this.bullets[i].damage;
+                        this.boss.health -= damage;
+                        
+                        this.showDamage(this.boss.x, this.boss.y, damage, '#ff0000');
+                        
+                        const playerIndex = this.bullets[i].owner - 1;
+                        if (playerIndex >= 0 && playerIndex < this.scores.length) {
+                            this.scores[playerIndex] += 50 * this.difficulty;
+                        }
+                        
+                        this.bullets.splice(i, 1);
+                        this.bulletCount--;
+                        
+                        this.explosions.push(new Explosion(
+                            this.boss.x + (Math.random() - 0.5) * this.boss.width,
+                            this.boss.y + (Math.random() - 0.5) * this.boss.height
+                        ));
+                        
+                        this.updateUI();
+                        break;
+                    }
+                }
+                
+                // Enemy bullets with players
+                for (let i = this.enemyBullets.length - 1; i >= 0; i--) {
+                    for (let j = this.players.length - 1; j >= 0; j--) {
+                        if (this.isColliding(this.enemyBullets[i], this.players[j])) {
+                            const damage = this.enemyBullets[i].damage * this.difficulty * 0.5;
+                            this.players[j].health -= damage;
+                            
+                            this.showDamage(this.players[j].x, this.players[j].y, Math.round(damage), '#ff3300');
+                            
+                            this.enemyBullets.splice(i, 1);
+                            
+                            this.explosions.push(new Explosion(
+                                this.players[j].x,
+                                this.players[j].y
+                            ));
+                            
+                            this.updateUI();
+                            
+                            if (this.players[j].health <= 0) {
+                                this.lives--;
+                                this.players[j].health = 100;
+                                
+                                if (this.lives <= 0) {
+                                    this.gameOver = true;
+                                }
+                            }
+                            break;
+                        }
+                    }
+                }
+                
+                // Enemies with players
+                for (let i = this.enemies.length - 1; i >= 0; i--) {
+                    for (let j = this.players.length - 1; j >= 0; j--) {
+                        if (this.isColliding(this.enemies[i], this.players[j])) {
+                            const damage = 50 * this.difficulty * 0.7;
+                            this.players[j].health -= damage;
+                            
+                            this.showDamage(this.players[j].x, this.players[j].y, Math.round(damage), '#ff0000');
+                            
+                            this.explosions.push(new Explosion(
+                                this.enemies[i].x,
+                                this.enemies[i].y
+                            ));
+                            
+                            this.enemies.splice(i, 1);
+                            
+                            this.enemiesDestroyed++;
+                            this.enemiesDestroyedThisLevel++;
+                            
+                            this.updateUI();
+                            this.updateLevelProgress();
+                            
+                            if (this.players[j].health <= 0) {
+                                this.lives--;
+                                this.players[j].health = 100;
+                                
+                                if (this.lives <= 0) {
+                                    this.gameOver = true;
+                                }
+                            }
+                            break;
+                        }
+                    }
+                }
+                
+                // BOSS with players
+                if (this.boss) {
+                    for (let j = this.players.length - 1; j >= 0; j--) {
+                        if (this.isColliding(this.boss, this.players[j])) {
+                            const damage = 100 * this.difficulty;
+                            this.players[j].health -= damage;
+                            
+                            this.showDamage(this.players[j].x, this.players[j].y, Math.round(damage), '#ff0000');
+                            
+                            this.explosions.push(new Explosion(
+                                this.players[j].x,
+                                this.players[j].y
+                            ));
+                            
+                            this.updateUI();
+                            
+                            if (this.players[j].health <= 0) {
+                                this.lives--;
+                                this.players[j].health = 100;
+                                
+                                if (this.lives <= 0) {
+                                    this.gameOver = true;
+                                }
+                            }
+                            break;
+                        }
+                    }
+                }
+                
+                // Power-ups with players
+                for (let i = this.powerUps.length - 1; i >= 0; i--) {
+                    for (let j = this.players.length - 1; j >= 0; j--) {
+                        if (this.isColliding(this.powerUps[i], this.players[j])) {
+                            const healAmount = 30;
+                            this.players[j].health = Math.min(100, this.players[j].health + healAmount);
+                            
+                            this.showDamage(this.players[j].x, this.players[j].y, `+${healAmount}`, '#00ff00');
+                            
+                            this.powerUps.splice(i, 1);
+                            
+                            this.updateUI();
+                            break;
+                        }
+                    }
+                }
+            },
+            
+            showDamage: function(x, y, damage, color = '#ff9900') {
+                this.damageTexts.push({
+                    x: x,
+                    y: y,
+                    text: damage.toString(),
+                    color: color,
+                    life: 1.0
+                });
+            },
+            
+            isColliding: function(obj1, obj2) {
+                return obj1.x < obj2.x + obj2.width &&
+                       obj1.x + obj1.width > obj2.x &&
+                       obj1.y < obj2.y + obj2.height &&
+                       obj1.y + obj1.height > obj2.y;
+            },
+            
+            checkGameOver: function() {
+                if (this.gameOver) {
+                    this.showGameOver();
+                }
+            },
+            
+            updateUI: function() {
+                document.getElementById('score').textContent = this.scores[0];
+                
+                if (this.twoPlayerMode && this.scores.length > 1) {
+                    document.getElementById('player2Score').textContent = this.scores[1];
+                }
+                
+                document.getElementById('lives').textContent = this.lives;
+                document.getElementById('level').textContent = this.level;
+                
+                for (const player of this.players) {
+                    player.updateHealthBar();
+                }
+            },
+            
+            updateLevelProgress: function() {
+                const progressPercent = Math.min(100, this.enemiesDestroyedThisLevel / this.enemiesPerLevel * 100);
+                document.getElementById('levelProgress').style.width = progressPercent + '%';
+            },
+            
+            updatePauseScreen: function() {
+                const difficultyName = this.difficultyLevels[this.difficulty - 1] || this.difficultyLevels[this.difficultyLevels.length - 1];
+                
+                document.getElementById('pauseLevel').textContent = this.level;
+                document.getElementById('pauseScore1').textContent = this.scores[0];
+                document.getElementById('pauseScore2').textContent = this.scores[1] || 0;
+                document.getElementById('pauseEnemies').textContent = this.enemiesDestroyed;
+                document.getElementById('pauseLives').textContent = this.lives;
+                document.getElementById('pauseDifficulty').textContent = difficultyName;
+            },
+            
+            updateExitScreen: function() {
+                const difficultyName = this.difficultyLevels[this.difficulty - 1] || this.difficultyLevels[this.difficultyLevels.length - 1];
+                
+                document.getElementById('exitLevel').textContent = this.level;
+                document.getElementById('exitScore1').textContent = this.scores[0];
+                document.getElementById('exitScore2').textContent = this.scores[1] || 0;
+                document.getElementById('exitDifficulty').textContent = difficultyName;
+            },
+            
+            updateBossHealthBar: function() {
+                if (this.boss) {
+                    const healthPercent = this.boss.health / this.boss.maxHealth * 100;
+                    document.getElementById('bossHealthFill').style.width = healthPercent + '%';
+                    document.getElementById('bossHealthText').textContent = `BOSS HP: ${Math.round(healthPercent)}%`;
+                }
+            },
+            
+            togglePause: function() {
+                if (!this.gameRunning || this.gameOver) return;
+                
+                this.paused = !this.paused;
+                
+                if (this.paused) {
+                    this.updatePauseScreen();
+                    document.getElementById('pauseScreen').style.display = 'flex';
+                } else {
+                    document.getElementById('pauseScreen').style.display = 'none';
+                }
+            },
+            
+            pauseForAd: function() {
+                if (!this.gameRunning || this.gameOver) return;
+                
+                this.adPaused = true;
+                this.originalPauseState = this.paused;
+                this.paused = true;
+                
+                // Hide pause screen if shown
+                document.getElementById('pauseScreen').style.display = 'none';
+            },
+            
+            resumeAfterAd: function() {
+                this.adPaused = false;
+                this.paused = this.originalPauseState || false;
+                this.lastAdShown = Date.now();
+            },
+            
+            showExitScreen: function() {
+                this.updateExitScreen();
+                document.getElementById('exitScreen').style.display = 'flex';
+            },
+            
+            exitGame: function() {
+                this.saveGame();
+                this.gameRunning = false;
+                this.paused = false;
+                
+                document.getElementById('exitScreen').style.display = 'none';
+                document.getElementById('startScreen').style.display = 'flex';
+                
+                this.checkForSavedGame();
+                
+                // Show banner on menu
+                setTimeout(() => {
+                    window.adManager.showBanner();
+                }, 500);
+            },
+            
+            saveGame: function() {
+                const saveData = {
+                    twoPlayerMode: this.twoPlayerMode,
+                    scores: this.scores,
+                    lives: this.lives,
+                    level: this.level,
+                    enemiesDestroyed: this.enemiesDestroyed,
+                    enemiesDestroyedThisLevel: this.enemiesDestroyedThisLevel,
+                    difficulty: this.difficulty,
+                    players: this.players.map(player => ({
+                        x: player.x,
+                        y: player.y,
+                        health: player.health,
+                        playerNumber: player.playerNumber
+                    })),
+                    gameRunning: this.gameRunning,
+                    gameOver: this.gameOver,
+                    bossSpawned: this.bossSpawned,
+                    levelComplete: this.levelComplete,
+                    saveTime: Date.now()
+                };
+                
+                localStorage.setItem(this.SAVE_KEY, JSON.stringify(saveData));
+                localStorage.setItem(this.HAS_SAVE_KEY, 'true');
+                
+                document.getElementById('saveNotification').style.display = 'block';
+                setTimeout(() => {
+                    document.getElementById('saveNotification').style.display = 'none';
+                }, 2000);
+            },
+            
+            autoSaveGame: function() {
+                const saveData = {
+                    twoPlayerMode: this.twoPlayerMode,
+                    scores: this.scores,
+                    lives: this.lives,
+                    level: this.level,
+                    enemiesDestroyed: this.enemiesDestroyed,
+                    enemiesDestroyedThisLevel: this.enemiesDestroyedThisLevel,
+                    difficulty: this.difficulty,
+                    players: this.players.map(player => ({
+                        x: player.x,
+                        y: player.y,
+                        health: player.health,
+                        playerNumber: player.playerNumber
+                    })),
+                    saveTime: Date.now()
+                };
+                
+                localStorage.setItem(this.SAVE_KEY, JSON.stringify(saveData));
+                localStorage.setItem(this.HAS_SAVE_KEY, 'true');
+            },
+            
+            loadGame: function() {
+                const saveData = localStorage.getItem(this.SAVE_KEY);
+                if (!saveData) return false;
+                
+                try {
+                    const data = JSON.parse(saveData);
+                    
+                    this.twoPlayerMode = data.twoPlayerMode;
+                    this.scores = data.scores;
+                    this.lives = data.lives;
+                    this.level = data.level;
+                    this.enemiesDestroyed = data.enemiesDestroyed;
+                    this.enemiesDestroyedThisLevel = data.enemiesDestroyedThisLevel || 0;
+                    this.difficulty = data.difficulty || 1;
+                    this.loadedFromSave = true;
+                    
+                    return true;
+                } catch (e) {
+                    console.error('Failed to load save:', e);
+                    return false;
+                }
+            },
+            
+            clearSave: function() {
+                localStorage.removeItem(this.SAVE_KEY);
+                localStorage.removeItem(this.HAS_SAVE_KEY);
+                document.getElementById('continueGameBtn').style.display = 'none';
+            },
+            
+            showGameOver: function() {
+                const difficultyName = this.difficultyLevels[this.difficulty - 1] || this.difficultyLevels[this.difficultyLevels.length - 1];
+                
+                document.getElementById('finalScore').textContent = this.scores[0];
+                document.getElementById('player2FinalScore').textContent = this.scores[1] || 0;
+                document.getElementById('finalLevel').textContent = this.level;
+                document.getElementById('finalDifficulty').textContent = difficultyName;
+                document.getElementById('gameOverScreen').style.display = 'flex';
+                this.gameRunning = false;
+                
+                // Show ad on game over if cooldown passed
+                if (Date.now() - this.lastAdShown > this.adCooldown) {
+                    setTimeout(() => {
+                        window.adManager.showInterstitial();
+                        this.lastAdShown = Date.now();
+                    }, 1000);
+                }
+                
+                this.clearSave();
+            },
+            
+            canShoot: function() {
+                return this.bulletCount < this.maxBullets;
+            },
+            
+            addBullet: function() {
+                this.bulletCount++;
+            },
+            
+            // Ad-related methods
+            showRewardedAd: function() {
+                if (window.adManager.showRewarded()) {
+                    console.log("Requesting rewarded ad");
+                } else {
+                    alert("Rewarded ad not available. Please try again later.");
+                }
+            },
+            
+            giveRewardForAd: function() {
+                console.log("Giving reward for watching ad");
+                
+                // Add extra life
+                this.lives += 1;
+                
+                // Add bonus score
+                const bonusScore = 1000 * this.level;
+                for (let i = 0; i < this.scores.length; i++) {
+                    this.scores[i] += bonusScore;
+                }
+                
+                // Show reward notification
+                this.showRewardNotification(bonusScore);
+                
+                // Update UI
+                this.updateUI();
+                
+                // If game was over, continue game
+                if (this.gameOver) {
+                    this.gameOver = false;
+                    this.gameRunning = true;
+                    document.getElementById('gameOverScreen').style.display = 'none';
+                    
+                    // Reset player health
+                    for (const player of this.players) {
+                        player.health = 100;
+                    }
+                    
+                    // Create explosion effect for visual feedback
+                    for (const player of this.players) {
+                        this.explosions.push(new Explosion(player.x, player.y));
+                    }
+                }
+            },
+            
+            showRewardNotification: function(bonusScore) {
+                const notification = document.createElement('div');
+                notification.style.position = 'absolute';
+                notification.style.top = '50%';
+                notification.style.left = '50%';
+                notification.style.transform = 'translate(-50%, -50%)';
+                notification.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+                notification.style.color = '#ffcc00';
+                notification.style.padding = '20px 40px';
+                notification.style.borderRadius = '10px';
+                notification.style.fontSize = '28px';
+                notification.style.fontWeight = 'bold';
+                notification.style.textAlign = 'center';
+                notification.style.zIndex = '100';
+                notification.style.border = '3px solid #ffcc00';
+                notification.innerHTML = `🎁 Reward Received!<br>+${bonusScore} Points<br>+1 Extra Life`;
+                
+                document.getElementById('gameContainer').appendChild(notification);
+                
+                // Remove notification after 3 seconds
+                setTimeout(() => {
+                    notification.style.transition = 'opacity 1s';
+                    notification.style.opacity = '0';
+                    setTimeout(() => {
+                        if (notification.parentNode) {
+                            notification.parentNode.removeChild(notification);
+                        }
+                    }, 1000);
+                }, 3000);
+            }
+        };
+        
+        // Player class
+        class Player {
+            constructor(x, y, playerNumber, color) {
+                this.x = x;
+                this.y = y;
+                this.width = 60;
+                this.height = 80;
+                this.speed = 5;
+                this.health = 100;
+                this.maxHealth = 100;
+                this.shootCooldown = 0;
+                this.shootDelay = 200;
+                this.color = color;
+                this.playerNumber = playerNumber;
+                this.engineGlow = 0;
+                this.playerName = playerNumber === 1 ? "Player 1" : "Player 2";
+                this.lastShootTime = 0;
+                
+                this.movingLeft = false;
+                this.movingRight = false;
+                this.movingUp = false;
+                this.movingDown = false;
+            }
+            
+            update(keys, canvasWidth, canvasHeight, deltaTime, playerNum, game) {
+                if (this.shootCooldown > 0) {
+                    this.shootCooldown -= deltaTime;
+                }
+                
+                const canShootNow = this.shootCooldown <= 0 && game.canShoot();
+                
+                if (playerNum === 1 && keys['Space'] && canShootNow) {
+                    this.shootCooldown = this.shootDelay;
+                    this.shoot(game.bullets, game);
+                    game.addBullet();
+                }
+                
+                if (playerNum === 2 && keys['Enter'] && canShootNow) {
+                    this.shootCooldown = this.shootDelay;
+                    this.shoot(game.bullets, game);
+                    game.addBullet();
+                }
+                
+                this.updateMovementState(keys, playerNum);
+                
+                let moveX = 0, moveY = 0;
+                
+                if (this.movingLeft) moveX = -this.speed;
+                if (this.movingRight) moveX = this.speed;
+                if (this.movingUp) moveY = -this.speed;
+                if (this.movingDown) moveY = this.speed;
+                
+                this.x = Math.max(this.width/2, Math.min(canvasWidth - this.width/2, this.x + moveX));
+                this.y = Math.max(this.height/2, Math.min(canvasHeight - this.height/2, this.y + moveY));
+                
+                this.engineGlow = (this.engineGlow + 0.1) % (Math.PI * 2);
+            }
+            
+            updateMovementState(keys, playerNum) {
+                if (playerNum === 1) {
+                    this.movingLeft = keys['KeyA'] || false;
+                    this.movingRight = keys['KeyD'] || false;
+                    this.movingUp = keys['KeyW'] || false;
+                    this.movingDown = keys['KeyS'] || false;
+                } else if (playerNum === 2) {
+                    this.movingLeft = keys['ArrowLeft'] || false;
+                    this.movingRight = keys['ArrowRight'] || false;
+                    this.movingUp = keys['ArrowUp'] || false;
+                    this.movingDown = keys['ArrowDown'] || false;
+                }
+            }
+            
+            shoot(bullets, game) {
+                const damage = 15;
+                const bulletSpeed = -12;
+                
+                if (this.playerNumber === 1) {
+                    bullets.push(new Bullet(this.x - 10, this.y - this.height/2, 0, bulletSpeed, this.color, 12, damage, this.playerNumber));
+                    bullets.push(new Bullet(this.x + 10, this.y - this.height/2, 0, bulletSpeed, this.color, 12, damage, this.playerNumber));
+                } 
+                else if (this.playerNumber === 2) {
+                    bullets.push(new Bullet(this.x, this.y - this.height/2, 0, bulletSpeed, this.color, 12, damage, this.playerNumber));
+                    bullets.push(new Bullet(this.x - 15, this.y - this.height/2 + 10, 0, bulletSpeed, this.color, 12, damage, this.playerNumber));
+                    bullets.push(new Bullet(this.x + 15, this.y - this.height/2 + 10, 0, bulletSpeed, this.color, 12, damage, this.playerNumber));
+                }
+            }
+            
+            draw(ctx) {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                
+                // Draw body
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.moveTo(0, -this.height/2);
+                ctx.lineTo(-this.width/3, this.height/3);
+                ctx.lineTo(-this.width/6, this.height/2);
+                ctx.lineTo(this.width/6, this.height/2);
+                ctx.lineTo(this.width/3, this.height/3);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Draw cockpit
+                ctx.fillStyle = this.playerNumber === 1 ? '#88ddff' : '#ffcc88';
+                ctx.beginPath();
+                ctx.arc(0, -this.height/6, this.width/6, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Draw engine glow effect
+                const glowIntensity = 0.5 + 0.5 * Math.sin(this.engineGlow);
+                ctx.fillStyle = this.playerNumber === 1 ? 
+                    `rgba(255, ${100 + 155 * glowIntensity}, 0, ${0.7 * glowIntensity})` :
+                    `rgba(255, 255, ${100 + 155 * glowIntensity}, ${0.7 * glowIntensity})`;
+                ctx.beginPath();
+                ctx.ellipse(0, this.height/2, this.width/4, this.height/6, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Draw player number
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 16px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(this.playerName, 0, -this.height/2 - 25);
+                
+                // Draw health bar background
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                ctx.fillRect(-this.width/2, -this.height/2 - 20, this.width, 8);
+                
+                // Draw health bar
+                const healthPercent = this.health / this.maxHealth;
+                ctx.fillStyle = healthPercent > 0.5 ? '#00ff00' : healthPercent > 0.2 ? '#ffff00' : '#ff0000';
+                ctx.fillRect(-this.width/2, -this.height/2 - 20, this.width * healthPercent, 8);
+                
+                ctx.restore();
+            }
+            
+            updateHealthBar() {
+                // Health bar UI already drawn in draw method
+            }
+        }
+        
+        // Enemy class
+        class Enemy {
+            constructor(x, y, type = 1, level = 1, difficulty = 1) {
+                this.x = x;
+                this.y = y;
+                this.type = type;
+                this.width = type === 1 ? 40 : 60;
+                this.height = type === 1 ? 50 : 70;
+                
+                const levelFactor = 1 + (level - 1) * 0.1;
+                const difficultyFactor = 1 + (difficulty - 1) * 0.3;
+                
+                this.speed = (type === 1 ? 1 : 0.7) * levelFactor * difficultyFactor;
+                this.health = (type === 1 ? (15 + level * 3) : (30 + level * 6)) * difficultyFactor;
+                this.maxHealth = this.health;
+                this.color = type === 1 ? '#ff3366' : '#ff9900';
+                this.shootTimer = 0;
+                
+                const baseShootDelay = type === 1 ? 2000 : 1500;
+                this.shootDelay = Math.max(600, baseShootDelay - (level - 1) * 80 - (difficulty - 1) * 150);
+                
+                this.level = level;
+                this.difficulty = difficulty;
+            }
+            
+            update(deltaTime, canvasHeight, enemyBullets, level, difficulty) {
+                this.y += this.speed;
+                
+                this.shootTimer += deltaTime;
+                if (this.shootTimer > this.shootDelay) {
+                    this.shoot(enemyBullets, level, difficulty);
+                    this.shootTimer = 0;
+                }
+                
+                if (this.type === 2) {
+                    this.x += Math.sin(Date.now() / 1000 + this.y * 0.01) * (1.5 + level * 0.1);
+                }
+            }
+            
+            shoot(bullets, level, difficulty) {
+                const difficultyFactor = 1 + (difficulty - 1) * 0.5;
+                
+                if (this.type === 1) {
+                    const bulletSpeed = (4 + level * 0.2) * difficultyFactor;
+                    const damage = Math.round(5 * difficultyFactor);
+                    bullets.push(new Bullet(this.x, this.y + this.height/2, 0, bulletSpeed, '#ff3366', 6, damage, 0));
+                } else {
+                    const bulletSpeed = (5 + level * 0.3) * difficultyFactor;
+                    const damage = Math.round(8 * difficultyFactor);
+                    bullets.push(new Bullet(this.x, this.y + this.height/2, 0, bulletSpeed, '#ff9900', 8, damage, 0));
+                    bullets.push(new Bullet(this.x, this.y + this.height/2, -1.5, bulletSpeed, '#ff9900', 8, damage, 0));
+                    bullets.push(new Bullet(this.x, this.y + this.height/2, 1.5, bulletSpeed, '#ff9900', 8, damage, 0));
+                }
+            }
+            
+            draw(ctx) {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                
+                ctx.fillStyle = this.color;
+                
+                if (this.type === 1) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, -this.height/2);
+                    ctx.lineTo(-this.width/2, this.height/2);
+                    ctx.lineTo(0, this.height/4);
+                    ctx.lineTo(this.width/2, this.height/2);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    ctx.fillStyle = '#ff88aa';
+                    ctx.beginPath();
+                    ctx.arc(0, -this.height/6, this.width/6, 0, Math.PI * 2);
+                    ctx.fill();
+                } else {
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, this.width/2, this.height/2, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.fillStyle = '#ffcc00';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, this.width/4, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.fillStyle = this.color;
+                    ctx.fillRect(-this.width/2 - 10, -this.height/4, 10, this.height/2);
+                    ctx.fillRect(this.width/2, -this.height/4, 10, this.height/2);
+                }
+                
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                ctx.fillRect(-this.width/2, -this.height/2 - 15, this.width, 6);
+                
+                const healthPercent = this.health / this.maxHealth;
+                ctx.fillStyle = healthPercent > 0.5 ? '#00ff00' : healthPercent > 0.2 ? '#ffff00' : '#ff0000';
+                ctx.fillRect(-this.width/2, -this.height/2 - 15, this.width * healthPercent, 6);
+                
+                ctx.restore();
+            }
+        }
+        
+        // BOSS class
+        class Boss {
+            constructor(x, y, level, difficulty = 1) {
+                this.x = x;
+                this.y = y;
+                
+                const levelFactor = 1 + (level - 1) * 0.2;
+                const difficultyFactor = 1 + (difficulty - 1) * 0.5;
+                
+                this.width = (120 + level * 10) * difficultyFactor * 0.8;
+                this.height = (150 + level * 15) * difficultyFactor * 0.8;
+                this.speed = 1.5 * difficultyFactor;
+                this.health = (200 + level * 100) * difficultyFactor;
+                this.maxHealth = this.health;
+                this.color = '#ff3300';
+                this.shootTimer = 0;
+                this.shootDelay = Math.max(400, 1200 - level * 50 - difficulty * 100);
+                this.level = level;
+                this.difficulty = difficulty;
+                this.moveDirection = 1;
+                this.moveTimer = 0;
+                this.specialAttackTimer = 0;
+                this.specialAttackDelay = Math.max(3000, 6000 - level * 200 - difficulty * 500);
+            }
+            
+            update(deltaTime, canvasHeight, enemyBullets, difficulty) {
+                this.y += 0.5;
+                this.y = Math.min(canvasHeight * 0.3, this.y);
+                
+                this.moveTimer += deltaTime;
+                if (this.moveTimer > 2000) {
+                    this.moveDirection *= -1;
+                    this.moveTimer = 0;
+                }
+                
+                this.x += this.speed * this.moveDirection;
+                this.x = Math.max(this.width/2, Math.min(900 - this.width/2, this.x));
+                
+                this.shootTimer += deltaTime;
+                if (this.shootTimer > this.shootDelay) {
+                    this.shoot(enemyBullets);
+                    this.shootTimer = 0;
+                }
+                
+                this.specialAttackTimer += deltaTime;
+                if (this.specialAttackTimer > this.specialAttackDelay) {
+                    this.specialAttack(enemyBullets);
+                    this.specialAttackTimer = 0;
+                }
+            }
+            
+            shoot(bullets) {
+                const bulletCount = 3 + Math.floor(this.level / 3) + Math.floor(this.difficulty / 2);
+                const spread = 1.5 + this.level * 0.15 + this.difficulty * 0.2;
+                const bulletSpeed = (3 + this.level * 0.15) * (1 + this.difficulty * 0.2);
+                const damage = Math.round(10 * (1 + this.difficulty * 0.3));
+                
+                for (let i = 0; i < bulletCount; i++) {
+                    const angle = (i - (bulletCount - 1) / 2) * spread;
+                    bullets.push(new Bullet(this.x, this.y + this.height/2, angle, bulletSpeed, '#ff3300', 10, damage, 0));
+                }
+            }
+            
+            specialAttack(bullets) {
+                const bulletCount = 6 + this.level + this.difficulty * 2;
+                const bulletSpeed = 2.5 * (1 + this.difficulty * 0.2);
+                const damage = Math.round(15 * (1 + this.difficulty * 0.4));
+                
+                for (let i = 0; i < bulletCount; i++) {
+                    const angle = (i / bulletCount) * Math.PI * 2;
+                    const dx = Math.cos(angle) * bulletSpeed;
+                    const dy = Math.sin(angle) * bulletSpeed;
+                    bullets.push(new Bullet(this.x, this.y + this.height/2, dx, dy, '#ff9900', 12, damage, 0));
+                }
+            }
+            
+            draw(ctx) {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.ellipse(0, 0, this.width/2, this.height/2, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = '#ff9900';
+                ctx.beginPath();
+                ctx.arc(0, 0, this.width/4, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(-this.width/6, -this.height/8, this.width/10, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(this.width/6, -this.height/8, this.width/10, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = '#000000';
+                ctx.beginPath();
+                ctx.arc(-this.width/6, -this.height/8, this.width/20, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(this.width/6, -this.height/8, this.width/20, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = '#333333';
+                for (let i = -2; i <= 2; i++) {
+                    ctx.fillRect(i * this.width/8 - 5, this.height/2 - 10, 10, 20);
+                }
+                
+                ctx.restore();
+            }
+        }
+        
+        // Bullet class
+        class Bullet {
+            constructor(x, y, dx, dy, color, size, damage, owner = 0) {
+                this.x = x;
+                this.y = y;
+                this.dx = dx;
+                this.dy = dy;
+                this.color = color;
+                this.size = size;
+                this.damage = damage;
+                this.owner = owner;
+                this.width = size;
+                this.height = size * 3;
+                this.createdTime = Date.now();
+            }
+            
+            update(deltaTime) {
+                const maxSpeed = 20;
+                const currentSpeed = Math.sqrt(this.dx * this.dx + this.dy * this.dy);
+                
+                if (currentSpeed > maxSpeed) {
+                    const ratio = maxSpeed / currentSpeed;
+                    this.dx *= ratio;
+                    this.dy *= ratio;
+                }
+                
+                this.x += this.dx;
+                this.y += this.dy;
+            }
+            
+            draw(ctx) {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.ellipse(0, 0, this.size/2, this.size, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(0, -this.size/2, this.size/4, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.restore();
+            }
+        }
+        
+        // Explosion effect class
+        class Explosion {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.radius = 5;
+                this.maxRadius = 40;
+                this.life = 1.0;
+                this.speed = 0.05;
+            }
+            
+            update(deltaTime) {
+                this.radius += (this.maxRadius - this.radius) * 0.2;
+                this.life -= this.speed;
+            }
+            
+            draw(ctx) {
+                const alpha = this.life;
+                const gradient = ctx.createRadialGradient(
+                    this.x, this.y, 0,
+                    this.x, this.y, this.radius
+                );
+                
+                gradient.addColorStop(0, `rgba(255, 200, 0, ${alpha})`);
+                gradient.addColorStop(0.7, `rgba(255, 100, 0, ${alpha * 0.7})`);
+                gradient.addColorStop(1, `rgba(255, 0, 0, 0)`);
+                
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        // Power-up class
+        class PowerUp {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.width = 30;
+                this.height = 30;
+                this.speed = 2;
+                this.pulse = 0;
+            }
+            
+            update(deltaTime) {
+                this.y += this.speed;
+                this.pulse = (this.pulse + 0.05) % (Math.PI * 2);
+            }
+            
+            draw(ctx) {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                
+                const scale = 1 + 0.2 * Math.sin(this.pulse);
+                ctx.scale(scale, scale);
+                
+                const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, this.width/2);
+                gradient.addColorStop(0, '#ffffff');
+                gradient.addColorStop(0.4, '#00ffaa');
+                gradient.addColorStop(1, '#0099ff');
+                
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(0, 0, this.width/2, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(0, 0, this.width/6, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.restore();
+            }
+        }
+        
+        // Initialize game
+        window.addEventListener('load', () => {
+            game.init();
+        });
+    </script>
+</body>
+</html>

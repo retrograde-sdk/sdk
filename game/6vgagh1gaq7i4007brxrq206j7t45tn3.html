@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Counting Game for Kids</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
+
+<meta name="generator" content="Construct 3">
+<meta name="author" content="Vinkid">
+<meta name="description" content="Counting Game for Kids ...">
+
+<link rel="manifest" href="appmanifest.json">
+<link rel="apple-touch-icon" sizes="128x128" href="icons/icon-128.png">
+<link rel="apple-touch-icon" sizes="256x256" href="icons/icon-256.png">
+<link rel="apple-touch-icon" sizes="512x512" href="icons/icon-512.png">
+<link rel="icon" type="image/png" href="icons/icon-512.png">
+
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+<div id="fb-root"></div>
+
+<noscript>
+  <div id="notSupportedWrap">
+    <h2>This content requires JavaScript</h2>
+    <p>Please enable JavaScript.</p>
+  </div>
+</noscript>
+
+<script src="scripts/supportcheck.js"></script>
+<script src="scripts/offlineclient.js" type="module"></script>
+<script src="scripts/main.js" type="module"></script>
+<script src="scripts/register-sw.js" type="module"></script>
+
+<!-- ================= GameMonetize SDK ================= -->
+<script type="text/javascript">
+window.SDK_OPTIONS = {
+  gameId: "6vgagh1gaq7i4007brxrq206j7t45tn3",
+  onEvent: function (a) {
+    switch (a.name) {
+
+      case "SDK_GAME_PAUSE":
+        // Game pause (WAJIB)
+        if (window.cr_getC2Runtime) {
+          cr_getC2Runtime().SetSuspended(true);
+        }
+        break;
+
+      case "SDK_GAME_START":
+        // Resume game setelah iklan
+        if (window.cr_getC2Runtime) {
+          cr_getC2Runtime().SetSuspended(false);
+        }
+        break;
+
+      case "SDK_READY":
+        console.log("GameMonetize SDK Ready");
+        break;
+    }
+  }
+};
+
+(function (a, b, c) {
+  var d = a.getElementsByTagName(b)[0];
+  if (!a.getElementById(c)) {
+    a = a.createElement(b);
+    a.id = c;
+    a.src = "https://api.gamemonetize.com/sdk.js";
+    d.parentNode.insertBefore(a, d);
+  }
+})(document, "script", "gamemonetize-sdk");
+</script>
+<!-- ================= End SDK ================= -->
+
+<script>
+function showAdBanner() {
+  if (window.sdk && typeof sdk.showBanner === 'function') {
+    sdk.showBanner();
+  }
+}
+</script>
+
+
+
+</body>
+</html>

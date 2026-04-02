@@ -1,0 +1,166 @@
+﻿﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+	<title>Space Destroyer</title>
+	
+	<!-- Standardised web app manifest -->
+	<link rel="manifest" href="appmanifest.json" />
+	
+	<!-- Allow fullscreen mode on iOS devices. (These are Apple specific meta tags.) -->
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, minimal-ui" />
+	<meta name="apple-mobile-web-app-capable" content="yes" />
+	<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+	<link rel="apple-touch-icon" sizes="256x256" href="icon-256.png" />
+	<meta name="HandheldFriendly" content="true" />
+	
+	<!-- Chrome for Android web app tags -->
+	<meta name="mobile-web-app-capable" content="yes" />
+	<link rel="shortcut icon" sizes="256x256" href="icon-256.png" />
+
+	<style type="text/css">
+		* {
+			padding: 0;
+			margin: 0;
+		}
+		html, body {
+			background: #000;
+			overflow: hidden;
+			width: 100%;
+			height: 100%;
+		}
+		canvas {
+			display: block;
+			width: 100%;
+			height: 100%;
+		}
+		
+		/* Простой overlay */
+		#overlay {
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			background: #000;
+			z-index: 10000;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			flex-direction: column;
+		}
+		
+		#playButton {
+			width: 200px;
+			height: 200px;
+			border-radius: 50%;
+			background: #ff4444;
+			border: 5px solid white;
+			color: white;
+			font-size: 48px;
+			cursor: pointer;
+			margin: 20px;
+		}
+		
+		h1 {
+			color: white;
+			font-size: 48px;
+			margin-bottom: 30px;
+		}
+		
+		#status {
+			color: #888;
+			margin-top: 20px;
+		}
+	</style>
+	
+	<!-- GameMonetize SDK -->
+	<script>
+	window.SDK_OPTIONS = {
+		gameId: "f0ss8d5zkmddjjrgz0xrci27ko15kd6h",
+		onEvent: function(e) {
+			console.log("SDK:", e.name);
+		}
+	};
+	</script>
+	<script src="https://api.gamemonetize.com/sdk.js"></script>
+	
+</head>
+<body>
+
+	<!-- Overlay -->
+	<div id="overlay">
+		<h1>SPACE DESTROYER</h1>
+		<button id="playButton">▶</button>
+		<div id="status">Loading...</div>
+	</div>
+
+	<!-- Game canvas -->
+	<div id="c2canvasdiv">
+		<canvas id="c2canvas" width="360" height="640"></canvas>
+	</div>
+
+	<!-- Game scripts -->
+	<script src="jquery-3.4.1.min.js"></script>
+	<script src="c2runtime.js"></script>
+	
+	<script>
+	// Запускаем игру
+	jQuery(document).ready(function() {
+		cr_createRuntime("c2canvas");
+		console.log("Game started");
+		document.getElementById('status').innerHTML = 'SDK Ready - Click Play';
+	});
+
+	// Функция скрытия overlay
+	function hideOverlay() {
+		console.log("Hiding overlay");
+		var overlay = document.getElementById('overlay');
+		if (overlay) {
+			overlay.style.display = 'none';
+		}
+	}
+
+	// Обработчик кнопки
+	document.getElementById('playButton').onclick = function() {
+		console.log("Play clicked");
+		
+		// Пробуем показать рекламу
+		if (typeof sdk !== 'undefined' && sdk.showBanner) {
+			console.log("Showing ad");
+			document.getElementById('status').innerHTML = 'Showing ad...';
+			
+			try {
+				sdk.showBanner();
+				// Скрываем overlay через 2 секунды
+				setTimeout(hideOverlay, 2000);
+			} catch(e) {
+				console.log("Ad error, starting game");
+				hideOverlay();
+			}
+		} else {
+			console.log("SDK not available");
+			hideOverlay();
+		}
+	};
+
+	// Pause/resume
+	function onVisibilityChanged() {
+		if (window.cr_setSuspended) {
+			cr_setSuspended(document.hidden);
+		}
+	}
+	
+	document.addEventListener("visibilitychange", onVisibilityChanged);
+	
+	// Service worker
+	window.C2_RegisterSW = function() {
+		if (navigator.serviceWorker) {
+			navigator.serviceWorker.register("sw.js").catch(console.warn);
+		}
+	};
+	</script>
+	
+</body>
+</html>

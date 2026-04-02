@@ -1,0 +1,1600 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>3D Tower Defense - Pro Physics</title>
+    <script type="text/javascript">
+        window.SDK_OPTIONS = {
+            gameId: "14dmjhvrz1a49o8mzkbm7ztup4ocbr2u",
+            onEvent: function (a) {
+                switch (a.name) {
+                    case "SDK_GAME_PAUSE":
+                        // pause game logic / mute audio
+                        break;
+                    case "SDK_GAME_START":
+                        // advertisement done, resume game logic and unmute audio
+                        break;
+                    case "SDK_READY":
+                        // when sdk is ready
+                        break;
+                }
+            }
+        };
+        (function (a, b, c) {
+            var d = a.getElementsByTagName(b)[0];
+            a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+        })(document, "script", "gamemonetize-sdk"); 
+    </script>
+    <style>
+        :root {
+            --bg-color: #1a1a2e;
+            --primary-color: #0f3460;
+            --secondary-color: #e94560;
+            --font-color: #e0e0e0;
+            --glass-bg: rgba(20, 30, 70, 0.4);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: var(--bg-color);
+            color: var(--font-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+        }
+
+        #game-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            cursor: default;
+        }
+
+        .ui-panel {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            padding: 30px 40px;
+            min-width: 300px;
+            text-align: center;
+        }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 15px;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        h1,
+        h2 {
+            margin: 0;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        h1 {
+            font-size: 2.5em;
+        }
+
+        h2 {
+            font-size: 1.8em;
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: var(--font-color);
+            border: 1px solid var(--glass-border);
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.2s ease;
+            width: 200px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn:hover {
+            background-color: var(--secondary-color);
+            transform: scale(1.05);
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn:disabled {
+            background-color: #555;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #game-hud {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .hud-top {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px;
+        }
+
+        .hud-info {
+            background: var(--glass-bg);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-size: 1.2em;
+            pointer-events: all;
+            display: flex;
+            align-items: center;
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+
+        #mobile-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            /* Pindahkan ke pojok kiri bawah untuk layout lebih rapi */
+            transform: none;
+            /* Hapus transform karena tidak lagi di tengah */
+
+            display: flex;
+            flex-direction: column;
+            /* Selalu vertikal */
+            align-items: flex-start;
+            gap: 8px;
+
+            /* KUNCI ANIMASI 1: Tentukan lebar awal yang sempit */
+            width: 64px;
+
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 8px;
+            pointer-events: all;
+            overflow: hidden;
+            /* Sangat penting untuk menyembunyikan detail teks */
+
+            /* KUNCI ANIMASI 2: Transisi pada properti 'width' */
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Style saat di-hover (desktop) atau saat memiliki class .expanded (mobile) */
+        #mobile-controls:hover,
+        #mobile-controls.expanded {
+            /* KUNCI ANIMASI 3: Lebarkan kontainer saat aktif */
+            width: 240px;
+        }
+
+        .tower-btn {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            /* Selalu penuhi lebar kontainer (#mobile-controls) */
+            padding: 4px;
+            border-radius: 8px;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.05);
+            /* Beri background tipis */
+            transition: background-color 0.2s ease-in-out;
+            border: 2px solid transparent;
+            /* Tetap pertahankan border untuk status 'selected' */
+        }
+
+        .tower-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .tower-btn.selected {
+            border-color: var(--secondary-color);
+            background: rgba(233, 69, 96, 0.3);
+        }
+
+        .tower-icon {
+            width: 48px;
+            /* Sedikit perbesar ikon */
+            height: 48px;
+            background-color: #ccc;
+            border-radius: 5px;
+            flex-shrink: 0;
+            /* Pastikan ikon tidak menyusut */
+            margin-bottom: 0;
+        }
+
+        /* MODIFIKASI KELAS INI UNTUK ANIMASI YANG LEBIH BAIK */
+        .tower-details {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            white-space: nowrap;
+            /* Mencegah teks turun baris saat animasi */
+
+            /* KUNCI ANIMASI 4: Gunakan opacity dan transform untuk fade-in yang mulus */
+            opacity: 0;
+            transform: translateX(-15px);
+            transition: opacity 0.3s ease-out 0.15s, transform 0.3s ease-out 0.15s;
+        }
+
+        /* Tampilkan teks saat container di-hover atau .expanded */
+        #mobile-controls:hover .tower-details,
+        #mobile-controls.expanded .tower-details {
+            /* KUNCI ANIMASI 5: Kembalikan opacity dan posisi transform */
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        /* Atur style teks di dalam .tower-details */
+        .tower-details div {
+            line-height: 1.3;
+        }
+
+        .tower-cost {
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        #tower-actions {
+            position: absolute;
+            bottom: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            pointer-events: all;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="game-container"></div>
+
+    <div id="main-menu" class="ui-panel glass-panel">
+        <h1>3D Tower Defense</h1>
+        <button id="new-game-btn" class="btn">New Games</button>
+        <button id="load-game-btn" class="btn">Continue</button>
+        <button id="settings-btn" class="btn">Settings</button>
+    </div>
+
+    <div id="settings-menu" class="ui-panel glass-panel hidden">
+        <h2>Settings</h2>
+        <div class="setting-item">
+            <label for="volume-slider">Volume</label>
+            <input type="range" id="volume-slider" min="0" max="1" step="0.1" value="0.5">
+        </div>
+        <div class="setting-item">
+            <label for="graphics-select">Graphics</label>
+            <select id="graphics-select">
+                <option value="low">Low</option>
+                <option value="medium" selected>Medium</option>
+                <option value="high">High</option>
+            </select>
+        </div>
+        <button id="fullscreen-btn" class="btn">Fullscreen</button>
+        <button id="back-to-main-btn" class="btn">Back</button>
+    </div>
+
+    <div id="game-hud" class="hidden">
+        <div id="stats-info" class="hud-info">
+            <span>❤️ <span id="health-stat">100</span></span> &nbsp;&nbsp;|&nbsp;&nbsp;
+            <span>💰 <span id="money-stat">9999</span></span>
+            <button id="pause-btn" class="btn" style="width: 40px; padding: 8px; margin-left: 15px;">❚❚</button>
+        </div>
+        <div id="wave-info" class="hud-info">
+            <span>Wave: <span id="wave-stat">0</span> / MAX</span>
+            <div style="margin-left: 15px; display: flex; align-items: center; gap: 5px;">
+                <input type="checkbox" id="auto-wave-check" style="cursor: pointer;">
+                <label for="auto-wave-check" style="cursor: pointer;">Auto</label>
+            </div>
+            <button id="start-wave-btn" class="btn" style="width: auto; padding: 8px 15px; margin-left: 15px;">Start
+                Wave</button>
+        </div>
+
+        <div id="mobile-controls"></div>
+
+        <div id="tower-actions" class="hidden">
+            <button id="upgrade-tower-btn" class="btn" style="width: 130px;">Upgrade</button>
+            <button id="sell-tower-btn" class="btn" style="width: 130px; background-color: #8B0000;">Sell</button>
+        </div>
+    </div>
+
+    <div id="game-over-menu" class="ui-panel glass-panel hidden">
+        <h2>Game Over</h2>
+        <p>You survive until the wave <span id="final-wave-stat">0</span>.</p>
+        <button id="restart-game-btn" class="btn">Restart</button>
+        <button id="back-to-menu-from-gameover-btn" class="btn">Main course</button>
+    </div>
+    <div id="pause-menu" class="ui-panel glass-panel hidden">
+        <h2>Game Paused</h2>
+        <button id="resume-btn" class="btn">Continue</button>
+        <button id="back-to-menu-from-pause-btn" class="btn">Main course</button>
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.179.1/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.179.1/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        // TAMBAHKAN INI DI BAGIAN ATAS SCRIPT MODULE ANDA
+        const vertexShader = `
+    varying vec2 vUv;
+    void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+`;
+
+        const fragmentShader = `
+    uniform float time;
+    uniform vec3 color;
+    uniform float opacity;
+    varying vec2 vUv;
+
+    void main() {
+        // Hitung jarak dari pusat (0.5, 0.5)
+        float dist = distance(vUv, vec2(0.5));
+        
+        // Buat gelombang menggunakan sinus
+        float wave = sin(dist * 25.0 - time * 5.0) * 0.5 + 0.5;
+        
+        // Buat efek fade out di tepi lingkaran
+        float alpha = 1.0 - smoothstep(0.45, 0.5, dist);
+        
+        // Gabungkan gelombang dan fade out
+        float finalAlpha = wave * alpha * opacity;
+        
+        gl_FragColor = vec4(color, finalAlpha);
+    }
+`;
+
+        const TOWER_TYPES = {
+            'gun': {
+                name: 'Gun Tower', baseCost: 100, color: 0xffa500, projectileSpeed: 40,
+                levels: [
+                    { range: 10, damage: 5, fireRate: 1.0, cost: 0 },
+                    { range: 12, damage: 10, fireRate: 0.8, cost: 75 },
+                    { range: 14, damage: 18, fireRate: 0.7, cost: 150 }
+                ]
+            },
+            'slow': {
+                name: 'Frost Tower', baseCost: 150, color: 0x00bfff, projectileSpeed: 30,
+                levels: [
+                    { range: 8, damage: 1, fireRate: 2.0, slow: 0.3, slowDuration: 2, cost: 0 },
+                    { range: 9, damage: 2, fireRate: 1.8, slow: 0.4, slowDuration: 2.5, cost: 100 },
+                    { range: 10, damage: 3, fireRate: 1.5, slow: 0.5, slowDuration: 3, cost: 200 }
+                ]
+            },
+            'splash': {
+                name: 'Rocket Tower', baseCost: 250, color: 0xff4500, projectileSpeed: 20,
+                levels: [
+                    { range: 15, damage: 20, fireRate: 3.0, splashRadius: 2, cost: 0 },
+                    { range: 17, damage: 35, fireRate: 2.8, splashRadius: 2.5, cost: 200 },
+                    { range: 20, damage: 50, fireRate: 2.5, splashRadius: 3, cost: 400 }
+                ]
+            }
+        };
+
+        const ENEMY_TYPES = {
+            'normal': { hp: 100, speed: 2, money: 5, color: 0x00ff00 },
+            'fast': { hp: 70, speed: 4, money: 7, color: 0xffff00 },
+            'heavy': { hp: 300, speed: 1.5, money: 15, color: 0xff0000 }
+        };
+
+        const MAX_WAVES = 250;
+        const TOWER_PLACEMENT_RADIUS = 2.5;
+        const PATH_PLACEMENT_RADIUS = 3.0;
+
+        class Game {
+            constructor() {
+                this.isPaused = true;
+                this.isGameOver = false;
+                this.health = 100;
+                this.money = 9999;
+                this.currentWave = 0;
+
+                this.setupScene();
+                this.setupLights();
+
+                this.audioManager = new AudioManager(this.camera);
+
+                this.pathfinder = new Pathfinder(this.scene);
+                this.uiManager = new UIManager(this);
+                this.waveGenerator = new WaveGenerator();
+                this.waveManager = new WaveManager(this);
+                this.enemyManager = new EnemyManager(this);
+                this.towerManager = new TowerManager(this);
+                this.projectileManager = new ProjectileManager(this);
+                this.particleManager = new ParticleManager(this.scene);
+
+                this.clock = new THREE.Clock();
+                this.animate();
+            }
+
+            setupScene() {
+                this.scene = new THREE.Scene();
+                this.scene.background = new THREE.Color(0x1a1a2e);
+                this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                this.camera.position.set(0, 40, 30);
+                this.camera.lookAt(0, 0, 0);
+                this.renderer = new THREE.WebGLRenderer({ antialias: true });
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                this.renderer.setPixelRatio(window.devicePixelRatio);
+                document.getElementById('game-container').appendChild(this.renderer.domElement);
+                this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+                this.controls.enableDamping = true;
+                this.controls.maxPolarAngle = Math.PI / 2.2;
+                const groundGeo = new THREE.PlaneGeometry(100, 100);
+                this.groundMat = new THREE.MeshStandardMaterial({ color: 0x2c3e50 });
+                this.ground = new THREE.Mesh(groundGeo, this.groundMat);
+                this.ground.rotation.x = -Math.PI / 2;
+                this.scene.add(this.ground);
+                window.addEventListener('resize', this.onWindowResize.bind(this));
+            }
+
+            setupLights() {
+                this.scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+                const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+                dirLight.position.set(50, 50, 50);
+                dirLight.castShadow = true;
+                this.scene.add(dirLight);
+            }
+
+            startGame(fromSave = false) {
+                if (!fromSave) this.resetGame();
+                this.isPaused = false;
+                this.isGameOver = false;
+                this.uiManager.showGameHUD();
+                this.uiManager.updateHUD();
+                this.audioManager.playMusic();
+            }
+
+            resetGame() {
+                this.health = 100;
+                this.money = 9999;
+                this.currentWave = 0;
+                this.enemyManager.reset();
+                this.towerManager.reset();
+                this.projectileManager.reset();
+                this.particleManager.reset();
+                this.audioManager.stopMusic();
+            }
+
+            animate() {
+                requestAnimationFrame(this.animate.bind(this));
+                const deltaTime = Math.min(this.clock.getDelta(), 0.05); // Cap delta time
+                if (!this.isPaused && !this.isGameOver) {
+                    this.update(deltaTime);
+                }
+                this.controls.update();
+                this.renderer.render(this.scene, this.camera);
+            }
+
+            update(deltaTime) {
+                this.waveManager.update(deltaTime);
+                this.enemyManager.update(deltaTime);
+                this.towerManager.update(deltaTime);
+                this.projectileManager.update(deltaTime);
+                this.particleManager.update(deltaTime);
+            }
+            pauseGame() {
+                if (this.isGameOver) return;
+                this.isPaused = true;
+                this.uiManager.showPauseMenu();
+                this.audioManager.pauseMusic();
+            }
+
+            resumeGame() {
+                this.isPaused = false;
+                this.uiManager.hidePauseMenu();
+                this.audioManager.resumeMusic();
+            }
+
+            loseHealth(amount) {
+                this.health -= amount;
+                if (this.health <= 0) {
+                    this.health = 0;
+                    this.gameOver();
+                }
+                this.uiManager.updateHUD();
+            }
+
+            addMoney(amount) {
+                this.money += amount;
+                this.uiManager.updateHUD();
+            }
+
+            spendMoney(amount) {
+                if (this.money >= amount) {
+                    this.money -= amount;
+                    this.uiManager.updateHUD();
+                    return true;
+                }
+                return false;
+            }
+
+            gameOver() {
+                this.isGameOver = true;
+                this.isPaused = true;
+                this.uiManager.showGameOver();
+            }
+
+            saveGame() {
+                const saveData = {
+                    health: this.health,
+                    money: this.money,
+                    currentWave: this.currentWave,
+                    towers: this.towerManager.towers.map(t => ({
+                        type: t.type,
+                        position: { x: t.mesh.position.x, y: t.mesh.position.y, z: t.mesh.position.z },
+                        level: t.level
+                    }))
+                };
+                localStorage.setItem('towerDefenseSave', JSON.stringify(saveData));
+                console.log('Game Saved');
+            }
+
+            loadGame() {
+                const savedData = localStorage.getItem('towerDefenseSave');
+                if (savedData) {
+                    const data = JSON.parse(savedData);
+                    this.resetGame();
+                    this.health = data.health;
+                    this.money = data.money;
+                    this.currentWave = data.currentWave;
+                    data.towers.forEach(tData => {
+                        this.towerManager.createTower(tData.type, new THREE.Vector3(tData.position.x, tData.position.y, tData.position.z), tData.level);
+                    });
+                    this.startGame(true);
+                    return true;
+                }
+                return false;
+            }
+
+            onWindowResize() {
+                this.camera.aspect = window.innerWidth / window.innerHeight;
+                this.camera.updateProjectionMatrix();
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+        }
+
+        class UIManager {
+            constructor(game) {
+                this.game = game;
+                this.mainMenu = document.getElementById('main-menu');
+                this.settingsMenu = document.getElementById('settings-menu');
+                this.gameHUD = document.getElementById('game-hud');
+                this.gameOverMenu = document.getElementById('game-over-menu');
+                this.pauseMenu = document.getElementById('pause-menu');
+                this.pauseBtn = document.getElementById('pause-btn');
+                this.resumeBtn = document.getElementById('resume-btn');
+                this.backToMenuFromPauseBtn = document.getElementById('back-to-menu-from-pause-btn');
+                this.autoWaveCheck = document.getElementById('auto-wave-check');
+                this.healthStat = document.getElementById('health-stat');
+                this.moneyStat = document.getElementById('money-stat');
+                this.waveStat = document.getElementById('wave-stat');
+                this.finalWaveStat = document.getElementById('final-wave-stat');
+                this.newGameBtn = document.getElementById('new-game-btn');
+                this.loadGameBtn = document.getElementById('load-game-btn');
+                this.settingsBtn = document.getElementById('settings-btn');
+                this.backToMainBtn = document.getElementById('back-to-main-btn');
+                this.fullscreenBtn = document.getElementById('fullscreen-btn');
+                this.startWaveBtn = document.getElementById('start-wave-btn');
+                this.restartGameBtn = document.getElementById('restart-game-btn');
+                this.backToMenuFromGOBtn = document.getElementById('back-to-menu-from-gameover-btn');
+                this.mobileControls = document.getElementById('mobile-controls');
+                this.towerActions = document.getElementById('tower-actions');
+                this.upgradeTowerBtn = document.getElementById('upgrade-tower-btn');
+                this.sellTowerBtn = document.getElementById('sell-tower-btn');
+                this.volumeSlider = document.getElementById('volume-slider');
+                this.graphicsSelect = document.getElementById('graphics-select');
+                this.setupEventListeners();
+                this.generateTowerButtons();
+                this.loadGameBtn.disabled = !localStorage.getItem('towerDefenseSave');
+                this.game.audioManager.setMasterVolume(parseFloat(this.volumeSlider.value));
+            }
+
+            setupEventListeners() {
+                this.mobileControls.onclick = () => {
+                    // Cek sederhana apakah ini perangkat sentuh
+                    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+                    if (isTouchDevice) {
+                        this.mobileControls.classList.toggle('expanded');
+                    }
+                };
+
+                // Tambahkan listener untuk menutup menu jika klik di luar
+                document.addEventListener('click', (event) => {
+                    if (!this.mobileControls.contains(event.target)) {
+                        this.mobileControls.classList.remove('expanded');
+                    }
+                });
+                this.newGameBtn.onclick = () => {
+                    if (typeof sdk !== 'undefined' && sdk.showBanner !== 'undefined') {
+                        sdk.showBanner();
+                    }
+                    this.game.startGame();
+                }
+                this.loadGameBtn.onclick = () => { 
+                    if (!this.game.loadGame()) alert('No game data saved!'); 
+                    if (typeof sdk !== 'undefined' && sdk.showBanner !== 'undefined') {
+                        sdk.showBanner();
+                    }
+                };
+                this.settingsBtn.onclick = () => this.showSettings();
+                this.backToMainBtn.onclick = () => this.showMainMenu();
+                this.restartGameBtn.onclick = () => this.game.startGame();
+                this.backToMenuFromGOBtn.onclick = () => this.showMainMenu();
+                this.pauseBtn.onclick = () => this.game.pauseGame();
+                this.resumeBtn.onclick = () => this.game.resumeGame();
+                this.backToMenuFromPauseBtn.onclick = () => {
+                    this.game.resumeGame(); // Hapus state pause
+                    this.showMainMenu();
+                    this.game.resetGame();
+                };
+                this.autoWaveCheck.onchange = (e) => this.game.waveManager.setAutoWave(e.target.checked);
+                this.startWaveBtn.onclick = () => this.game.waveManager.startNextWave();
+                this.upgradeTowerBtn.onclick = () => this.game.towerManager.upgradeSelectedTower();
+                this.sellTowerBtn.onclick = () => this.game.towerManager.sellSelectedTower();
+                this.fullscreenBtn.onclick = () => this.toggleFullscreen();
+                this.graphicsSelect.onchange = (e) => this.setGraphicsQuality(e.target.value);
+                this.volumeSlider.oninput = (e) => this.game.audioManager.setMasterVolume(parseFloat(e.target.value));
+            }
+            showPauseMenu() {
+                this.pauseMenu.classList.remove('hidden');
+            }
+
+            hidePauseMenu() {
+                this.pauseMenu.classList.add('hidden');
+            }
+
+            showMainMenu() {
+                this.mainMenu.classList.remove('hidden');
+                this.settingsMenu.classList.add('hidden');
+                this.gameHUD.classList.add('hidden');
+                this.gameOverMenu.classList.add('hidden');
+                this.loadGameBtn.disabled = !localStorage.getItem('towerDefenseSave');
+            }
+
+            showGameHUD() {
+                this.mainMenu.classList.add('hidden');
+                this.settingsMenu.classList.add('hidden');
+                this.gameHUD.classList.remove('hidden');
+                this.gameOverMenu.classList.add('hidden');
+            }
+
+            showSettings() {
+                this.mainMenu.classList.add('hidden');
+                this.settingsMenu.classList.remove('hidden');
+            }
+
+            showGameOver() {
+                this.gameOverMenu.classList.remove('hidden');
+                this.gameHUD.classList.add('hidden');
+                this.finalWaveStat.textContent = this.game.currentWave;
+            }
+
+            updateHUD() {
+                this.healthStat.textContent = this.game.health;
+                this.moneyStat.textContent = this.game.money;
+                this.waveStat.textContent = `${this.game.currentWave} / ${MAX_WAVES}`;
+                const waveInProgress = this.game.waveManager.isWaveActive;
+                const allWavesCompleted = this.game.currentWave >= MAX_WAVES;
+                this.startWaveBtn.disabled = waveInProgress || allWavesCompleted;
+                this.startWaveBtn.textContent = allWavesCompleted ? "Finished" : "Start Wave";
+            }
+
+            // GANTI FUNGSI LAMA DENGAN INI
+            generateTowerButtons() {
+                this.mobileControls.innerHTML = ''; // Kosongkan dulu
+                Object.entries(TOWER_TYPES).forEach(([key, config]) => {
+                    const btn = document.createElement('div');
+                    btn.className = 'tower-btn';
+                    btn.dataset.type = key;
+
+                    // Struktur HTML baru dengan pembungkus .tower-details
+                    btn.innerHTML = `
+            <div class="tower-icon" style="background-color: #${new THREE.Color(config.color).getHexString()}"></div>
+            <div class="tower-details">
+                <div>${config.name}</div>
+                <div class="tower-cost">💰 ${config.baseCost}</div>
+            </div>
+        `;
+
+                    btn.onclick = (event) => {
+                        // Penting: Hentikan event agar tidak trigger listener di container
+                        event.stopPropagation();
+                        this.game.towerManager.selectTowerType(key);
+                    };
+                    this.mobileControls.appendChild(btn);
+                });
+            }
+
+            updateTowerButtons(selectedType) {
+                document.querySelectorAll('.tower-btn').forEach(btn => {
+                    btn.classList.toggle('selected', btn.dataset.type === selectedType);
+                });
+            }
+
+            showTowerActions(tower) {
+                this.towerActions.classList.remove('hidden');
+                const nextLevel = tower.level + 1;
+                const upgradeConfig = TOWER_TYPES[tower.type].levels[nextLevel];
+                if (upgradeConfig) {
+                    this.upgradeTowerBtn.disabled = this.game.money < upgradeConfig.cost;
+                    this.upgradeTowerBtn.innerHTML = `Upgrade<br>(💰 ${upgradeConfig.cost})`;
+                } else {
+                    this.upgradeTowerBtn.disabled = true;
+                    this.upgradeTowerBtn.innerHTML = 'Max Level';
+                }
+                const sellValue = Math.floor(tower.totalCost * 0.7);
+                this.sellTowerBtn.innerHTML = `Sell<br>(💰 ${sellValue})`;
+            }
+
+            hideTowerActions() {
+                this.towerActions.classList.add('hidden');
+            }
+
+            toggleFullscreen() {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(err => alert(`Gagal fullscreen: ${err.message}`));
+                } else {
+                    document.exitFullscreen();
+                }
+            }
+
+            setGraphicsQuality(quality) {
+                let ratio;
+                switch (quality) {
+                    case 'high': ratio = window.devicePixelRatio; break;
+                    case 'medium': ratio = Math.max(1, window.devicePixelRatio / 1.5); break;
+                    case 'low': ratio = 1; break;
+                }
+                this.game.renderer.setPixelRatio(ratio);
+            }
+        }
+
+
+        class Pathfinder {
+            constructor(scene) {
+                this.scene = scene;
+                this.waypoints = [
+                    new THREE.Vector3(-45, 0.5, 0), new THREE.Vector3(-30, 0.5, 0),
+                    new THREE.Vector3(-30, 0.5, 20), new THREE.Vector3(10, 0.5, 20),
+                    new THREE.Vector3(10, 0.5, -20), new THREE.Vector3(30, 0.5, -20),
+                    new THREE.Vector3(30, 0.5, 0), new THREE.Vector3(45, 0.5, 0),
+                ];
+                this.curve = new THREE.CatmullRomCurve3(this.waypoints);
+                this.pathPoints = this.curve.getPoints(100);
+                this.visualizePath();
+            }
+
+            getPath() { return this.waypoints; }
+            getPathPoints() { return this.pathPoints; }
+
+            visualizePath() {
+                const tubeGeo = new THREE.TubeGeometry(this.curve, 100, 0.5, 8, false);
+                const tubeMat = new THREE.MeshBasicMaterial({ color: 0x445566, transparent: true, opacity: 0.5 });
+                this.scene.add(new THREE.Mesh(tubeGeo, tubeMat));
+            }
+        }
+
+        class WaveGenerator {
+            generate(level) {
+                const config = { normal: 0, fast: 0, heavy: 0 };
+                const totalEnemies = 10 + Math.floor(level * 1.5);
+                for (let i = 0; i < totalEnemies; i++) {
+                    const rand = Math.random() * 100;
+                    if (level > 20 && rand < (10 + level * 0.2)) config.heavy++;
+                    else if (level > 5 && rand < (20 + level * 0.3)) config.fast++;
+                    else config.normal++;
+                }
+                return config;
+            }
+        }
+
+        class WaveManager {
+            constructor(game) {
+                this.game = game;
+                this.isWaveActive = false;
+                this.spawnQueue = [];
+                this.spawnTimer = 0;
+                this.spawnInterval = 0.5;
+                this.isAutoWaveActive = false;
+            }
+            setAutoWave(isActive) {
+                this.isAutoWaveActive = isActive;
+            }
+
+            startNextWave() {
+                if (this.isWaveActive || this.game.currentWave >= MAX_WAVES) return;
+                this.game.currentWave++;
+                this.isWaveActive = true;
+                this.game.uiManager.updateHUD();
+                this.game.towerManager.deselectTower();
+                const waveConfig = this.game.waveGenerator.generate(this.game.currentWave);
+                this.spawnQueue = [];
+                for (const type in waveConfig) {
+                    for (let i = 0; i < waveConfig[type]; i++) {
+                        this.spawnQueue.push(type);
+                    }
+                }
+                this.spawnQueue.sort(() => Math.random() - 0.5);
+            }
+
+            update(deltaTime) {
+                if (!this.isWaveActive) return;
+                this.spawnTimer -= deltaTime;
+                if (this.spawnTimer <= 0 && this.spawnQueue.length > 0) {
+                    const enemyType = this.spawnQueue.shift();
+                    const healthMultiplier = 1 + (this.game.currentWave - 1) * 0.15;
+                    this.game.enemyManager.spawnEnemy(enemyType, healthMultiplier);
+                    this.spawnTimer = Math.max(0.1, this.spawnInterval - this.game.currentWave * 0.002);
+                }
+
+                if (this.spawnQueue.length === 0 && this.game.enemyManager.enemies.length === 0) {
+                    this.isWaveActive = false;
+                    this.game.uiManager.updateHUD();
+                    this.game.saveGame();
+                    if (this.isAutoWaveActive) {
+                        // Beri jeda sedikit sebelum wave berikutnya agar tidak terlalu instan
+                        setTimeout(() => {
+                            if (this.isAutoWaveActive && !this.game.isGameOver) {
+                                this.startNextWave();
+                            }
+                        }, 1000);
+                    }
+                }
+            }
+        }
+
+        class Enemy {
+            constructor(type, path, scene, healthMultiplier = 1) {
+                this.config = ENEMY_TYPES[type];
+                this.path = path;
+                this.scene = scene;
+                this.uuid = THREE.MathUtils.generateUUID();
+
+                this.maxHealth = Math.ceil(this.config.hp * healthMultiplier);
+                this.health = this.maxHealth;
+                this.speed = this.config.speed;
+                this.moneyValue = this.config.money;
+
+                this.currentWaypoint = 1;
+                this.slowTimer = 0;
+                this.isSlowed = false;
+                this.isDead = false;
+
+                this.createMesh();
+                this.mesh.position.copy(this.path[0]);
+            }
+
+            createMesh() {
+                let geometry;
+                if (this.config.speed > 3) geometry = new THREE.ConeGeometry(0.8, 1.5, 4);
+                else if (this.config.hp > 200) geometry = new THREE.BoxGeometry(1.5, 1.5, 1.5);
+                else geometry = new THREE.IcosahedronGeometry(0.7, 0);
+                const material = new THREE.MeshStandardMaterial({ color: this.config.color });
+                this.mesh = new THREE.Mesh(geometry, material);
+                this.scene.add(this.mesh);
+            }
+
+            update(deltaTime) {
+                if (this.currentWaypoint >= this.path.length) return;
+                if (this.slowTimer > 0) {
+                    this.slowTimer -= deltaTime;
+                    if (this.slowTimer <= 0) this.isSlowed = false;
+                }
+                const currentSpeed = this.isSlowed ? this.speed * (1 - this.slowFactor) : this.speed;
+                const target = this.path[this.currentWaypoint];
+                const direction = target.clone().sub(this.mesh.position).normalize();
+                const distance = this.mesh.position.distanceTo(target);
+                if (distance < currentSpeed * deltaTime) {
+                    this.mesh.position.copy(target);
+                    this.currentWaypoint++;
+                } else {
+                    this.mesh.position.add(direction.multiplyScalar(currentSpeed * deltaTime));
+                }
+            }
+
+            takeDamage(amount) {
+                if (this.isDead) return false;
+                this.health -= amount;
+                if (this.health <= 0) {
+                    this.isDead = true;
+                    return true;
+                }
+                return false;
+            }
+
+            applySlow(factor, duration) {
+                this.isSlowed = true;
+                this.slowFactor = Math.max(this.slowFactor || 0, factor);
+                this.slowTimer = Math.max(this.slowTimer, duration);
+            }
+
+            destroy() {
+                this.scene.remove(this.mesh);
+                this.mesh.geometry.dispose();
+                this.mesh.material.dispose();
+            }
+        }
+
+        class EnemyManager {
+            constructor(game) {
+                this.game = game;
+                this.enemies = [];
+            }
+
+            spawnEnemy(type, healthMultiplier) {
+                const enemy = new Enemy(type, this.game.pathfinder.getPath(), this.game.scene, healthMultiplier);
+                this.enemies.push(enemy);
+            }
+
+            update(deltaTime) {
+                for (let i = this.enemies.length - 1; i >= 0; i--) {
+                    const enemy = this.enemies[i];
+                    enemy.update(deltaTime);
+                    if (enemy.currentWaypoint >= enemy.path.length) {
+                        this.game.loseHealth(10);
+                        enemy.destroy();
+                        this.enemies.splice(i, 1);
+                    }
+                }
+            }
+
+            removeEnemy(enemy) {
+                const index = this.enemies.indexOf(enemy);
+                if (index > -1) {
+                    this.game.addMoney(enemy.moneyValue);
+                    enemy.destroy();
+                    this.enemies.splice(index, 1);
+                }
+            }
+
+            reset() {
+                this.enemies.forEach(e => e.destroy());
+                this.enemies = [];
+            }
+        }
+
+        class Tower {
+            constructor(type, position, scene, level = 0) {
+                this.type = type;
+                this.scene = scene;
+                this.level = -1;
+                this.totalCost = 0;
+                this.target = null;
+                this.fireCooldown = 0;
+                this.recoil = 0;
+                this.config = TOWER_TYPES[type];
+                this.createMesh(position);
+                this.upgrade(level);
+            }
+            setHover(isHovered) {
+                // Kita akan ubah warna emissive pada material kepala menara
+                const headMaterial = this.head.material;
+                if (isHovered) {
+                    headMaterial.emissive.setHex(0x555555); // Beri sedikit cahaya
+                } else {
+                    headMaterial.emissive.setHex(0x000000); // Kembali ke normal (tidak ada cahaya)
+                }
+            }
+
+            createMesh(position) {
+                const base = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 0.5, 16), new THREE.MeshStandardMaterial({ color: 0x555555 }));
+                base.position.copy(position);
+                let headGeo;
+                if (this.type === 'gun') headGeo = new THREE.BoxGeometry(0.8, 2, 0.8);
+                else if (this.type === 'slow') headGeo = new THREE.SphereGeometry(1, 16, 16);
+                else headGeo = new THREE.CylinderGeometry(0.2, 1, 2, 8);
+                this.head = new THREE.Mesh(headGeo, new THREE.MeshStandardMaterial({ color: this.config.color }));
+                this.head.position.y = 1.5;
+                base.add(this.head);
+                this.mesh = base;
+                this.scene.add(this.mesh);
+            }
+
+            upgrade(toLevel = this.level + 1) {
+                if (toLevel >= this.config.levels.length) return false;
+                const levelConfig = this.config.levels[toLevel];
+                this.level = toLevel;
+                this.range = levelConfig.range;
+                this.damage = levelConfig.damage;
+                this.fireRate = levelConfig.fireRate;
+                this.splashRadius = levelConfig.splashRadius || 0;
+                this.slowFactor = levelConfig.slow || 0;
+                this.slowDuration = levelConfig.slowDuration || 0;
+                this.upgradeCost = this.config.levels[toLevel + 1]?.cost || Infinity;
+                this.totalCost += (toLevel === 0) ? this.config.baseCost : levelConfig.cost;
+                return true;
+            }
+
+            update(deltaTime, enemies) {
+                this.fireCooldown -= deltaTime;
+                if (this.recoil > 0) {
+                    this.recoil = Math.max(0, this.recoil - deltaTime * 5);
+                    this.head.position.z = this.recoil;
+                }
+                if (this.target && (this.target.isDead || this.mesh.position.distanceTo(this.target.mesh.position) > this.range)) {
+                    this.target = null;
+                }
+                if (!this.target) this.findTarget(enemies);
+                if (this.target) {
+                    this.head.lookAt(this.target.mesh.position.clone().setY(this.head.getWorldPosition(new THREE.Vector3()).y));
+                    if (this.fireCooldown <= 0) {
+                        this.fire();
+                        this.fireCooldown = this.fireRate;
+                    }
+                }
+            }
+
+            findTarget(enemies) {
+                let closestDist = this.range;
+                this.target = null;
+                for (const enemy of enemies) {
+                    if (enemy.isDead) continue;
+                    const dist = this.mesh.position.distanceTo(enemy.mesh.position);
+                    if (dist <= closestDist) {
+                        closestDist = dist;
+                        this.target = enemy;
+                    }
+                }
+            }
+
+            fire() {
+                if (!this.target) return;
+                this.recoil = 0.3;
+                const startPos = this.head.getWorldPosition(new THREE.Vector3());
+                game.projectileManager.createProjectile(this, startPos, this.target);
+            }
+
+            destroy() {
+                this.scene.remove(this.mesh);
+            }
+        }
+
+        // GANTI SELURUH KELAS TOWERMANAGER DENGAN INI
+
+        class TowerManager {
+            constructor(game) {
+                this.game = game;
+                this.towers = [];
+                this.selectedTowerType = null;
+                this.selectedTower = null;
+
+                // MODIFIKASI: Gunakan material shader untuk placementIndicator
+                this.placementIndicator = new THREE.Mesh(
+                    new THREE.CircleGeometry(TOWER_PLACEMENT_RADIUS, 64), // Gunakan Circle agar cocok dengan shader
+                    new THREE.ShaderMaterial({
+                        uniforms: {
+                            time: { value: 0.0 },
+                            color: { value: new THREE.Color(0x00ff00) },
+                            opacity: { value: 0.7 }
+                        },
+                        vertexShader: vertexShader,
+                        fragmentShader: fragmentShader,
+                        transparent: true,
+                        side: THREE.DoubleSide
+                    })
+                );
+                this.placementIndicator.rotation.x = -Math.PI / 2;
+                this.placementIndicator.position.y = 0.05; // Sedikit di atas lantai
+                this.placementIndicator.visible = false;
+                this.game.scene.add(this.placementIndicator);
+
+                // BARU: Buat grid visual untuk area yang tidak valid
+                this.invalidAreaGrid = this.createInvalidAreaGrid();
+                this.invalidAreaGrid.visible = false;
+                this.game.scene.add(this.invalidAreaGrid);
+
+                // --- Sisa properti tetap sama ---
+                this.rangeIndicator = new THREE.Mesh(
+                    new THREE.CircleGeometry(1, 64),
+                    new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.25, side: THREE.DoubleSide })
+                );
+                this.rangeIndicator.rotation.x = -Math.PI / 2;
+                this.rangeIndicator.position.y = 0.1;
+                this.rangeIndicator.visible = false;
+                this.game.scene.add(this.rangeIndicator);
+
+                this.raycaster = new THREE.Raycaster();
+                this.mouse = new THREE.Vector2();
+                this.hoveredTower = null;
+                window.addEventListener('pointermove', this.onPointerMove.bind(this));
+                window.addEventListener('pointerdown', this.onPointerDown.bind(this));
+            }
+
+            // BARU: Fungsi untuk membuat grid area tidak valid (merah)
+            createInvalidAreaGrid() {
+                const material = new THREE.LineBasicMaterial({
+                    color: 0xff0000,
+                    transparent: true,
+                    opacity: 0.35
+                });
+                const points = [];
+                const gridSize = 100;
+                const step = 1; // Jarak antar garis
+
+                for (let i = -gridSize / 2; i <= gridSize / 2; i += step) {
+                    points.push(new THREE.Vector3(-gridSize / 2, 0.05, i));
+                    points.push(new THREE.Vector3(gridSize / 2, 0.05, i));
+                    points.push(new THREE.Vector3(i, 0.05, -gridSize / 2));
+                    points.push(new THREE.Vector3(i, 0.05, gridSize / 2));
+                }
+
+                const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                const grid = new THREE.LineSegments(geometry, material);
+
+                // BARU: Buat "topeng" (mask) untuk area jalan
+                const pathPoints = this.game.pathfinder.getPathPoints();
+                const pathShape = new THREE.Shape();
+                pathShape.moveTo(pathPoints[0].x, pathPoints[0].z);
+                for (let i = 1; i < pathPoints.length; i++) {
+                    pathShape.lineTo(pathPoints[i].x, pathPoints[i].z);
+                }
+
+                // Gunakan TubeGeometry sebagai dasar stencil/mask
+                const tubeGeo = new THREE.TubeGeometry(this.game.pathfinder.curve, 100, PATH_PLACEMENT_RADIUS, 12, false);
+                const maskMaterial = new THREE.MeshBasicMaterial({
+                    color: 0xff0000,
+                    colorWrite: false, // Jangan gambar warna, hanya tulis ke stencil buffer
+                    depthWrite: false,
+                    stencilWrite: true,
+                    stencilFunc: THREE.AlwaysStencilFunc,
+                    stencilRef: 1,
+                    stencilZPass: THREE.ReplaceStencilOp,
+                });
+
+                const pathMask = new THREE.Mesh(tubeGeo, maskMaterial);
+                pathMask.position.y = 0.05;
+                grid.add(pathMask); // Jadikan mask anak dari grid
+
+                // Atur material grid agar menggunakan stencil test
+                material.stencilWrite = true;
+                material.stencilRef = 0;
+                material.stencilFunc = THREE.NotEqualStencilFunc;
+                material.stencilZPass = THREE.ReplaceStencilOp;
+
+                return grid;
+            }
+
+            selectTowerType(type) {
+                this.deselectTower(); // Pastikan tidak ada tower terpilih
+                const wasSameType = this.selectedTowerType === type;
+                this.selectedTowerType = wasSameType ? null : type;
+
+                // MODIFIKASI: Tampilkan/sembunyikan kedua indikator
+                this.placementIndicator.visible = !!this.selectedTowerType;
+                this.invalidAreaGrid.visible = !!this.selectedTowerType;
+
+                this.game.uiManager.updateTowerButtons(this.selectedTowerType);
+
+                // BARU: Jika membatalkan pilihan, tutup juga menu tower
+                if (!this.selectedTowerType) {
+                    const controls = document.getElementById('mobile-controls');
+                    if (controls) controls.classList.remove('expanded');
+                }
+            }
+
+            isPlacementValid(position) {
+                for (const tower of this.towers) {
+                    if (tower.mesh.position.distanceTo(position) < TOWER_PLACEMENT_RADIUS) return false;
+                }
+                for (const point of this.game.pathfinder.getPathPoints()) {
+                    if (point.distanceTo(position) < PATH_PLACEMENT_RADIUS) return false;
+                }
+                return true;
+            }
+
+            onPointerMove(event) {
+                this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+                this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+                this.raycaster.setFromCamera(this.mouse, this.game.camera);
+
+                // MODIFIKASI: Logika untuk placement indicator
+                if (this.selectedTowerType) {
+                    const intersects = this.raycaster.intersectObject(this.game.ground);
+                    if (intersects.length > 0) {
+                        const pos = intersects[0].point;
+                        this.placementIndicator.position.set(pos.x, 0.05, pos.z);
+
+                        // Ganti warna shader berdasarkan validitas
+                        const isValid = this.isPlacementValid(pos);
+                        const targetColor = isValid ? 0x00ff00 : 0xff0000;
+                        this.placementIndicator.material.uniforms.color.value.setHex(targetColor);
+                    }
+                    // ... sisa logika hover tetap sama ...
+                    return;
+                }
+                // ... sisa fungsi onPointerMove tetap sama ...
+                const towerMeshes = this.towers.map(t => t.mesh);
+                if (towerMeshes.length === 0) {
+                    if (this.hoveredTower) {
+                        this.hoveredTower.setHover(false);
+                        this.hoveredTower = null;
+                    }
+                    return;
+                }
+
+                const intersects = this.raycaster.intersectObjects(towerMeshes, true);
+
+                if (intersects.length > 0) {
+                    const rootMesh = intersects[0].object.parent.type === 'Scene' ? intersects[0].object : intersects[0].object.parent;
+                    const tower = this.towers.find(t => t.mesh.uuid === rootMesh.uuid);
+
+                    if (this.hoveredTower && this.hoveredTower !== tower) {
+                        this.hoveredTower.setHover(false);
+                    }
+
+                    if (tower) {
+                        this.hoveredTower = tower;
+                        this.hoveredTower.setHover(true);
+                    }
+                } else {
+                    if (this.hoveredTower) {
+                        this.hoveredTower.setHover(false);
+                        this.hoveredTower = null;
+                    }
+                }
+            }
+
+            onPointerDown(event) {
+                if (event.target !== this.game.renderer.domElement) return;
+                this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+                this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+                this.raycaster.setFromCamera(this.mouse, this.game.camera);
+
+                if (this.selectedTowerType) {
+                    const intersects = this.raycaster.intersectObject(this.game.ground);
+                    if (intersects.length > 0) this.placeTower(this.selectedTowerType, intersects[0].point);
+                } else {
+                    const towerMeshes = this.towers.map(t => t.mesh);
+                    if (towerMeshes.length === 0) { this.deselectTower(); return; }
+                    const intersects = this.raycaster.intersectObjects(towerMeshes, true);
+                    if (intersects.length > 0) {
+                        const rootMesh = intersects[0].object.parent.type === 'Scene' ? intersects[0].object : intersects[0].object.parent;
+                        const tower = this.towers.find(t => t.mesh.uuid === rootMesh.uuid);
+                        if (tower) this.selectTower(tower);
+                    } else {
+                        this.deselectTower();
+                    }
+                }
+            }
+
+            placeTower(type, position) {
+                const config = TOWER_TYPES[type];
+                if (this.isPlacementValid(position) && this.game.spendMoney(config.baseCost)) {
+                    this.createTower(type, position);
+                    // MODIFIKASI: Jangan langsung batalkan pilihan, biarkan user membangun lagi
+                    // this.selectTowerType(null); 
+                }
+            }
+
+            createTower(type, position, level = 0) {
+                const tower = new Tower(type, position, this.game.scene, level);
+                this.towers.push(tower);
+                return tower;
+            }
+
+            selectTower(tower) {
+                this.selectTowerType(null); // Batalkan mode placement jika ada
+                this.selectedTower = tower;
+                this.rangeIndicator.position.set(tower.mesh.position.x, 0.1, tower.mesh.position.z);
+                const baseScale = tower.range;
+                this.rangeIndicator.scale.set(baseScale, baseScale, baseScale);
+                this.rangeIndicator.visible = true;
+                this.game.uiManager.showTowerActions(tower);
+            }
+
+            deselectTower() {
+                if (this.selectedTower) {
+                    this.selectedTower = null;
+                    this.rangeIndicator.visible = false;
+                    this.game.uiManager.hideTowerActions();
+                }
+            }
+
+            upgradeSelectedTower() {
+                if (!this.selectedTower) return;
+                if (this.game.spendMoney(this.selectedTower.upgradeCost)) {
+                    this.selectedTower.upgrade();
+                    this.selectTower(this.selectedTower);
+                }
+            }
+
+            sellSelectedTower() {
+                if (!this.selectedTower) return;
+                const sellValue = Math.floor(this.selectedTower.totalCost * 0.7);
+                this.game.addMoney(sellValue);
+                const index = this.towers.indexOf(this.selectedTower);
+                if (index > -1) {
+                    this.selectedTower.destroy();
+                    this.towers.splice(index, 1);
+                }
+                this.deselectTower();
+            }
+
+            update(deltaTime) {
+                // MODIFIKASI: Animasikan shader
+                if (this.placementIndicator.visible) {
+                    this.placementIndicator.material.uniforms.time.value += deltaTime;
+                }
+
+                this.towers.forEach(tower => tower.update(deltaTime, this.game.enemyManager.enemies));
+
+                if (this.selectedTower) {
+                    const time = this.game.clock.elapsedTime;
+                    const pulseSpeed = 3;
+                    const pulseAmount = 0.05;
+                    const baseScale = this.selectedTower.range;
+                    const scale = baseScale + (Math.sin(time * pulseSpeed) * (baseScale * pulseAmount));
+                    this.rangeIndicator.scale.set(scale, scale, scale);
+                }
+            }
+
+            reset() {
+                this.towers.forEach(t => t.destroy());
+                this.towers = [];
+                this.deselectTower();
+                this.selectTowerType(null);
+            }
+        }
+
+        class Projectile {
+            constructor(tower, startPos, target, scene) {
+                this.tower = tower;
+                this.target = target;
+                this.scene = scene;
+                this.speed = tower.config.projectileSpeed;
+                this.hasHit = false;
+
+                const geo = new THREE.SphereGeometry(this.tower.type === 'splash' ? 0.5 : 0.2, 8, 8);
+                const mat = new THREE.MeshBasicMaterial({ color: tower.config.color });
+                this.mesh = new THREE.Mesh(geo, mat);
+                this.mesh.position.copy(startPos);
+                scene.add(this.mesh);
+            }
+
+            update(deltaTime) {
+                if (this.hasHit || this.target.isDead) return;
+                const targetPos = this.target.mesh.position.clone().add(new THREE.Vector3(0, 0.5, 0));
+                const direction = targetPos.sub(this.mesh.position).normalize();
+                this.mesh.position.add(direction.multiplyScalar(this.speed * deltaTime));
+
+                if (this.mesh.position.distanceTo(this.target.mesh.position) < 1.0) {
+                    this.hasHit = true;
+                }
+            }
+
+            destroy() {
+                this.scene.remove(this.mesh);
+                this.mesh.geometry.dispose();
+                this.mesh.material.dispose();
+            }
+        }
+
+        class ProjectileManager {
+            constructor(game) {
+                this.game = game;
+                this.projectiles = [];
+            }
+
+            createProjectile(tower, startPos, target) {
+                const projectile = new Projectile(tower, startPos, target, this.game.scene);
+                this.projectiles.push(projectile);
+            }
+
+            update(deltaTime) {
+                for (let i = this.projectiles.length - 1; i >= 0; i--) {
+                    const p = this.projectiles[i];
+                    p.update(deltaTime);
+
+                    if (p.hasHit || p.target.isDead) {
+                        if (p.hasHit) this.handleImpact(p);
+                        p.destroy();
+                        this.projectiles.splice(i, 1);
+                    }
+                }
+            }
+
+            handleImpact(projectile) {
+                const { tower, target } = projectile;
+                this.game.audioManager.playImpactSFX();
+                this.game.particleManager.createExplosion(projectile.mesh.position, tower.config.color, tower.splashRadius > 0 ? 15 : 5);
+
+                if (tower.splashRadius > 0) {
+                    this.game.enemyManager.enemies.forEach(enemy => {
+                        if (enemy.isDead) return;
+                        if (projectile.mesh.position.distanceTo(enemy.mesh.position) <= tower.splashRadius) {
+                            if (enemy.takeDamage(tower.damage)) {
+                                this.game.enemyManager.removeEnemy(enemy);
+                            }
+                            if (tower.slowFactor > 0) enemy.applySlow(tower.slowFactor, tower.slowDuration);
+                        }
+                    });
+                } else {
+                    if (target.takeDamage(tower.damage)) {
+                        this.game.enemyManager.removeEnemy(target);
+                    }
+                    if (tower.slowFactor > 0) target.applySlow(tower.slowFactor, tower.slowDuration);
+                }
+            }
+
+            reset() {
+                this.projectiles.forEach(p => p.destroy());
+                this.projectiles = [];
+            }
+        }
+        class AudioManager {
+            constructor(camera) {
+                this.listener = new THREE.AudioListener();
+                camera.add(this.listener);
+
+                this.music = new THREE.Audio(this.listener);
+                this.impactSfx = new THREE.Audio(this.listener);
+
+                const audioLoader = new THREE.AudioLoader();
+
+                // URL Musik dan SFX
+                const musicUrl = 'https://assets.mixkit.co/music/839/839.mp3';
+                const sfxUrl = 'https://assets.mixkit.co/active_storage/sfx/3169/3169.wav';
+
+                // Volume dasar untuk balancing
+                this.baseMusicVolume = 0.5;
+                this.baseSfxVolume = 0.8;
+                this.masterVolume = 0.5; // Default dari slider
+
+                audioLoader.load(musicUrl, (buffer) => {
+                    this.music.setBuffer(buffer);
+                    this.music.setLoop(true);
+                    this.music.setVolume(this.baseMusicVolume * this.masterVolume);
+                });
+
+                audioLoader.load(sfxUrl, (buffer) => {
+                    this.impactSfx.setBuffer(buffer);
+                    this.impactSfx.setVolume(this.baseSfxVolume * this.masterVolume);
+                });
+            }
+
+            playMusic() {
+                if (!this.music.isPlaying && this.music.buffer) {
+                    this.music.play();
+                }
+            }
+
+            stopMusic() {
+                if (this.music.isPlaying) {
+                    this.music.stop();
+                }
+            }
+            pauseMusic() {
+                if (this.music.isPlaying) {
+                    this.music.pause();
+                }
+            }
+
+            resumeMusic() {
+                if (!this.music.isPlaying && this.music.buffer) {
+                    this.music.play();
+                }
+            }
+
+
+            playImpactSFX() {
+                if (this.impactSfx.isPlaying) {
+                    this.impactSfx.stop();
+                }
+                if (this.impactSfx.buffer) {
+                    this.impactSfx.play();
+                }
+            }
+
+            setMasterVolume(volume) {
+                this.masterVolume = volume;
+                this.listener.setMasterVolume(volume);
+                // Optional: Jika ingin kontrol volume individual lebih presisi
+                this.music.setVolume(this.baseMusicVolume * this.masterVolume);
+                this.impactSfx.setVolume(this.baseSfxVolume * this.masterVolume);
+            }
+        }
+
+        class ParticleManager {
+            constructor(scene) {
+                this.scene = scene;
+                this.particles = [];
+            }
+
+            createExplosion(position, color, count) {
+                for (let i = 0; i < count; i++) {
+                    const particle = {
+                        mesh: new THREE.Mesh(
+                            new THREE.SphereGeometry(0.1, 4, 4),
+                            new THREE.MeshBasicMaterial({ color: color, transparent: true })
+                        ),
+                        velocity: new THREE.Vector3(
+                            (Math.random() - 0.5) * 5,
+                            (Math.random() - 0.5) * 5,
+                            (Math.random() - 0.5) * 5
+                        ),
+                        lifespan: Math.random() * 0.5 + 0.2
+                    };
+                    particle.mesh.position.copy(position);
+                    this.scene.add(particle.mesh);
+                    this.particles.push(particle);
+                }
+            }
+
+            update(deltaTime) {
+                for (let i = this.particles.length - 1; i >= 0; i--) {
+                    const p = this.particles[i];
+                    p.lifespan -= deltaTime;
+                    if (p.lifespan <= 0) {
+                        this.scene.remove(p.mesh);
+                        p.mesh.geometry.dispose();
+                        p.mesh.material.dispose();
+                        this.particles.splice(i, 1);
+                    } else {
+                        p.mesh.position.add(p.velocity.clone().multiplyScalar(deltaTime));
+                        p.mesh.material.opacity = p.lifespan * 2;
+                    }
+                }
+            }
+
+            reset() {
+                for (let i = this.particles.length - 1; i >= 0; i--) {
+                    const p = this.particles[i];
+                    this.scene.remove(p.mesh);
+                    p.mesh.geometry.dispose();
+                    p.mesh.material.dispose();
+                    this.particles.splice(i, 1);
+                }
+            }
+        }
+
+        const game = new Game();
+    </script>
+</body>
+
+</html>

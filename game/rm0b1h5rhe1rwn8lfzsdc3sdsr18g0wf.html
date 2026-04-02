@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Brick Breaker</title>
+    <!-- Phaser.js framework -->
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+    <!-- Tone.js for sound -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            background-color: #1a1a1a;
+            overflow: hidden; /* Prevent scrollbars */
+            font-family: 'Arial', sans-serif;
+        }
+        #game-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        canvas {
+            /* Box shadow and border are maintained for aesthetics */
+            border: 2px solid #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 20px #fff;
+        }
+    </style>
+</head>
+<body>
+<script type="text/javascript">
+   window.SDK_OPTIONS = {
+      gameId: "rm0b1h5rhe1rwn8lfzsdc3sdsr18g0wf",
+      onEvent: function (a) {
+         switch (a.name) {
+            case "SDK_GAME_PAUSE":
+               // pause game logic / mute audio
+               break;
+            case "SDK_GAME_START":
+               // advertisement done, resume game logic and unmute audio
+               break;
+            case "SDK_READY":
+               // when sdk is ready
+               break;
+         }
+      }
+   };
+(function (a, b, c) {
+   var d = a.getElementsByTagName(b)[0];
+   a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+})(document, "script", "gamemonetize-sdk"); 
+</script>
+    <div id="game-container"></div>
+    <script>
+    const GAME_WIDTH = 450;
+    const GAME_HEIGHT = 800;
+
+    // Helper function to create the starfield background
+    function createStarfield(scene) {
+        if (!scene.textures.exists('star')) {
+            const starGraphics = scene.make.graphics();
+            starGraphics.fillStyle(0xffffff);
+            starGraphics.fillCircle(1, 1, 1);
+            starGraphics.generateTexture('star', 2, 2);
+            starGraphics.destroy();
+        }
+
+        scene.add.particles('star', {
+            x: { min: 0, max: GAME_WIDTH },
+            y: { min: 0, max: GAME_HEIGHT },
+            lifespan: { min: 1000, max: 3000 },
+            speed: 0,
+            scale: { start: 0.2, end: 0.6, ease: 'Sine.easeInOut' },
+            alpha: { start: 1, end: 0, ease: 'Sine.easeInOut' },
+            blendMode: 'ADD',
+            frequency: 100
+        });
+    }
+
+    // Helper function for creating styled buttons, can be used across scenes
+    function createCuteButton(scene, x, y, text, onClick, width = 240, height = 70) {
+        const buttonContainer = scene.add.container(x, y);
+
+        const buttonBg = scene.add.graphics();
+        buttonBg.fillStyle(0x333333, 1);
+        buttonBg.fillRoundedRect(-width/2, -height/2, width, height, height/2.8);
+        buttonBg.lineStyle(3, 0x00ff00, 1);
+        buttonBg.strokeRoundedRect(-width/2, -height/2, width, height, height/2.8);
+        
+        const buttonText = scene.add.text(0, 0, text, {
+            fontSize: `${height * 0.45}px`,
+            fill: '#0f0',
+            align: 'center',
+            wordWrap: { width: width - 20 }
+        }).setOrigin(0.5);
+
+        buttonContainer.add([buttonBg, buttonText]);
+        buttonContainer.setSize(width, height);
+        buttonContainer.setInteractive({ useHandCursor: true });
+        
+        buttonContainer.on('pointerover', () => {
+             buttonText.setStyle({ fill: '#fff' });
+             buttonBg.clear();
+             buttonBg.fillStyle(0x555555, 1);
+             buttonBg.fillRoundedRect(-width/2, -height/2, width, height, height/2.8);
+             buttonBg.lineStyle(3, 0xffffff, 1);
+             buttonBg.strokeRoundedRect(-width/2, -height/2, width, height, height/2.8);
+        });
+        
+        buttonContainer.on('pointerout', () => {
+            buttonText.setStyle({ fill: '#0f0' });
+            buttonBg.clear();
+            buttonBg.fillStyle(0x333333, 1);
+            buttonBg.fillRoundedRect(-width/2, -height/2, width, height, height/2.8);
+            buttonBg.lineStyle(3, 0x00ff00, 1);
+            buttonBg.strokeRoundedRect(-width/2, -height/2, width, height, height/2.8);
+        });
+        
+        buttonContainer.on('pointerdown', onClick);
+        
+        return buttonContainer;
+    }
+
+    class MainMenuScene extends Phaser.Scene {
+        constructor() {
+            super('MainMenuScene');
+        }
+
+        preload() {
+            // No assets to preload for the new menu
+        }
+
+        create() {
+            createStarfield(this);
+
+            // --- Background Animation ---
+            this.physics.world.setBoundsCollision(true, true, true, true);
+            const bgBall = this.physics.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'ballTexture');
+            bgBall.setAlpha(0.15);
+            bgBall.setCollideWorldBounds(true);
+            bgBall.setBounce(1);
+            bgBall.setVelocity(250, 250);
+            bgBall.body.allowGravity = false;
+
+            // --- Colorful Title ---
+            const titleStyle = {
+                fontFamily: '"Arial Black", Gadget, sans-serif',
+                fontSize: '64px',
+                stroke: '#ffffff',
+                strokeThickness: 8,
+                shadow: {
+                    offsetX: 5,
+                    offsetY: 5,
+                    color: '#000',
+                    blur: 10,
+                    stroke: true,
+                    fill: true
+                }
+            };
+            
+            this.add.text(GAME_WIDTH / 2, 200, 'Many', titleStyle).setOrigin(0.5).setTint(0xff8d8d, 0xffd18d, 0x8dff8d, 0x8dffff);
+            this.add.text(GAME_WIDTH / 2, 270, 'Bricks', titleStyle).setOrigin(0.5).setTint(0x8dffff, 0x8d8dff, 0xd18dff, 0xff8d8d);
+            this.add.text(GAME_WIDTH / 2, 340, 'Breaker', titleStyle).setOrigin(0.5).setTint(0x8dff8d, 0xffd18d, 0xff8d8d, 0xd18dff);
+
+
+            // --- Cute Play Button ---
+            const playButtonContainer = this.add.container(GAME_WIDTH / 2, 550);
+            const playCircle = this.add.graphics();
+            playCircle.fillStyle(0x333333, 1);
+            playCircle.fillCircle(0, 0, 80);
+            playCircle.lineStyle(5, 0x00ff00, 1);
+            playCircle.strokeCircle(0, 0, 80);
+            
+            const playTriangle = this.add.graphics();
+            playTriangle.fillStyle(0x00ff00, 1);
+            playTriangle.fillTriangle( -20, -30, -20, 30, 40, 0);
+
+            playButtonContainer.add([playCircle, playTriangle]);
+            playButtonContainer.setSize(160, 160);
+            playButtonContainer.setInteractive({ useHandCursor: true });
+
+            const tween = this.tweens.add({
+                targets: playCircle,
+                scale: 1.1,
+                duration: 500,
+                ease: 'Sine.easeInOut',
+                yoyo: true,
+                repeat: -1,
+                paused: true
+            });
+            
+            playButtonContainer.on('pointerover', () => {
+                playCircle.clear().fillStyle(0x555555, 1).fillCircle(0, 0, 80).lineStyle(5, 0xffffff, 1).strokeCircle(0, 0, 80);
+                playTriangle.clear().fillStyle(0xffffff, 1).fillTriangle(-20, -30, -20, 30, 40, 0);
+                tween.resume();
+            });
+
+             playButtonContainer.on('pointerout', () => {
+                playCircle.clear().fillStyle(0x333333, 1).fillCircle(0, 0, 80).lineStyle(5, 0x00ff00, 1).strokeCircle(0, 0, 80);
+                playTriangle.clear().fillStyle(0x00ff00, 1).fillTriangle(-20, -30, -20, 30, 40, 0);
+                tween.pause();
+                playCircle.setScale(1);
+            });
+            
+            playButtonContainer.on('pointerdown', async () => {
+			if (typeof sdk !== 'undefined' && sdk.showBanner !== 'undefined') {
+sdk.showBanner();
+}
+                if (Tone.context.state !== 'running') {
+                    await Tone.start();
+                }
+                this.scene.start('ModeSelectScene');
+            });
+
+
+            // --- More Games Button ---
+            const moreGamesBtn = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 30, 'MORE GAMES', {
+                fontSize: '18px',
+                fill: '#aaa'
+            }).setOrigin(0.5);
+
+            moreGamesBtn.setInteractive({ useHandCursor: true });
+            moreGamesBtn.on('pointerover', () => moreGamesBtn.setStyle({ fill: '#fff' }));
+            moreGamesBtn.on('pointerout', () => moreGamesBtn.setStyle({ fill: '#aaa' }));
+            moreGamesBtn.on('pointerdown', () => {
+                window.open('https://hyhygames.com', '_blank');
+            });
+        }
+    }
+
+    class ModeSelectScene extends Phaser.Scene {
+        constructor() {
+            super('ModeSelectScene');
+        }
+
+        create() {
+            createStarfield(this);
+            this.add.text(GAME_WIDTH / 2, 150, 'Select Mode', { fontSize: '48px', fill: '#fff' }).setOrigin(0.5);
+
+            createCuteButton(this, GAME_WIDTH / 2, 350, 'Classic', () => {
+                this.scene.start('LevelSelectScene');
+            });
+
+            createCuteButton(this, GAME_WIDTH / 2, 500, 'Many Bricks!', () => {
+                this.scene.start('ManyBricksLevelSelectScene');
+            });
+        }
+    }
+
+    class LevelSelectScene extends Phaser.Scene {
+        constructor(config) {
+            super(config || 'LevelSelectScene');
+            this.storageKey = 'brickBreakerHighestLevel';
+            this.nextScene = 'GameScene';
+            this.title = 'Select a Level';
+        }
+
+        create() {
+            createStarfield(this);
+            this.add.text(GAME_WIDTH / 2, 50, this.title, { fontSize: '40px', fill: '#fff' }).setOrigin(0.5);
+            this.add.text(GAME_WIDTH / 2, 85, '(Click and Drag to Scroll)', { fontSize: '18px', fill: '#aaa' }).setOrigin(0.5);
+
+            const highestUnlockedLevel = parseInt(localStorage.getItem(this.storageKey) || '1');
+
+            const levels = Array.from({ length: 100 }, (_, i) => i + 1);
+            const columns = 5;
+            const buttonSize = 70;
+            const buttonSpacing = 15;
+            const gridWidth = columns * (buttonSize + buttonSpacing) - buttonSpacing;
+            const offsetX = (GAME_WIDTH - gridWidth) / 2;
+            
+            const scrollableContainer = this.add.container(0, 0);
+            let contentHeight = 0;
+
+            levels.forEach((level, index) => {
+                const col = index % columns;
+                const row = Math.floor(index / columns);
+
+                const xPos = offsetX + col * (buttonSize + buttonSpacing);
+                const yPos = 150 + row * (buttonSize + buttonSpacing);
+                
+                const isLocked = level > highestUnlockedLevel;
+
+                const levelButton = this.add.text(xPos, yPos, `${level}`, {
+                    fontSize: '32px',
+                    fill: isLocked ? '#555' : '#0f0',
+                    backgroundColor: isLocked ? '#222' : '#333',
+                    align: 'center',
+                    fixedWidth: buttonSize,
+                    fixedHeight: buttonSize,
+                    padding: { top: 15 }
+                }).setOrigin(0);
+                
+                scrollableContainer.add(levelButton);
+
+                if (isLocked) {
+                    const lockIcon = this.add.text(xPos + buttonSize / 2, yPos + buttonSize / 2 + 5, '🔒', {
+                        fontSize: '24px'
+                    }).setOrigin(0.5);
+                    scrollableContainer.add(lockIcon);
+                } else {
+                    levelButton.setInteractive({ useHandCursor: true });
+                    levelButton.on('pointerover', () => levelButton.setStyle({ fill: '#fff' }));
+                    levelButton.on('pointerout', () => levelButton.setStyle({ fill: '#0f0' }));
+                    levelButton.on('pointerdown', () => {
+                        this.scene.start(this.nextScene, { level: level });
+                    });
+                }
+                
+                contentHeight = yPos + buttonSize;
+            });
+            
+            const maskHeight = GAME_HEIGHT - 120;
+            const mask = this.make.graphics();
+            mask.fillStyle(0xffffff);
+            mask.beginPath();
+            mask.fillRect(0, 120, GAME_WIDTH, maskHeight);
+            scrollableContainer.mask = new Phaser.Display.Masks.GeometryMask(this, mask);
+
+            let pointerStartY = 0;
+            let containerStartY = 0;
+
+            this.input.on('pointerdown', (pointer) => {
+                pointerStartY = pointer.y;
+                containerStartY = scrollableContainer.y;
+            });
+
+            this.input.on('pointermove', (pointer) => {
+                if (pointer.isDown) {
+                    const dy = pointer.y - pointerStartY;
+                    const newY = containerStartY + dy;
+                    const lowerBound = -(contentHeight - maskHeight + 120);
+                    scrollableContainer.y = Phaser.Math.Clamp(newY, lowerBound < 0 ? lowerBound : 0, 0);
+                }
+            });
+        }
+    }
+    
+    class ManyBricksLevelSelectScene extends LevelSelectScene {
+        constructor() {
+            super('ManyBricksLevelSelectScene');
+            this.storageKey = 'manyBricksHighestLevel';
+            this.nextScene = 'ManyBricksGameScene';
+            this.title = 'Many Bricks Levels';
+        }
+    }
+
+    class PauseScene extends Phaser.Scene {
+        constructor() {
+            super('PauseScene');
+        }
+
+        create() {
+            this.add.rectangle(0, 0, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.7).setOrigin(0);
+
+            createCuteButton(this, GAME_WIDTH / 2, GAME_HEIGHT / 2 - 80, 'Resume', () => {
+                const gameSceneKey = this.scene.manager.getScenes(false).find(s => s.scene.isPaused()).scene.key;
+                this.scene.resume(gameSceneKey);
+                this.scene.stop();
+            });
+
+            createCuteButton(this, GAME_WIDTH / 2, GAME_HEIGHT / 2 + 20, 'Home', () => {
+			if (typeof sdk !== 'undefined' && sdk.showBanner !== 'undefined') {
+sdk.showBanner();
+}
+                const gameSceneKey = this.scene.manager.getScenes(false).find(s => s.scene.isPaused()).scene.key;
+                this.scene.stop(gameSceneKey);
+                this.scene.start('MainMenuScene');
+            });
+        }
+    }
+
+
+    class GameScene extends Phaser.Scene {
+        constructor(key = 'GameScene') {
+            super(key);
+            this.balls = null;
+            this.paddle = null;
+            this.bricks = null;
+            this.boosters = null;
+            this.bullets = null;
+            this.scoreText = null;
+            this.livesText = null;
+            this.startButton = null;
+
+            this.score = 0;
+            this.lives = 3;
+            this.gameStarted = false;
+            this.currentLevel = 1;
+            
+            this.paddleCanFire = false;
+            this.fireTimer = null;
+            this.lastFired = 0;
+
+            this.hitBrickSound = null;
+            this.hitPaddleSound = null;
+            this.loseLifeSound = null;
+            this.collectBoosterSound = null;
+            this.fireSound = null;
+            
+            this.storageKey = 'brickBreakerHighestLevel';
+        }
+
+        init(data) {
+            this.currentLevel = data.level || 1;
+        }
+
+        create() {
+            this.score = 0;
+            this.lives = 3;
+            this.gameStarted = false;
+
+            createStarfield(this);
+            
+            // --- Initialize Sounds ---
+            this.hitBrickSound = new Tone.PolySynth(Tone.Synth, { oscillator: { type: 'square' }, envelope: { attack: 0.005, decay: 0.1, sustain: 0.2, release: 0.1 } }).toDestination();
+            this.fireSound = new Tone.PolySynth(Tone.NoiseSynth, { noise: { type: 'white' }, envelope: { attack: 0.001, decay: 0.05, sustain: 0, release: 0.05 } }).toDestination();
+            this.hitPaddleSound = new Tone.PolySynth(Tone.MembraneSynth).toDestination();
+            this.loseLifeSound = new Tone.Synth({ oscillator: { type: 'sawtooth' }, envelope: { attack: 0.01, decay: 0.5, sustain: 0.1, release: 0.5 } }).toDestination();
+            this.collectBoosterSound = new Tone.Synth({ oscillator: { type: 'triangle' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.2, release: 0.2 } }).toDestination();
+            
+            this.paddleCanFire = false;
+            this.fireTimer = null;
+            this.lastFired = 0;
+
+            this.physics.world.setBoundsCollision(true, true, true, false);
+
+            // --- Create dynamic textures for game objects ---
+            const graphics = this.make.graphics();
+            graphics.fillStyle(0x00ffff).fillRoundedRect(0, 0, 100, 20, 10).generateTexture('paddleTexture', 100, 20);
+            graphics.clear().fillStyle(0xffffff).fillCircle(10, 10, 10).generateTexture('ballTexture', 20, 20);
+            graphics.clear().fillStyle(0xffffff).fillRoundedRect(0, 0, 60, 28, 8).generateTexture('brickTexture', 60, 28);
+            graphics.clear().fillStyle(0x00ff00, 1).fillRoundedRect(0, 0, 30, 30, 8).generateTexture('enlargeBoosterTexture', 30, 30);
+            
+            if (!this.textures.exists('fireBoosterTexture')) this.createBoosterTexture('fireBoosterTexture', 'F', 0xff4444);
+            if (!this.textures.exists('multiplyBoosterTexture')) this.createBoosterTexture('multiplyBoosterTexture', 'M', 0xd18dff);
+            if (!this.textures.exists('bulletTexture')) {
+                graphics.clear().fillStyle(0xffff00, 1).fillRect(0, 0, 5, 15).generateTexture('bulletTexture', 5, 15);
+            }
+            graphics.destroy();
+
+            // --- Create Game Objects ---
+            const PADDLE_Y_POSITION = GAME_HEIGHT - 100;
+            this.paddle = this.physics.add.image(GAME_WIDTH / 2, PADDLE_Y_POSITION, 'paddleTexture').setImmovable().setCollideWorldBounds(true);
+            this.paddle.body.allowGravity = false;
+
+            this.balls = this.physics.add.group();
+            this.createBall();
+
+            this.bricks = this.physics.add.staticGroup();
+            this.boosters = this.physics.add.group();
+            this.bullets = this.physics.add.group();
+
+            const brickColors = [0xff8d8d, 0xffd18d, 0x8dff8d, 0x8dffff, 0x8d8dff, 0xd18dff];
+            const layout = this.generateLevelLayout(this.currentLevel);
+            const brickWidth = 60, brickHeight = 28, columns = layout[0].length;
+            const offsetX = (GAME_WIDTH - (columns * brickWidth) - ((columns - 1) * 10)) / 2;
+
+            layout.forEach((row, r) => {
+                row.forEach((brickType, c) => {
+                    if (brickType > 0) {
+                        const brickX = offsetX + c * (brickWidth + 10);
+                        const brickY = 100 + r * (brickHeight + 10);
+                        let brick = this.bricks.create(brickX, brickY, 'brickTexture');
+                        brick.setTint(Phaser.Math.RND.pick(brickColors));
+                        if (brick) brick.refreshBody();
+                    }
+                });
+            });
+
+            // --- UI Elements ---
+            this.scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '24px', fill: '#fff' });
+            this.livesText = this.add.text(GAME_WIDTH / 2, 16, 'Lives: 3', { fontSize: '24px', fill: '#fff' }).setOrigin(0.5, 0);
+            this.startButton = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'Click to Start', { fontSize: '32px', fill: '#fff' }).setOrigin(0.5);
+
+            // --- Pause Button ---
+            const pauseButton = this.add.container(GAME_WIDTH - 40, 40);
+            const p_bg = this.add.graphics();
+            p_bg.fillStyle(0x333333, 0.9).fillCircle(0, 0, 24).lineStyle(2, 0xcccccc, 1).strokeCircle(0, 0, 24);
+            const p_bar1 = this.add.rectangle(-6, 0, 6, 18, 0xcccccc);
+            const p_bar2 = this.add.rectangle(6, 0, 6, 18, 0xcccccc);
+            pauseButton.add([p_bg, p_bar1, p_bar2]).setSize(48, 48).setInteractive({ useHandCursor: true });
+            
+            pauseButton.on('pointerdown', () => {
+                this.scene.pause();
+                this.scene.launch('PauseScene');
+            });
+
+            pauseButton.on('pointerover', () => {
+                p_bg.clear().fillStyle(0x555555, 1).fillCircle(0, 0, 24).lineStyle(2, 0xffffff, 1).strokeCircle(0, 0, 24);
+                p_bar1.setFillStyle(0xffffff);
+                p_bar2.setFillStyle(0xffffff);
+            });
+            pauseButton.on('pointerout', () => {
+                p_bg.clear().fillStyle(0x333333, 0.9).fillCircle(0, 0, 24).lineStyle(2, 0xcccccc, 1).strokeCircle(0, 0, 24);
+                p_bar1.setFillStyle(0xcccccc);
+                p_bar2.setFillStyle(0xcccccc);
+            });
+
+            // --- Physics and Colliders ---
+            this.physics.add.collider(this.balls, this.bricks, this.hitBrick, null, this);
+            this.physics.add.collider(this.balls, this.paddle, this.hitPaddle, null, this);
+            this.physics.add.overlap(this.paddle, this.boosters, this.collectBooster, null, this);
+            this.physics.add.collider(this.bullets, this.bricks, this.bulletHitBrick, null, this);
+            
+            // --- Input Handlers ---
+            this.input.on('pointermove', (pointer) => {
+                if (this.gameStarted) {
+                     this.paddle.x = Phaser.Math.Clamp(pointer.x, this.paddle.displayWidth / 2, GAME_WIDTH - this.paddle.displayWidth / 2);
+                }
+            });
+
+            this.input.on('pointerdown', () => {
+                if (!this.gameStarted) {
+                    this.gameStarted = true;
+                    this.startButton.setVisible(false);
+                    this.balls.getFirstAlive()?.setVelocity(-200, -600);
+                }
+            });
+        }
+
+        update(time, delta) {
+            this.paddle.y = GAME_HEIGHT - 100;
+
+            this.balls.children.each(ball => {
+                if (ball.y > GAME_HEIGHT) {
+                    ball.destroy();
+                }
+            });
+
+            if (this.gameStarted && this.balls.countActive(true) === 0) {
+                this.loseLifeSound.triggerAttackRelease("F3", "2n");
+                this.lives--;
+                this.livesText.setText('Lives: ' + this.lives);
+                if (this.lives <= 0) {
+                    this.gameOver();
+                } else {
+                    this.resetPlayerStateAfterLifeLost();
+                }
+            }
+            
+            if (this.paddleCanFire && time > this.lastFired) {
+                this.fireBullet();
+                this.lastFired = time + 250;
+            }
+        }
+        
+        checkWinCondition() {
+            if (this.bricks.countActive(true) === 0) {
+                this.levelComplete();
+            }
+        }
+
+        createBoosterTexture(key, text, color) {
+            const rt = this.add.renderTexture(0, 0, 30, 30).setVisible(false);
+            const graphics = this.make.graphics();
+            graphics.fillStyle(color, 1).fillCircle(15, 15, 15);
+            const textEl = this.make.text({ text, style: { fontSize: '20px', fill: '#fff', fontStyle: 'bold' } }, false).setOrigin(0.5);
+            rt.draw(graphics);
+            rt.draw(textEl, 15, 15);
+            rt.saveTexture(key);
+            graphics.destroy();
+            textEl.destroy();
+        }
+
+        createBall() {
+            const ball = this.balls.create(this.paddle.x, this.paddle.y - 30, 'ballTexture');
+            ball.setCollideWorldBounds(true).setBounce(1);
+            ball.body.allowGravity = false;
+            return ball;
+        }
+
+        fireBullet() {
+            ['Left', 'Right'].forEach(side => {
+                const offset = side === 'Left' ? - (this.paddle.displayWidth / 2) + 10 : (this.paddle.displayWidth / 2) - 10;
+                const bullet = this.bullets.create(this.paddle.x + offset, this.paddle.y - 20, 'bulletTexture');
+                bullet?.setVelocityY(-800).body.setAllowGravity(false);
+            });
+            this.fireSound.triggerAttackRelease("32n");
+        }
+        
+        destroyBrick(brick) {
+             brick.disableBody(true, true);
+             this.score += 10;
+             this.scoreText.setText('Score: ' + this.score);
+             this.hitBrickSound.triggerAttackRelease("C5", "8n");
+             this.checkWinCondition();
+        }
+        
+        bulletHitBrick(bullet, brick) {
+            bullet.destroy();
+            this.destroyBrick(brick);
+        }
+
+        hitBrick(ball, brick) {
+            this.destroyBrick(brick);
+
+            if (Phaser.Math.Between(1, 5) === 1) {
+                const boosterType = Phaser.Math.RND.pick(['enlarge', 'fire', 'multiply']);
+                let texture = '';
+                if (boosterType === 'enlarge') texture = 'enlargeBoosterTexture';
+                else if (boosterType === 'fire') texture = 'fireBoosterTexture';
+                else if (boosterType === 'multiply') texture = 'multiplyBoosterTexture';
+                
+                const booster = this.boosters.create(brick.x, brick.y, texture);
+                booster?.setData('type', boosterType).setVelocityY(200);
+            }
+        }
+
+        collectBooster(paddle, booster) {
+            booster.disableBody(true, true);
+            this.collectBoosterSound.triggerAttackRelease("E5", "8n");
+            
+            const boosterType = booster.getData('type');
+            
+            if (boosterType === 'enlarge') {
+                paddle.setDisplaySize(150, 20);
+            } else if (boosterType === 'fire') {
+                this.paddleCanFire = true;
+                if (this.fireTimer) this.fireTimer.remove();
+                this.fireTimer = this.time.delayedCall(10000, () => this.paddleCanFire = false);
+            } else if (boosterType === 'multiply') {
+                const originalBall = this.balls.getFirstAlive();
+                if (originalBall) this.multiplyBall(originalBall);
+            }
+        }
+
+        multiplyBall(originalBall) {
+            const velocity = new Phaser.Math.Vector2(originalBall.body.velocity.x, originalBall.body.velocity.y);
+            if (velocity.length() === 0) return;
+
+            for (let i = 0; i < 2; i++) {
+                const newBall = this.createBall();
+                newBall.setPosition(originalBall.x, originalBall.y);
+                const newVelocity = velocity.clone().rotate(Phaser.Math.DegToRad(i === 0 ? -20 : 20));
+                newBall.setVelocity(newVelocity.x, newVelocity.y);
+            }
+        }
+
+        hitPaddle(ball, paddle) {
+            this.hitPaddleSound.triggerAttackRelease("C2", "8n");
+            const speed = Math.sqrt(ball.body.velocity.x ** 2 + ball.body.velocity.y ** 2);
+            const hitPosition = (ball.x - paddle.x) / (paddle.displayWidth / 2);
+            const maxBounceAngle = 75 * (Math.PI / 180);
+            const newAngle = -(Math.PI / 2) + (hitPosition * maxBounceAngle);
+            const newVelX = speed * Math.cos(newAngle);
+            const newVelY = speed * Math.sin(newAngle);
+            ball.setVelocity(newVelX, newVelY);
+        }
+
+        resetPlayerStateAfterLifeLost() {
+            this.gameStarted = false;
+            this.paddle.setPosition(GAME_WIDTH / 2, GAME_HEIGHT - 100).setDisplaySize(100, 20);
+            this.paddleCanFire = false;
+            if (this.fireTimer) {
+                this.fireTimer.remove();
+                this.fireTimer = null;
+            }
+
+            this.balls.clear(true, true);
+            this.createBall(); // This will use the correct createBall for the scene
+            this.boosters.clear(true, true);
+            
+            this.startButton.setText('Click to Continue').setVisible(true);
+        }
+        
+        gameOver() {
+            this.physics.pause();
+            this.balls.clear(true, true); // Make sure no balls are left
+            this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 150, 'Game Over', { fontSize: '64px', fill: '#f00', fontStyle: 'bold' }).setOrigin(0.5);
+            
+            createCuteButton(this, GAME_WIDTH / 2, GAME_HEIGHT / 2 - 20, 'Restart', () => {
+                this.scene.start(this.scene.key, { level: this.currentLevel });
+            });
+
+            createCuteButton(this, GAME_WIDTH / 2, GAME_HEIGHT / 2 + 80, 'Home', () => {
+                this.scene.start('MainMenuScene');
+            });
+
+            const skipButton = createCuteButton(this, GAME_WIDTH / 2, GAME_HEIGHT / 2 + 180, 'Skip Level [AD]', () => {
+			if (typeof sdk !== 'undefined' && sdk.showBanner !== 'undefined') {
+sdk.showBanner();
+}
+                const nextLevel = this.currentLevel + 1;
+                if (nextLevel <= 100) {
+                    // Unlock the next level
+                    const highestUnlockedLevel = parseInt(localStorage.getItem(this.storageKey) || '1');
+                    if (nextLevel > highestUnlockedLevel) {
+                        localStorage.setItem(this.storageKey, nextLevel.toString());
+                    }
+                    // Start the next level
+                    this.scene.start(this.scene.key, { level: nextLevel });
+                } else {
+                    // If it's the last level, just go home
+                    this.scene.start('MainMenuScene');
+                }
+            }, 300, 80); 
+        }
+
+        levelComplete() {
+            this.physics.pause();
+            this.balls.setVisible(false);
+
+            const nextLevel = this.currentLevel + 1;
+            if (nextLevel <= 100) {
+                const highestUnlockedLevel = parseInt(localStorage.getItem(this.storageKey) || '1');
+                if (nextLevel > highestUnlockedLevel) {
+                    localStorage.setItem(this.storageKey, nextLevel.toString());
+                }
+            }
+
+            this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 50, 'Level Complete!', { fontSize: '48px', fill: '#0f0' }).setOrigin(0.5);
+            const nextBtn = createCuteButton(this, GAME_WIDTH / 2, GAME_HEIGHT / 2 + 50, 'Next Level', () => {
+			if (typeof sdk !== 'undefined' && sdk.showBanner !== 'undefined') {
+sdk.showBanner();
+}
+                if (this.currentLevel < 100) {
+                   this.scene.start(this.scene.key, { level: this.currentLevel + 1 });
+                } else {
+                   this.add.text(GAME_WIDTH / 2, GAME_HEIGHT/2 + 150, 'All levels complete!', { fontSize: '24px', fill: '#fff' }).setOrigin(0.5);
+                   nextBtn.destroy();
+                   this.time.delayedCall(2000, () => this.scene.start('MainMenuScene'));
+                }
+            });
+        }
+        
+        generateLevelLayout(level) {
+            // All bricks are now type 1 (breakable)
+            const layouts = [
+                // Level 1: Simple line
+                [[0, 0, 0, 0, 0, 0], [0, 1, 1, 1, 1, 0]],
+                // Level 2: Two lines
+                [[0, 1, 1, 1, 1, 0], [0, 1, 1, 1, 1, 0]],
+                // Level 3: Simple Pyramid
+                [[0, 0, 1, 1, 0, 0], [0, 1, 1, 1, 1, 0], [1, 1, 1, 1, 1, 1]],
+                 // Level 4
+                [[0, 0, 1, 1, 0, 0], [0, 1, 1, 1, 1, 0], [1, 1, 1, 1, 1, 1]],
+                 // Level 5
+                [[1, 1, 0, 0, 1, 1], [0, 1, 1, 1, 1, 0], [0, 1, 1, 1, 1, 0], [0, 0, 1, 1, 0, 0]]
+            ];
+
+            if (level <= layouts.length) {
+                return layouts[level - 1];
+            }
+
+            // Procedural generation for levels > 5
+            const layout = [];
+            const rows = 6 + Math.floor(level / 10);
+            const cols = 6;
+            
+            for (let r = 0; r < rows; r++) {
+                layout[r] = [];
+                for (let c = 0; c < cols; c++) {
+                    const rand = Math.random();
+                    const brickChance = 0.5 + (level / 150);
+                    if (rand < brickChance) {
+                        layout[r][c] = 1; // Regular brick
+                    } else {
+                        layout[r][c] = 0; // Empty space
+                    }
+                }
+            }
+             // Ensure at least one breakable brick
+            if (layout.flat().indexOf(1) === -1) {
+                layout[0][Math.floor(cols/2)] = 1;
+            }
+            return layout;
+        }
+    }
+    
+    class ManyBricksGameScene extends GameScene {
+        constructor() {
+            super('ManyBricksGameScene');
+            this.storageKey = 'manyBricksHighestLevel';
+        }
+    
+        create() {
+            const graphics = this.make.graphics();
+            if (!this.textures.exists('tinyBallTexture')) {
+                graphics.clear().fillStyle(0xffffff).fillCircle(4, 4, 4).generateTexture('tinyBallTexture', 8, 8);
+            }
+            if (!this.textures.exists('tinyBrickTexture')) {
+                graphics.clear().fillStyle(0xffffff).fillRect(0, 0, 12, 12).generateTexture('tinyBrickTexture', 12, 12);
+            }
+            // Create smaller booster textures for this mode
+            if (!this.textures.exists('tinyEnlargeBoosterTexture')) {
+                 graphics.clear().fillStyle(0x00ff00, 1).fillRoundedRect(0, 0, 20, 20, 5).generateTexture('tinyEnlargeBoosterTexture', 20, 20);
+            }
+            if (!this.textures.exists('tinyFireBoosterTexture')) this.createBoosterTexture('tinyFireBoosterTexture', 'F', 0xff4444, 20);
+            if (!this.textures.exists('tinyMultiplyBoosterTexture')) this.createBoosterTexture('tinyMultiplyBoosterTexture', 'M', 0xd18dff, 20);
+            
+            graphics.destroy();
+
+            // Call parent create but skip its brick layout part
+            super.create();
+            
+            this.bricks.clear(true, true);
+            
+            const brickColors = [0xff8d8d, 0xffd18d, 0x8dff8d, 0x8dffff, 0x8d8dff, 0xd18dff];
+            const layout = this.generateManyBricksLayout(this.currentLevel);
+            const brickWidth = 12, brickHeight = 12, columns = layout[0].length, brickSpacing = 2;
+            const offsetX = (GAME_WIDTH - (columns * brickWidth) - ((columns - 1) * brickSpacing)) / 2;
+            const offsetY = 120; // Start bricks even higher up
+            
+            layout.forEach((row, r) => {
+                row.forEach((brickType, c) => {
+                    if (brickType > 0) {
+                        const brickX = offsetX + c * (brickWidth + brickSpacing);
+                        const brickY = offsetY + r * (brickHeight + brickSpacing);
+                        let brick = this.bricks.create(brickX, brickY, 'tinyBrickTexture');
+                        brick.setTint(Phaser.Math.RND.pick(brickColors));
+                        if (brick) brick.refreshBody();
+                    }
+                });
+            });
+        }
+        
+        // Override createBall for this specific mode
+        createBall() {
+            const ball = this.balls.create(this.paddle.x, this.paddle.y - 30, 'tinyBallTexture');
+            ball.setCollideWorldBounds(true).setBounce(1);
+            ball.body.allowGravity = false;
+            return ball;
+        }
+        
+        // Override hitBrick to use smaller boosters
+        hitBrick(ball, brick) {
+            this.destroyBrick(brick);
+
+            // Boosters are back!
+            if (Phaser.Math.Between(1, 10) === 1) { // Lower chance in this mode
+                const boosterType = Phaser.Math.RND.pick(['enlarge', 'fire', 'multiply']);
+                let texture = '';
+                if (boosterType === 'enlarge') texture = 'tinyEnlargeBoosterTexture';
+                else if (boosterType === 'fire') texture = 'tinyFireBoosterTexture';
+                else if (boosterType === 'multiply') texture = 'tinyMultiplyBoosterTexture';
+                
+                const booster = this.boosters.create(brick.x, brick.y, texture);
+                booster?.setData('type', boosterType).setVelocityY(200);
+            }
+        }
+        
+        // Override multiplyBall to create tiny balls
+        multiplyBall(originalBall) {
+            const velocity = new Phaser.Math.Vector2(originalBall.body.velocity.x, originalBall.body.velocity.y);
+            if (velocity.length() === 0) return;
+
+            for (let i = 0; i < 2; i++) {
+                // Explicitly call the overridden createBall method
+                const newBall = this.createBall();
+                newBall.setPosition(originalBall.x, originalBall.y);
+                const newVelocity = velocity.clone().rotate(Phaser.Math.DegToRad(i === 0 ? -20 : 20));
+                newBall.setVelocity(newVelocity.x, newVelocity.y);
+            }
+        }
+        
+        // Override booster texture creation to allow for smaller size
+        createBoosterTexture(key, text, color, size = 30) {
+            const rt = this.add.renderTexture(0, 0, size, size).setVisible(false);
+            const graphics = this.make.graphics();
+            graphics.fillStyle(color, 1).fillCircle(size / 2, size / 2, size / 2);
+            const textEl = this.make.text({ text, style: { fontSize: `${size * 0.7}px`, fill: '#fff', fontStyle: 'bold' } }, false).setOrigin(0.5);
+            rt.draw(graphics);
+            rt.draw(textEl, size/2, size/2);
+            rt.saveTexture(key);
+            graphics.destroy();
+            textEl.destroy();
+        }
+
+
+        generateManyBricksLayout(level) {
+            const pixelArt = {
+                // Level 1: Smiley Face
+                1: [
+                    '0000000000000000000000000000',
+                    '000000011111111111100000000',
+                    '00000110000000000001100000',
+                    '00001001100000001100100000',
+                    '0001001000000000010010000',
+                    '0001010000000000001010000',
+                    '0010000000000000000000100',
+                    '001010011000011001010100',
+                    '001001100110011001100100',
+                    '0001000000000000000001000',
+                    '0000100000000000000010000',
+                    '0000011111111111111100000',
+                    '00000000000000000000000000',
+                ],
+                // Level 2: Heart
+                2: [
+                    '0000000000000000000000000000',
+                    '00000110000000000011000000',
+                    '00001111000000000111100000',
+                    '0001111110000000111111000',
+                    '0001111111000001111111000',
+                    '0000111111100011111110000',
+                    '0000011111110111111100000',
+                    '0000001111111111111000000',
+                    '0000000111111111110000000',
+                    '0000000011111111100000000',
+                    '0000000001111111000000000',
+                    '0000000000111110000000000',
+                    '0000000000011100000000000',
+                    '0000000000001000000000000',
+                ],
+                // Level 3: Dog
+                3: [
+                    '00000000000000000000000000',
+                    '000000001110000000000000',
+                    '000000011111000000000000',
+                    '000000110111100000000000',
+                    '000000111111100000000000',
+                    '000000011111001110000000',
+                    '000000001001011111000000',
+                    '000000001001011111000000',
+                    '000000000000011111000000',
+                    '000000000000011111000000',
+                    '000000000000010101000000',
+                ],
+                // Level 4: Ghost
+                4: [
+                    '0000000000000000000000000000',
+                    '0000000001111111100000000000',
+                    '000000011111111111000000000',
+                    '000000111111111111100000000',
+                    '00000111100110011110000000', // Eyes
+                    '00000111111111111110000000',
+                    '00000111111111111110000000',
+                    '00000111111111111110000000',
+                    '00000110110110110110000000', // Bottom
+                    '0000000000000000000000000000'
+                ]
+            };
+
+            if (pixelArt[level]) {
+                const art = pixelArt[level];
+                const layout = [];
+                const artWidth = art[0].length;
+                const cols = 30; // Standard width for pixel art
+                const padding = Math.floor((cols - artWidth) / 2);
+
+                for (let r = 0; r < art.length; r++) {
+                    layout[r] = [];
+                    for(let i = 0; i < padding; i++) layout[r].push(0); // Left padding
+                    for (let c = 0; c < artWidth; c++) {
+                        layout[r].push(parseInt(art[r][c]));
+                    }
+                    for(let i = 0; i < padding; i++) layout[r].push(0); // Right padding
+                }
+                return layout;
+            }
+            
+            // Procedural for higher levels
+            const layout = [];
+            const rows = 35;
+            const cols = 30;
+            const safeZoneRows = 15; // Keep bottom rows clear
+
+            for (let r = 0; r < rows; r++) {
+                layout[r] = [];
+                for (let c = 0; c < cols; c++) {
+                    if (r >= rows - safeZoneRows) {
+                        layout[r][c] = 0; // Empty safe zone
+                        continue;
+                    }
+                     const rand = Math.random();
+                    const brickChance = 0.6 + (level / 200);
+                    if (rand < brickChance) {
+                        layout[r][c] = 1;
+                    } else {
+                        layout[r][c] = 0;
+                    }
+                }
+            }
+            return layout;
+        }
+    }
+
+
+    const config = {
+        type: Phaser.AUTO,
+        scale: {
+            mode: Phaser.Scale.FIT,
+            parent: 'game-container',
+            autoCenter: Phaser.Scale.CENTER_BOTH,
+            width: GAME_WIDTH,
+            height: GAME_HEIGHT
+        },
+        physics: {
+            default: 'arcade',
+            arcade: { gravity: { y: 0 }, debug: false }
+        },
+        scene: [MainMenuScene, ModeSelectScene, LevelSelectScene, ManyBricksLevelSelectScene, GameScene, PauseScene, ManyBricksGameScene]
+    };
+
+    const game = new Phaser.Game(config);
+    </script>
+</body>
+</html>
+

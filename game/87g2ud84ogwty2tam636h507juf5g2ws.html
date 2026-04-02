@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Shape Shift Survival</title>
+    <style>
+        /* --- GLOBAL STYLES (FLAT DESIGN) --- */
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&display=swap');
+
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #2c3e50; 
+            font-family: 'Fredoka', sans-serif;
+            color: #ecf0f1;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* --- UI OVERLAYS --- */
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(44, 62, 80, 0.95);
+            z-index: 10;
+            transition: opacity 0.3s;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            color: #f1c40f; 
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-align: center;
+            text-shadow: 4px 4px 0 #d35400;
+        }
+
+        p {
+            font-size: 1.2rem;
+            color: #bdc3c7;
+            text-align: center;
+            max-width: 80%;
+            margin: 10px 0;
+        }
+
+        /* --- BUTTONS --- */
+        .btn {
+            background-color: #e67e22; 
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.5rem;
+            font-family: 'Fredoka', sans-serif;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px;
+            box-shadow: 0 6px 0 #d35400;
+            transition: transform 0.1s;
+            width: 280px; 
+        }
+
+        .btn:active {
+            transform: translateY(6px);
+            box-shadow: none;
+        }
+
+        .btn-daily {
+            background-color: #9b59b6; 
+            box-shadow: 0 6px 0 #8e44ad;
+        }
+
+        .btn-small {
+            padding: 10px 20px;
+            font-size: 1rem;
+            background-color: #34495e;
+            box-shadow: 0 4px 0 #2c3e50;
+            width: auto;
+        }
+
+        /* --- HUD --- */
+        #hud {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .hud-text {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #ecf0f1;
+            text-shadow: 2px 2px 0 #000;
+        }
+        
+        .daily-badge {
+            background: #9b59b6;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 1rem;
+            margin-left: 10px;
+            vertical-align: middle;
+            text-shadow: none;
+        }
+
+        /* --- TUTORIAL OVERLAY --- */
+        #tutorial-text {
+            position: absolute;
+            top: 25%;
+            width: 100%;
+            text-align: center;
+            font-size: 2rem;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            animation: pulse 1s infinite;
+            z-index: 4;
+            pointer-events: none;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* --- MOBILE CONTROLS --- */
+        #mobile-controls {
+            position: absolute;
+            bottom: 30px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            z-index: 5;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        .shape-btn {
+            width: 85px;
+            height: 85px;
+            border-radius: 16px;
+            border: none;
+            background: rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            border: 3px solid rgba(255,255,255,0.2);
+            transition: transform 0.1s, background 0.1s;
+        }
+
+        .shape-btn:active, .shape-btn.active {
+            background: rgba(255, 255, 255, 0.25);
+            border-color: #fff;
+            transform: scale(0.95);
+        }
+
+        .icon-circle { width: 40px; height: 40px; background: #3498db; border-radius: 50%; box-shadow: 0 4px 0 #2980b9;}
+        .icon-square { width: 40px; height: 40px; background: #e74c3c; border-radius: 4px; box-shadow: 0 4px 0 #c0392b;}
+        .icon-triangle {
+            width: 0; height: 0;
+            border-left: 22px solid transparent;
+            border-right: 22px solid transparent;
+            border-bottom: 44px solid #f1c40f;
+            filter: drop-shadow(0 4px 0 #f39c12);
+        }
+
+        /* --- LEADERBOARD --- */
+        #leaderboard-container {
+            background: #34495e;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            width: 300px;
+            box-shadow: 0 4px 0 #2c3e50;
+        }
+        .lb-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 2px solid #2c3e50;
+        }
+        .lb-row.highlight {
+            color: #f1c40f;
+            font-weight: bold;
+        }
+
+        /* --- TUTORIAL ICONS --- */
+        .tut-row { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; text-align: left; font-size: 1.1rem;}
+        .tut-icon { width: 30px; height: 30px; display: inline-block; }
+    </style>
+</head>
+<body>
+
+    <!-- CANVAS -->
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- HUD -->
+    <div id="hud" class="hidden">
+        <div class="hud-text">
+            SCORE: <span id="scoreDisplay">0</span>
+            <span id="comboDisplay" style="color:#00e5ff; font-size:1.2rem; margin-left:10px;"></span>
+            <span id="dailyBadge" class="daily-badge hidden">DAILY</span>
+        </div>
+        <div class="hud-text" style="pointer-events: auto; cursor: pointer;" onclick="togglePause()">❚❚</div>
+    </div>
+    
+    <!-- IN-GAME TUTORIAL TEXT -->
+    <div id="tutorial-text" class="hidden">PRESS CIRCLE!</div>
+
+    <!-- MOBILE CONTROLS -->
+    <div id="mobile-controls" class="hidden">
+        <button class="shape-btn" id="btn-circle" ontouchstart="setShape('circle')" onclick="setShape('circle')">
+            <div class="icon-circle"></div>
+        </button>
+        <button class="shape-btn" id="btn-square" ontouchstart="setShape('square')" onclick="setShape('square')">
+            <div class="icon-square"></div>
+        </button>
+        <button class="shape-btn" id="btn-triangle" ontouchstart="setShape('triangle')" onclick="setShape('triangle')">
+            <div class="icon-triangle"></div>
+        </button>
+    </div>
+
+    <!-- HOME SCREEN -->
+    <div id="homeScreen" class="screen">
+        <h1>Shape Shift<br>Survival</h1>
+        <p>Change Shape. Change Fate.</p>
+        <button class="btn" onclick="initiateGameFlow('normal')">PLAY GAME</button>
+        <button class="btn btn-daily" onclick="initiateGameFlow('daily')">DAILY CHALLENGE</button>
+        <div style="height:10px"></div>
+        <button class="btn btn-small" onclick="showScreen('tutorialScreen')">HOW TO PLAY</button>
+        <button class="btn btn-small" onclick="showScreen('settingsScreen')">SETTINGS</button>
+    </div>
+
+    <!-- TUTORIAL SCREEN -->
+    <div id="tutorialScreen" class="screen hidden">
+        <h2>HOW TO PLAY</h2>
+        <div style="background:#34495e; padding:25px; border-radius:12px; box-shadow: 0 4px 0 #2c3e50;">
+            <div class="tut-row">
+                <div class="tut-icon" style="background:#3498db; border-radius:50%"></div>
+                <span><b>Circle</b> rolls through Tunnels</span>
+            </div>
+            <div class="tut-row">
+                <div class="tut-icon" style="background:#e74c3c; border-radius:4px"></div>
+                <span><b>Square</b> crushes Spikes</span>
+            </div>
+            <div class="tut-row">
+                <div class="tut-icon" style="width:0; height:0; border-left:15px solid transparent; border-right:15px solid transparent; border-bottom:30px solid #f1c40f;"></div>
+                <span><b>Triangle</b> breaks Walls</span>
+            </div>
+        </div>
+        <p style="margin-top:20px; font-size:1rem; opacity:0.8">PC: Press 1, 2, 3<br>Mobile: Tap Buttons</p>
+        <button class="btn btn-small" id="btn-tut-back" onclick="showScreen('homeScreen')">BACK</button>
+        <button class="btn hidden" id="btn-tut-play" onclick="initiateGameFlow('force_start')">START GAME</button>
+    </div>
+
+    <!-- SETTINGS SCREEN -->
+    <div id="settingsScreen" class="screen hidden">
+        <h2>SETTINGS</h2>
+        <button class="btn btn-small" id="btnSound" onclick="toggleSoundSetting()">SOUND: ON</button>
+        <div style="height:20px"></div>
+        <button class="btn btn-small" onclick="showScreen('homeScreen')">BACK</button>
+    </div>
+
+    <!-- GAME OVER SCREEN -->
+    <div id="gameOverScreen" class="screen hidden">
+        <h1 style="color:#e74c3c; font-size: 2.5rem;">GAME OVER</h1>
+        <p>Score: <span id="finalScore" style="color:white; font-weight:bold; font-size:1.5rem">0</span></p>
+        <p>Best: <span id="bestScoreText" style="color:#f1c40f; font-weight:bold">0</span></p>
+        
+        <div id="leaderboard-container">
+            <h3 style="margin-top:0; color:#bdc3c7">LEADERBOARD</h3>
+            <div id="lb-content"></div>
+        </div>
+
+        <button class="btn" onclick="initiateGameFlow('restart')">RESTART</button>
+        <button class="btn btn-small" onclick="showScreen('homeScreen')">HOME</button>
+    </div>
+
+    <!-- PAUSE SCREEN -->
+    <div id="pauseScreen" class="screen hidden">
+        <h1>PAUSED</h1>
+        <button class="btn" onclick="resumeGame()">RESUME</button>
+        <button class="btn btn-small" onclick="quitToHome()">QUIT</button>
+    </div>
+
+    <!-- GAMEMONETIZE SDK -->
+    <script type="text/javascript">
+        window.SDK_OPTIONS = {
+            gameId: "87g2ud84ogwty2tam636h507juf5g2ws",
+            onEvent: function (a) {
+                switch (a.name) {
+                    case "SDK_GAME_PAUSE":
+                        if(window.gameInstance) window.gameInstance.pauseInternals();
+                        break;
+                    case "SDK_GAME_START":
+                        if(window.gameInstance) window.gameInstance.resumeInternals();
+                        // This event fires when ad closes
+                        if(window.gameInstance && window.gameInstance.pendingStart) {
+                            window.gameInstance.resolvePendingStart();
+                        }
+                        break;
+                    case "SDK_READY":
+                        console.log("SDK Ready");
+                        break;
+                }
+            }
+        };
+        (function (a, b, c) {
+            var d = a.getElementsByTagName(b)[0];
+            var e = a.createElement(b);
+            e.async = true;
+            e.src = c;
+            d.parentNode.insertBefore(e, d);
+        })(document, "script", "https://api.gamemonetize.com/sdk.js");
+    </script>
+
+    <!-- GAME LOGIC -->
+    <script>
+        /**
+         * 🧠 CORE LOGIC & AUDIO SYSTEM
+         */
+
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let soundEnabled = true;
+        
+        if(localStorage.getItem('sound') === 'false') soundEnabled = false;
+        updateSoundBtn();
+
+        function toggleSoundSetting() {
+            soundEnabled = !soundEnabled;
+            localStorage.setItem('sound', soundEnabled);
+            updateSoundBtn();
+        }
+
+        function updateSoundBtn() {
+            const btn = document.getElementById('btnSound');
+            if(btn) btn.innerText = "SOUND: " + (soundEnabled ? "ON" : "OFF");
+        }
+
+        function playTone(type, freq, duration, slideTo = null, vol = 0.1) {
+            if (!soundEnabled) return;
+            try {
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type; 
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                if(slideTo) osc.frequency.exponentialRampToValueAtTime(slideTo, audioCtx.currentTime + duration);
+                gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.start(); osc.stop(audioCtx.currentTime + duration);
+            } catch(e) {}
+        }
+
+        function playSound(name) {
+            switch(name) {
+                case 'switch': playTone('sine', 400, 0.1, 600, 0.1); break;
+                case 'score': playTone('sine', 800, 0.1, null, 0.05); break;
+                case 'milestone': playTone('square', 400, 0.3, 800, 0.1); break;
+                case 'crash': playTone('sawtooth', 150, 0.4, 50, 0.2); break;
+                case 'click': playTone('triangle', 600, 0.05, null, 0.05); break;
+                case 'combo': playTone('triangle', 1200, 0.2, 1800, 0.1); break;
+            }
+        }
+
+        // --- DAILY CHALLENGE LOGIC ---
+        function getDailySeed() {
+            const d = new Date();
+            return parseInt(d.getFullYear() + "" + (d.getMonth() + 1) + "" + d.getDate());
+        }
+
+        let dailySeed = getDailySeed();
+        let isDailyMode = false;
+        let pendingGameMode = 'normal';
+
+        function seededRandom() {
+            dailySeed = (dailySeed * 9301 + 49297) % 233280;
+            return dailySeed / 233280;
+        }
+
+        // --- GAME VARIABLES ---
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        let gameState = 'MENU';
+        let score = 0;
+        let speed = 5; 
+        let lastTime = 0;
+        let spawnTimer = 0;
+        let lastMilestone = 0;
+        let lastRequiredShape = null; 
+        
+        let combo = 0;
+        let slowMoTimer = 0;
+        let tutorialSlowMo = false; // New: Slow down for tutorial reading
+
+        let scaleRatio = 1;
+        const TARGET_HEIGHT = 640; 
+        let logicalWidth = 1000;
+
+        let isTutorial = false;
+        let tutorialStep = 0;
+        const tutText = document.getElementById('tutorial-text');
+
+        const player = { x: 0, y: 0, size: 40, shape: 'circle', baseY: 0 };
+        let obstacles = [];
+        let particles = [];
+
+        const COLORS = {
+            bg: '#2c3e50', ground: '#34495e', circle: '#3498db',
+            square: '#e74c3c', triangle: '#f1c40f', text: '#ffffff'
+        };
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            scaleRatio = canvas.height / TARGET_HEIGHT;
+            logicalWidth = canvas.width / scaleRatio;
+            player.baseY = TARGET_HEIGHT / 2 + 80;
+            player.x = logicalWidth * 0.15;
+            player.y = player.baseY - player.size;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        // --- INPUT ---
+        function setShape(shape) {
+            if(gameState !== 'PLAYING') return;
+            if(player.shape !== shape) {
+                player.shape = shape;
+                playSound('switch');
+                if (navigator.vibrate) navigator.vibrate(20);
+
+                // FIX: Hide tutorial immediately on switch and remove slow mo
+                if(!tutText.classList.contains('hidden')) {
+                     tutText.classList.add('hidden');
+                     tutorialSlowMo = false; 
+                }
+
+                document.querySelectorAll('.shape-btn').forEach(b => b.classList.remove('active'));
+                document.getElementById('btn-' + shape).classList.add('active');
+            }
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if(e.key === 'Escape') {
+                if(gameState === 'PLAYING') togglePause();
+                else if(gameState === 'PAUSED') resumeGame();
+            }
+            if(gameState !== 'PLAYING') return;
+            // Prevent scrolling
+            if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].indexOf(e.key) > -1) e.preventDefault();
+            
+            if(e.key === '1' || e.key === 'ArrowLeft') setShape('circle');
+            if(e.key === '2' || e.key === 'ArrowDown') setShape('square');
+            if(e.key === '3' || e.key === 'ArrowRight') setShape('triangle');
+        });
+
+        // --- LOOP ---
+        function loop(timestamp) {
+            const dt = timestamp - lastTime;
+            lastTime = timestamp;
+            if (gameState === 'PLAYING') {
+                update(dt);
+                draw();
+            }
+            requestAnimationFrame(loop);
+        }
+        requestAnimationFrame(loop);
+
+        // --- AD & GAME FLOW MANAGER ---
+        // FIX: Ads are now pre-roll (before game starts)
+        function initiateGameFlow(mode) {
+            playSound('click');
+            
+            // First time check
+            if(!localStorage.getItem('playedBefore') && mode !== 'force_start') {
+                showScreen('tutorialScreen');
+                document.getElementById('btn-tut-back').classList.add('hidden');
+                document.getElementById('btn-tut-play').classList.remove('hidden');
+                return;
+            }
+
+            // Set Mode
+            if(mode === 'daily') {
+                isDailyMode = true;
+                dailySeed = getDailySeed();
+            } else if (mode === 'normal' || mode === 'force_start') {
+                isDailyMode = false;
+            }
+
+            // Request Ad before starting
+            if (typeof sdk !== 'undefined' && sdk.showBanner) {
+                window.gameInstance.pendingStart = true;
+                sdk.showBanner();
+            } else {
+                startGame();
+            }
+        }
+
+        function startGame() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            // Setup Tutorial
+            if(!isDailyMode && !localStorage.getItem('playedBefore')) {
+                isTutorial = true;
+                tutorialStep = 0;
+                speed = 4; 
+            } else {
+                isTutorial = false;
+                speed = 4.5; 
+            }
+
+            // Reset Vars
+            score = 0;
+            combo = 0; 
+            slowMoTimer = 0;
+            tutorialSlowMo = false;
+            lastMilestone = 0;
+            lastRequiredShape = null;
+            obstacles = [];
+            particles = [];
+            player.shape = 'circle';
+            setShape('circle');
+            
+            document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+            tutText.classList.add('hidden');
+            document.getElementById('hud').classList.remove('hidden');
+            document.getElementById('comboDisplay').innerText = '';
+
+            if(isDailyMode) document.getElementById('dailyBadge').classList.remove('hidden');
+            else document.getElementById('dailyBadge').classList.add('hidden');
+            
+            if(window.innerWidth > 768 && !('ontouchstart' in window)) {
+                 document.getElementById('mobile-controls').classList.add('hidden');
+            } else {
+                 document.getElementById('mobile-controls').classList.remove('hidden');
+            }
+
+            lastTime = performance.now();
+            gameState = 'PLAYING';
+        }
+
+        function update(dt) {
+            if(dt > 100) dt = 16;
+
+            // FIX: Extreme slow motion when tutorial text is active so user can read
+            let timeScale = 1;
+            if(tutorialSlowMo) timeScale = 0.1; 
+            else if(slowMoTimer > 0) timeScale = 0.4;
+            
+            dt *= timeScale;
+            
+            if (slowMoTimer > 0) slowMoTimer -= dt / timeScale; 
+
+            speed += 0.0004 * (dt/16); 
+            score += (0.08 + combo * 0.01) * (dt/16);
+            
+            const floorScore = Math.floor(score);
+            document.getElementById('scoreDisplay').innerText = floorScore;
+
+            if (floorScore > 0 && floorScore % 100 === 0 && floorScore > lastMilestone) {
+                playSound('milestone');
+                lastMilestone = floorScore;
+                createParticles(logicalWidth/2, 100, '#f1c40f', 20);
+            }
+
+            spawnTimer -= dt;
+            if (spawnTimer <= 0) {
+                spawnObstacle();
+                spawnTimer = (2200 - (speed * 90)) + Math.random() * 500; 
+                if(spawnTimer < 800) spawnTimer = 800; 
+            }
+
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                let obs = obstacles[i];
+                obs.x -= speed * (dt / 16);
+
+                // FIX: Trigger Tutorial Hint and Slow Mo
+                if(isTutorial && !obs.passed && !obs.shownHint && obs.x < logicalWidth * 0.6) {
+                    obs.shownHint = true;
+                    tutText.classList.remove('hidden');
+                    tutorialSlowMo = true; // Activate slow mo
+                    if(obs.type === 'tunnel') tutText.innerText = "SWITCH TO CIRCLE!";
+                    if(obs.type === 'spikes') tutText.innerText = "SWITCH TO SQUARE!";
+                    if(obs.type === 'wall') tutText.innerText = "SWITCH TO TRIANGLE!";
+                    tutText.style.color = obs.color;
+                }
+
+                if (!obs.passed) {
+                    if(obs.x < player.x + player.size && obs.x + obs.w > player.x - player.size) {
+                         if(obs.x > logicalWidth * 0.1) checkCollision(obs);
+                    }
+                }
+                if (obs.x + obs.w < -100) obstacles.splice(i, 1);
+            }
+
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life -= 0.04;
+                if(p.life <= 0) particles.splice(i, 1);
+            }
+        }
+
+        function spawnObstacle() {
+            let type;
+
+            if(isTutorial) {
+                if(tutorialStep === 0) type = 'tunnel';
+                else if(tutorialStep === 1) type = 'spikes';
+                else if(tutorialStep === 2) type = 'wall';
+                else {
+                    isTutorial = false;
+                    localStorage.setItem('playedBefore', 'true');
+                    type = 'tunnel'; 
+                }
+                tutorialStep++;
+            } else {
+                let availableTypes = ['tunnel', 'spikes'];
+                if (score > 100) availableTypes.push('wall'); 
+                let r = isDailyMode ? seededRandom() : Math.random();
+                type = availableTypes[Math.floor(r * availableTypes.length)];
+            }
+            
+            let reqShape = (type === 'tunnel') ? 'circle' : (type === 'spikes' ? 'square' : 'triangle');
+
+            if (!isTutorial && reqShape === lastRequiredShape) return;
+            lastRequiredShape = reqShape;
+
+            let obs = {
+                x: logicalWidth + 50, y: player.baseY, w: 70, h: 70,
+                type: type, requiredShape: reqShape, passed: false, shownHint: false, color: '#fff'
+            };
+
+            if (type === 'tunnel') {
+                obs.color = COLORS.circle; obs.y = player.baseY - 100; obs.h = 40; obs.w = 250; 
+            } else if (type === 'spikes') {
+                obs.color = COLORS.square; obs.w = 90; obs.h = 35; obs.y = player.baseY;
+            } else if (type === 'wall') {
+                obs.color = COLORS.triangle; obs.h = 140; obs.y = player.baseY; obs.w = 30;
+            }
+            obstacles.push(obs);
+        }
+
+        function checkCollision(obs) {
+            if (player.shape === obs.requiredShape) {
+                if(!obs.passed) {
+                    obs.passed = true;
+                    // Tutorial success
+                    if(tutText.classList.contains('hidden') === false) {
+                        tutText.classList.add('hidden');
+                        tutorialSlowMo = false;
+                    }
+                    
+                    combo++;
+                    if(combo >= 2) {
+                        playSound('combo');
+                        document.getElementById('comboDisplay').innerText = `x${combo} 🔥`;
+                        createParticles(player.x, player.baseY - 50, '#00e5ff', 5); 
+                    }
+                    if(combo === 5 || (combo > 5 && combo % 5 === 0)) {
+                        slowMoTimer = 1000; 
+                        createParticles(player.x, player.baseY - 80, '#ffffff', 20); 
+                    }
+                    if(obs.type === 'wall' || obs.type === 'spikes') {
+                        createParticles(obs.x + obs.w/2, obs.y - 30, obs.color);
+                    }
+                    if(combo < 2) playSound('score'); 
+                }
+            } else {
+                 let centerObs = obs.x + obs.w/2;
+                 let centerPlayer = player.x;
+                 let hit = false;
+                 if(obs.type === 'tunnel') {
+                     if(player.shape !== 'circle' && Math.abs(centerObs - centerPlayer) < 30) hit = true;
+                 } else {
+                     if(centerObs > centerPlayer && Math.abs(centerObs - centerPlayer) < 40) hit = true;
+                 }
+
+                 if(hit) {
+                     combo = 0; document.getElementById('comboDisplay').innerText = '';
+                     gameOver();
+                 }
+            }
+        }
+
+        function createParticles(x, y, color, amount=10) {
+            for(let i=0; i<amount; i++) {
+                particles.push({
+                    x: x, y: y,
+                    vx: (Math.random() - 0.5) * 12, vy: (Math.random() - 0.5) * 12,
+                    life: 1, color: color
+                });
+            }
+        }
+
+        function gameOver() {
+            gameState = 'GAMEOVER';
+            playSound('crash');
+            tutText.classList.add('hidden');
+            combo = 0; 
+
+            // FIX: Removed sdk.showBanner() from here. Only triggered by buttons now.
+
+            const finalScore = Math.floor(score);
+            document.getElementById('finalScore').innerText = finalScore;
+            
+            let displayBest = 0;
+            if(isDailyMode) {
+                let todayKey = "daily_" + getDailySeed();
+                let prev = localStorage.getItem(todayKey) || 0;
+                if(finalScore > prev) {
+                    localStorage.setItem(todayKey, finalScore);
+                    displayBest = finalScore;
+                } else {
+                    displayBest = prev;
+                }
+            } else {
+                let prev = localStorage.getItem('bestScore') || 0;
+                if (finalScore > prev) {
+                    localStorage.setItem('bestScore', finalScore);
+                    displayBest = finalScore;
+                } else {
+                    displayBest = prev;
+                }
+            }
+            
+            document.getElementById('bestScoreText').innerText = displayBest;
+            generateLeaderboard(finalScore);
+            
+            document.getElementById('hud').classList.add('hidden');
+            document.getElementById('mobile-controls').classList.add('hidden');
+            showScreen('gameOverScreen');
+        }
+
+        function draw() {
+            ctx.save();
+            ctx.scale(scaleRatio, scaleRatio);
+            ctx.fillStyle = COLORS.bg;
+            ctx.fillRect(0, 0, logicalWidth, TARGET_HEIGHT);
+
+            ctx.fillStyle = COLORS.ground;
+            ctx.fillRect(0, player.baseY, logicalWidth, TARGET_HEIGHT - player.baseY);
+            ctx.strokeStyle = '#34495e'; 
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(0, player.baseY);
+            ctx.lineTo(logicalWidth, player.baseY);
+            ctx.stroke();
+
+            // Warning
+            let warningActive = false;
+            for(let obs of obstacles) {
+                if (!obs.passed && obs.x > player.x && obs.x < player.x + 250) {
+                    if (player.shape !== obs.requiredShape) {
+                        warningActive = true;
+                        break;
+                    }
+                }
+            }
+            if (warningActive) {
+                ctx.save();
+                ctx.translate(Math.sin(Date.now()/50)*3, 0); 
+                ctx.fillStyle = 'rgba(231, 76, 60, 0.15)'; 
+                ctx.fillRect(0, 0, logicalWidth, TARGET_HEIGHT);
+                ctx.restore();
+            }
+
+            obstacles.forEach(obs => {
+                ctx.save();
+                ctx.shadowBlur = 10; ctx.shadowColor = obs.color;
+                ctx.fillStyle = obs.color;
+                
+                if (obs.type === 'spikes') {
+                    ctx.beginPath();
+                    ctx.moveTo(obs.x, obs.y);
+                    ctx.lineTo(obs.x + obs.w/2, obs.y - obs.h);
+                    ctx.lineTo(obs.x + obs.w, obs.y);
+                    ctx.fill();
+                } else if (obs.type === 'wall') {
+                    if(!obs.passed) {
+                        ctx.fillStyle = obs.color; ctx.globalAlpha = 0.8;
+                        ctx.fillRect(obs.x, obs.y - obs.h, obs.w, obs.h);
+                    }
+                } else if (obs.type === 'tunnel') {
+                    ctx.fillStyle = obs.color;
+                    ctx.fillRect(obs.x, 0, obs.w, obs.y);
+                    ctx.fillRect(obs.x + obs.w - 20, 0, 20, player.baseY);
+                }
+                ctx.restore();
+            });
+
+            let px = player.x;
+            let bob = Math.sin(Date.now() / 100) * 3;
+            ctx.shadowBlur = 15; ctx.shadowColor = COLORS[player.shape];
+
+            if(slowMoTimer > 0) {
+                 ctx.save(); ctx.globalAlpha = 0.3; ctx.translate(-20, 0); 
+                 drawPlayerShape(px, bob); ctx.restore();
+            }
+            drawPlayerShape(px, bob);
+            ctx.shadowBlur = 0;
+
+            particles.forEach(p => {
+                ctx.fillStyle = p.color; ctx.globalAlpha = p.life;
+                ctx.fillRect(p.x, p.y, 6, 6); ctx.globalAlpha = 1.0;
+            });
+            ctx.restore();
+        }
+
+        function drawPlayerShape(px, bob) {
+            if (player.shape === 'circle') {
+                ctx.fillStyle = COLORS.circle;
+                ctx.beginPath();
+                ctx.arc(px, player.baseY - 20, 20, 0, Math.PI * 2);
+                ctx.fill();
+                let roll = (Date.now() / 100) * speed;
+                ctx.fillStyle = 'rgba(255,255,255,0.5)';
+                ctx.beginPath();
+                ctx.arc(px + Math.cos(roll)*10, (player.baseY - 20) + Math.sin(roll)*10, 5, 0, Math.PI*2);
+                ctx.fill();
+            } else if (player.shape === 'square') {
+                ctx.fillStyle = COLORS.square;
+                ctx.fillRect(px - 20, player.baseY - 40 + bob, 40, 40);
+            } else if (player.shape === 'triangle') {
+                ctx.fillStyle = COLORS.triangle;
+                ctx.beginPath();
+                ctx.moveTo(px - 20, player.baseY + bob); 
+                ctx.lineTo(px + 20, player.baseY + bob); 
+                ctx.lineTo(px, player.baseY - 40 + bob); 
+                ctx.fill();
+            }
+        }
+
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        function togglePause() {
+            if(gameState === 'PLAYING') {
+                gameState = 'PAUSED';
+                lastTime = performance.now();
+                showScreen('pauseScreen');
+            } else if(gameState === 'PAUSED') resumeGame();
+        }
+
+        function resumeGame() {
+            gameState = 'PLAYING';
+            lastTime = performance.now();
+            document.getElementById('pauseScreen').classList.add('hidden');
+            requestAnimationFrame(loop);
+        }
+
+        function quitToHome() {
+            gameState = 'MENU';
+            showScreen('homeScreen');
+            document.getElementById('hud').classList.add('hidden');
+            document.getElementById('mobile-controls').classList.add('hidden');
+        }
+
+        window.gameInstance = {
+            pendingStart: false,
+            pauseInternals: function() {
+                if(gameState === 'PLAYING') gameState = 'PAUSED';
+                lastTime = performance.now();
+            },
+            resumeInternals: function() {
+                if(gameState === 'PAUSED') gameState = 'PLAYING';
+                lastTime = performance.now();
+            },
+            resolvePendingStart: function() {
+                this.pendingStart = false;
+                startGame();
+            }
+        };
+
+        function generateLeaderboard(currentScore) {
+            const names = ["Alex", "Sam", "Jordan", "Speedy", "CubeMaster"];
+            let scores = [];
+            for(let i=0; i<4; i++) {
+                scores.push({
+                    name: names[i],
+                    score: Math.floor(Math.random() * 500) + 100
+                });
+            }
+            scores.push({ name: "YOU", score: currentScore });
+            
+            if(isDailyMode) {
+                let todayKey = "daily_" + getDailySeed();
+                let best = localStorage.getItem(todayKey);
+                if(best && parseInt(best) > currentScore) scores.push({ name: "DAILY BEST", score: parseInt(best) });
+            } else {
+                const best = localStorage.getItem('bestScore');
+                if(best && parseInt(best) > currentScore) scores.push({ name: "BEST", score: parseInt(best) });
+            }
+
+            scores.sort((a,b) => b.score - a.score);
+            scores = scores.slice(0, 5);
+
+            const container = document.getElementById('lb-content');
+            container.innerHTML = '';
+            scores.forEach((s, index) => {
+                let div = document.createElement('div');
+                div.className = 'lb-row';
+                if(s.name === "YOU") div.classList.add('highlight');
+                div.innerHTML = `<span>#${index+1} ${s.name}</span><span>${s.score}</span>`;
+                container.appendChild(div);
+            });
+        }
+    </script>
+</body>
+</html>

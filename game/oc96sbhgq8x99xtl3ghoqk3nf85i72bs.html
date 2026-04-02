@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Jump Master - Sky High</title>
+    <link rel="stylesheet" href="styles.css">
+    <style type="text/css">@font-face {font-family:Fredoka;font-style:normal;font-weight:400;src:url(/cf-fonts/v/fredoka/5.0.11/latin-ext/wght/normal.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:Fredoka;font-style:normal;font-weight:400;src:url(/cf-fonts/v/fredoka/5.0.11/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Fredoka;font-style:normal;font-weight:400;src:url(/cf-fonts/v/fredoka/5.0.11/hebrew/wght/normal.woff2);unicode-range:U+0590-05FF,U+200C-2010,U+20AA,U+25CC,U+FB1D-FB4F;font-display:swap;}@font-face {font-family:Fredoka;font-style:normal;font-weight:600;src:url(/cf-fonts/v/fredoka/5.0.11/hebrew/wght/normal.woff2);unicode-range:U+0590-05FF,U+200C-2010,U+20AA,U+25CC,U+FB1D-FB4F;font-display:swap;}@font-face {font-family:Fredoka;font-style:normal;font-weight:600;src:url(/cf-fonts/v/fredoka/5.0.11/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Fredoka;font-style:normal;font-weight:600;src:url(/cf-fonts/v/fredoka/5.0.11/latin-ext/wght/normal.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}</style>
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+        
+        <!-- UI Layers -->
+        <div id="start-screen" class="ui-panel">
+            <h1>JUMP MASTER</h1>
+            <div class="input-group">
+                <input type="text" id="player-name" placeholder="Enter Your Name" maxlength="10">
+                <button id="start-btn">PLAY</button>
+            </div>
+            <p style="font-size: 14px; color: #666; margin-top: 10px;">Tap Left/Right or use Arrow Keys to Move</p>
+            <div id="leaderboard-preview">
+                <h3>Top Jumpers</h3>
+                <ul id="leaderboard-list"></ul>
+            </div>
+            <button id="settings-btn">Settings</button>
+        </div>
+
+        <div id="settings-screen" class="ui-panel hidden">
+            <h2>Settings</h2>
+            <div class="setting-item">
+                <label>Outfit Color</label>
+                <div class="color-picker">
+                    <div class="color-option" data-color="#ff0055" style="background: #ff0055;"></div>
+                    <div class="color-option" data-color="#0055ff" style="background: #0055ff;"></div>
+                    <div class="color-option" data-color="#00ff55" style="background: #00ff55;"></div>
+                    <div class="color-option" data-color="#ffaa00" style="background: #ffaa00;"></div>
+                </div>
+            </div>
+            <div class="setting-item">
+                <label>Sound</label>
+                <input type="checkbox" id="sound-toggle" checked>
+            </div>
+            <button id="close-settings">Back</button>
+        </div>
+
+        <div id="hud" class="hidden">
+            <div id="score">0m</div>
+            <div id="name-display">Player</div>
+        </div>
+
+        <div id="game-over-screen" class="ui-panel hidden">
+            <h2>GAME OVER</h2>
+            <p>You fell!</p>
+            <div class="final-score">Score: <span id="final-score-val">0</span>m</div>
+            <button id="revive-btn" style="background: linear-gradient(135deg, #ff9900, #ff5500); margin-bottom: 10px;">Revive (Ad)</button>
+            <button id="restart-btn">Try Again</button>
+            <button id="menu-btn">Main Menu</button>
+        </div>
+    </div>
+    
+    <script type="text/javascript">
+        window.SDK_OPTIONS = {
+            gameId: "oc96sbhgq8x99xtl3ghoqk3nf85i72bs",
+            onEvent: function (a) {
+                console.log("SDK Event:", a.name, a);
+                switch (a.name) {
+                    case "SDK_GAME_PAUSE":
+                        // Pause game logic
+                        if (window.gameInstance) window.gameInstance.pauseGame();
+                        break;
+                    case "SDK_GAME_START":
+                        // Resume game logic
+                        if (window.gameInstance) window.gameInstance.resumeGame();
+                        break;
+                    case "SDK_READY":
+                        // SDK is ready
+                        console.log("SDK is Ready!");
+                        break;
+                    case "SDK_ERROR":
+                        console.error("SDK Error:", a);
+                        break;
+                }
+            }
+        };
+        (function (a, b, c) {
+            var d = a.getElementsByTagName(b)[0];
+            a.getElementById(c) || (a = a.createElement(b), a.id = c,
+            a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+        })(document, "script", "gamemonetize-sdk");
+    </script>
+    
+    <script type="module" src="src/main.js"></script>
+</body>
+</html>

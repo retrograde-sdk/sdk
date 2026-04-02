@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no" />
+    <title>Celebrity BarbieCore Aesthetic Look</title>
+       <script type="text/javascript" src="vendor/phaser.min.js"></script>
+    <script type="text/javascript" src="vendor/animation.js"></script>
+    <script>
+        var soundcheck = false
+        var soundstart = 0
+        var soundcheck1 = true
+        window.SDK_OPTIONS = {
+            gameId: "xp0vfhnwdhhniu52fyb1vu3lezbl85vm",
+            onEvent: function(a) {
+                switch (a.name) {
+                    case "SDK_GAME_PAUSE":
+                        if (soundcheck) {
+                            soundstart = 1
+                            game.scene.scenes[pageNo].scene.pause()
+                            soundstart = 1
+                            if (!isMuted) {
+                                music.pause()
+                                soundmute.setFrame(1)
+                            }
+                        }
+
+                        break;
+                    case "SDK_GAME_START":
+                        if (soundcheck) {
+                            soundstart = 0
+                            game.scene.scenes[pageNo].scene.resume()
+                            soundstart = 0
+                            if (!isMuted) {
+                                music.resume()
+                                soundmute.setFrame(0)
+                            } else {
+                                music.pause()
+                                soundmute.setFrame(1)
+                            }
+
+                        }
+
+                        break;
+                    case "SDK_READY":
+                        // when sdk is ready
+                        break;
+                }
+            }
+        };
+        (function(a, b, c) {
+            var d = a.getElementsByTagName(b)[0];
+            a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+        })(document, "script", "gamemonetize-sdk");
+
+        var a = document.createElement("script");
+        a.type = "text/javascript";
+        a.src = "https://www.googletagmanager.com/gtag/js?id=G-MGFZZ12T3E";
+        document.head.appendChild(a);
+
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+        gtag('js', new Date());
+        gtag('config', 'G-MGFZZ12T3E');
+
+    </script>
+    <style>
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+    </style>
+</head>
+
+<body>
+    <div id='theGame'>
+
+        <script src="game.js"></script>
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,1460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Street Mayhem Driver</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Russo+One&family=Orbitron:wght@400;700;900&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            background: #000;
+            overflow: hidden;
+            font-family: 'Russo One', 'Orbitron', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            touch-action: none;
+        }
+        
+        #gameContainer {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            max-width: 600px;
+            max-height: 900px;
+            overflow: hidden;
+        }
+        
+        #gameCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            background: #0a0a12;
+        }
+        
+        .overlay {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 20;
+        }
+        
+        #menuOverlay {
+            background: radial-gradient(ellipse at 50% 30%, rgba(60,20,10,0.92) 0%, rgba(10,5,15,0.98) 60%, rgba(0,0,0,1) 100%);
+        }
+        
+        #menuOverlay.hidden { display: none; }
+        
+        .logoContainer { margin-bottom: 50px; text-align: center; }
+        
+        .gameTitle {
+            font-family: 'Russo One', sans-serif;
+            font-size: clamp(36px, 9vw, 58px);
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            color: #ff3300;
+            text-shadow: 0 0 10px #ff6600, 0 0 20px #ff4400, 0 4px 0 #881100;
+        }
+        
+        .gameTitleMayhem {
+            font-family: 'Russo One', sans-serif;
+            font-size: clamp(46px, 13vw, 76px);
+            text-transform: uppercase;
+            background: linear-gradient(180deg, #ffee00 0%, #ff8800 40%, #ff4400 70%, #cc2200 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 4px 0 #661100) drop-shadow(0 0 25px rgba(255,100,0,0.7));
+            line-height: 1;
+        }
+        
+        .gameTitleDriver {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(18px, 4.5vw, 28px);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 10px;
+            color: #4488ff;
+            text-shadow: 0 0 10px #0066ff, 0 2px 0 #002266;
+            margin-top: 5px;
+        }
+        
+        .menuSection { text-align: center; }
+        
+        .menuLabel {
+            font-family: 'Orbitron', sans-serif;
+            color: rgba(255,255,255,0.5);
+            font-size: 12px;
+            margin-bottom: 18px;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+        }
+        
+        .difficultyBtn {
+            display: block;
+            width: 220px;
+            padding: 15px 30px;
+            margin: 10px auto;
+            font-family: 'Russo One', sans-serif;
+            font-size: 17px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #fff;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+        }
+        
+        .difficultyBtn.easy {
+            background: linear-gradient(180deg, #33dd55, #22aa44, #118833);
+            box-shadow: 0 4px 0 #0a5522, 0 6px 18px rgba(0,180,80,0.4);
+        }
+        
+        .difficultyBtn.normal {
+            background: linear-gradient(180deg, #ffcc00, #ff9900, #dd7700);
+            box-shadow: 0 4px 0 #995500, 0 6px 18px rgba(255,150,0,0.4);
+        }
+        
+        .difficultyBtn.hard {
+            background: linear-gradient(180deg, #ff4444, #dd2222, #aa1111);
+            box-shadow: 0 4px 0 #661111, 0 6px 18px rgba(255,50,50,0.4);
+        }
+        
+        .difficultyBtn:hover { transform: translateY(-2px); }
+        .difficultyBtn:active { transform: translateY(2px); }
+        
+        .bestScore {
+            font-family: 'Orbitron', sans-serif;
+            color: #ffaa00;
+            font-size: 13px;
+            margin-top: 35px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            padding: 10px 25px;
+            background: rgba(255,150,0,0.15);
+            border: 1px solid rgba(255,150,0,0.35);
+            border-radius: 6px;
+        }
+        
+        #gameOverOverlay {
+            background: radial-gradient(ellipse at center, rgba(80,10,0,0.95) 0%, rgba(20,0,0,0.98) 50%, rgba(0,0,0,1) 100%);
+            display: none;
+        }
+        
+        #gameOverOverlay.show { display: flex; }
+        
+        .gameOverTitle {
+            font-family: 'Russo One', sans-serif;
+            font-size: clamp(42px, 11vw, 68px);
+            color: #ff0000;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px #ff0000, 0 0 40px #ff0000, 0 4px 0 #880000;
+            animation: pulse 0.4s ease infinite;
+        }
+        
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.85; } }
+        
+        .scoreContainer {
+            text-align: center;
+            margin-bottom: 25px;
+            padding: 20px 45px;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,100,0,0.3);
+            border-radius: 10px;
+        }
+        
+        .finalScoreLabel {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 12px;
+            color: rgba(255,255,255,0.5);
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            margin-bottom: 6px;
+        }
+        
+        .finalScore {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(38px, 9vw, 55px);
+            font-weight: 700;
+            color: #ffcc00;
+            text-shadow: 0 0 18px rgba(255,200,0,0.6);
+        }
+        
+        .newBest {
+            font-family: 'Russo One', sans-serif;
+            font-size: 16px;
+            color: #00ffaa;
+            margin-top: 10px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            text-shadow: 0 0 12px #00ffaa;
+            animation: pulse 0.7s ease infinite;
+        }
+        
+        .btnContainer { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+        
+        .gameOverBtn {
+            font-family: 'Russo One', sans-serif;
+            padding: 14px 35px;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .playAgainBtn {
+            background: linear-gradient(180deg, #33dd55, #22aa44, #118833);
+            box-shadow: 0 4px 0 #0a5522;
+        }
+        
+        .menuBtn {
+            background: linear-gradient(180deg, #4488ff, #2266dd, #1144aa);
+            box-shadow: 0 4px 0 #0a2255;
+        }
+        
+        .gameOverBtn:hover { transform: translateY(-2px); }
+        
+        #hud {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%;
+            padding: 10px 12px;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+            z-index: 10;
+        }
+        
+        .hudItem {
+            background: rgba(0,0,0,0.8);
+            padding: 8px 14px;
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.12);
+        }
+        
+        .hudLabel {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 8px;
+            color: rgba(255,255,255,0.4);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .hudValue {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(20px, 5vw, 26px);
+            font-weight: 700;
+        }
+        
+        #scoreValue { color: #ffcc00; }
+        #distanceValue { color: #00ddff; }
+        
+        #pausedOverlay {
+            background: rgba(0,0,0,0.85);
+            display: none;
+            z-index: 15;
+        }
+        
+        #pausedOverlay.show { display: flex; }
+        
+        .pausedText {
+            font-family: 'Russo One', sans-serif;
+            font-size: clamp(38px, 9vw, 55px);
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 10px;
+        }
+        
+        #mobileControls {
+            position: absolute;
+            bottom: 30px; left: 0;
+            width: 100%;
+            display: none;
+            justify-content: space-between;
+            padding: 0 30px;
+            z-index: 10;
+            pointer-events: none;
+        }
+        
+        .mobileBtn {
+            width: 80px; height: 80px;
+            background: rgba(255,150,50,0.2);
+            border: 2px solid rgba(255,150,50,0.5);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 28px;
+            color: #ffaa44;
+            pointer-events: auto;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        
+        .mobileBtn:active { background: rgba(255,150,50,0.4); transform: scale(0.92); }
+        
+        @media (pointer: coarse) { #mobileControls { display: flex; } }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+        
+        <div id="hud">
+            <div class="hudItem">
+                <div class="hudLabel">Score</div>
+                <div class="hudValue" id="scoreValue">0</div>
+            </div>
+            <div class="hudItem">
+                <div class="hudLabel">Distance</div>
+                <div class="hudValue" id="distanceValue">0m</div>
+            </div>
+        </div>
+        
+        <div id="menuOverlay" class="overlay">
+            <div class="logoContainer">
+                <div class="gameTitle">STREET</div>
+                <div class="gameTitleMayhem">MAYHEM</div>
+                <div class="gameTitleDriver">DRIVER</div>
+            </div>
+            <div class="menuSection">
+                <p class="menuLabel">Select Difficulty</p>
+                <button class="difficultyBtn easy" data-difficulty="easy">EASY</button>
+                <button class="difficultyBtn normal" data-difficulty="normal">NORMAL</button>
+                <button class="difficultyBtn hard" data-difficulty="hard">HARD</button>
+            </div>
+            <p class="bestScore" id="menuBestScore">BEST: 0</p>
+        </div>
+        
+        <div id="gameOverOverlay" class="overlay">
+            <h2 class="gameOverTitle">WRECKED</h2>
+            <div class="scoreContainer">
+                <p class="finalScoreLabel">Final Score</p>
+                <p class="finalScore" id="finalScoreValue">0</p>
+                <p class="newBest" id="newBestText" style="display:none;">NEW RECORD!</p>
+            </div>
+            <div class="btnContainer">
+                <button class="gameOverBtn playAgainBtn" id="playAgainBtn">PLAY AGAIN</button>
+                <button class="gameOverBtn menuBtn" id="menuBtn">MENU</button>
+            </div>
+        </div>
+        
+        <div id="pausedOverlay" class="overlay">
+            <p class="pausedText">PAUSED</p>
+        </div>
+        
+        <div id="mobileControls">
+            <div class="mobileBtn" id="leftBtn">◀</div>
+            <div class="mobileBtn" id="rightBtn">▶</div>
+        </div>
+    </div>
+
+    <!-- GameMonetize SDK - Official Integration -->
+    <script type="text/javascript">
+        // Game functions that SDK will call
+        var gameInstance = null;
+        var sdkReady = false;
+        var pendingAdCallback = null;
+        
+        window.SDK_OPTIONS = {
+            gameId: "3vet59sqg87hj5mhbwzy711v06ywtkvg",
+            onEvent: function(a) {
+                switch(a.name) {
+                    case "SDK_GAME_PAUSE":
+                        // Pause game and mute audio when ad starts
+                        if (gameInstance && gameInstance.pauseForAd) {
+                            gameInstance.pauseForAd();
+                        }
+                        break;
+                    case "SDK_GAME_START":
+                        // Resume game and unmute audio when ad ends
+                        if (gameInstance && gameInstance.resumeFromAd) {
+                            gameInstance.resumeFromAd();
+                        }
+                        // Call pending callback
+                        if (pendingAdCallback) {
+                            var cb = pendingAdCallback;
+                            pendingAdCallback = null;
+                            setTimeout(cb, 100);
+                        }
+                        break;
+                    case "SDK_READY":
+                        // SDK is ready to show ads
+                        sdkReady = true;
+                        break;
+                }
+            }
+        };
+        
+        // Load SDK
+        (function(a, b, c) {
+            var d = a.getElementsByTagName(b)[0];
+            if (!a.getElementById(c)) {
+                var e = a.createElement(b);
+                e.id = c;
+                e.src = "https://api.gamemonetize.com/sdk.js";
+                d.parentNode.insertBefore(e, d);
+            }
+        })(document, "script", "gamemonetize-sdk");
+        
+        // Show ad function
+        function showAd(callback) {
+            if (typeof sdk !== "undefined" && sdk.showBanner) {
+                pendingAdCallback = callback;
+                try {
+                    sdk.showBanner();
+                } catch(e) {
+                    if (callback) callback();
+                }
+                // Fallback timeout
+                setTimeout(function() {
+                    if (pendingAdCallback === callback) {
+                        pendingAdCallback = null;
+                        if (callback) callback();
+                    }
+                }, 5000);
+            } else {
+                // SDK not available, call callback directly
+                if (callback) setTimeout(callback, 50);
+            }
+        }
+    </script>
+
+    <script>
+        
+        (function() {
+            'use strict';
+            
+            // Canvas
+            const canvas = document.getElementById('gameCanvas');
+            const ctx = canvas.getContext('2d');
+            const container = document.getElementById('gameContainer');
+            
+            // DOM Elements
+            const menuOverlay = document.getElementById('menuOverlay');
+            const gameOverOverlay = document.getElementById('gameOverOverlay');
+            const pausedOverlay = document.getElementById('pausedOverlay');
+            const scoreValue = document.getElementById('scoreValue');
+            const distanceValue = document.getElementById('distanceValue');
+            const finalScoreValue = document.getElementById('finalScoreValue');
+            const newBestText = document.getElementById('newBestText');
+            const menuBestScore = document.getElementById('menuBestScore');
+            const playAgainBtn = document.getElementById('playAgainBtn');
+            const menuBtn = document.getElementById('menuBtn');
+            const leftBtn = document.getElementById('leftBtn');
+            const rightBtn = document.getElementById('rightBtn');
+            
+            // Game State
+            let gameState = 'menu';
+            let difficulty = 'normal';
+            let isPaused = false;
+            let isAdPlaying = false;
+            let score = 0;
+            let distance = 0;
+            let bestScore = parseInt(localStorage.getItem('streetMayhemBest')) || 0;
+            let gameStartTime = 0;
+            let lastAdTime = 0;
+            let nextAdInterval = 0;
+            let animationId = null;
+            let lastTime = 0;
+            let gameTime = 0;
+            
+            // Audio
+            let audioCtx = null, bgmGain = null, sfxGain = null, bgmTimers = [], engineOsc = null, isMuted = false;
+            
+            // Effects
+            let screenShake = 0;
+            let particles = [];
+            let exhaustParticles = [];
+            let sparkParticles = [];
+            
+            // City lights
+            let cityLights = [];
+            for (let i = 0; i < 60; i++) {
+                cityLights.push({
+                    x: Math.random(),
+                    y: Math.random() * 0.35,
+                    size: 2 + Math.random() * 4,
+                    brightness: 0.4 + Math.random() * 0.6,
+                    color: ['#ffaa00', '#ff6600', '#00aaff', '#ff00aa', '#ffffff', '#00ff88'][Math.floor(Math.random() * 6)],
+                    phase: Math.random() * 100
+                });
+            }
+            
+            // Difficulty Settings
+            const difficultySettings = {
+                easy: { playerSpeed: 6, trafficDensity: 0.012, policeDelay: 15000, policeCount: 1, trafficSpeed: 2.5, steerSpeed: 6 },
+                normal: { playerSpeed: 8, trafficDensity: 0.02, policeDelay: 10000, policeCount: 2, trafficSpeed: 3.5, steerSpeed: 7.5 },
+                hard: { playerSpeed: 11, trafficDensity: 0.035, policeDelay: 6000, policeCount: 3, trafficSpeed: 5, steerSpeed: 9 }
+            };
+            
+            let settings = difficultySettings.normal;
+            
+            // Player
+            let player = { x: 0, y: 0, width: 45, height: 85, speed: 0, steerSpeed: 0, tilt: 0 };
+            
+            // Road
+            const laneCount = 4;
+            let roadOffset = 0;
+            
+            // Game objects
+            let trafficCars = [];
+            let hazards = [];
+            let policeCars = [];
+            
+            // Controls
+            let keys = { left: false, right: false };
+            
+            window.onload = function () {
+                showAd();
+            };
+            // Resize
+            function resizeCanvas() {
+                const rect = container.getBoundingClientRect();
+                canvas.width = rect.width;
+                canvas.height = rect.height;
+                player.x = canvas.width / 2;
+                player.y = canvas.height - 140;
+            }
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            
+            // Road helpers
+            function getRoadBounds(y) {
+                const horizonY = canvas.height * 0.3;
+                const t = Math.max(0, Math.min(1, (y - horizonY) / (canvas.height - horizonY)));
+                const topWidth = 90;
+                const bottomWidth = 380;
+                const width = topWidth + (bottomWidth - topWidth) * t;
+                const centerX = canvas.width / 2;
+                return { left: centerX - width / 2, right: centerX + width / 2, width: width, scale: 0.3 + t * 0.7 };
+            }
+            
+            function getLaneX(lane, y) {
+                const road = getRoadBounds(y);
+                const laneWidth = road.width / laneCount;
+                return road.left + laneWidth * lane + laneWidth / 2;
+            }
+            
+            // Audio
+            function initAudio() {
+                if (audioCtx) return;
+                try {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    bgmGain = audioCtx.createGain();
+                    sfxGain = audioCtx.createGain();
+                    bgmGain.connect(audioCtx.destination);
+                    sfxGain.connect(audioCtx.destination);
+                    bgmGain.gain.value = 0.08;
+                    sfxGain.gain.value = 0.15;
+                } catch(e) {}
+            }
+            
+            function startBGM() {
+                if (!audioCtx || isMuted) return;
+                stopBGM();
+                let beat = 0;
+                function playBeat() {
+                    if (isMuted || gameState !== 'playing') return;
+                    try {
+                        if (beat % 4 === 0) {
+                            const kick = audioCtx.createOscillator();
+                            const kickG = audioCtx.createGain();
+                            kick.type = 'sine';
+                            kick.frequency.setValueAtTime(100, audioCtx.currentTime);
+                            kick.frequency.exponentialRampToValueAtTime(35, audioCtx.currentTime + 0.08);
+                            kickG.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                            kickG.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                            kick.connect(kickG);
+                            kickG.connect(bgmGain);
+                            kick.start();
+                            kick.stop(audioCtx.currentTime + 0.1);
+                        }
+                        beat++;
+                        bgmTimers.push(setTimeout(playBeat, 150));
+                    } catch(e) {}
+                }
+                playBeat();
+            }
+            
+            function stopBGM() { bgmTimers.forEach(t => clearTimeout(t)); bgmTimers = []; }
+            
+            function startEngineSound() {
+                if (!audioCtx || isMuted || engineOsc) return;
+                try {
+                    engineOsc = audioCtx.createOscillator();
+                    const g = audioCtx.createGain();
+                    const f = audioCtx.createBiquadFilter();
+                    engineOsc.type = 'sawtooth';
+                    engineOsc.frequency.value = 50;
+                    f.type = 'lowpass';
+                    f.frequency.value = 150;
+                    g.gain.value = 0.025;
+                    engineOsc.connect(f);
+                    f.connect(g);
+                    g.connect(sfxGain);
+                    engineOsc.start();
+                } catch(e) {}
+            }
+            
+            function updateEngineSound(speed) {
+                if (engineOsc && !isMuted) try { engineOsc.frequency.value = 40 + speed * 4; } catch(e) {}
+            }
+            
+            function stopEngineSound() {
+                if (engineOsc) { try { engineOsc.stop(); } catch(e) {} engineOsc = null; }
+            }
+            
+            function playCrashSound() {
+                if (!audioCtx || isMuted) return;
+                try {
+                    const buf = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.4, audioCtx.sampleRate);
+                    const d = buf.getChannelData(0);
+                    for (let i = 0; i < buf.length; i++) d[i] = (Math.random() * 2 - 1) * Math.exp(-i / (audioCtx.sampleRate * 0.12));
+                    const n = audioCtx.createBufferSource();
+                    n.buffer = buf;
+                    const g = audioCtx.createGain();
+                    g.gain.value = 0.4;
+                    n.connect(g);
+                    g.connect(sfxGain);
+                    n.start();
+                } catch(e) {}
+            }
+            
+            function muteAllAudio() {
+                isMuted = true;
+                stopBGM();
+                stopEngineSound();
+                if (bgmGain) bgmGain.gain.value = 0;
+                if (sfxGain) sfxGain.gain.value = 0;
+            }
+            
+            function unmuteAllAudio() {
+                isMuted = false;
+                if (bgmGain) bgmGain.gain.value = 0.08;
+                if (sfxGain) sfxGain.gain.value = 0.15;
+                if (gameState === 'playing' && !isPaused) {
+                    startBGM();
+                    startEngineSound();
+                }
+            }
+            
+            // Visibility
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) {
+                    pauseGame();
+                } else {
+                    // Sayfa görünür olduğunda resume
+                    if (gameState === 'playing') {
+                        isPaused = false;
+                        isAdPlaying = false;
+                        pausedOverlay.classList.remove('show');
+                        unmuteAllAudio();
+                        lastTime = performance.now();
+                    }
+                }
+            });
+            
+            window.addEventListener('blur', () => {
+                if (gameState === 'playing' && !isPaused) {
+                    pauseGame();
+                }
+            });
+            
+            window.addEventListener('focus', () => {
+                if (gameState === 'playing') {
+                    isPaused = false;
+                    isAdPlaying = false;
+                    pausedOverlay.classList.remove('show');
+                    unmuteAllAudio();
+                    lastTime = performance.now();
+                }
+            });
+            
+            function pauseGame() {
+                if (gameState !== 'playing' || isPaused) return;
+                isPaused = true;
+                muteAllAudio();
+                pausedOverlay.classList.add('show');
+            }
+            
+            function resumeGame() {
+                if (gameState !== 'playing') return;
+                if (!isPaused && !pausedOverlay.classList.contains('show')) return;
+                
+                isPaused = false;
+                isAdPlaying = false;
+                pausedOverlay.classList.remove('show');
+                unmuteAllAudio();
+                lastTime = performance.now();
+            }
+            
+            function pauseForAd() {
+                isAdPlaying = true;
+                if (gameState === 'playing') isPaused = true;
+                muteAllAudio();
+                // Reklam sırasında PAUSED ekranı gösterme
+                pausedOverlay.classList.remove('show');
+            }
+            
+            function resumeFromAd() {
+                isAdPlaying = false;
+                isPaused = false;
+                // PAUSED ekranını kaldır
+                pausedOverlay.classList.remove('show');
+                if (gameState === 'playing' && !document.hidden) {
+                    unmuteAllAudio();
+                    lastTime = performance.now();
+                }
+            }
+            
+            // Export functions for SDK
+            window.gameInstance = {
+                pauseForAd: pauseForAd,
+                resumeFromAd: resumeFromAd
+            };
+            
+            // Game functions
+            function initGame() {
+                settings = difficultySettings[difficulty];
+                player.x = canvas.width / 2;
+                player.y = canvas.height - 140;
+                player.speed = settings.playerSpeed;
+                player.steerSpeed = settings.steerSpeed;
+                player.tilt = 0;
+                
+                trafficCars = [];
+                hazards = [];
+                policeCars = [];
+                particles = [];
+                exhaustParticles = [];
+                sparkParticles = [];
+                
+                screenShake = 0;
+                score = 0;
+                distance = 0;
+                gameTime = 0;
+                roadOffset = 0;
+                
+                gameStartTime = Date.now();
+                lastAdTime = Date.now();
+                nextAdInterval = 60000 + Math.random() * 30000;
+                lastTime = 0;
+                
+                updateHUD();
+            }
+            
+            function startGame() {
+                initAudio();
+                if (audioCtx?.state === 'suspended') audioCtx.resume();
+                initGame();
+                
+                // Tüm durumları sıfırla
+                gameState = 'playing';
+                isPaused = false;
+                isAdPlaying = false;
+                isMuted = false;
+                
+                // Tüm overlay'leri kapat
+                menuOverlay.classList.add('hidden');
+                gameOverOverlay.classList.remove('show');
+                pausedOverlay.classList.remove('show');
+                
+                // Sesi başlat
+                if (bgmGain) bgmGain.gain.value = 0.08;
+                if (sfxGain) sfxGain.gain.value = 0.15;
+                startBGM();
+                startEngineSound();
+                
+                if (animationId) cancelAnimationFrame(animationId);
+                lastTime = performance.now();
+                animationId = requestAnimationFrame(gameLoop);
+            }
+            
+            function endGame() {
+                gameState = 'gameover';
+                stopBGM();
+                stopEngineSound();
+                playCrashSound();
+                screenShake = 25;
+                
+                for (let i = 0; i < 80; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const speed = 4 + Math.random() * 15;
+                    particles.push({
+                        x: player.x, y: player.y,
+                        vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
+                        size: 3 + Math.random() * 12,
+                        color: ['#ff2200', '#ff6600', '#ffaa00', '#ffff00', '#ffffff'][Math.floor(Math.random() * 5)],
+                        life: 1, decay: 0.012 + Math.random() * 0.015
+                    });
+                }
+                
+                const isNewBest = score > bestScore;
+                if (isNewBest) {
+                    bestScore = score;
+                    localStorage.setItem('streetMayhemBest', bestScore);
+                }
+                
+                setTimeout(() => {
+                    finalScoreValue.textContent = Math.floor(score).toLocaleString();
+                    newBestText.style.display = isNewBest ? 'block' : 'none';
+                    gameOverOverlay.classList.add('show');
+                    showAd();
+                }, 1200);
+            }
+            
+            function returnToMenu() {
+                gameState = 'menu';
+                gameOverOverlay.classList.remove('show');
+                menuOverlay.classList.remove('hidden');
+                menuBestScore.textContent = 'BEST: ' + bestScore.toLocaleString();
+                if (animationId) cancelAnimationFrame(animationId);
+                animationId = requestAnimationFrame(menuLoop);
+            }
+            
+            function playAgain() {
+                gameOverOverlay.classList.remove('show');
+                // Play Again'de reklam gösterme, direkt oyunu başlat
+                startGame();
+            }
+            
+            // Traffic
+            function generateTraffic() {
+                const elapsed = Date.now() - gameStartTime;
+                const mult = 1 + elapsed / 90000;
+                const horizonY = canvas.height * 0.3;
+                
+                if (Math.random() < settings.trafficDensity * mult) {
+                    const lane = Math.floor(Math.random() * laneCount);
+                    const spawnY = horizonY - 30;
+                    
+                    if (!trafficCars.some(c => c.lane === lane && c.y < horizonY + 80)) {
+                        const colors = [
+                            { body: '#cc2222', accent: '#aa1111' },
+                            { body: '#2255cc', accent: '#1144aa' },
+                            { body: '#22aa44', accent: '#119933' },
+                            { body: '#dddd22', accent: '#bbbb11' },
+                            { body: '#666666', accent: '#444444' },
+                            { body: '#aa22aa', accent: '#881188' },
+                            { body: '#22aaaa', accent: '#118888' },
+                            { body: '#ffffff', accent: '#dddddd' }
+                        ];
+                        const color = colors[Math.floor(Math.random() * colors.length)];
+                        
+                        trafficCars.push({
+                            x: getLaneX(lane, spawnY), y: spawnY, lane: lane,
+                            width: 42, height: 80,
+                            speed: settings.trafficSpeed * (0.7 + Math.random() * 0.5),
+                            bodyColor: color.body, accentColor: color.accent
+                        });
+                    }
+                }
+                
+                if (Math.random() < 0.002 * mult) {
+                    const lane = Math.floor(Math.random() * laneCount);
+                    const spawnY = horizonY - 20;
+                    const type = Math.random() > 0.4 ? 'oil' : 'barricade';
+                    hazards.push({
+                        x: getLaneX(lane, spawnY), y: spawnY, lane: lane,
+                        width: type === 'oil' ? 45 : 55, height: type === 'oil' ? 45 : 22, type: type
+                    });
+                }
+                
+                // Police cars - spawn from behind, slower approach
+                if (elapsed > settings.policeDelay && policeCars.length < settings.policeCount) {
+                    const shouldSpawn = policeCars.length === 0 || Math.random() < 0.015;
+                    if (shouldSpawn) {
+                        const lane = Math.floor(Math.random() * laneCount);
+                        const spawnY = canvas.height + 150; // Daha uzaktan spawn
+                        policeCars.push({
+                            x: getLaneX(lane, spawnY), y: spawnY, lane: lane, targetLane: lane,
+                            width: 44, height: 85, 
+                            speed: settings.playerSpeed * 0.7, // Daha yavaş hız
+                            sirenPhase: Math.random() * Math.PI * 2,
+                            catchUpTimer: 0 // Yavaş yaklaşma için timer
+                        });
+                    }
+                }
+            }
+            
+            function updatePlayer(dt) {
+                const moveSpeed = player.steerSpeed * dt * 60 / 1000;
+                const road = getRoadBounds(player.y);
+                const minX = road.left + player.width / 2 + 8;
+                const maxX = road.right - player.width / 2 - 8;
+                
+                if (keys.left) {
+                    player.x -= moveSpeed;
+                    player.tilt = Math.max(player.tilt - 0.02, -0.15);
+                } else if (keys.right) {
+                    player.x += moveSpeed;
+                    player.tilt = Math.min(player.tilt + 0.02, 0.15);
+                } else {
+                    player.tilt *= 0.9;
+                }
+                
+                const hitEdge = player.x < minX || player.x > maxX;
+                player.x = Math.max(minX, Math.min(maxX, player.x));
+                
+                if (hitEdge && (keys.left || keys.right) && Math.random() < 0.6) {
+                    const side = player.x < canvas.width / 2 ? -1 : 1;
+                    for (let i = 0; i < 3; i++) {
+                        sparkParticles.push({
+                            x: player.x + side * player.width / 2,
+                            y: player.y + player.height / 2 - 10 + Math.random() * 20,
+                            vx: side * (3 + Math.random() * 6), vy: -1 + Math.random() * 3,
+                            life: 1, size: 1 + Math.random() * 2
+                        });
+                    }
+                }
+                
+                if (Math.random() < 0.4) {
+                    exhaustParticles.push({
+                        x: player.x + (Math.random() - 0.5) * 8,
+                        y: player.y + player.height / 2,
+                        size: 3 + Math.random() * 4, life: 1, vy: 3 + Math.random() * 2,
+                        color: Math.random() > 0.3 ? '#ff6600' : '#ffaa00'
+                    });
+                }
+            }
+            
+            function updateTraffic(dt) {
+                const mult = dt * 60 / 1000;
+                const horizonY = canvas.height * 0.3;
+                
+                trafficCars.forEach(car => {
+                    car.y += (player.speed - car.speed * 0.6) * mult;
+                    car.x = getLaneX(car.lane, car.y);
+                });
+                trafficCars = trafficCars.filter(c => c.y > horizonY - 80 && c.y < canvas.height + 100);
+                
+                hazards.forEach(h => {
+                    h.y += player.speed * mult;
+                    h.x = getLaneX(h.lane, h.y);
+                });
+                hazards = hazards.filter(h => h.y < canvas.height + 80);
+                
+                // Police chase - yavaş ve adil yaklaşma
+                policeCars.forEach(pc => {
+                    pc.sirenPhase += dt * 0.02;
+                    pc.catchUpTimer = (pc.catchUpTimer || 0) + dt;
+                    
+                    // Polisler yavaşça yaklaşır - oyuncuya kaçış şansı ver
+                    const targetY = player.y + 120; // Daha uzak hedef
+                    const catchUpSpeed = 1.5 + (pc.catchUpTimer / 10000); // Zamanla yavaşça hızlanır
+                    
+                    if (pc.y > targetY + 50) {
+                        // Yavaşça yaklaş
+                        pc.y -= catchUpSpeed * mult;
+                    } else if (pc.y > targetY) {
+                        // Çok yavaş yaklaş (sabit mesafe tut)
+                        pc.y -= 0.5 * mult;
+                    }
+                    
+                    // Oyuncu hızlandığında polisler geride kalır
+                    pc.y += player.speed * 0.3 * mult;
+                    
+                    // Ekranda tut ama oyuncuya çok yaklaştırma
+                    const minY = player.y + 80; // Daha uzak minimum mesafe
+                    const maxY = canvas.height + 50;
+                    pc.y = Math.max(minY, Math.min(maxY, pc.y));
+                    
+                    // Şerit takibi - daha yavaş reaksiyon
+                    const road = getRoadBounds(player.y);
+                    const playerLane = Math.floor((player.x - road.left) / (road.width / laneCount));
+                    
+                    if (Math.random() < 0.008) { // Daha nadir şerit değişimi
+                        pc.targetLane = Math.max(0, Math.min(laneCount - 1, playerLane + Math.floor(Math.random() * 3) - 1));
+                    }
+                    
+                    pc.lane += (pc.targetLane - pc.lane) * 0.02; // Daha yavaş şerit değişimi
+                    pc.x = getLaneX(pc.lane, pc.y);
+                    
+                    const pcRoad = getRoadBounds(pc.y);
+                    pc.x = Math.max(pcRoad.left + pc.width / 2 + 5, Math.min(pcRoad.right - pc.width / 2 - 5, pc.x));
+                });
+                
+                sparkParticles.forEach(s => { s.x += s.vx * mult; s.y += s.vy * mult; s.vy += 0.3 * mult; s.life -= 0.05 * mult; });
+                sparkParticles = sparkParticles.filter(s => s.life > 0);
+                
+                exhaustParticles.forEach(p => { p.y += p.vy * mult; p.life -= 0.06 * mult; p.size *= 0.96; });
+                exhaustParticles = exhaustParticles.filter(p => p.life > 0 && p.size > 0.5);
+                
+                particles.forEach(p => { p.x += p.vx * mult; p.y += p.vy * mult; p.vy += 0.15 * mult; p.life -= p.decay * mult; });
+                particles = particles.filter(p => p.life > 0);
+                
+                if (screenShake > 0) { screenShake *= 0.88; if (screenShake < 0.5) screenShake = 0; }
+            }
+            
+            function checkCollisions() {
+                const shrink = 8;
+                const pb = {
+                    left: player.x - player.width / 2 + shrink,
+                    right: player.x + player.width / 2 - shrink,
+                    top: player.y - player.height / 2 + shrink,
+                    bottom: player.y + player.height / 2 - shrink
+                };
+                
+                for (const car of trafficCars) {
+                    const scale = getRoadBounds(car.y).scale;
+                    const w = car.width * scale, h = car.height * scale;
+                    const cb = { left: car.x - w/2 + 4, right: car.x + w/2 - 4, top: car.y - h/2 + 4, bottom: car.y + h/2 - 4 };
+                    if (pb.left < cb.right && pb.right > cb.left && pb.top < cb.bottom && pb.bottom > cb.top) return true;
+                }
+                
+                for (const h of hazards) {
+                    if (h.type !== 'barricade') continue;
+                    const scale = getRoadBounds(h.y).scale;
+                    const w = h.width * scale, hh = h.height * scale;
+                    const hb = { left: h.x - w/2, right: h.x + w/2, top: h.y - hh/2, bottom: h.y + hh/2 };
+                    if (pb.left < hb.right && pb.right > hb.left && pb.top < hb.bottom && pb.bottom > hb.top) return true;
+                }
+                
+                for (const pc of policeCars) {
+                    const scale = getRoadBounds(pc.y).scale;
+                    const w = pc.width * scale, h = pc.height * scale;
+                    const pcb = { left: pc.x - w/2 + 4, right: pc.x + w/2 - 4, top: pc.y - h/2 + 4, bottom: pc.y + h/2 - 4 };
+                    if (pb.left < pcb.right && pb.right > pcb.left && pb.top < pcb.bottom && pb.bottom > pcb.top) return true;
+                }
+                
+                return false;
+            }
+            
+            function updateScore(dt) {
+                gameTime += dt;
+                distance += player.speed * dt / 55;
+                score = Math.floor(gameTime / 1000) * 2 + Math.floor(distance) * 3;
+                updateEngineSound(player.speed + gameTime / 5000);
+            }
+            
+            function updateHUD() {
+                scoreValue.textContent = Math.floor(score).toLocaleString();
+                distanceValue.textContent = Math.floor(distance) + 'm';
+            }
+            
+            function checkTimedAd() {
+                const now = Date.now();
+                if (now - lastAdTime > nextAdInterval) {
+                    lastAdTime = now;
+                    nextAdInterval = 60000 + Math.random() * 30000;
+                    showAd();
+                }
+            }
+            
+            // Drawing
+            function drawBackground() {
+                const horizonY = canvas.height * 0.3;
+                
+                const skyGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+                skyGrad.addColorStop(0, '#020105');
+                skyGrad.addColorStop(0.25, '#080315');
+                skyGrad.addColorStop(0.5, '#100720');
+                skyGrad.addColorStop(1, '#180a28');
+                ctx.fillStyle = skyGrad;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                const glowGrad = ctx.createRadialGradient(canvas.width/2, horizonY*0.5, 0, canvas.width/2, horizonY*0.5, canvas.width*0.6);
+                glowGrad.addColorStop(0, 'rgba(255,80,30,0.2)');
+                glowGrad.addColorStop(0.6, 'rgba(255,40,0,0.08)');
+                glowGrad.addColorStop(1, 'transparent');
+                ctx.fillStyle = glowGrad;
+                ctx.fillRect(0, 0, canvas.width, horizonY);
+                
+                const time = gameTime || 0;
+                cityLights.forEach(l => {
+                    const x = l.x * canvas.width, y = l.y * canvas.height;
+                    const flicker = (Math.sin(time * 0.002 + l.phase) + 1) * 0.25 + 0.5;
+                    ctx.globalAlpha = l.brightness * flicker;
+                    ctx.fillStyle = l.color;
+                    ctx.beginPath(); ctx.arc(x, y, l.size, 0, Math.PI * 2); ctx.fill();
+                    ctx.globalAlpha = l.brightness * flicker * 0.2;
+                    ctx.beginPath(); ctx.arc(x, y, l.size * 4, 0, Math.PI * 2); ctx.fill();
+                });
+                ctx.globalAlpha = 1;
+                
+                for (let i = 0; i < 18; i++) {
+                    const bw = 18 + Math.sin(i * 1.4) * 12;
+                    const bh = 35 + Math.cos(i * 2.1) * 25 + Math.sin(i * 0.6) * 20;
+                    ctx.fillStyle = '#04030a';
+                    const bxL = i * (canvas.width * 0.48 / 9) - 8;
+                    ctx.fillRect(bxL, horizonY - bh, bw, bh + canvas.height);
+                    const bxR = canvas.width * 0.52 + i * (canvas.width * 0.48 / 9);
+                    ctx.fillRect(bxR, horizonY - bh - 5, bw, bh + 5 + canvas.height);
+                }
+            }
+            
+            function drawRoad() {
+                const horizonY = canvas.height * 0.3;
+                const topRoad = getRoadBounds(horizonY);
+                const bottomRoad = getRoadBounds(canvas.height);
+                
+                ctx.beginPath();
+                ctx.moveTo(topRoad.left, horizonY);
+                ctx.lineTo(topRoad.right, horizonY);
+                ctx.lineTo(bottomRoad.right, canvas.height);
+                ctx.lineTo(bottomRoad.left, canvas.height);
+                ctx.closePath();
+                
+                const roadGrad = ctx.createLinearGradient(0, horizonY, 0, canvas.height);
+                roadGrad.addColorStop(0, '#12101a');
+                roadGrad.addColorStop(0.5, '#181525');
+                roadGrad.addColorStop(1, '#1e1a30');
+                ctx.fillStyle = roadGrad;
+                ctx.fill();
+                
+                ctx.globalAlpha = 0.06;
+                const reflGrad = ctx.createLinearGradient(0, canvas.height * 0.6, 0, canvas.height);
+                reflGrad.addColorStop(0, 'transparent');
+                reflGrad.addColorStop(1, 'rgba(255,80,0,0.25)');
+                ctx.fillStyle = reflGrad;
+                ctx.fill();
+                ctx.globalAlpha = 1;
+                
+                ctx.shadowBlur = 30; ctx.shadowColor = '#ff5500';
+                ctx.strokeStyle = '#ff4400'; ctx.lineWidth = 4;
+                ctx.beginPath(); ctx.moveTo(topRoad.left, horizonY); ctx.lineTo(bottomRoad.left, canvas.height); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(topRoad.right, horizonY); ctx.lineTo(bottomRoad.right, canvas.height); ctx.stroke();
+                ctx.shadowBlur = 0;
+                
+                roadOffset = (roadOffset + player.speed * 0.6) % 70;
+                ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 3;
+                
+                for (let lane = 1; lane < laneCount; lane++) {
+                    ctx.beginPath();
+                    let drawing = false;
+                    for (let y = horizonY; y <= canvas.height; y += 3) {
+                        const road = getRoadBounds(y);
+                        const laneWidth = road.width / laneCount;
+                        const x = road.left + laneWidth * lane;
+                        const yOff = (y + roadOffset) % 70;
+                        const visible = yOff < 35;
+                        if (visible) {
+                            ctx.globalAlpha = 0.35 * road.scale;
+                            if (!drawing) { ctx.moveTo(x, y); drawing = true; }
+                            else ctx.lineTo(x, y);
+                        } else { drawing = false; }
+                    }
+                    ctx.stroke();
+                }
+                ctx.globalAlpha = 1;
+            }
+            
+            function drawRealisticCar(x, y, w, h, bodyColor, accentColor, isPlayer, tilt) {
+                const scale = isPlayer ? 1 : getRoadBounds(y).scale;
+                ctx.save();
+                ctx.translate(x, y);
+                ctx.rotate(tilt || 0);
+                ctx.scale(scale, scale);
+                
+                ctx.fillStyle = 'rgba(0,0,0,0.4)';
+                ctx.beginPath(); ctx.ellipse(4, h/2 + 8, w/2 + 8, 10, 0, 0, Math.PI * 2); ctx.fill();
+                
+                if (isPlayer) { ctx.shadowBlur = 40; ctx.shadowColor = '#ff4400'; }
+                
+                ctx.fillStyle = '#111'; ctx.shadowBlur = 0;
+                ctx.fillRect(-w/2 - 4, -h/2 + 8, 8, 18); ctx.fillRect(w/2 - 4, -h/2 + 8, 8, 18);
+                ctx.fillRect(-w/2 - 4, h/2 - 26, 8, 18); ctx.fillRect(w/2 - 4, h/2 - 26, 8, 18);
+                
+                ctx.fillStyle = '#555';
+                ctx.fillRect(-w/2 - 2, -h/2 + 11, 4, 12); ctx.fillRect(w/2 - 2, -h/2 + 11, 4, 12);
+                ctx.fillRect(-w/2 - 2, h/2 - 23, 4, 12); ctx.fillRect(w/2 - 2, h/2 - 23, 4, 12);
+                
+                if (isPlayer) { ctx.shadowBlur = 40; ctx.shadowColor = '#ff4400'; }
+                
+                ctx.fillStyle = bodyColor;
+                ctx.beginPath();
+                ctx.moveTo(-w/2 + 6, -h/2); ctx.lineTo(w/2 - 6, -h/2);
+                ctx.quadraticCurveTo(w/2, -h/2, w/2, -h/2 + 8); ctx.lineTo(w/2, h/2 - 8);
+                ctx.quadraticCurveTo(w/2, h/2, w/2 - 6, h/2); ctx.lineTo(-w/2 + 6, h/2);
+                ctx.quadraticCurveTo(-w/2, h/2, -w/2, h/2 - 8); ctx.lineTo(-w/2, -h/2 + 8);
+                ctx.quadraticCurveTo(-w/2, -h/2, -w/2 + 6, -h/2);
+                ctx.fill();
+                
+                ctx.fillStyle = accentColor || bodyColor;
+                ctx.beginPath();
+                ctx.moveTo(-w/2 + 5, -h/2 + 3); ctx.lineTo(w/2 - 5, -h/2 + 3);
+                ctx.lineTo(w/2 - 7, -h/2 + 25); ctx.lineTo(-w/2 + 7, -h/2 + 25);
+                ctx.closePath(); ctx.fill();
+                
+                const windGrad = ctx.createLinearGradient(0, -h/2 + 26, 0, -h/2 + 42);
+                windGrad.addColorStop(0, isPlayer ? 'rgba(100,200,255,0.9)' : 'rgba(40,50,70,0.9)');
+                windGrad.addColorStop(1, isPlayer ? 'rgba(50,150,200,0.7)' : 'rgba(60,70,90,0.85)');
+                ctx.fillStyle = windGrad;
+                ctx.beginPath();
+                ctx.moveTo(-w/2 + 7, -h/2 + 27); ctx.lineTo(w/2 - 7, -h/2 + 27);
+                ctx.lineTo(w/2 - 10, -h/2 + 42); ctx.lineTo(-w/2 + 10, -h/2 + 42);
+                ctx.closePath(); ctx.fill();
+                
+                ctx.fillStyle = bodyColor;
+                ctx.fillRect(-w/2 + 8, -h/2 + 42, w - 16, 20);
+                
+                ctx.fillStyle = 'rgba(40,50,70,0.85)';
+                ctx.beginPath();
+                ctx.moveTo(-w/2 + 10, -h/2 + 62); ctx.lineTo(w/2 - 10, -h/2 + 62);
+                ctx.lineTo(w/2 - 7, -h/2 + 75); ctx.lineTo(-w/2 + 7, -h/2 + 75);
+                ctx.closePath(); ctx.fill();
+                
+                ctx.fillStyle = accentColor || bodyColor;
+                ctx.beginPath();
+                ctx.moveTo(-w/2 + 6, -h/2 + 75); ctx.lineTo(w/2 - 6, -h/2 + 75);
+                ctx.lineTo(w/2 - 5, h/2 - 3); ctx.lineTo(-w/2 + 5, h/2 - 3);
+                ctx.closePath(); ctx.fill();
+                
+                ctx.fillStyle = '#222';
+                ctx.fillRect(-w/2 - 5, -h/2 + 28, 6, 8); ctx.fillRect(w/2 - 1, -h/2 + 28, 6, 8);
+                
+                ctx.fillStyle = '#ffffee'; ctx.shadowBlur = 15; ctx.shadowColor = '#ffff88';
+                ctx.beginPath(); ctx.ellipse(-w/2 + 10, -h/2 + 8, 6, 4, 0, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.ellipse(w/2 - 10, -h/2 + 8, 6, 4, 0, 0, Math.PI * 2); ctx.fill();
+                
+                ctx.fillStyle = '#ff2200'; ctx.shadowColor = '#ff0000'; ctx.shadowBlur = 12;
+                ctx.fillRect(-w/2 + 5, h/2 - 10, 10, 5); ctx.fillRect(w/2 - 15, h/2 - 10, 10, 5);
+                
+                if (isPlayer) {
+                    ctx.fillStyle = '#ff3300'; ctx.fillRect(-8, h/2 - 10, 16, 4);
+                    ctx.fillStyle = 'rgba(255,68,0,0.6)'; ctx.fillRect(-2, -h/2 + 5, 4, h - 20);
+                }
+                
+                ctx.shadowBlur = 0;
+                ctx.restore();
+            }
+            
+            function drawPoliceCar(pc) {
+                const scale = getRoadBounds(pc.y).scale;
+                const w = pc.width, h = pc.height;
+                ctx.save();
+                ctx.translate(pc.x, pc.y);
+                ctx.scale(scale, scale);
+                
+                ctx.fillStyle = 'rgba(0,0,0,0.4)';
+                ctx.beginPath(); ctx.ellipse(4, h/2 + 8, w/2 + 8, 10, 0, 0, Math.PI * 2); ctx.fill();
+                
+                ctx.fillStyle = '#111';
+                ctx.fillRect(-w/2 - 4, -h/2 + 8, 8, 18); ctx.fillRect(w/2 - 4, -h/2 + 8, 8, 18);
+                ctx.fillRect(-w/2 - 4, h/2 - 26, 8, 18); ctx.fillRect(w/2 - 4, h/2 - 26, 8, 18);
+                
+                ctx.fillStyle = '#e8e8f0';
+                ctx.beginPath();
+                ctx.moveTo(-w/2 + 6, -h/2); ctx.lineTo(w/2 - 6, -h/2);
+                ctx.quadraticCurveTo(w/2, -h/2, w/2, -h/2 + 8); ctx.lineTo(w/2, h/2 - 8);
+                ctx.quadraticCurveTo(w/2, h/2, w/2 - 6, h/2); ctx.lineTo(-w/2 + 6, h/2);
+                ctx.quadraticCurveTo(-w/2, h/2, -w/2, h/2 - 8); ctx.lineTo(-w/2, -h/2 + 8);
+                ctx.quadraticCurveTo(-w/2, -h/2, -w/2 + 6, -h/2);
+                ctx.fill();
+                
+                ctx.fillStyle = '#0055cc'; ctx.fillRect(-w/2, -10, w, 20);
+                ctx.fillStyle = '#1a1a1a'; ctx.fillRect(-w/2 + 5, -h/2 + 3, w - 10, 22);
+                ctx.fillStyle = '#222'; ctx.fillRect(-w/2 + 8, -h/2 + 12, w - 16, 16);
+                
+                const p1 = Math.sin(pc.sirenPhase * 22) > 0;
+                const p2 = !p1;
+                
+                ctx.shadowBlur = p1 ? 50 : 20; ctx.shadowColor = p1 ? '#ff0000' : '#440000';
+                ctx.fillStyle = p1 ? '#ff0000' : '#550000';
+                ctx.fillRect(-w/2 + 10, -h/2 + 14, 12, 12);
+                
+                ctx.shadowColor = p2 ? '#0066ff' : '#001144'; ctx.fillStyle = p2 ? '#0066ff' : '#002244';
+                ctx.fillRect(w/2 - 22, -h/2 + 14, 12, 12);
+                
+                if (Math.sin(pc.sirenPhase * 45) > 0.4) {
+                    ctx.fillStyle = '#ffffff'; ctx.shadowColor = '#ffffff'; ctx.shadowBlur = 25;
+                    ctx.fillRect(-4, -h/2 + 14, 8, 12);
+                }
+                
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = 'rgba(40,50,70,0.9)';
+                ctx.beginPath();
+                ctx.moveTo(-w/2 + 7, -h/2 + 28); ctx.lineTo(w/2 - 7, -h/2 + 28);
+                ctx.lineTo(w/2 - 10, -h/2 + 42); ctx.lineTo(-w/2 + 10, -h/2 + 42);
+                ctx.closePath(); ctx.fill();
+                
+                ctx.fillStyle = '#ffffcc'; ctx.shadowBlur = 18; ctx.shadowColor = '#ffff88';
+                ctx.beginPath();
+                ctx.ellipse(-w/2 + 10, -h/2 + 8, 5, 3, 0, 0, Math.PI * 2);
+                ctx.ellipse(w/2 - 10, -h/2 + 8, 5, 3, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.shadowBlur = 0;
+                ctx.restore();
+            }
+            
+            function drawHazard(h) {
+                const scale = getRoadBounds(h.y).scale;
+                ctx.save();
+                ctx.translate(h.x, h.y);
+                ctx.scale(scale, scale);
+                
+                if (h.type === 'oil') {
+                    const oilGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, h.width / 2);
+                    oilGrad.addColorStop(0, 'rgba(15,10,25,0.8)');
+                    oilGrad.addColorStop(0.6, 'rgba(20,15,30,0.5)');
+                    oilGrad.addColorStop(1, 'rgba(15,10,25,0.1)');
+                    ctx.fillStyle = oilGrad;
+                    ctx.beginPath(); ctx.ellipse(0, 0, h.width/2, h.height/2, 0, 0, Math.PI * 2); ctx.fill();
+                } else {
+                    ctx.fillStyle = '#ff6600'; ctx.shadowBlur = 10; ctx.shadowColor = '#ff4400';
+                    ctx.fillRect(-h.width/2, -h.height/2, h.width, h.height);
+                    ctx.shadowBlur = 0;
+                    ctx.fillStyle = '#111';
+                    for (let i = -h.width/2 + 5; i < h.width/2; i += 15) ctx.fillRect(i, -h.height/2, 7, h.height);
+                    ctx.fillStyle = '#ff0000'; ctx.shadowBlur = 12; ctx.shadowColor = '#ff0000';
+                    ctx.beginPath(); ctx.arc(-h.width/2 + 8, 0, 4, 0, Math.PI * 2); ctx.arc(h.width/2 - 8, 0, 4, 0, Math.PI * 2); ctx.fill();
+                    ctx.shadowBlur = 0;
+                }
+                ctx.restore();
+            }
+            
+            function drawParticles() {
+                exhaustParticles.forEach(p => {
+                    ctx.globalAlpha = p.life * 0.8; ctx.fillStyle = p.color;
+                    ctx.shadowBlur = 8; ctx.shadowColor = p.color;
+                    ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+                });
+                
+                sparkParticles.forEach(s => {
+                    ctx.globalAlpha = s.life; ctx.fillStyle = '#ffdd00';
+                    ctx.shadowBlur = 8; ctx.shadowColor = '#ffaa00';
+                    ctx.beginPath(); ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2); ctx.fill();
+                    ctx.strokeStyle = '#ff8800'; ctx.lineWidth = 1;
+                    ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.lineTo(s.x - s.vx * 2, s.y - s.vy * 2); ctx.stroke();
+                });
+                
+                particles.forEach(p => {
+                    ctx.globalAlpha = p.life; ctx.fillStyle = p.color;
+                    ctx.shadowBlur = 15; ctx.shadowColor = p.color;
+                    ctx.beginPath(); ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2); ctx.fill();
+                });
+                
+                ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+            }
+            
+            function draw() {
+                ctx.save();
+                if (screenShake > 0) ctx.translate((Math.random() - 0.5) * screenShake, (Math.random() - 0.5) * screenShake);
+                
+                drawBackground();
+                drawRoad();
+                
+                const objects = [];
+                hazards.forEach(h => objects.push({ type: 'hazard', obj: h, y: h.y }));
+                trafficCars.forEach(c => objects.push({ type: 'traffic', obj: c, y: c.y }));
+                policeCars.forEach(p => objects.push({ type: 'police', obj: p, y: p.y }));
+                if (gameState === 'playing' || gameState === 'gameover') objects.push({ type: 'player', obj: player, y: player.y });
+                
+                objects.sort((a, b) => a.y - b.y);
+                
+                objects.forEach(item => {
+                    if (item.type === 'hazard') drawHazard(item.obj);
+                    else if (item.type === 'traffic') drawRealisticCar(item.obj.x, item.obj.y, item.obj.width, item.obj.height, item.obj.bodyColor, item.obj.accentColor, false, 0);
+                    else if (item.type === 'police') drawPoliceCar(item.obj);
+                    else if (item.type === 'player') drawRealisticCar(item.obj.x, item.obj.y, item.obj.width, item.obj.height, '#1a1a1a', '#ff4400', true, item.obj.tilt);
+                });
+                
+                drawParticles();
+                ctx.restore();
+            }
+            
+            function gameLoop(ts) {
+                if (!ts) ts = performance.now();
+                if (!lastTime) lastTime = ts;
+                const dt = Math.min(ts - lastTime, 50);
+                lastTime = ts;
+                
+                if (gameState === 'playing' && !isPaused && !isAdPlaying) {
+                    updatePlayer(dt);
+                    updateTraffic(dt);
+                    generateTraffic();
+                    updateScore(dt);
+                    updateHUD();
+                    checkTimedAd();
+                    if (checkCollisions()) endGame();
+                }
+                
+                if (gameState === 'gameover') updateTraffic(dt);
+                
+                draw();
+                
+                if (gameState !== 'menu') animationId = requestAnimationFrame(gameLoop);
+            }
+            
+            function menuLoop(ts) {
+                if (gameState !== 'menu') return;
+                if (!ts) ts = performance.now();
+                gameTime = ts;
+                drawBackground();
+                drawRoad();
+                roadOffset = (roadOffset + 3) % 70;
+                animationId = requestAnimationFrame(menuLoop);
+            }
+            
+            // Events
+            document.querySelectorAll('.difficultyBtn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    difficulty = btn.dataset.difficulty;
+                    startGame();
+                });
+            });
+            
+            playAgainBtn.addEventListener('click', playAgain);
+            menuBtn.addEventListener('click', returnToMenu);
+            
+            document.addEventListener('keydown', e => {
+                if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 'a') { keys.left = true; e.preventDefault(); }
+                if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'd') { keys.right = true; e.preventDefault(); }
+                if (e.key === 'Escape' && gameState === 'playing') { isPaused ? resumeGame() : pauseGame(); }
+            });
+            
+            document.addEventListener('keyup', e => {
+                if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 'a') keys.left = false;
+                if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'd') keys.right = false;
+            });
+            
+            const handleTouch = (dir, val) => e => { e.preventDefault(); keys[dir] = val; };
+            leftBtn.addEventListener('touchstart', handleTouch('left', true), { passive: false });
+            leftBtn.addEventListener('touchend', handleTouch('left', false), { passive: false });
+            leftBtn.addEventListener('touchcancel', handleTouch('left', false), { passive: false });
+            rightBtn.addEventListener('touchstart', handleTouch('right', true), { passive: false });
+            rightBtn.addEventListener('touchend', handleTouch('right', false), { passive: false });
+            rightBtn.addEventListener('touchcancel', handleTouch('right', false), { passive: false });
+            
+            leftBtn.addEventListener('mousedown', () => keys.left = true);
+            leftBtn.addEventListener('mouseup', () => keys.left = false);
+            leftBtn.addEventListener('mouseleave', () => keys.left = false);
+            rightBtn.addEventListener('mousedown', () => keys.right = true);
+            rightBtn.addEventListener('mouseup', () => keys.right = false);
+            rightBtn.addEventListener('mouseleave', () => keys.right = false);
+            
+            let touchStartX = 0, swiping = false;
+            canvas.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; swiping = true; }, { passive: true });
+            canvas.addEventListener('touchmove', e => {
+                if (!swiping) return;
+                e.preventDefault();
+                const diff = e.touches[0].clientX - touchStartX;
+                keys.left = diff < -25;
+                keys.right = diff > 25;
+            }, { passive: false });
+            canvas.addEventListener('touchend', () => { swiping = false; keys.left = false; keys.right = false; }, { passive: true });
+            
+            menuBestScore.textContent = 'BEST: ' + bestScore.toLocaleString();
+            animationId = requestAnimationFrame(menuLoop);
+        })();
+    </script>
+</body>
+</html>

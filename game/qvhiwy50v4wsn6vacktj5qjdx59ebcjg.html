@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Stick Fighter 3D - Epic fighting game with 15 levels, power-ups, and intense 3D combat">
+    <meta name="keywords" content="fighting game, stick fighter, 3D game, action game, combat game">
+    <meta name="author" content="Stick Fighter 3D">
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+    <title>Hamada Yedrab Stickman Fighter 3D</title>
+    
+    <!-- GameMonetize SDK -->
+    <script type="text/javascript">
+        window.SDK_OPTIONS = {
+            gameId: "qvhiwy50v4wsn6vacktj5qjdx59ebcjg",
+            onEvent: function (a) {
+                console.log("SDK Event:", a.name, a); // Debug log
+                switch (a.name) {
+                    case "SDK_GAME_PAUSE":
+                        // pause game logic / mute audio
+                        if (window.onGamePause) window.onGamePause();
+                        break;
+                    case "SDK_GAME_START":
+                        // advertisement done, resume game logic and unmute audio
+                        if (window.onGameResume) window.onGameResume();
+                        break;
+                    case "SDK_READY":
+                        // when sdk is ready
+                        if (window.onSDKReady) window.onSDKReady();
+                        break;
+                    case "SDK_REWARDED_WATCH_COMPLETE":
+                    case "COMPLETE": // Fallback for some ad providers
+                        // this event is triggered when your user completely watched the reward video ad
+                        if (window.onRewardComplete) window.onRewardComplete();
+                        break;
+                    case "AD_CANCELED":
+                    case "AD_ERROR":
+                        if (window.onAdError) window.onAdError();
+                        break;
+                }
+            }
+        };
+        (function (a, b, c) {
+            var d = a.getElementsByTagName(b)[0];
+            a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+        })(document, "script", "gamemonetize-sdk");
+    </script>
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="game">
+    <meta property="og:title" content="Stick Fighter 3D">
+    <meta property="og:description" content="Epic 3D fighting game with 15 levels and unique combat moves">
+    <meta property="og:image" content="thumbnail.png">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:title" content="Stick Fighter 3D">
+    <meta property="twitter:description" content="Epic 3D fighting game with 15 levels">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial Black', Arial, sans-serif;
+            overflow: hidden;
+            background: #111;
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            touch-action: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+        
+        #canvas-container {
+            width: 800px;
+            height: 600px;
+            max-width: 100vw;
+            max-height: 100vh;
+            position: relative;
+            background: #000;
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+            aspect-ratio: 4 / 3;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Responsive scaling for the container */
+        @media (max-aspect-ratio: 4/3) {
+            #canvas-container {
+                width: 100vw;
+                height: auto;
+            }
+        }
+
+        @media (min-aspect-ratio: 4/3) {
+            #canvas-container {
+                width: auto;
+                height: 100vh;
+            }
+        }
+        
+        canvas {
+            display: block;
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: contain;
+        }
+        
+        /* HUD Overlay */
+        #hud {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+        
+        .health-container {
+            position: absolute;
+            top: min(20px, 3vh);
+            width: min(350px, 40vw);
+            z-index: 10;
+        }
+
+        @media (max-width: 850px) {
+            #p1-health { left: 10px; }
+            #p2-health { right: 10px; }
+        }
+
+        @media (max-height: 650px) {
+            #controls { display: none !important; } /* Hide controls on very short screens to avoid overlap */
+        }
+        
+        #p1-health {
+            left: 30px;
+        }
+        
+        #p2-health {
+            right: 30px;
+        }
+        
+        .health-bg {
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            border: 4px solid #fff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(255,0,0,0.5);
+        }
+        
+        .health-bar {
+            height: 100%;
+            transition: width 0.3s ease-out;
+            background: linear-gradient(90deg, #ff0000 0%, #ff6b6b 50%, #ffaa00 100%);
+            box-shadow: inset 0 0 20px rgba(255,255,255,0.3);
+        }
+        
+        .player-name {
+            position: absolute;
+            top: -30px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 0 0 10px #ff0000, 2px 2px 4px #000;
+        }
+        
+        #p1-health .player-name {
+            left: 0;
+        }
+        
+        #p2-health .player-name {
+            right: 0;
+        }
+        
+        #timer {
+            position: absolute;
+            top: min(30px, 4vh);
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: min(56px, 8vw);
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 0 0 20px #ffd700, 0 0 40px #ffd700, 3px 3px 6px #000;
+            background: rgba(0,0,0,0.8);
+            padding: min(15px, 2vh) min(40px, 5vw);
+            border-radius: 15px;
+            border: 4px solid #ffd700;
+            box-shadow: 0 0 30px rgba(255,215,0,0.5);
+        }
+        
+        #combo-display {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 72px;
+            font-weight: bold;
+            color: #ffd700;
+            text-shadow: 0 0 30px #ffd700, 0 0 60px #ffd700, 4px 4px 8px #000;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        
+        #round-display {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 96px;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 0 0 40px #ff0000, 0 0 80px #ff0000, 5px 5px 10px #000;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        /* Main Menu */
+        #menu {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(0,0,0,0.95) 0%, rgba(26,26,46,0.95) 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        
+        #menu h1 {
+            font-size: min(84px, 12vw);
+            color: #fff;
+            text-shadow: 0 0 30px #ff0000, 0 0 60px #ff0000, 0 0 90px #ff0000;
+            margin-bottom: 20px;
+            text-align: center;
+            line-height: 1;
+            animation: glow 2s ease-in-out infinite;
+        }
+        
+        @keyframes glow {
+            0%, 100% { text-shadow: 0 0 30px #ff0000, 0 0 60px #ff0000; }
+            50% { text-shadow: 0 0 40px #ff0000, 0 0 80px #ff0000, 0 0 120px #ff0000; }
+        }
+        
+        .subtitle {
+            font-size: min(24px, 3.5vw);
+            color: #ffd700;
+            margin-bottom: min(50px, 6vh);
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            text-align: center;
+        }
+        
+        .menu-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .menu-btn {
+            padding: min(20px, 3vh) min(60px, 8vw);
+            font-size: min(28px, 4vw);
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: 4px solid #fff;
+            border-radius: 15px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            pointer-events: all;
+        }
+        
+        .menu-btn:hover {
+            transform: scale(1.1) translateY(-5px);
+            box-shadow: 0 15px 40px rgba(255,255,255,0.3), 0 0 50px rgba(102,126,234,0.5);
+        }
+        
+        .menu-btn:active {
+            transform: scale(1.05) translateY(-2px);
+        }
+        
+        /* Level Select */
+        #level-select {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(0,0,0,0.95) 0%, rgba(26,26,46,0.95) 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        
+        .level-btn {
+            padding: min(20px, 2.5vh);
+            font-size: min(32px, 4.5vw);
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: 3px solid #fff;
+            border-radius: 10px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            pointer-events: all;
+            min-width: 100px;
+        }
+        
+        .level-btn:hover {
+            transform: scale(1.15) translateY(-3px);
+            box-shadow: 0 10px 25px rgba(255,255,255,0.3), 0 0 30px rgba(102,126,234,0.5);
+        }
+        
+        .level-btn.level-hard {
+            background: linear-gradient(135deg, #ff0000 0%, #ff6b00 100%);
+            border-color: #ffd700;
+            animation: pulse-hard 2s infinite;
+        }
+        
+        @keyframes pulse-hard {
+            0%, 100% { box-shadow: 0 5px 15px rgba(0,0,0,0.5), 0 0 20px rgba(255,0,0,0.5); }
+            50% { box-shadow: 0 5px 15px rgba(0,0,0,0.5), 0 0 40px rgba(255,0,0,0.8); }
+        }
+        
+        @keyframes pulse-health {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        
+        /* Controls Display */
+        #controls {
+            position: absolute;
+            bottom: min(30px, 4vh);
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.9);
+            padding: min(20px, 3vh) min(40px, 5vw);
+            border-radius: 15px;
+            border: 3px solid #fff;
+            display: flex;
+            gap: min(60px, 8vw);
+            font-size: min(14px, 2vw);
+            color: #fff;
+            width: fit-content;
+            max-width: 90%;
+        }
+        
+        .control-section h3 {
+            color: #ffd700;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        
+        .key {
+            display: inline-block;
+            padding: 5px 10px;
+            background: #333;
+            border: 2px solid #666;
+            border-radius: 5px;
+            margin: 3px;
+            font-weight: bold;
+        }
+        
+        /* Loading Screen */
+        #loading-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+            transition: opacity 0.5s;
+        }
+        
+        #loading-screen h2 {
+            color: #fff;
+            font-size: 36px;
+            margin-bottom: 30px;
+        }
+        
+        .loading-bar {
+            width: 400px;
+            height: 30px;
+            background: rgba(255,255,255,0.1);
+            border: 3px solid #fff;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        
+        .loading-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container">
+        <!-- Fullscreen Button inside container -->
+        <button id="fullscreen-btn" style="position: absolute; top: 10px; right: 10px; z-index: 10000; padding: 10px 20px; background: rgba(0,0,0,0.8); color: white; border: 2px solid #fff; border-radius: 5px; cursor: pointer; font-weight: bold; pointer-events: all;">
+            ⛶ FULLSCREEN
+        </button>
+    </div>
+    
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+        <h2 id="loading-text">LOADING 3D ASSETS...</h2>
+        <div class="loading-bar">
+            <div class="loading-fill" id="loading-bar"></div>
+        </div>
+    </div>
+    
+    <!-- Main Menu -->
+    <div id="menu" style="display: none;">
+        <h1>Hamada Yedrab Stickman Fighter 3D</h1>
+        <div class="menu-buttons">
+            <button class="menu-btn" onclick="showLevelSelect()">
+                🏆 ARCADE MODE
+            </button>
+            <button class="menu-btn" onclick="startGame('vs-player')">
+                ⚔️ VS PLAYER
+            </button>
+            <button class="menu-btn" onclick="startGame('training')">
+                🎯 TRAINING MODE
+            </button>
+        </div>
+    </div>
+    
+    <!-- Level Select -->
+    <div id="level-select" style="display: none;">
+        <h1 style="font-size: min(64px, 10vw); color: #fff; text-shadow: 0 0 30px #ff0000; margin-bottom: 20px; text-align: center;">SELECT LEVEL</h1>
+        <p class="subtitle" style="margin-bottom: 30px;">Choose Your Challenge</p>
+        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: min(15px, 2vw); max-width: 90%; width: 600px;">
+            <button class="level-btn" onclick="startGame('arcade', 1)">1</button>
+            <button class="level-btn" onclick="startGame('arcade', 2)">2</button>
+            <button class="level-btn" onclick="startGame('arcade', 3)">3</button>
+            <button class="level-btn" onclick="startGame('arcade', 4)">4</button>
+            <button class="level-btn" onclick="startGame('arcade', 5)">5</button>
+            <button class="level-btn" onclick="startGame('arcade', 6)">6</button>
+            <button class="level-btn" onclick="startGame('arcade', 7)">7</button>
+            <button class="level-btn" onclick="startGame('arcade', 8)">8</button>
+            <button class="level-btn" onclick="startGame('arcade', 9)">9</button>
+            <button class="level-btn" onclick="startGame('arcade', 10)">10</button>
+            <button class="level-btn" onclick="startGame('arcade', 11)">11</button>
+            <button class="level-btn" onclick="startGame('arcade', 12)">12</button>
+            <button class="level-btn" onclick="startGame('arcade', 13)">13</button>
+            <button class="level-btn level-hard" onclick="startGame('arcade', 14)">14<br><span style="font-size: 12px;">PERFECT</span></button>
+            <button class="level-btn level-hard" onclick="startGame('arcade', 15)">15<br><span style="font-size: 12px;">UNBEATABLE</span></button>
+        </div>
+        <button class="menu-btn" onclick="document.getElementById('level-select').style.display='none'; document.getElementById('menu').style.display='flex';" style="margin-top: 30px; padding: 15px 40px; font-size: 20px;">
+            ← BACK
+        </button>
+    </div>
+    
+    <!-- HUD -->
+    <div id="hud" style="display: none;">
+        <button id="ad-health-btn" onclick="window.showRewardAd('health')" style="
+            position: absolute;
+            top: min(100px, 15vh);
+            left: min(30px, 4vw);
+            padding: min(10px, 1.5vh) min(20px, 3vw);
+            font-size: min(14px, 2vw);
+            background: linear-gradient(135deg, #00ff00 0%, #00aa00 100%);
+            border: 2px solid #fff;
+            border-radius: 10px;
+            color: #fff;
+            font-weight: bold;
+            cursor: pointer;
+            pointer-events: all;
+            box-shadow: 0 0 10px #00ff00;
+            z-index: 1000;
+            display: none; 
+        ">
+            📺 WATCH AD: REFILL HEALTH
+        </button>
+        <div id="p1-health" class="health-container">
+            <div class="player-name">PLAYER 1</div>
+            <div class="health-bg">
+                <div class="health-bar" id="p1-health-fill" style="width: 100%"></div>
+            </div>
+            <div class="health-bg" style="margin-top: 5px; height: 15px; border-color: #ffd700;">
+                <div class="health-bar" id="p1-meter-fill" style="width: 0%; background: linear-gradient(90deg, #ffd700 0%, #ffaa00 100%);"></div>
+            </div>
+        </div>
+        <div id="p2-health" class="health-container">
+            <div class="player-name">PLAYER 2</div>
+            <div class="health-bg">
+                <div class="health-bar" id="p2-health-fill" style="width: 100%"></div>
+            </div>
+            <div class="health-bg" style="margin-top: 5px; height: 15px; border-color: #ffd700;">
+                <div class="health-bar" id="p2-meter-fill" style="width: 0%; background: linear-gradient(90deg, #ffd700 0%, #ffaa00 100%);"></div>
+            </div>
+        </div>
+        <div id="timer">99</div>
+        <div id="combo-display"></div>
+        <div id="round-display"></div>
+        <div id="controls">
+            <div class="control-section">
+                <h3>PLAYER 1</h3>
+                <div><span class="key">WASD</span> Move</div>
+                <div><span class="key">SPACE</span> Jump</div>
+                <div><span class="key">F</span> Punch <span class="key">G</span> Kick</div>
+            </div>
+            <div class="control-section">
+                <h3>PLAYER 2</h3>
+                <div><span class="key">Arrows</span> Move</div>
+                <div><span class="key">SHIFT</span> Jump</div>
+                <div><span class="key">K</span> Punch <span class="key">L</span> Kick</div>
+            </div>
+            <div class="control-section">
+                <h3>POWER-UPS</h3>
+                <div><span class="key" style="background: #00ffff;">⚡</span> Speed Boost</div>
+                <div><span class="key" style="background: #ff0000;">💥</span> Damage Boost</div>
+                <div><span class="key" style="background: #00ff00;">❤️</span> Health Pack</div>
+                <div><span class="key" style="background: #ffd700;">🛡️</span> Invulnerable</div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    
+    <script>
+        // Fullscreen functionality
+        document.getElementById('fullscreen-btn').addEventListener('click', function() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log('Fullscreen error:', err);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        });
+        
+        // Prevent context menu
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        
+        // Prevent zoom on mobile
+        document.addEventListener('gesturestart', e => e.preventDefault());
+        document.addEventListener('gesturechange', e => e.preventDefault());
+        document.addEventListener('gestureend', e => e.preventDefault());
+    </script>
+    
+    <script src="game.js"></script>
+    <script src="ad-manager.js"></script>
+</body>
+</html>

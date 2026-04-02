@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Racing Typing Game</title>
+
+    <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.179.1/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.179.1/examples/jsm/"
+      }
+    }
+  </script>
+    <script type="text/javascript">
+        window.SDK_OPTIONS = {
+            gameId: "wtmy1hk5nob7j0znq0ypwoz9tricgilg",
+            onEvent: function (a) {
+                switch (a.name) {
+                    case "SDK_GAME_PAUSE":
+                        // pause game logic / mute audio
+                        break;
+                    case "SDK_GAME_START":
+                        // advertisement done, resume game logic and unmute audio
+                        break;
+                    case "SDK_READY":
+                        // when sdk is ready
+                        break;
+                }
+            }
+        };
+        (function (a, b, c) {
+            var d = a.getElementsByTagName(b)[0];
+            a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+        })(document, "script", "gamemonetize-sdk"); 
+    </script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow: hidden;
+            color: white;
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+
+        #mainMenu,
+        #settingsMenu,
+        #leaderboard,
+        #pauseMenu,
+        #howToPlayMenu {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            padding: 40px;
+            z-index: 1000;
+        }
+
+        h1,
+        h2 {
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        #mainMenu h1 {
+            font-size: 3em;
+            margin-bottom: 30px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 15px 30px;
+            margin: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            color: white;
+            text-decoration: none;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 150px;
+        }
+
+        .btn:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            cursor: not-allowed;
+            background: rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        #gameUI {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+            display: none;
+        }
+
+        .ui-element {
+            pointer-events: auto;
+        }
+
+        #typingArea {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 20px;
+            text-align: center;
+            min-width: 300px;
+        }
+
+        #wordTimer {
+            width: 100%;
+            height: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 5px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+
+        #wordTimerFill {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, #ff4757, #ffa502, #26de81);
+            transition: width 0.1s linear;
+            border-radius: 5px;
+        }
+
+        #currentWord {
+            font-size: 2em;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        #typingInput {
+            padding: 10px;
+            font-size: 1.5em;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            color: white;
+            text-align: center;
+            width: 100%;
+            backdrop-filter: blur(10px);
+            transition: border-color 0.3s;
+        }
+
+        #typingInput.error {
+            border-color: #ff4757;
+        }
+
+        #typingInput::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        #gameStats {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 20px;
+            text-align: right;
+        }
+
+        .stat {
+            margin: 10px 0;
+            font-size: 1.2em;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+        }
+
+        #nitroBar {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 300px;
+            height: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        #nitroFill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #00ff00, #ffff00, #ff0000);
+            transition: width 0.3s ease;
+        }
+
+        #settingsMenu,
+        #leaderboard,
+        #pauseMenu,
+        #howToPlayMenu {
+            display: none;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .setting-item {
+            margin: 20px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* --- KODE PERUBAHAN WARNA SUBMENU --- */
+        .setting-item select option {
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+        }
+
+        /* Mengubah warna teks pada select box itu sendiri agar lebih terang */
+        .setting-item select {
+            color: #f0f0f0;
+            /* Warna putih pudar agar tidak terlalu mencolok */
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+            /* Menambah bayangan agar lebih terbaca */
+        }
+
+        /* --- AKHIR KODE PERUBAHAN --- */
+
+        select,
+        input[type="range"] {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 5px;
+            padding: 5px 10px;
+        }
+
+        #loadingScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        #loadingBar {
+            width: 300px;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+
+        #loadingProgress {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.3s ease;
+        }
+
+        #gameContainer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        #howToPlayMenu p {
+            text-align: left;
+            margin: 15px 0;
+            line-height: 1.6;
+        }
+
+        .leaderboard-entry {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            margin: 5px 0;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+        }
+
+        #progressBar {
+            position: absolute;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 400px;
+            height: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        #progressFill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #26de81, #45aaf2);
+            transition: width 0.3s ease;
+            border-radius: 5px;
+        }
+
+        #levelInfo {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+        }
+
+        @media (max-width: 768px) {
+            #mainMenu h1 {
+                font-size: 2em;
+            }
+
+            .btn {
+                padding: 12px 20px;
+                font-size: 1em;
+            }
+
+            #typingArea {
+                min-width: 250px;
+            }
+
+            #currentWord {
+                font-size: 1.5em;
+            }
+
+            #typingInput {
+                font-size: 1.2em;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="loadingScreen">
+        <h2>Loading Assets...</h2>
+        <div id="loadingBar">
+            <div id="loadingProgress"></div>
+        </div>
+        <p id="loadingText">Preparing game...</p>
+    </div>
+
+    <div id="mainMenu" class="glass">
+        <h1>3D Racing Typing Game</h1>
+        <div>
+            <button class="btn" id="playButton" onclick="startGame()">Play</button>
+            <button class="btn" onclick="showHowToPlay()">How to Play</button>
+            <button class="btn" onclick="showSettings()">Settings</button>
+            <button class="btn" onclick="showLeaderboard()">Leaderboard</button>
+        </div>
+    </div>
+
+    <div id="howToPlayMenu" class="glass">
+        <h2>How to Play</h2>
+        <p>Type the words that appear on screen as fast as you can.</p>
+        <p>Each correct word gives you a speed boost and fills your nitro bar.</p>
+        <p>You have 10 seconds to type each word. If time runs out, it counts as a mistake!</p>
+        <p>Complete 250 levels to finish the race. Good luck!</p>
+        <button class="btn" onclick="hideHowToPlay()">Back</button>
+    </div>
+
+    <div id="settingsMenu" class="glass">
+        <h2>Settings</h2>
+        <div class="setting-item">
+            <label>Music Volume:</label>
+            <input type="range" class="slider" id="musicVolume" min="0" max="100" value="50">
+        </div>
+        <div class="setting-item">
+            <label>SFX Volume:</label>
+            <input type="range" class="slider" id="sfxVolume" min="0" max="100" value="70">
+        </div>
+        <div class="setting-item">
+            <label>Difficulty:</label>
+            <select id="difficulty">
+                <option value="easy">Easy</option>
+                <option value="normal" selected>Normal</option>
+                <option value="hard">Hard</option>
+            </select>
+        </div>
+        <div class="setting-item">
+            <label>Language:</label>
+            <select id="language">
+                <option value="en" selected>English</option>
+                <option value="id">Indonesian</option>
+            </select>
+        </div>
+        <div class="setting-item">
+            <label>Graphics Quality:</label>
+            <select id="quality">
+                <option value="low">Low</option>
+                <option value="medium" selected>Medium</option>
+                <option value="high">High</option>
+            </select>
+        </div>
+        <button class="btn" onclick="saveSettings()">Save</button>
+        <button class="btn" onclick="hideSettings()">Back</button>
+    </div>
+
+    <div id="leaderboard" class="glass">
+        <h2>Leaderboard</h2>
+        <div id="leaderboardList"></div>
+        <button class="btn" onclick="hideLeaderboard()">Back</button>
+    </div>
+
+    <div id="gameContainer"></div>
+
+    <div id="gameUI">
+        <div id="levelInfo" class="glass ui-element">
+            <div>Level: <span id="level">1/250</span></div>
+        </div>
+        <div id="typingArea" class="glass ui-element">
+            <div id="wordTimer">
+                <div id="wordTimerFill"></div>
+            </div>
+            <div id="currentWord">Start typing!</div>
+            <input type="text" id="typingInput" placeholder="Type here..." autocomplete="off" autocorrect="off"
+                autocapitalize="off" spellcheck="false">
+        </div>
+        <div id="gameStats" class="glass ui-element">
+            <div class="stat">Speed: <span id="speed">0</span> km/h</div>
+            <div class="stat">Position: <span id="position">1/4</span></div>
+            <div class="stat">Lap: <span id="lap">1/3</span></div>
+            <div class="stat">Accuracy: <span id="accuracy">100</span>%</div>
+        </div>
+        <div id="nitroBar" class="glass ui-element">
+            <div id="nitroFill"></div>
+        </div>
+        <div id="progressBar" class="glass ui-element">
+            <div id="progressFill"></div>
+        </div>
+        <button class="btn ui-element" onclick="pauseGame()"
+            style="position: absolute; top: 120px; left: 20px;">Pause</button>
+    </div>
+
+    <div id="pauseMenu" class="glass">
+        <h2>Game Paused</h2>
+        <button class="btn" onclick="resumeGame()">Resume</button>
+        <button class="btn" onclick="restartRace()">Restart</button>
+        <button class="btn" onclick="backToMenu()">Main Menu</button>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+
+        // Variabel Audio
+        let audioContext;
+        let engineSoundBuffer, musicBuffer, typingSoundBuffer;
+        let engineSourceNode, musicSourceNode;
+        let musicGainNode, sfxGainNode, engineGainNode;
+
+        // Variabel Game
+        let scene, camera, renderer, clock;
+        let playerCar, aiCars = [];
+        let gameState = 'loading';
+        let buildings = [], trees = [], worldBounds = { minX: -200, maxX: 200, minZ: -5000, maxZ: 1000 };
+        let isInitialLoad = true;
+        let gameStats = {
+            speed: 0, position: 1, lap: 1, accuracy: 100, nitro: 0, level: 1,
+            correctWords: 0, totalWords: 0, progress: 0,
+            boost: { active: false, duration: 0.3, progress: 0 }
+        };
+        const MAX_WORD_TIME = 10;
+        const MAX_LEVEL = 250;
+        let wordTimer = MAX_WORD_TIME;
+        let wordTimerInterval;
+        let currentWord = '';
+        let raceStartTime = 0;
+
+        const wordLists = {
+            en: {
+                easy: ["car", "run", "go", "win", "lap", "gas", "oil", "top", "race", "fast", "road", "turn", "stop", "red", "blue", "tire", "rim", "door", "seat", "key", "light", "horn", "fan", "drift", "spin", "pass", "park", "team", "flag", "cup", "gold", "map", "start", "end", "gear", "pit", "crew", "green", "black", "white", "one", "two", "three", "slow", "hot", "cold", "new"],
+                normal: ["racing", "turbo", "engine", "victory", "champion", "speed", "nitrous", "velocity", "drive", "finish", "accelerate", "brake", "steering", "track", "competition", "highway", "corner", "overtake", "podium", "driver", "clutch", "exhaust", "spoiler", "chassis", "piston", "qualifying", "rival", "sponsor", "trophy", "winner", "strategy", "leader", "drafting", "circuit", "paddock", "penalty", "mechanic", "asphalt", "throttle", "torque", "grip", "skid", "rally", "formula", "legend", "amateur", "professional", "gearbox", "understeer", "oversteer"],
+                hard: ["acceleration", "aerodynamic", "transmission", "championship", "magnificent", "extraordinary", "performance", "supercharged", "horsepower", "displacement", "suspension", "differential", "turbocharger", "aerodynamics", "downforce", "monocoque", "drivetrain", "powertrain", "intercooler", "crankshaft", "camshaft", "caliper", "combustion", "calibration", "kinetics", "longitudinal", "friction", "aerofoil", "ballast", "homologation", "chicane", "apex", "undercut", "steward", "scrutineering", "phenomenal", "precision", "endurance", "g-force", "traction", "telemetry"]
+            },
+            id: {
+                easy: ["mobil", "lari", "pergi", "menang", "putaran", "bensin", "oli", "atas", "balap", "cepat", "jalan", "belok", "berhenti", "merah", "biru", "ban", "velg", "pintu", "jok", "kunci", "lampu", "klakson", "kipas", "ngepot", "putar", "lewat", "parkir", "tim", "bendera", "piala", "emas", "peta", "mulai", "akhir", "gigi", "pit", "kru", "hijau", "hitam", "putih", "satu", "dua", "tiga", "lambat", "panas", "dingin", "baru"],
+                normal: ["balap", "turbo", "mesin", "kemenangan", "juara", "kecepatan", "nitro", "mengemudi", "selesai", "rem", "kemudi", "lintasan", "kompetisi", "jalan tol", "tikungan", "menyalip", "podium", "pembalap", "kopling", "knalpot", "spoiler", "sasis", "piston", "kualifikasi", "rival", "sponsor", "trofi", "pemenang", "strategi", "pemimpin", "membuntuti", "sirkuit", "paddock", "penalti", "mekanik", "aspal", "pedal gas", "torsi", "cengkeraman", "selip", "reli", "formula", "legenda", "amatir", "profesional", "girboks", "understeer", "oversteer"],
+                hard: ["percepatan", "aerodinamik", "transmisi", "kejuaraan", "luar biasa", "performa", "bertenaga", "tenaga kuda", "suspensi", "turbocharger", "aerodinamika", "gaya tekan", "monokok", "drivetrain", "powertrain", "intercooler", "poros engkol", "poros bubungan", "kaliper", "pembakaran", "kalibrasi", "kinetika", "longitudinal", "gesekan", "aerofoil", "pemberat", "homologasi", "chicane", "apeks", "undercut", "steward", "skrutinering", "fenomenal", "presisi", "ketahanan", "gaya-g", "traksi", "telemetri"]
+            }
+        };
+
+        window.startGame = startGame;
+        window.showSettings = showSettings; window.hideSettings = hideSettings; window.saveSettings = saveSettings;
+        window.showLeaderboard = showLeaderboard; window.hideLeaderboard = hideLeaderboard;
+        window.showHowToPlay = showHowToPlay; window.hideHowToPlay = hideHowToPlay;
+        window.pauseGame = pauseGame; window.resumeGame = resumeGame;
+        window.restartRace = restartRace; window.backToMenu = backToMenu;
+
+        window.addEventListener('load', loadAssets);
+
+        async function loadAssets() {
+            const loadingProgress = document.getElementById('loadingProgress');
+            const loadingText = document.getElementById('loadingText');
+
+            try {
+                await updateLoading('Initializing 3D Scene...', 10);
+                await initThree();
+
+                await updateLoading('Loading Car Model...', 30);
+                await loadCarModel();
+
+                await updateLoading('Creating World Environment...', 60);
+                await createWorldEnvironment();
+
+                await updateLoading('Loading Audio...', 80);
+                // FIX 1: PANGGIL FUNGSI loadAudio() DI SINI! INI ADALAH MASALAH UTAMA.
+                await loadAudio();
+
+                await updateLoading('Finalizing...', 100);
+
+                setTimeout(() => {
+                    document.getElementById('loadingScreen').style.display = 'none';
+                    backToMenu();
+                    if (isInitialLoad) {
+                        startPlayButtonCountdown();
+                        isInitialLoad = false;
+                    }
+                    animate();
+                }, 500);
+
+            } catch (error) {
+                console.error('Asset loading failed:', error);
+                loadingText.textContent = 'Error loading assets. Please refresh.';
+            }
+        }
+
+        function startPlayButtonCountdown() {
+            const playButton = document.getElementById('playButton');
+            let countdown = 10;
+
+            playButton.disabled = true;
+            playButton.style.minWidth = '250px';
+            playButton.textContent = `Loading Game ${countdown} Seconds`;
+
+            const countdownInterval = setInterval(() => {
+                countdown--;
+                if (countdown > 0) {
+                    playButton.textContent = `Loading Game ${countdown} Seconds`;
+                } else {
+                    clearInterval(countdownInterval);
+                    playButton.textContent = 'Play';
+                    playButton.disabled = false;
+                    playButton.style.minWidth = '150px';
+                }
+            }, 1000);
+        }
+
+        function updateLoading(text, progress) {
+            return new Promise(resolve => {
+                document.getElementById('loadingText').textContent = text;
+                document.getElementById('loadingProgress').style.width = progress + '%';
+                setTimeout(resolve, 100);
+            });
+        }
+
+        async function loadAudioFile(url) {
+            const response = await fetch(url);
+            const arrayBuffer = await response.arrayBuffer();
+            return new Promise((resolve, reject) => {
+                audioContext.decodeAudioData(arrayBuffer, resolve, reject);
+            });
+        }
+
+        async function loadAudio() {
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                musicGainNode = audioContext.createGain();
+                musicGainNode.connect(audioContext.destination);
+                sfxGainNode = audioContext.createGain();
+                sfxGainNode.connect(audioContext.destination);
+
+                // Menggunakan URL yang lebih stabil dan tidak diblokir
+                [engineSoundBuffer, musicBuffer, typingSoundBuffer] = await Promise.all([
+                    loadAudioFile('https://assets.mixkit.co/active_storage/sfx/1561/1561.wav').catch(e => console.error("Gagal memuat engine.wav:", e)),
+                    loadAudioFile('https://assets.mixkit.co/music/846/846.mp3').catch(e => console.error("Gagal memuat music.wav:", e)),
+                    loadAudioFile('https://assets.mixkit.co/active_storage/sfx/269/269.wav').catch(e => console.error("Gagal memuat typing sound:", e))
+                ]);
+
+                applyVolumeSettings();
+                console.log("Semua aset audio berhasil dimuat.");
+            } catch (error) {
+                console.warn('Inisialisasi Audio Gagal. Game akan berjalan tanpa suara.', error);
+            }
+        }
+
+        function playTypingSound() {
+            if (!audioContext || !typingSoundBuffer || !sfxGainNode) return;
+            const source = audioContext.createBufferSource();
+            source.buffer = typingSoundBuffer;
+            source.connect(sfxGainNode);
+            source.start(0);
+        }
+
+        function updateEngineSound() {
+            if (engineGainNode && engineSourceNode && gameState === 'playing') {
+                const speedRatio = gameStats.speed / 100;
+                const volume = 0.1 + Math.min(0.7, speedRatio * 0.6);
+                const pitch = 0.8 + Math.min(1.2, speedRatio);
+                engineGainNode.gain.setTargetAtTime(volume, audioContext.currentTime, 0.1);
+                engineSourceNode.playbackRate.setTargetAtTime(pitch, audioContext.currentTime, 0.1);
+            }
+        }
+
+        async function initThree() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x87CEEB);
+            scene.fog = new THREE.Fog(0x87CEEB, 200, 1000);
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            document.getElementById('gameContainer').appendChild(renderer.domElement);
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.92);
+            scene.add(ambientLight);
+            const hemisphereLight = new THREE.HemisphereLight(0x87CEEB, 0x2d5016, 0.65);
+            scene.add(hemisphereLight);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 1.6);
+            directionalLight.position.set(150, 150, 75);
+            directionalLight.castShadow = true;
+            directionalLight.shadow.mapSize.width = 2048;
+            directionalLight.shadow.mapSize.height = 2048;
+            directionalLight.shadow.camera.left = -300;
+            directionalLight.shadow.camera.right = 300;
+            directionalLight.shadow.camera.top = 300;
+            directionalLight.shadow.camera.bottom = -300;
+            scene.add(directionalLight);
+
+            createTrack();
+            clock = new THREE.Clock();
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        async function loadCarModel() {
+            const loader = new GLTFLoader();
+            const dracoLoader = new DRACOLoader();
+            dracoLoader.setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.179.1/examples/jsm/libs/draco/gltf/');
+            loader.setDRACOLoader(dracoLoader);
+            try {
+                // IMPORTANT: Ganti path ini jika nama file atau lokasi berbeda
+                const gltf = await loader.loadAsync('assets/bmw_m4_f821.glb');
+                playerCar = gltf.scene;
+                playerCar.scale.set(1.5, 1.5, 1.5);
+                playerCar.rotation.y = 0;
+                playerCar.traverse(child => {
+                    if (child.isMesh) {
+                        child.castShadow = true;
+                        child.receiveShadow = true;
+                    }
+                });
+                scene.add(playerCar);
+                const aiColors = [0xff0000, 0x00ff00, 0xffff00];
+                const aiPositions = [{ x: -5, z: 10 }, { x: 0, z: 15 }, { x: 5, z: 20 }];
+                for (let i = 0; i < 3; i++) {
+                    const aiCar = playerCar.clone();
+                    aiCar.traverse(child => {
+                        if (child.isMesh && child.material) {
+                            const newMaterial = child.material.clone();
+                            newMaterial.color.set(aiColors[i]);
+                            child.material = newMaterial;
+                        }
+                    });
+                    aiCar.position.set(aiPositions[i].x, 0, aiPositions[i].z);
+                    aiCar.userData = { speed: 35 + Math.random() * 15, lap: 1, progress: 0, baseSpeed: 35 + Math.random() * 15 };
+                    aiCars.push(aiCar);
+                    scene.add(aiCar);
+                }
+            } catch (error) {
+                console.warn('GLB model loading failed, creating fallback cars:', error);
+                createFallbackCars();
+            }
+        }
+
+        function createFallbackCars() {
+            const carGeometry = new THREE.BoxGeometry(2, 1, 4);
+            const playerMaterial = new THREE.MeshLambertMaterial({ color: 0x0066ff });
+            playerCar = new THREE.Mesh(carGeometry, playerMaterial);
+            playerCar.castShadow = true;
+            scene.add(playerCar);
+            const aiColors = [0xff0000, 0x00ff00, 0xffff00];
+            const aiPositions = [{ x: -5, z: 10 }, { x: 0, z: 15 }, { x: 5, z: 20 }];
+            for (let i = 0; i < 3; i++) {
+                const aiMaterial = new THREE.MeshLambertMaterial({ color: aiColors[i] });
+                const aiCar = new THREE.Mesh(carGeometry, aiMaterial);
+                aiCar.castShadow = true;
+                aiCar.position.set(aiPositions[i].x, 0, aiPositions[i].z);
+                aiCar.userData = { speed: 35 + Math.random() * 15, lap: 1, progress: 0, baseSpeed: 35 + Math.random() * 15 };
+                aiCars.push(aiCar);
+                scene.add(aiCar);
+            }
+        }
+
+        function createTrack() {
+            const ground = new THREE.Mesh(new THREE.PlaneGeometry(500, 6000), new THREE.MeshLambertMaterial({ color: 0x2d5016 }));
+            ground.rotation.x = -Math.PI / 2;
+            ground.receiveShadow = true;
+            ground.position.z = -2500;
+            scene.add(ground);
+            const track = new THREE.Mesh(new THREE.PlaneGeometry(20, 6000), new THREE.MeshLambertMaterial({ color: 0x333333 }));
+            track.rotation.x = -Math.PI / 2;
+            track.position.y = 0.01;
+            track.position.z = -2500;
+            scene.add(track);
+            for (let i = 0; i < 200; i++) {
+                const line = new THREE.Mesh(new THREE.PlaneGeometry(1, 0.3), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+                line.rotation.x = -Math.PI / 2;
+                line.position.set(0, 0.02, i * 30 - 3000);
+                scene.add(line);
+            }
+            const barrierGeometry = new THREE.BoxGeometry(2, 3, 6000);
+            const barrierMaterial = new THREE.MeshLambertMaterial({ color: 0x444444 });
+            const leftBarrier = new THREE.Mesh(barrierGeometry, barrierMaterial);
+            leftBarrier.position.set(-12, 1.5, -2500);
+            leftBarrier.castShadow = true;
+            scene.add(leftBarrier);
+            const rightBarrier = new THREE.Mesh(barrierGeometry, barrierMaterial);
+            rightBarrier.position.set(12, 1.5, -2500);
+            rightBarrier.castShadow = true;
+            scene.add(rightBarrier);
+        }
+
+        async function createWorldEnvironment() {
+            await createBuildings();
+            await createTrees();
+        }
+
+        async function createBuildings() {
+            const buildingColors = [0x666666, 0x777777, 0x555555, 0x888888];
+            for (let i = 0; i < 150; i++) {
+                const width = 10 + Math.random() * 20;
+                const height = 20 + Math.random() * 80;
+                const depth = 10 + Math.random() * 20;
+                const buildingGeometry = new THREE.BoxGeometry(width, height, depth);
+                const buildingMaterial = new THREE.MeshLambertMaterial({ color: buildingColors[Math.floor(Math.random() * buildingColors.length)] });
+                const building = new THREE.Mesh(buildingGeometry, buildingMaterial);
+                building.position.x = (Math.random() > 0.5 ? 1 : -1) * (50 + Math.random() * 200);
+                building.position.y = height / 2;
+                building.position.z = -4000 + Math.random() * 8000;
+                building.castShadow = true;
+                building.receiveShadow = true;
+                buildings.push(building);
+                scene.add(building);
+            }
+        }
+
+        async function createTrees() {
+            for (let i = 0; i < 300; i++) {
+                const trunkGeometry = new THREE.CylinderGeometry(1, 1.5, 8);
+                const trunkMaterial = new THREE.MeshLambertMaterial({ color: 0x8B4513 });
+                const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
+                const leavesGeometry = new THREE.SphereGeometry(5);
+                const leavesMaterial = new THREE.MeshLambertMaterial({ color: 0x228B22 });
+                const leaves = new THREE.Mesh(leavesGeometry, leavesMaterial);
+                const tree = new THREE.Group();
+                trunk.position.y = 4;
+                leaves.position.y = 8;
+                tree.add(trunk);
+                tree.add(leaves);
+                tree.position.x = (Math.random() > 0.5 ? 1 : -1) * (25 + Math.random() * 250);
+                tree.position.z = -4000 + Math.random() * 8000;
+                trunk.castShadow = true;
+                leaves.castShadow = true;
+                trees.push(tree);
+                scene.add(tree);
+            }
+        }
+
+        async function startGame() {
+            if (typeof sdk !== 'undefined' && sdk.showBanner !== 'undefined') {
+                sdk.showBanner();
+            }
+            if (audioContext && audioContext.state === 'suspended') {
+                await audioContext.resume();
+                console.log("AudioContext berhasil diaktifkan oleh interaksi user.");
+            }
+            gameState = 'playing';
+            hideAllMenus();
+            document.getElementById('gameUI').style.display = 'block';
+            raceStartTime = Date.now();
+            gameStats = { speed: 0, position: 4, lap: 1, accuracy: 100, nitro: 0, level: 1, correctWords: 0, totalWords: 0, progress: 0, boost: { active: false, duration: 0.3, progress: 0 } };
+            playerCar.position.set(0, 0, 0);
+            playerCar.rotation.y = 0;
+            aiCars.forEach((car, i) => {
+                car.visible = true;
+                car.position.set((i - 1) * 6, 0, 10 + (i * 5));
+                car.userData.lap = 1;
+                car.userData.progress = 0;
+            });
+            if (engineSourceNode) { try { engineSourceNode.stop(); } catch (e) { } }
+            if (musicSourceNode) { try { musicSourceNode.stop(); } catch (e) { } }
+            if (audioContext && musicBuffer) {
+                musicSourceNode = audioContext.createBufferSource();
+                musicSourceNode.buffer = musicBuffer;
+                musicSourceNode.loop = true;
+                musicSourceNode.connect(musicGainNode);
+                musicSourceNode.start(0);
+            }
+            if (audioContext && engineSoundBuffer) {
+                engineSourceNode = audioContext.createBufferSource();
+                engineSourceNode.buffer = engineSoundBuffer;
+                engineSourceNode.loop = true;
+                engineGainNode = audioContext.createGain();
+                engineGainNode.gain.value = 0;
+                engineSourceNode.connect(engineGainNode).connect(sfxGainNode);
+                engineSourceNode.start(0);
+            }
+            generateNewWord();
+            document.getElementById('typingInput').focus();
+        }
+
+        function getCurrentWordList() {
+            const language = document.getElementById('language').value;
+            const difficulty = document.getElementById('difficulty').value;
+            return wordLists[language][difficulty];
+        }
+
+        function generateNewWord() {
+            const wordList = getCurrentWordList();
+            currentWord = wordList[Math.floor(Math.random() * wordList.length)];
+            document.getElementById('currentWord').textContent = currentWord;
+            const input = document.getElementById('typingInput');
+            input.value = '';
+            input.classList.remove('error');
+            startWordTimer();
+        }
+
+        function startWordTimer() {
+            clearInterval(wordTimerInterval);
+            wordTimer = MAX_WORD_TIME;
+            const timerFill = document.getElementById('wordTimerFill');
+            timerFill.style.transition = 'none';
+            timerFill.style.width = '100%';
+            void timerFill.offsetWidth;
+            timerFill.style.transition = `width ${MAX_WORD_TIME}s linear`;
+            timerFill.style.width = '0%';
+            wordTimerInterval = setInterval(() => {
+                wordTimer--;
+                if (wordTimer <= 0) {
+                    handleTimerExpired();
+                }
+            }, 1000);
+        }
+
+        function handleTimerExpired() {
+            clearInterval(wordTimerInterval);
+            gameStats.totalWords++;
+            gameStats.nitro = Math.max(0, gameStats.nitro - 15);
+            updateAccuracy();
+            generateNewWord();
+        }
+
+        function handleTyping() {
+            const input = document.getElementById('typingInput');
+            const typed = input.value.toLowerCase();
+            if (typed === currentWord) {
+                gameStats.correctWords++;
+                gameStats.totalWords++;
+                gameStats.level = Math.min(MAX_LEVEL, gameStats.level + 1);
+                gameStats.nitro = Math.min(100, gameStats.nitro + 20);
+                updateAccuracy();
+                triggerBoostAnimation();
+                // FIX 2: PANGGIL FUNGSI playTypingSound() SETELAH KETIKAN BENAR
+                playTypingSound();
+                if (gameStats.level >= MAX_LEVEL) {
+                    finishRace();
+                    return;
+                }
+                generateNewWord();
+            } else if (currentWord.startsWith(typed)) {
+                input.classList.remove('error');
+            } else {
+                input.classList.add('error');
+            }
+        }
+
+        function updateAccuracy() {
+            if (gameStats.totalWords > 0) {
+                gameStats.accuracy = Math.round((gameStats.correctWords / gameStats.totalWords) * 100);
+            }
+        }
+
+        function triggerBoostAnimation() {
+            gameStats.boost.active = true;
+            gameStats.boost.progress = 0;
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const deltaTime = clock.getDelta();
+            if (gameState === 'menu') {
+                updateMenuAnimation(deltaTime);
+            } else if (gameState === 'playing') {
+                updateGameLogic(deltaTime);
+            }
+            renderer.render(scene, camera);
+        }
+
+        function updateMenuAnimation(deltaTime) {
+            if (playerCar) {
+                playerCar.rotation.y += deltaTime * 0.5;
+                playerCar.position.y = Math.sin(clock.getElapsedTime() * 2) * 0.5;
+                camera.position.x = Math.sin(clock.getElapsedTime() * 0.3) * 15;
+                camera.position.z = Math.cos(clock.getElapsedTime() * 0.3) * 15;
+                camera.position.y = 8;
+                camera.lookAt(playerCar.position);
+            }
+        }
+
+        function updateGameLogic(deltaTime) {
+            const baseSpeed = 25;
+            const levelMultiplier = 1 + (gameStats.level / 500);
+            const nitroMultiplier = 1 + (gameStats.nitro / 100);
+            const accuracyMultiplier = 0.5 + (gameStats.accuracy / 200);
+            gameStats.speed = baseSpeed * levelMultiplier * nitroMultiplier * accuracyMultiplier;
+            gameStats.nitro = Math.max(0, gameStats.nitro - deltaTime * 2);
+            updatePlayerCar(deltaTime);
+            updateAICars(deltaTime);
+            updatePosition();
+            updateCamera(deltaTime);
+            updateUI();
+            // FIX 3: PANGGIL updateEngineSound() DI GAME LOOP AGAR SUARA MESIN BERUBAH
+            updateEngineSound();
+        }
+
+        function updatePlayerCar(deltaTime) {
+            let speed = gameStats.speed * deltaTime;
+            if (gameStats.boost.active) {
+                gameStats.boost.progress += deltaTime;
+                const boostPhase = gameStats.boost.progress / gameStats.boost.duration;
+                const boostFactor = Math.sin(boostPhase * Math.PI) * 15 * deltaTime;
+                speed += boostFactor;
+                if (boostPhase >= 1) {
+                    gameStats.boost.active = false;
+                }
+            }
+            playerCar.position.z -= speed;
+            playerCar.position.x = Math.max(worldBounds.minX + 15, Math.min(worldBounds.maxX - 15, playerCar.position.x));
+            playerCar.position.z = Math.max(worldBounds.minZ, Math.min(worldBounds.maxZ, playerCar.position.z));
+            gameStats.progress = Math.abs(playerCar.position.z) + (gameStats.lap - 1) * 800;
+            if (playerCar.position.z < -4000) {
+                if (gameStats.lap >= 3) {
+                    finishRace();
+                } else {
+                    gameStats.lap++;
+                    playerCar.position.z = 0;
+                }
+            }
+        }
+
+        function updateAICars(deltaTime) {
+            aiCars.forEach((car, index) => {
+                const variance = Math.sin(clock.getElapsedTime() + index) * 0.1;
+                const levelBonus = gameStats.level / 1000;
+                car.userData.speed = car.userData.baseSpeed + variance + levelBonus;
+                car.position.z -= car.userData.speed * deltaTime;
+                car.position.x += (Math.random() - 0.5) * 0.3;
+                car.position.x = Math.max(-8, Math.min(8, car.position.x));
+                car.userData.progress = Math.abs(car.position.z) + (car.userData.lap - 1) * 800;
+                if (car.position.z < -4000) {
+                    car.userData.lap++;
+                    car.position.z = 0;
+                }
+            });
+        }
+
+        function updatePosition() {
+            const allCars = [{ progress: gameStats.progress, isPlayer: true }, ...aiCars.map(car => ({ progress: car.userData.progress, isPlayer: false }))];
+            allCars.sort((a, b) => b.progress - a.progress);
+            gameStats.position = allCars.findIndex(item => item.isPlayer) + 1;
+        }
+
+        function updateCamera(deltaTime) {
+            const cameraOffset = { x: 0, y: 5, z: 10 };
+            if (gameStats.boost.active) {
+                const boostPhase = gameStats.boost.progress / gameStats.boost.duration;
+                cameraOffset.z += Math.sin(boostPhase * Math.PI) * 2;
+                cameraOffset.y += Math.sin(boostPhase * Math.PI) * 1;
+            }
+            const targetPos = new THREE.Vector3(playerCar.position.x + cameraOffset.x, playerCar.position.y + cameraOffset.y, playerCar.position.z + cameraOffset.z);
+            camera.position.lerp(targetPos, deltaTime * 5.0);
+            const lookAtTarget = new THREE.Vector3(playerCar.position.x, playerCar.position.y + 1, playerCar.position.z - 5);
+            camera.lookAt(lookAtTarget);
+        }
+
+        function updateUI() {
+            document.getElementById('speed').textContent = Math.round(gameStats.speed);
+            document.getElementById('position').textContent = `${gameStats.position}/4`;
+            document.getElementById('lap').textContent = `${gameStats.lap}/3`;
+            document.getElementById('accuracy').textContent = `${gameStats.accuracy}%`;
+            document.getElementById('level').textContent = `${gameStats.level}/${MAX_LEVEL}`;
+            document.getElementById('nitroFill').style.width = gameStats.nitro + '%';
+            const totalProgress = (gameStats.level / MAX_LEVEL) * 100;
+            document.getElementById('progressFill').style.width = Math.min(100, totalProgress) + '%';
+        }
+
+        function pauseGame() {
+            if (gameState !== 'playing') return;
+            gameState = 'paused';
+            clearInterval(wordTimerInterval);
+            document.getElementById('pauseMenu').style.display = 'block';
+            if (musicGainNode) musicGainNode.gain.setTargetAtTime(0, audioContext.currentTime, 0.5);
+            if (engineGainNode) engineGainNode.gain.setTargetAtTime(0, audioContext.currentTime, 0.1);
+        }
+        function applyVolumeSettings() {
+            if (!audioContext) return;
+            const musicVolume = document.getElementById('musicVolume').value / 100;
+            const sfxVolume = document.getElementById('sfxVolume').value / 100;
+            if (musicGainNode) musicGainNode.gain.setTargetAtTime(musicVolume, audioContext.currentTime, 0.1);
+            if (sfxGainNode) sfxGainNode.gain.setTargetAtTime(sfxVolume, audioContext.currentTime, 0.1);
+        }
+
+        function resumeGame() {
+            if (gameState !== 'paused') return;
+            gameState = 'playing';
+            startWordTimer();
+            document.getElementById('pauseMenu').style.display = 'none';
+            document.getElementById('typingInput').focus();
+            applyVolumeSettings();
+        }
+
+        function finishRace() {
+            gameState = 'finished';
+            clearInterval(wordTimerInterval);
+            const raceTime = (Date.now() - raceStartTime) / 1000;
+
+            saveScore(raceTime, gameStats.accuracy, gameStats.position);
+            setTimeout(() => {
+                alert(`Race Finished!\nLevel: ${gameStats.level}/${MAX_LEVEL}\nPosition: ${gameStats.position}/4\nTime: ${raceTime.toFixed(1)}s\nAccuracy: ${gameStats.accuracy}%`);
+                backToMenu();
+            }, 1000);
+        }
+
+        function saveScore(time, accuracy, position) {
+            const difficulty = document.getElementById('difficulty').value;
+            const score = { time: time.toFixed(1), accuracy: accuracy, position: position, level: gameStats.level, difficulty: difficulty, date: new Date().toLocaleDateString() };
+            let leaderboard = getLeaderboard();
+            leaderboard.push(score);
+            leaderboard.sort((a, b) => {
+                if (a.level !== b.level) return b.level - a.level;
+                if (a.position !== b.position) return a.position - b.position;
+                return parseFloat(a.time) - parseFloat(b.time);
+            });
+            leaderboard = leaderboard.slice(0, 10);
+            try {
+                localStorage.setItem('racingTyperLeaderboard', JSON.stringify(leaderboard));
+            } catch (e) { console.warn('Could not save to localStorage:', e); }
+        }
+
+        function backToMenu() {
+            gameState = 'menu';
+            hideAllMenus();
+            clearInterval(wordTimerInterval);
+            document.getElementById('mainMenu').style.display = 'block';
+            if (playerCar) {
+                playerCar.position.set(0, 0, 0);
+            }
+            aiCars.forEach(car => car.visible = false);
+            if (engineSourceNode) { try { engineSourceNode.stop(); } catch (e) { } engineSourceNode = null; }
+            if (musicSourceNode) { try { musicSourceNode.stop(); } catch (e) { } musicSourceNode = null; }
+        }
+
+        function showHowToPlay() { hideAllMenus(); document.getElementById('howToPlayMenu').style.display = 'block'; }
+        function hideHowToPlay() { hideAllMenus(); showMainMenu(); }
+
+        function hideAllMenus() {
+            ['mainMenu', 'settingsMenu', 'leaderboard', 'pauseMenu', 'gameUI', 'howToPlayMenu'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.style.display = 'none';
+            });
+        }
+
+        function showMainMenu() { hideAllMenus(); document.getElementById('mainMenu').style.display = 'block'; }
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        function showSettings() { hideAllMenus(); document.getElementById('settingsMenu').style.display = 'block'; loadSettingsUI(); }
+        function hideSettings() { showMainMenu(); }
+
+        function loadSettingsUI() {
+            try {
+                const savedSettings = JSON.parse(localStorage.getItem('racingTyperSettings') || '{}');
+                document.getElementById('musicVolume').value = savedSettings.musicVolume || 50;
+                document.getElementById('sfxVolume').value = savedSettings.sfxVolume || 70;
+                document.getElementById('difficulty').value = savedSettings.difficulty || 'normal';
+                document.getElementById('language').value = savedSettings.language || 'en';
+                document.getElementById('quality').value = savedSettings.quality || 'medium';
+            } catch (e) { console.warn('Could not load settings:', e); }
+        }
+
+        function saveSettings() {
+            const settings = {
+                musicVolume: document.getElementById('musicVolume').value,
+                sfxVolume: document.getElementById('sfxVolume').value,
+                difficulty: document.getElementById('difficulty').value,
+                language: document.getElementById('language').value,
+                quality: document.getElementById('quality').value
+            };
+            try {
+                localStorage.setItem('racingTyperSettings', JSON.stringify(settings));
+            } catch (e) { console.warn('Could not save settings:', e); }
+            applyVolumeSettings();
+            alert('Settings saved!');
+            hideSettings();
+        }
+
+        function showLeaderboard() { hideAllMenus(); document.getElementById('leaderboard').style.display = 'block'; updateLeaderboardDisplay(); }
+        function getLeaderboard() {
+            try {
+                const saved = localStorage.getItem('racingTyperLeaderboard');
+                return saved ? JSON.parse(saved) : [];
+            } catch (e) { console.warn('Could not load leaderboard:', e); return []; }
+        }
+
+        function updateLeaderboardDisplay() {
+            const scores = getLeaderboard();
+            const listElement = document.getElementById('leaderboardList');
+            if (scores.length === 0) {
+                listElement.innerHTML = '<p>No scores yet!</p>';
+                return;
+            }
+            listElement.innerHTML = scores.map((score, index) => `
+                <div class="leaderboard-entry"> 
+                    <span>#${index + 1}</span> <span>Lv: ${score.level}</span> <span>Pos: ${score.position}</span> <span>${score.time}s</span> <span>${score.accuracy}%</span> <span>${score.difficulty}</span> 
+                </div> 
+            `).join('');
+        }
+
+        function hideLeaderboard() { showMainMenu(); }
+        function restartRace() { startGame(); }
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('musicVolume').addEventListener('input', applyVolumeSettings);
+            document.getElementById('sfxVolume').addEventListener('input', applyVolumeSettings);
+            document.getElementById('typingInput')?.addEventListener('input', handleTyping);
+        });
+
+        document.addEventListener('keydown', e => {
+            if (e.code === 'Escape') { if (gameState === 'playing') pauseGame(); else if (gameState === 'paused') resumeGame(); }
+            if (gameState === 'playing') {
+                if (e.code === 'ArrowLeft' || e.code === 'KeyA') { playerCar.position.x = Math.max(-8, playerCar.position.x - 2); }
+                else if (e.code === 'ArrowRight' || e.code === 'KeyD') { playerCar.position.x = Math.min(8, playerCar.position.x + 2); }
+            }
+            if (gameState === 'playing' && audioContext?.state === 'suspended') audioContext.resume();
+        });
+
+        window.addEventListener('click', () => { if (audioContext?.state === 'suspended') audioContext.resume(); });
+
+    </script>
+</body>
+
+</html>

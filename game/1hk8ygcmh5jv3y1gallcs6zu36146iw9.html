@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
+    <title>Space Surfer</title>
+
+    <!-- Import map to resolve "three" module specifiers -->
+    <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.module.js",
+        "three/examples/jsm/": "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/"
+      }
+    }
+    </script>
+
+    <!-- Google font -->
+    <link href="https://fonts.googleapis.com/css2?family=Anta&display=swap" rel="stylesheet">
+
+    <!-- GameMonetize.com SDK -->
+    <script type = "text/javascript" >
+    window.SDK_OPTIONS = {
+      gameId: "1hk8ygcmh5jv3y1gallcs6zu36146iw9",
+      onEvent: function (a) {
+           switch (a.name) {
+                case "SDK_GAME_PAUSE":
+                    // pause game logic / mute audio
+                    window.dispatchEvent(new CustomEvent('sdk-pause'));
+                    break;
+                case "SDK_GAME_START":
+                    // advertisement done, resume game logic and unmute audio
+                    window.dispatchEvent(new CustomEvent('sdk-resume'));
+                    break;
+                case "SDK_READY":
+                    // when sdk is ready
+                    console.log('GameMonetize SDK is ready.');
+                    break;
+                case "SDK_ERROR":
+                    // when sdk get error
+                    console.warn('GameMonetize SDK failed to initialize. Ads may not work. This is common in development environments.');
+                    break;
+           }
+         }
+       };
+    (function (a, b, c) {
+       var d = a.getElementsByTagName(b)[0];
+       a.getElementById(c) || (a = a.createElement(b), a.id = c, 
+       a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+    })(document, "script", "gamemonetize-sdk"); 
+    </script>
+
+    <style>
+        /* --- Styling is unchanged except for any missing brackets or typos fixed --- */
+        html,body { height:100%; margin:0; padding:0; background:#000; color:#fff; font-family:'Anta',sans-serif; overflow:hidden; }
+        canvas { display:block; width:100vw; height:100vh; }
+        #ui-container { position:absolute; inset:0; display:flex; justify-content:center; align-items:center; pointer-events:none; }
+        .ui-element {
+            pointer-events: auto;
+            background: rgba(0,0,0,0.5);
+            padding: 1.25rem 1.5rem;
+            border-radius: 1rem;
+            border: 1px solid rgba(255,255,255,0.15);
+            backdrop-filter: blur(6px);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 90%;
+            max-width: 450px;
+            box-sizing: border-box;
+        }
+        .game-title { font-size:4.0rem; margin:0 0 1rem 0; color:#fff; text-shadow:0 0 5px #fff,0 0 20px #00aaff; font-style:italic; }
+        .popup-title { font-size:2.6rem; font-weight:700; margin:0 0 .5rem 0; }
+        .popup-text { font-size:1rem; margin:.5rem 0; }
+        button { font-family:'Anta',sans-serif; border:none; padding:.75rem 1.25rem; border-radius:.5rem; cursor:pointer; font-weight:700; font-size:1rem; }
+        .action-button { background:linear-gradient(145deg,#81c784,#388e3c); color:white; box-shadow:0 0 10px #4caf50; }
+        .menu-buttons { display:flex; gap:1rem; justify-content:center; align-items:center; margin-top:.75rem; }
+        .level-select-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+            max-width: 600px;
+        }
+        .level-button {
+            background: #444;
+            color: #fff;
+            border: 1px solid #666;
+        }
+        #hud {
+            position: absolute;
+            top: 20px;
+            left: 0;
+            right: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0 40px;
+            box-sizing: border-box;
+            pointer-events: none;
+            font-weight: 700;
+            display: none;
+            gap: 5px;
+        }
+        .hud-top-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+        .powerup-indicators-container {
+            display: flex;
+            gap: 1rem;
+        }
+        .powerup-indicator { background: rgba(0,0,0,0.6); padding: 0.5rem 0.75rem; border-radius: .75rem; border: 1px solid rgba(255,255,255,0.1); font-weight: 700; display: none; align-items: center; gap: .5rem; backdrop-filter: blur(4px); }
+        #shield-indicator { color: #00ff00; }
+        #ai-aid-indicator { color: #e0b0ff; }
+        #bottom-controls { position:absolute; bottom:20px; left:0; right:0; display:flex; justify-content:center; gap:1rem; pointer-events:none; display:none; }
+        .toggle-button { pointer-events:auto; width:54px; height:54px; display:flex; align-items:center; justify-content:center; border-radius:.5rem; background:#555; color:#fff; }
+        .toggle-button.sound-off { background:linear-gradient(145deg,#ff6b6b,#ee1e1e); }
+        .toggle-button.ai-active { background:linear-gradient(145deg,#81c784,#388e3c); }
+        #level-title-display { position:absolute; top:40%; left:50%; transform:translate(-50%,-50%); font-size:3.2rem; font-weight:800; color:#fff; opacity:0; pointer-events:none; transition:opacity .8s; text-shadow:0 0 12px #fff; width: 90%; text-align: center; }
+    </style>
+</head>
+<body>
+    <div id="ui-container"></div>
+
+    <div id="hud">
+        <div class="hud-top-row">
+            <div id="lives-container"><span>LIVES: </span><span id="lives-display"></span></div>
+            <div style="display: flex; align-items: center; gap: 2rem;">
+                <div id="level-display">LEVEL: 1</div>
+                <div id="score-display">SCORE: 0</div>
+            </div>
+            <div id="time-display">TIME: 00:00</div>
+        </div>
+        <div class="powerup-indicators-container">
+            <div id="shield-indicator" class="powerup-indicator">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                <span></span>s
+            </div>
+            <div id="ai-aid-indicator" class="powerup-indicator">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="5" y="8" width="14" height="10" rx="2"></rect><path d="M2 14h2"></path><path d="M20 14h2"></path><path d="M9 12v2"></path><path d="M15 12v2"></path><path d="M9 7V5c0-1.1.9-2 2-2h2c1.1 0 2 .9 2 2v2"></path></svg>
+                <span></span>s
+            </div>
+        </div>
+    </div>
+
+    <div id="bottom-controls">
+        <button id="soundToggleButton" class="toggle-button" title="Toggle Sound"></button>
+        <button id="aiToggleButton" class="toggle-button" title="Toggle AI"></button>
+        <button id="pauseButton" class="toggle-button" title="Pause/Resume"></button>
+        <button id="quitButton" class="toggle-button" title="Quit to Menu"></button>
+    </div>
+
+    <div id="level-title-display"></div>
+
+    <!-- Main module script (imports Three.js and addons as ES modules) -->
+    <script type="module">
+    import * as THREE from 'three';
+    import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+    import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+    import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
+
+    // --- Game variables ---
+    let scene, camera, renderer, composer, clock;
+    let player, hyperspaceTunnel, activeEntities, explosionParticles, trailGroup;
+    let playerTrailPool = [], activePlayerTrailParts = [];
+    let gameState = 'MENU';
+    let score = 0, gameTime = 0, lives = 3, currentLevel = 1;
+    let speed = 8, baseSpeed = 8, maxSpeed = 40;
+    let isPaused = false, isAiActive = false, isShielded = false, isAiAidActive = false;
+    let isDragging = false;
+    let shieldEndTime = 0, aiAidEndTime = 0;
+    let movementSoundNodes = null;
+    let playerTargetAngle = -Math.PI/2;
+    let playerTrailSpawnCounter = 0;
+    let playerOriginalColor, playerOriginalEmissive;
+    let menuAnimationId = null, gameAnimationId = null;
+    let spawnTimer = 0;
+    let sdkPaused = false;
+    let soundStateBeforeAd = true;
+    const levelConfig = [
+        { level: 1, name: 'First Flight', duration: 120, startingSpeed: 8 },
+        { level: 2, name: 'Spin Cycle', duration: 120, startingSpeed: 10 },
+        { level: 3, name: 'Arcade Chaos', duration: 120, startingSpeed: 12 },
+        { level: 4, name: 'Crimson Gauntlet', duration: 120, startingSpeed: 14 },
+        { level: 5, name: 'Space Surfing', duration: 180, startingSpeed: 16 },
+        { level: 6, name: 'Vortex Fury', duration: 240, startingSpeed: 16 }
+    ];
+
+    // UI elements
+    const uiContainer = document.getElementById('ui-container');
+    const hud = document.getElementById('hud');
+    const scoreDisplay = document.getElementById('score-display');
+    const timeDisplay = document.getElementById('time-display');
+    const livesDisplay = document.getElementById('lives-display');
+    const levelDisplay = document.getElementById('level-display');
+    const bottomControls = document.getElementById('bottom-controls');
+    const pauseButton = document.getElementById('pauseButton');
+    const aiToggleButton = document.getElementById('aiToggleButton');
+    const soundToggleButton = document.getElementById('soundToggleButton');
+    const quitButton = document.getElementById('quitButton');
+    const levelTitleDisplay = document.getElementById('level-title-display');
+    const shieldIndicator = document.getElementById('shield-indicator');
+    const aiAidIndicator = document.getElementById('ai-aid-indicator');
+    const shieldTimeSpan = shieldIndicator.querySelector('span');
+    const aiAidTimeSpan = aiAidIndicator.querySelector('span');
+
+    // Audio placeholders & safe init
+    let audioContext = null;
+    let isSoundOn = true;
+    function initAudio() {
+        if (audioContext) return;
+        try {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        } catch(e) {
+            audioContext = null; // Audio not supported or blocked
+            console.warn('AudioContext unavailable:', e);
+        }
+    }
+    function startFlyingSound(){ /* placeholder - implement SFX as needed */ }
+    function stopFlyingSound(){ /* placeholder */ }
+    function startMovementSound(){
+        if (!audioContext || !isSoundOn || movementSoundNodes) return;
+
+        const now = audioContext.currentTime;
+
+        const bufferSize = audioContext.sampleRate * 2;
+        const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+        const output = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            output[i] = Math.random() * 2 - 1;
+        }
+
+        const noiseSource = audioContext.createBufferSource();
+        noiseSource.buffer = buffer;
+        noiseSource.loop = true;
+
+        const filter = audioContext.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(400, now);
+        filter.Q.value = 10;
+
+        const gainNode = audioContext.createGain();
+        
+        noiseSource.connect(filter);
+        filter.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        gainNode.gain.setValueAtTime(0, now);
+        gainNode.gain.linearRampToValueAtTime(0.04, now + 0.1);
+
+        noiseSource.start(now);
+
+        movementSoundNodes = { source: noiseSource, gain: gainNode };
+    }
+    function stopMovementSound(){
+        if (!audioContext || !movementSoundNodes) return;
+
+        const now = audioContext.currentTime;
+        const { source, gain } = movementSoundNodes;
+
+        gain.gain.cancelScheduledValues(now);
+        gain.gain.setValueAtTime(gain.gain.value, now);
+        gain.gain.linearRampToValueAtTime(0.0001, now + 0.2);
+
+        source.stop(now + 0.2);
+        
+        movementSoundNodes = null;
+    }
+    function playImpactSound(name){
+        if (!audioContext || !isSoundOn) return;
+
+        const now = audioContext.currentTime;
+        const gainNode = audioContext.createGain();
+        gainNode.connect(audioContext.destination);
+
+        if (name === 'explosion') {
+            const bufferSize = audioContext.sampleRate * 0.5;
+            const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+            const output = buffer.getChannelData(0);
+
+            for (let i = 0; i < bufferSize; i++) {
+                output[i] = Math.random() * 2 - 1;
+            }
+
+            const noiseSource = audioContext.createBufferSource();
+            noiseSource.buffer = buffer;
+            
+            const bandpass = audioContext.createBiquadFilter();
+            bandpass.type = 'bandpass';
+            bandpass.frequency.value = 1500;
+            bandpass.Q.value = 1;
+
+            noiseSource.connect(bandpass);
+            bandpass.connect(gainNode);
+
+            gainNode.gain.setValueAtTime(0.5, now);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+            
+            noiseSource.start(now);
+            noiseSource.stop(now + 0.4);
+
+        } else if (name === 'collect') {
+            const oscillator = audioContext.createOscillator();
+            oscillator.type = 'triangle';
+            oscillator.frequency.setValueAtTime(880, now);
+            oscillator.connect(gainNode);
+            
+            gainNode.gain.setValueAtTime(0.3, now);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+
+            oscillator.start(now);
+            oscillator.stop(now + 0.2);
+
+        } else if (name === 'pass') {
+             const oscillator = audioContext.createOscillator();
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(1318.51, now);
+            oscillator.connect(gainNode);
+            
+            gainNode.gain.setValueAtTime(0.2, now);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+
+            oscillator.start(now);
+            oscillator.stop(now + 0.1);
+        } else if (name === 'penalty') {
+            const oscillator1 = audioContext.createOscillator();
+            const oscillator2 = audioContext.createOscillator();
+            oscillator1.type = 'sawtooth';
+            oscillator2.type = 'sawtooth';
+            oscillator1.frequency.setValueAtTime(440, now);
+            oscillator2.frequency.setValueAtTime(466.16, now);
+
+            oscillator1.connect(gainNode);
+            oscillator2.connect(gainNode);
+
+            gainNode.gain.setValueAtTime(0.3, now);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+
+            oscillator1.start(now);
+            oscillator2.start(now);
+            oscillator1.stop(now + 0.5);
+            oscillator2.stop(now + 0.5);
+        }
+    }
+
+    // UI Icon SVGs
+    const soundOnIcon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>`;
+    const soundOffIcon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>`;
+    const aiOnIcon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="8" width="14" height="10" rx="2"></rect><path d="M2 14h2"></path><path d="M20 14h2"></path><path d="M9 12v2"></path><path d="M15 12v2"></path><path d="M9 7V5c0-1.1.9-2 2-2h2c1.1 0 2 .9 2 2v2"></path></svg>`;
+    const aiOffIcon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="8" width="14" height="10" rx="2"></rect><path d="M2 14h2"></path><path d="M20 14h2"></path><path d="M9 12v2"></path><path d="M15 12v2"></path><path d="M9 7V5c0-1.1.9-2 2-2h2c1.1 0 2 .9 2 2v2"></path><line x1="2" y1="2" x2="22" y2="22"></line></svg>`;
+    const pauseIcon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>`;
+    const resumeIcon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>`;
+    const quitIcon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
+
+    // update icons
+    function updateSoundIcon(){ soundToggleButton.innerHTML = isSoundOn ? soundOnIcon : soundOffIcon; if(!isSoundOn) soundToggleButton.classList.add('sound-off'); else soundToggleButton.classList.remove('sound-off'); }
+    function updateAiIcon(){ aiToggleButton.innerHTML = isAiActive ? aiOnIcon : aiOffIcon; if(isAiActive) aiToggleButton.classList.add('ai-active'); else aiToggleButton.classList.remove('ai-active'); }
+    function updatePauseIcon(){ pauseButton.innerHTML = isPaused ? resumeIcon : pauseIcon; if(isPaused) pauseButton.classList.add('sound-off'); else pauseButton.classList.remove('sound-off'); }
+
+    // --- Initialization ---
+    function init() {
+        scene = new THREE.Scene();
+        clock = new THREE.Clock();
+
+        camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 1000);
+        camera.position.z = 6;
+
+        renderer = new THREE.WebGLRenderer({ antialias:true, alpha:false });
+        renderer.setSize(innerWidth, innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        document.body.appendChild(renderer.domElement);
+
+        scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+
+        composer = new EffectComposer(renderer);
+        composer.addPass(new RenderPass(scene, camera));
+        const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 1.2, 0.4, 0.85);
+        bloom.threshold = 0.0; bloom.strength = 1.0; bloom.radius = 0.0;
+        composer.addPass(bloom);
+
+        activeEntities = new THREE.Group(); scene.add(activeEntities);
+        explosionParticles = new THREE.Group(); scene.add(explosionParticles);
+        trailGroup = new THREE.Group(); scene.add(trailGroup);
+
+        createPlayer();
+        createHyperspaceTunnel();
+        createPlayerTrailPool();
+
+        updateSoundIcon(); updateAiIcon(); updatePauseIcon();
+        quitButton.innerHTML = quitIcon;
+        setGameState('MENU');
+
+        window.addEventListener('resize', onWindowResize);
+        pauseButton.addEventListener('click', togglePause);
+        aiToggleButton.addEventListener('click', toggleAI);
+        soundToggleButton.addEventListener('click', toggleSound);
+        quitButton.addEventListener('click', () => setGameState('MENU'));
+
+        // SDK Event Listeners
+        window.addEventListener('sdk-pause', () => {
+            soundStateBeforeAd = isSoundOn;
+            if (isSoundOn) {
+                toggleSound(); // This will set isSoundOn to false and update icon
+            }
+            if (gameState === 'PLAYING' && !isPaused) {
+                isPaused = true;
+                sdkPaused = true;
+                updatePauseIcon();
+            }
+        });
+
+        window.addEventListener('sdk-resume', () => {
+            if (isSoundOn !== soundStateBeforeAd) {
+                toggleSound(); // Restore sound state
+            }
+            if (sdkPaused) {
+                isPaused = false;
+                sdkPaused = false;
+                updatePauseIcon();
+                clock.start();
+                animate();
+            }
+        });
+
+        const down = (x,y) => { if (gameState !== 'PLAYING' || isPaused) return; isDragging = true; initAudio(); startMovementSound(); updateTargetAngle(x,y); };
+        const move = (x,y) => { if (isDragging) updateTargetAngle(x,y); };
+        const up = () => { if (isDragging) { isDragging=false; stopMovementSound(); } };
+
+        window.addEventListener('mousedown', (e)=> down(e.clientX,e.clientY));
+        window.addEventListener('mousemove', (e)=> move(e.clientX,e.clientY));
+        window.addEventListener('mouseup', up);
+        window.addEventListener('mouseleave', up);
+        window.addEventListener('touchstart', (e)=> { if(e.touches && e.touches[0]) { down(e.touches[0].clientX, e.touches[0].clientY); }});
+        window.addEventListener('touchmove', (e)=> { if(e.touches && e.touches[0]) move(e.touches[0].clientX, e.touches[0].clientY);});
+        window.addEventListener('touchend', up);
+        window.addEventListener('touchcancel', up);
+    }
+
+    function onWindowResize(){
+        camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix();
+        renderer.setSize(innerWidth, innerHeight);
+        composer.setSize(innerWidth, innerHeight);
+    }
+
+    function setGameState(newState){
+        cancelAnimationFrame(menuAnimationId); cancelAnimationFrame(gameAnimationId);
+        stopFlyingSound();
+        uiContainer.innerHTML = '';
+        hud.style.display = 'none'; bottomControls.style.display = 'none'; levelTitleDisplay.style.opacity = 0;
+
+        gameState = newState;
+        if (isPaused) { isPaused = false; updatePauseIcon(); }
+
+        if (newState === 'MENU') {
+            const menuDiv = document.createElement('div');
+            menuDiv.className = 'ui-element';
+            menuDiv.innerHTML = `<h1 class="game-title">SPACE SURFER</h1>
+                <div class="menu-buttons" style="flex-direction: column; align-items: stretch; gap: 0.75rem;">
+                    <button id="startButton" class="action-button">START</button>
+                    <button id="levelSelectButton" class="action-button" style="background: linear-gradient(145deg, #64b5f6, #1976d2); box-shadow: 0 0 10px #2196f3;">SELECT LEVEL</button>
+                </div>`;
+            uiContainer.appendChild(menuDiv);
+
+            document.getElementById('startButton').addEventListener('click', () => {
+                if (window.sdk && typeof window.sdk.showBanner === 'function') {
+                    window.sdk.showBanner();
+                }
+                initAudio();
+                if (audioContext && audioContext.state === 'suspended') audioContext.resume().then(() => {
+                    fullGameReset();
+                    setGameState('PLAYING');
+                });
+                else {
+                    fullGameReset();
+                    setGameState('PLAYING');
+                }
+            });
+
+            document.getElementById('levelSelectButton').addEventListener('click', () => {
+                uiContainer.innerHTML = '';
+                const levelSelectDiv = document.createElement('div');
+                levelSelectDiv.className = 'ui-element';
+                
+                let buttonsHTML = levelConfig.map(level =>
+                    `<button class="level-button" data-level="${level.level}">${level.level}: ${level.name}</button>`
+                ).join('');
+
+                levelSelectDiv.innerHTML = `
+                    <h1 class="popup-title">Select Level</h1>
+                    <div class="level-select-grid">${buttonsHTML}</div>
+                    <div class="menu-buttons" style="margin-top: 1.5rem;">
+                        <button id="backButton">Back</button>
+                    </div>
+                `;
+                uiContainer.appendChild(levelSelectDiv);
+
+                document.querySelectorAll('.level-button').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        if (window.sdk && typeof window.sdk.showBanner === 'function') {
+                            window.sdk.showBanner();
+                        }
+                        currentLevel = parseInt(e.currentTarget.dataset.level);
+                        score = 0;
+                        lives = 3;
+                        updateLivesDisplay();
+                        scoreDisplay.textContent = `SCORE: ${score}`;
+                        shieldEndTime = 0;
+                        aiAidEndTime = 0;
+
+                        initAudio();
+                        if (audioContext && audioContext.state === 'suspended') audioContext.resume().then(() => {
+                            setGameState('PLAYING');
+                        });
+                        else {
+                            setGameState('PLAYING');
+                        }
+                    });
+                });
+
+                document.getElementById('backButton').addEventListener('click', () => {
+                    setGameState('MENU');
+                });
+            });
+
+            animateMenu();
+        } else if (newState === 'PLAYING') {
+            hud.style.display = 'flex'; bottomControls.style.display = 'flex';
+            startLevel();
+            startFlyingSound();
+            animate();
+        } else if (newState === 'LEVEL_COMPLETE') {
+            const div = document.createElement('div'); div.className='ui-element';
+            div.innerHTML = `<h1 class="popup-title">Level ${currentLevel} Complete!</h1>
+                <p class="popup-text">Total Score: ${score}</p>
+                <div class="menu-buttons"><button id="nextLevelButton" class="action-button">Next</button></div>`;
+            uiContainer.appendChild(div);
+            document.getElementById('nextLevelButton').addEventListener('click', ()=> { 
+                if (window.sdk && typeof window.sdk.showBanner === 'function') {
+                    window.sdk.showBanner();
+                }
+                currentLevel++; 
+                setGameState('PLAYING'); 
+            });
+            animateMenu();
+        } else if (newState === 'GAME_OVER') {
+            const div = document.createElement('div'); div.className='ui-element';
+            div.innerHTML = `<h1 class="popup-title">GAME OVER</h1>
+                <p class="popup-text">You reached Level ${currentLevel}</p>
+                <p class="popup-text">Final Score: ${score}</p>
+                <div class="menu-buttons"><button id="restartButton" class="action-button">Try Again</button></div>`;
+            uiContainer.appendChild(div);
+            document.getElementById('restartButton').addEventListener('click', ()=> {
+                if (window.sdk && typeof window.sdk.showBanner === 'function') {
+                    window.sdk.showBanner();
+                }
+                setGameState('MENU');
+            });
+            animateMenu();
+        } else if (newState === 'VICTORY') {
+            const div = document.createElement('div'); div.className='ui-element';
+            div.innerHTML = `<h1 class="popup-title">Congratulations!</h1>
+                <p class="popup-text">You've mastered the Space Tunnel!</p>
+                <p class="popup-text">Final Score: ${score}</p>
+                <div class="menu-buttons"><button id="playAgainButton" class="action-button">Play Again</button></div>`;
+            uiContainer.appendChild(div);
+            document.getElementById('playAgainButton').addEventListener('click', ()=> {
+                if (window.sdk && typeof window.sdk.showBanner === 'function') {
+                    window.sdk.showBanner();
+                }
+                setGameState('MENU');
+            });
+        }
+    }
+
+    function fullGameReset(){
+        score = 0; lives = 3; currentLevel = 1; updateLivesDisplay(); scoreDisplay.textContent = `SCORE: ${score}`;
+        levelDisplay.textContent = `LEVEL: ${currentLevel}`;
+        if (player && playerOriginalColor) {
+            player.material.color.copy(playerOriginalColor);
+            player.material.emissive.copy(playerOriginalEmissive);
+        }
+        isShielded = false; isAiAidActive = false;
+        shieldEndTime = 0; aiAidEndTime = 0;
+    }
+
+    function startLevel(){
+        gameTime = 0;
+        speed = levelConfig[currentLevel-1]?.startingSpeed ?? baseSpeed;
+        while(activeEntities.children.length) activeEntities.remove(activeEntities.children[0]);
+        while(explosionParticles.children.length) explosionParticles.remove(explosionParticles.children[0]);
+        playerTrailPool.forEach(p => p.visible = false); activePlayerTrailParts = [];
+        player.position.set(0, -0.95, 0); playerTargetAngle = -Math.PI/2; player.visible = true;
+        if (player && playerOriginalColor) {
+            player.material.color.copy(playerOriginalColor);
+            player.material.emissive.copy(playerOriginalEmissive);
+        }
+        updateLivesDisplay();
+        scoreDisplay.textContent = `SCORE: ${score}`;
+        levelDisplay.textContent = `LEVEL: ${currentLevel}`;
+        showLevelTitle(levelConfig[currentLevel-1]?.name || `Level ${currentLevel}`);
+    }
+
+    function showLevelTitle(text){
+        levelTitleDisplay.textContent = text || `Level ${currentLevel}`;
+        levelTitleDisplay.style.opacity = 1;
+        setTimeout(()=> { levelTitleDisplay.style.opacity = 0; }, 1600);
+    }
+
+    function createPlayer(){
+        const geom = new THREE.SphereGeometry(0.38, 32, 32);
+        const canvas = document.createElement('canvas'); canvas.width = 256; canvas.height = 256;
+        const ctx = canvas.getContext('2d');
+        const grad = ctx.createRadialGradient(90,90,0,130,130,140);
+        grad.addColorStop(0,'#87cefa'); grad.addColorStop(.5,'#4169e1'); grad.addColorStop(1,'#00008b');
+        ctx.fillStyle = grad; ctx.fillRect(0,0,256,256);
+        const tex = new THREE.CanvasTexture(canvas);
+        const mat = new THREE.MeshStandardMaterial({ map:tex, metalness:0.6, roughness:0.2, emissive:0x4169e1, emissiveIntensity:1.2 });
+        player = new THREE.Mesh(geom, mat);
+        playerOriginalColor = player.material.color.clone();
+        playerOriginalEmissive = player.material.emissive.clone();
+        player.position.set(0,-0.95,0);
+        scene.add(player);
+        const pLight = new THREE.PointLight(0x4488ff,1,8); player.add(pLight);
+
+        const glowCanvas = document.createElement('canvas'); glowCanvas.width = 128; glowCanvas.height = 128;
+        const gctx = glowCanvas.getContext('2d');
+        const ggrad = gctx.createRadialGradient(64,64,0,64,64,64);
+        ggrad.addColorStop(0,'rgba(0,170,255,0.8)'); ggrad.addColorStop(1,'rgba(0,170,255,0)');
+        gctx.fillStyle = ggrad; gctx.fillRect(0,0,128,128);
+        const glowTex = new THREE.CanvasTexture(glowCanvas);
+        const spriteMat = new THREE.SpriteMaterial({ map: glowTex, blending: THREE.AdditiveBlending, transparent:true, depthWrite:false });
+        const sprite = new THREE.Sprite(spriteMat); sprite.scale.set(1.2,1.2,1.2); player.add(sprite);
+    }
+
+    function createHyperspaceTunnel(){
+        const particleCount = 2200;
+        const positions = new Float32Array(particleCount*3);
+        const colors = new Float32Array(particleCount*3);
+        const tunnelLength = 200;
+        const radius = 1.5;
+        for (let i=0;i<particleCount;i++){
+            const angle = Math.random()*Math.PI*2;
+            positions[i*3] = Math.cos(angle)*radius;
+            positions[i*3+1] = Math.sin(angle)*radius;
+            positions[i*3+2] = (Math.random()-1)*tunnelLength;
+            colors[i*3] = 0.2; colors[i*3+1] = 0.2; colors[i*3+2] = 0.5;
+        }
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions,3));
+        geometry.setAttribute('color', new THREE.BufferAttribute(colors,3));
+        const canvas = document.createElement('canvas'); canvas.width = 64; canvas.height = 64;
+        const ctx = canvas.getContext('2d'); ctx.beginPath(); ctx.arc(32,32,30,0,Math.PI*2); ctx.fillStyle='white'; ctx.fill();
+        const particleTexture = new THREE.CanvasTexture(canvas);
+        const material = new THREE.PointsMaterial({ size:0.05, vertexColors:true, blending:THREE.AdditiveBlending, transparent:true, opacity:0.8, map:particleTexture });
+        hyperspaceTunnel = new THREE.Points(geometry, material);
+        scene.add(hyperspaceTunnel);
+    }
+
+    function createPlayerTrailPool(){
+        const trailMat = new THREE.MeshBasicMaterial({ color: player.material.emissive, transparent:true });
+        for (let i=0;i<50;i++){
+            const mesh = new THREE.Mesh(player.geometry.clone(), trailMat.clone());
+            mesh.visible = false;
+            playerTrailPool.push(mesh); trailGroup.add(mesh);
+        }
+    }
+
+    function handleSpawning(delta){
+        spawnTimer -= delta;
+        if (spawnTimer <= 0) {
+            spawnTimer = 1.5 / (speed / baseSpeed); // Base spawn rate
+            const rand = Math.random();
+
+            if (currentLevel >= 3 && rand < 0.08) { spawnBlueRingSpiral(); spawnTimer = 10; return; }
+            if (currentLevel >= 4 && rand < 0.12) { spawnDoubleRingSpiral(); spawnTimer = 15; return; }
+
+            if (rand < 0.50) spawnObstacle();
+            else if (rand < 0.75) spawnReward();
+            else if (rand < 0.85) spawnPenalty();
+            else if (rand < 0.93) spawnLifeUp();
+            else if (rand < 0.97) spawnShield();
+            else spawnAiAid();
+        }
+    }
+
+    function spawnReward(){ const geometry = new THREE.TorusGeometry(0.1,0.03,16,100); const material = new THREE.MeshStandardMaterial({ color:0xffd700, emissive:0xffaa00, metalness:0.5, roughness:0.2 }); const reward = new THREE.Mesh(geometry, material); const angle = Math.random()*Math.PI*2; const radius = 1.2; reward.position.set(Math.cos(angle)*radius, Math.sin(angle)*radius, -100); reward.userData.type='reward'; activeEntities.add(reward); }
+    function spawnPenalty(){ const geometry = new THREE.TorusGeometry(0.1,0.03,16,100); const material = new THREE.MeshStandardMaterial({ color:0xff0000, emissive:0xcc0000, metalness:0.5, roughness:0.2 }); const penalty = new THREE.Mesh(geometry, material); const angle = Math.random()*Math.PI*2; const radius = 1.2; penalty.position.set(Math.cos(angle)*radius, Math.sin(angle)*radius, -100); penalty.userData.type='penalty'; activeEntities.add(penalty); }
+    function spawnBlueRingSpiral(){
+        const blueMaterial = new THREE.MeshStandardMaterial({ color:0x00aaff, emissive:0x0088dd, metalness:0.5, roughness:0.2 });
+        const geometry = new THREE.TorusGeometry(0.1,0.03,16,100);
+        const radius = 1.2; let currentAngle = Math.random()*Math.PI*2; const angleStep = 0.4; const zStep = -2.5;
+        for (let i=0;i<30;i++){
+            currentAngle += angleStep;
+            const ring = new THREE.Mesh(geometry, blueMaterial);
+            ring.position.set(Math.cos(currentAngle)*radius, Math.sin(currentAngle)*radius, -100 + i*zStep);
+            ring.userData.type = 'blue_ring'; activeEntities.add(ring);
+        }
+    }
+    function spawnDoubleRingSpiral(){
+        const yellowMaterial = new THREE.MeshStandardMaterial({ color:0xffd700, emissive:0xffaa00, metalness:0.5, roughness:0.2 });
+        const redMaterial = new THREE.MeshStandardMaterial({ color:0xff0000, emissive:0xcc0000, metalness:0.5, roughness:0.2 });
+        const geometry = new THREE.TorusGeometry(0.1,0.03,16,100);
+        const radius = 1.2; let currentAngle = Math.random()*Math.PI*2; const angleStep = 0.4; const zStep = -2.5;
+        for (let i=0;i<30;i++){
+            const yellowAngle = currentAngle + i*angleStep;
+            const yellowRing = new THREE.Mesh(geometry, yellowMaterial);
+            yellowRing.position.set(Math.cos(yellowAngle)*radius, Math.sin(yellowAngle)*radius, -100 + i*zStep);
+            yellowRing.userData.type = 'reward';
+            yellowRing.userData.isSpiral = true; // Tag for AI
+            activeEntities.add(yellowRing);
+            const redAngle = yellowAngle + Math.PI;
+            const redRing = new THREE.Mesh(geometry, redMaterial);
+            redRing.position.set(Math.cos(redAngle)*radius, Math.sin(redAngle)*radius, -100 + i*zStep);
+            redRing.userData.type = 'penalty'; activeEntities.add(redRing);
+        }
+    }
+    function spawnLifeUp(){
+        const cross = new THREE.Group();
+        const barWidth = 0.1, barHeight = 0.3;
+        const redMaterial = new THREE.MeshStandardMaterial({ color:0xff0000, emissive:0xcc0000 });
+        const vertGeo = new THREE.BoxGeometry(barWidth, barHeight, barWidth);
+        const horizGeo = new THREE.BoxGeometry(barHeight, barWidth, barWidth);
+        const vert = new THREE.Mesh(vertGeo, redMaterial); const horiz = new THREE.Mesh(horizGeo, redMaterial);
+        cross.add(vert, horiz);
+        const angle = Math.random()*Math.PI*2; const radius = 1.2; cross.position.set(Math.cos(angle)*radius, Math.sin(angle)*radius, -100);
+        cross.scale.set(1.8,1.8,1.8); cross.userData.type='life'; activeEntities.add(cross);
+    }
+    function spawnShield(){
+        const shape = new THREE.Shape();
+        shape.moveTo(0,0.4); shape.lineTo(-0.3,0.2); shape.lineTo(-0.3,-0.3); shape.lineTo(0,-0.4); shape.lineTo(0.3,-0.3); shape.lineTo(0.3,0.2); shape.lineTo(0,0.4);
+        const extrudeSettings = { depth:0.04, bevelEnabled:true, bevelSegments:1, steps:1, bevelSize:0.02, bevelThickness:0.02 };
+        const geom = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+        const mat = new THREE.MeshStandardMaterial({ color:0x00ff00, emissive:0x00cc00, metalness:0.6, roughness:0.2 });
+        const shield = new THREE.Mesh(geom, mat);
+        const angle = Math.random()*Math.PI*2; const radius = 1.2; shield.position.set(Math.cos(angle)*radius, Math.sin(angle)*radius, -100);
+        shield.scale.set(1.2,1.2,1.2); shield.userData.type='shield'; activeEntities.add(shield);
+    }
+    function spawnAiAid(){
+        const geometry = new THREE.SphereGeometry(0.25,16,16);
+        const canvas = document.createElement('canvas'); canvas.width=256; canvas.height=256; const ctx=canvas.getContext('2d');
+        const grad = ctx.createRadialGradient(128,128,0,128,128,128); grad.addColorStop(0,'#e0b0ff'); grad.addColorStop(.5,'#8A2BE2'); grad.addColorStop(1,'#4B0082');
+        ctx.fillStyle = grad; ctx.fillRect(0,0,256,256);
+        ctx.font = 'bold 128px Anta, sans-serif'; ctx.fillStyle = '#00aaff'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('AI', 128, 128);
+        const tex = new THREE.CanvasTexture(canvas);
+        const mat = new THREE.MeshStandardMaterial({ map:tex, metalness:0.7, roughness:0.3, emissive:0x00aaff, emissiveIntensity:1.2 });
+        const aiAid = new THREE.Mesh(geometry, mat);
+        const angle = Math.random()*Math.PI*2; const radius = 1.2; aiAid.position.set(Math.cos(angle)*radius, Math.sin(angle)*radius, -100);
+        aiAid.userData.type='ai_aid'; activeEntities.add(aiAid);
+    }
+    function spawnObstacle() {
+        let obstacleTypes = [];
+        switch(currentLevel) {
+            case 1: obstacleTypes = ['static_ring']; break;
+            case 2: obstacleTypes = ['static_ring', 'spinning_ring', 'double_ring']; break;
+            case 3: obstacleTypes = ['static_ring', 'spinning_ring', 'double_ring', 'spinning_double_ring', 'static_cross']; break;
+            case 4: obstacleTypes = ['spinning_ring', 'spinning_cross', 'spinning_double_ring']; break;
+            case 5: obstacleTypes = ['spinning_ring', 'spinning_cross', 'double_ring', 'spinning_double_ring']; break;
+            case 6: obstacleTypes = ['spinning_ring', 'spinning_cross', 'double_ring']; break;
+        }
+        if (obstacleTypes.length === 0) return;
+
+        const type = obstacleTypes[Math.floor(Math.random() * obstacleTypes.length)];
+        const material = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xcccccc, metalness: 0.5, roughness: 0.2 });
+        let entity;
+
+        if (type === 'static_ring' || type === 'spinning_ring') {
+            const geometry = new THREE.TorusGeometry(1.15, 0.05, 16, 100, Math.PI * 1.5);
+            entity = new THREE.Mesh(geometry, material);
+            entity.rotation.z = Math.random() * Math.PI * 2;
+            entity.userData.type = 'obstacle_ring';
+            if (type === 'spinning_ring') entity.userData.spinSpeed = (Math.random() - 0.5) * 2;
+        } else if (type === 'double_ring' || type === 'spinning_double_ring') {
+            entity = new THREE.Group();
+            const gapSize = 1.2;
+            const arcLength = Math.PI - gapSize;
+            const geometry = new THREE.TorusGeometry(1.15, 0.05, 16, 100, arcLength);
+            const obstacle1 = new THREE.Mesh(geometry, material.clone());
+            const obstacle2 = new THREE.Mesh(geometry, material.clone());
+            obstacle1.rotation.z = gapSize / 2;
+            obstacle2.rotation.z = Math.PI + gapSize / 2;
+            entity.add(obstacle1, obstacle2);
+            entity.rotation.z = Math.random() * Math.PI * 2;
+            entity.userData.type = 'obstacle_double_ring';
+            entity.userData.gapSize = gapSize;
+            if (type === 'spinning_double_ring') entity.userData.spinSpeed = (Math.random() - 0.5) * 1.5;
+        } else if (type === 'static_cross' || type === 'spinning_cross') {
+            entity = new THREE.Group();
+            const barGeometry = new THREE.BoxGeometry(2.4, 0.1, 0.1);
+            const bar1 = new THREE.Mesh(barGeometry, material);
+            const bar2 = new THREE.Mesh(barGeometry, material);
+            bar2.rotation.z = Math.PI / 2;
+            entity.add(bar1, bar2);
+            entity.rotation.z = Math.random() * Math.PI * 2;
+            entity.userData.type = 'obstacle_cross';
+            if (type === 'spinning_cross') entity.userData.spinSpeed = (Math.random() - 0.5) * 2;
+        }
+        
+        if (entity) {
+            entity.position.z = -100;
+            activeEntities.add(entity);
+        }
+    }
+
+    function createExplosion(position){
+        const count = 12;
+        for (let i=0;i<count;i++){
+            const pgeom = new THREE.BoxGeometry(0.05,0.05,0.05);
+            const pmat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            const particle = new THREE.Mesh(pgeom, pmat);
+            particle.position.copy(position);
+            particle.userData = { velocity: new THREE.Vector3((Math.random()-0.5)*4,(Math.random()-0.5)*4,(Math.random()-0.5)*4), lifetime: 0.9 };
+            explosionParticles.add(particle);
+        }
+    }
+
+    function updateTargetAngle(clientX, clientY){
+        if (gameState !== 'PLAYING' || isPaused) return;
+        const x = (clientX / innerWidth) * 2 - 1;
+        const y = -(clientY / innerHeight) * 2 + 1;
+        playerTargetAngle = Math.atan2(y,x);
+    }
+
+    function updatePlayerPosition(delta){
+        const currentAngle = Math.atan2(player.position.y, player.position.x);
+        let difference = playerTargetAngle - currentAngle;
+        while (difference < -Math.PI) difference += Math.PI*2;
+        while (difference > Math.PI) difference -= Math.PI*2;
+        const newAngle = currentAngle + difference * (delta * 8);
+        const radius = 1.5 - player.geometry.parameters.radius - 0.15;
+        player.position.x = Math.cos(newAngle) * radius;
+        player.position.y = Math.sin(newAngle) * radius;
+    }
+
+    // --- AI controls (Predictive Trajectory Logic) ---
+    let aiReactionTimer = 0;
+    function updateAiControls(delta){
+        aiReactionTimer -= delta;
+        if (aiReactionTimer > 0) return;
+        aiReactionTimer = 0.05;
+
+        const perceivedEntities = [];
+
+        // 1. Perception: Identify all entities.
+        activeEntities.children.forEach(entity => {
+            if (!entity.userData.type || entity.position.z > 0) return;
+
+            perceivedEntities.push({
+                dist: Math.abs(entity.position.z),
+                angle: Math.atan2(entity.position.y, entity.position.x),
+                type: entity.userData.type,
+                entity: entity,
+            });
+        });
+
+        if (perceivedEntities.length === 0) return;
+
+        // 2. Separate threats from opportunities
+        const threats = perceivedEntities.filter(e => e.type.startsWith('obstacle') || (e.type === 'penalty' && !isShielded));
+        const opportunities = perceivedEntities.filter(e => !threats.includes(e));
+
+        threats.sort((a, b) => a.dist - b.dist);
+        opportunities.sort((a, b) => a.dist - b.dist);
+        
+        const closestThreat = threats.length > 0 ? threats[0] : null;
+        let finalTargetAngle;
+
+        // 3. Core Logic: Always be aware of the safe path, but be greedy when possible.
+        if (closestThreat) {
+            // A threat exists. Calculate the safe path in advance.
+            const timeToArrival = closestThreat.dist / speed;
+            const predictedRotation = closestThreat.entity.rotation.z + (closestThreat.entity.userData.spinSpeed || 0) * timeToArrival;
+            let safeAngle = 0;
+
+            if (closestThreat.type === 'obstacle_ring') {
+                safeAngle = predictedRotation + 1.75 * Math.PI;
+            } else if (closestThreat.type === 'obstacle_double_ring') {
+                const safeAngle1 = predictedRotation;
+                const safeAngle2 = predictedRotation + Math.PI;
+                const currentAngle = Math.atan2(player.position.y, player.position.x);
+                let diff1 = safeAngle1 - currentAngle; while (diff1 < -Math.PI) diff1 += 2 * Math.PI; while (diff1 > Math.PI) diff1 -= 2 * Math.PI;
+                let diff2 = safeAngle2 - currentAngle; while (diff2 < -Math.PI) diff2 += 2 * Math.PI; while (diff2 > Math.PI) diff2 -= 2 * Math.PI;
+                safeAngle = Math.abs(diff1) < Math.abs(diff2) ? safeAngle1 : safeAngle2;
+            } else if (closestThreat.type === 'obstacle_cross') {
+                const currentAngle = Math.atan2(player.position.y, player.position.x);
+                let minDiff = Infinity;
+                for(let i = 0; i < 4; i++) {
+                    const gapAngle = predictedRotation + (Math.PI / 4) + (i * Math.PI / 2);
+                    let diff = gapAngle - currentAngle;
+                    while (diff < -Math.PI) diff += 2 * Math.PI; while (diff > Math.PI) diff -= 2 * Math.PI;
+                    if (Math.abs(diff) < Math.abs(minDiff)) {
+                        minDiff = diff;
+                        safeAngle = gapAngle;
+                    }
+                }
+            } else {
+                 safeAngle = closestThreat.angle + Math.PI / 1.8;
+            }
+
+            // "Point of no return" calculation. When to stop being greedy.
+            const decisionDistance = speed * 2.8;
+            if (closestThreat.dist > decisionDistance && opportunities.length > 0) {
+                // Far enough away to safely go for rewards. Prioritize spirals, then high-value power-ups.
+                const spiralRings = opportunities.filter(op => op.entity.userData.isSpiral);
+                if (spiralRings.length > 0) {
+                    finalTargetAngle = spiralRings[0].angle;
+                } else {
+                    const priorityTypes = ['life', 'shield', 'ai_aid'];
+                    const priorityPowerUps = opportunities.filter(op => priorityTypes.includes(op.type));
+                    if (priorityPowerUps.length > 0) {
+                        finalTargetAngle = priorityPowerUps[0].angle;
+                    } else {
+                        finalTargetAngle = opportunities[0].angle;
+                    }
+                }
+            } else {
+                // Too close for comfort. Switch to survival mode and aim for the safe path.
+                finalTargetAngle = safeAngle;
+            }
+
+        } else {
+            // No threats on screen. Safely collect rewards. Prioritize spirals, then high-value power-ups.
+             if (opportunities.length > 0) {
+                const spiralRings = opportunities.filter(op => op.entity.userData.isSpiral);
+                if (spiralRings.length > 0) {
+                    finalTargetAngle = spiralRings[0].angle;
+                } else {
+                    const priorityTypes = ['life', 'shield', 'ai_aid'];
+                    const priorityPowerUps = opportunities.filter(op => priorityTypes.includes(op.type));
+                    if (priorityPowerUps.length > 0) {
+                        finalTargetAngle = priorityPowerUps[0].angle;
+                    } else {
+                        finalTargetAngle = opportunities[0].angle;
+                    }
+                }
+            } else {
+                finalTargetAngle = Math.atan2(player.position.y, player.position.x); // Fly straight
+            }
+        }
+        
+        // Smoothly adjust the final target angle
+        let difference = finalTargetAngle - playerTargetAngle;
+        while (difference < -Math.PI) difference += Math.PI*2;
+        while (difference > Math.PI) difference -= Math.PI*2;
+        playerTargetAngle += difference * 0.4;
+    }
+
+
+    function updateAllTrails(delta){
+        playerTrailSpawnCounter += delta;
+        if (playerTrailSpawnCounter > 0.03){
+            const part = playerTrailPool.find(p => !p.visible);
+            if (part){
+                part.visible = true; part.position.copy(player.position); part.scale.copy(player.scale); part.userData = { lifetime:0.6 };
+                activePlayerTrailParts.push(part);
+            }
+            playerTrailSpawnCounter = 0;
+        }
+        for (let i=activePlayerTrailParts.length-1;i>=0;i--){
+            const p = activePlayerTrailParts[i];
+            p.userData.lifetime -= delta;
+            if (p.userData.lifetime <= 0){ p.visible=false; activePlayerTrailParts.splice(i,1); }
+            else { p.material.opacity = p.userData.lifetime * 1.8; p.scale.multiplyScalar(0.98); }
+        }
+    }
+
+    function updateExplosions(delta){
+        for (let i=explosionParticles.children.length-1;i>=0;i--){
+            const p = explosionParticles.children[i];
+            p.userData.lifetime -= delta;
+            if (p.userData.lifetime <= 0) explosionParticles.remove(p);
+            else { p.position.addScaledVector(p.userData.velocity, delta); p.material.transparent = true; p.material.opacity = p.userData.lifetime; }
+        }
+    }
+
+    function updateTunnel(delta){
+        const elapsed = clock.getElapsedTime();
+        const positions = hyperspaceTunnel.geometry.attributes.position.array;
+        const colors = hyperspaceTunnel.geometry.attributes.color.array;
+        const targetColor = new THREE.Color();
+        for (let i=0;i<positions.length;i+=3){
+            positions[i+2] += speed * delta;
+            if (positions[i+2] > camera.position.z) positions[i+2] -= 200;
+            const hue = (0.6 + elapsed*0.05 + positions[i+2]*0.01) % 1;
+            targetColor.setHSL(hue,1,0.5);
+            colors[i] += (targetColor.r - colors[i]) * delta * 3;
+            colors[i+1] += (targetColor.g - colors[i+1]) * delta * 3;
+            colors[i+2] += (targetColor.b - colors[i+2]) * delta * 3;
+        }
+        hyperspaceTunnel.geometry.attributes.position.needsUpdate = true;
+        hyperspaceTunnel.geometry.attributes.color.needsUpdate = true;
+    }
+
+    function checkCollisions(delta){
+        const playerRadius = player.geometry.parameters.radius || 0.38;
+        let i = activeEntities.children.length;
+        while (i--){
+            const entity = activeEntities.children[i];
+            entity.position.z += speed * delta;
+            if (entity.userData.spinSpeed) entity.rotation.z += entity.userData.spinSpeed * delta;
+
+            if (entity.userData.type && entity.userData.type.startsWith('obstacle')){
+                if (Math.abs(entity.position.z - player.position.z) < 0.5 && !entity.userData.passed){
+                    let playerAngle = Math.atan2(player.position.y, player.position.x);
+                    if (playerAngle < 0) playerAngle += Math.PI*2;
+                    let isHit = false;
+
+                    if (entity.userData.type === 'obstacle_ring'){
+                        const obsStart = (entity.rotation.z) % (2*Math.PI);
+                        const obsEnd = (entity.rotation.z + Math.PI * 1.5) % (2*Math.PI);
+                        if (obsStart < obsEnd) { isHit = playerAngle > obsStart && playerAngle < obsEnd; }
+                        else { isHit = playerAngle > obsStart || playerAngle < obsEnd; }
+                    } else if (entity.userData.type === 'obstacle_double_ring'){
+                        const gapSize = entity.userData.gapSize || 1.2;
+                        const arcLength = Math.PI - gapSize;
+                        const relativeAngle = (playerAngle - entity.rotation.z + 4*Math.PI) % (2*Math.PI);
+                        const gap1_start = arcLength; const gap1_end = Math.PI;
+                        const gap2_start = Math.PI + arcLength; const gap2_end = 2*Math.PI;
+                        isHit = !((relativeAngle > gap1_start && relativeAngle < gap1_end) || (relativeAngle > gap2_start && relativeAngle < gap2_end));
+                    } else if (entity.userData.type === 'obstacle_cross'){
+                        const totalAvoidanceRadius = playerRadius + 0.05;
+                        const avoidanceAngle = Math.atan2(totalAvoidanceRadius, player.position.length());
+                        let obsRot = entity.rotation.z % (2*Math.PI);
+                        for (let j=0;j<4;j++){
+                            const barAngle = (obsRot + j*Math.PI/2) % (2*Math.PI);
+                            let diff = Math.abs(playerAngle - barAngle); if (diff > Math.PI) diff = 2*Math.PI - diff;
+                            if (diff < avoidanceAngle) { isHit = true; break; }
+                        }
+                    }
+
+                    if (isHit){
+                        if (isShielded){
+                            score += 15; scoreDisplay.textContent = `SCORE: ${score}`; playImpactSound('explosion'); createExplosion(entity.position); activeEntities.remove(entity);
+                        } else {
+                            lives--; updateLivesDisplay(); playImpactSound('explosion'); createExplosion(entity.position); activeEntities.remove(entity);
+                            if (lives <= 0) { setGameState('GAME_OVER'); return; }
+                        }
+                    } else {
+                        playImpactSound('pass');
+                        score += 10; scoreDisplay.textContent = `SCORE: ${score}`; entity.userData.passed = true;
+                    }
+                }
+            } else {
+                if (Math.abs(entity.position.z - player.position.z) < 0.5){
+                    const dx = entity.position.x - player.position.x;
+                    const dy = entity.position.y - player.position.y;
+                    if (dx*dx + dy*dy < (playerRadius + 0.25)*(playerRadius + 0.25)){
+                        const type = entity.userData.type;
+                        if (type === 'reward' || type === 'blue_ring'){
+                            score += 10; scoreDisplay.textContent = `SCORE: ${score}`;
+                            playImpactSound('collect');
+                        } else if (type === 'penalty'){
+                            if (isShielded) { score += 5; scoreDisplay.textContent = `SCORE: ${score}`; playImpactSound('explosion'); }
+                            else { lives--; updateLivesDisplay(); playImpactSound('penalty'); if (lives <= 0) { setGameState('GAME_OVER'); return; } }
+                        } else if (type === 'life'){ lives++; updateLivesDisplay(); playImpactSound('collect');
+                        } else if (type === 'shield'){
+                            shieldEndTime = gameTime + 6;
+                            isShielded = true;
+                            player.material.color.setHex(0x00ff00);
+                            player.material.emissive.setHex(0x00cc00);
+                            playImpactSound('collect');
+                        } else if (type === 'ai_aid'){ aiAidEndTime = gameTime + 7; isAiAidActive = true; playImpactSound('collect'); }
+                        createExplosion(entity.position);
+                        activeEntities.remove(entity);
+                    }
+                }
+            }
+            if (entity.position.z > camera.position.z + 5) activeEntities.remove(entity);
+        }
+    }
+
+    function updatePowerupIndicators(){
+        if (isShielded && gameTime < shieldEndTime){
+            shieldIndicator.style.display = 'flex';
+            shieldTimeSpan.textContent = (shieldEndTime - gameTime).toFixed(1);
+        } else {
+            if(isShielded) {
+                shieldIndicator.style.display = 'none';
+                player.material.color.copy(playerOriginalColor);
+                player.material.emissive.copy(playerOriginalEmissive);
+            }
+            isShielded = false;
+        }
+        if (isAiAidActive && gameTime < aiAidEndTime){
+            aiAidIndicator.style.display = 'flex';
+            aiAidTimeSpan.textContent = (aiAidEndTime - gameTime).toFixed(1);
+        } else {
+            if(isAiAidActive) aiAidIndicator.style.display = 'none';
+            isAiAidActive = false;
+        }
+    }
+
+    function updateLivesDisplay(){ livesDisplay.textContent = lives; }
+    function toggleAI(){ isAiActive = !isAiActive; updateAiIcon(); }
+    function toggleSound(){ isSoundOn = !isSoundOn; updateSoundIcon(); }
+    function togglePause(){ isPaused = !isPaused; updatePauseIcon(); if (!isPaused) { clock.start(); animate(); } }
+
+    function animateMenu(){
+        const t0 = Date.now();
+        const menuLoop = () => {
+            menuAnimationId = requestAnimationFrame(menuLoop);
+            const t = (Date.now()-t0)/2000;
+            camera.position.x = Math.cos(t)*0.2; camera.position.y = Math.sin(t)*0.1; camera.lookAt(0,0,0);
+            composer.render();
+        };
+        menuLoop();
+    }
+
+    function animate(){
+        gameAnimationId = requestAnimationFrame(animate);
+        const delta = clock.getDelta();
+        if (isPaused) { composer.render(); return; }
+        gameTime += delta;
+        const remainingTime = Math.max(0, (levelConfig[currentLevel-1]?.duration || 120) - gameTime);
+        const minutes = Math.floor(remainingTime/60), seconds = Math.floor(remainingTime%60);
+        timeDisplay.textContent = `TIME: ${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`;
+        speed = Math.min(maxSpeed, speed + delta*0.1);
+
+        if ((isAiActive || isAiAidActive) && !isDragging) updateAiControls(delta);
+
+        updatePlayerPosition(delta);
+        handleSpawning(delta);
+        updateAllTrails(delta);
+        updateTunnel(delta);
+        updateExplosions(delta);
+        checkCollisions(delta);
+        updatePowerupIndicators();
+
+        if (gameTime >= (levelConfig[currentLevel-1]?.duration || 120)){
+            if (currentLevel >= levelConfig.length) setGameState('VICTORY'); else setGameState('LEVEL_COMPLETE');
+            return;
+        }
+
+        composer.render();
+    }
+
+    init();
+    </script>
+</body>
+</html>
+

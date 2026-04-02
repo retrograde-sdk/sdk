@@ -1,0 +1,551 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Flappy Dark Night - Fixed</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      #startScreen {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(to bottom, #020024, #090979, #00d4ff);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 30;
+        color: white;
+        font-family: sans-serif;
+        text-align: center;
+        animation: bgfade 6s infinite alternate;
+      }
+
+      @keyframes bgfade {
+        0% {
+          background: linear-gradient(to bottom, #020024, #090979, #00d4ff);
+        }
+        100% {
+          background: linear-gradient(to bottom, #000000, #1a1a40, #004466);
+        }
+      }
+
+      #startScreen h1 {
+        font-size: 48px;
+        margin-bottom: 20px;
+        text-shadow: 2px 2px 8px black;
+      }
+
+      #playButton {
+        padding: 12px 28px;
+        font-size: 20px;
+        background: #ffcc00;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: transform 0.2s;
+      }
+
+      #playButton:hover {
+        transform: scale(1.1);
+      }
+      body {
+        margin: 0;
+        overflow: hidden;
+        background: #000;
+      }
+      canvas {
+        display: block;
+        background: linear-gradient(to bottom, #0a0a0a, #1a1a1a);
+      }
+      #scoreDisplay,
+      #lifeDisplay {
+        position: absolute;
+        top: 20px;
+        color: white;
+        font-family: monospace;
+        font-size: 20px;
+        z-index: 10;
+        user-select: none;
+        pointer-events: none;
+      }
+      #scoreDisplay {
+        left: 20px;
+      }
+      #lifeDisplay {
+        right: 20px;
+      }
+      #gameOverScreen {
+        position: absolute;
+        top: 40%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        color: white;
+        font-family: sans-serif;
+        display: none;
+        z-index: 20;
+        background: rgba(0, 0, 0, 0.6);
+        padding: 20px;
+        border-radius: 12px;
+      }
+      button {
+        margin: 10px;
+        padding: 10px 20px;
+        font-size: 16px;
+        font-weight: bold;
+        background: #ffcc00;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="startScreen">
+      <h1>Flappy Dark Night</h1>
+      <p>Tap Play to Begin</p>
+      <button id="playButton">Play</button>
+    </div>
+    <canvas id="gameCanvas"></canvas>
+    <div id="scoreDisplay">Score: 0</div>
+    <div id="lifeDisplay">Lives: 3</div>
+    <div id="gameOverScreen">
+      <h1 id="gameOverText">Game Over</h1>
+      <p id="highScoreText"></p>
+      <button id="continueButton">Continue</button>
+      <button id="restartButton">Restart</button>
+    </div>
+
+    <!--
+    SDK integration placeholder:
+    - If GameMonetize (or another ad SDK) requires a script, paste it here (example):
+      <script src="https://example.com/gamemonetize-sdk.js"></script>
+    - Most SDKs need an init call. After you paste their script, call their init routine
+      inside the `initAdSdk()` function below (search for that function).
+    - I left a commented sample inside initAdSdk() to guide you.
+  -->
+
+    <script>
+      // --- Canvas + DOM refs ---
+      const canvas = document.getElementById("gameCanvas");
+      const ctx = canvas.getContext("2d");
+      const scoreDisplay = document.getElementById("scoreDisplay");
+      const lifeDisplay = document.getElementById("lifeDisplay");
+      const gameOverScreen = document.getElementById("gameOverScreen");
+      const continueButton = document.getElementById("continueButton");
+      const restartButton = document.getElementById("restartButton");
+      const highScoreText = document.getElementById("highScoreText");
+      const gameOverText = document.getElementById("gameOverText");
+
+      // --- Settings (tweak these if you want even easier/harder) ---
+      let gravity = 0.1; // reduced gravity so bird falls slower (tester complaint)
+      let jumpForce = -3.5; // stronger jump
+      const maxFallSpeed = 9; // clamp to avoid too-fast fall
+      const pipeSpeed = 2.2; // pipe movement speed
+      const pipeGap = 180; // distance between top and bottom pipe
+      const pipeWidth = 50;
+      const spawnIntervalFrames = 140; // how often pipes spawn (frames)
+      const flapHoldRate = 120; // ms between flaps when holding input
+
+      // --- Game state ---
+      let birdX, birdY, velocity;
+      let pipes = [];
+      let frame = 0;
+      let score = 0;
+      let highScore = 0;
+      let lives = 3;
+      let gameRunning = true;
+      let invincible = false;
+      let raining = false;
+      let sunVisible = false;
+      let moonVisible = true;
+
+      // --- Visual extras ---
+      let stars = [];
+      let raindrops = []; // preallocated raindrops for performance
+
+      // Input hold handling
+      let holdIntervalId = null;
+      let isHolding = false;
+
+      // --- Responsive canvas ---
+      function resizeCanvas() {
+        // Recompute proportionally and re-generate stars
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        // regenerate stars to fit new size
+        stars = Array.from({ length: 100 }, () => ({
+          x: Math.random() * canvas.width,
+          y: (Math.random() * canvas.height) / 2,
+          r: Math.random() * 2,
+        }));
+        // regenerate raindrops
+        raindrops = Array.from({ length: 120 }, () => ({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          len: 8 + Math.random() * 10,
+          speed: 4 + Math.random() * 6,
+        }));
+      }
+      window.addEventListener("resize", resizeCanvas);
+
+      // --- Helpers ---
+      function clamp(v, a, b) {
+        return Math.max(a, Math.min(b, v));
+      }
+
+      // --- SDK initialization function (user: paste the provider's init code here) ---
+
+      // --- Reset / start game ---
+      function resetGame(full = true) {
+        birdX = canvas.width / 5;
+        birdY = canvas.height / 2;
+        velocity = 0;
+        frame = 0;
+        pipes = [];
+        score = 0;
+        if (full) lives = 3;
+        gameRunning = true;
+        invincible = false;
+        raining = false;
+        sunVisible = false;
+        moonVisible = true;
+        gameOverScreen.style.display = "none";
+        scoreDisplay.textContent = "Score: 0";
+        lifeDisplay.textContent = "Lives: " + lives;
+        requestAnimationFrame(gameLoop);
+      }
+
+      // --- Input: flap behavior ---
+      function flap() {
+        if (!gameRunning) return;
+        // Apply jump force (set velocity to jumpForce)
+        velocity = jumpForce;
+      }
+
+      // Flap repeatedly while holding
+      function startHoldFlap() {
+        if (holdIntervalId) return;
+        flap(); // initial flap
+        holdIntervalId = setInterval(() => {
+          flap();
+        }, flapHoldRate);
+      }
+      function stopHoldFlap() {
+        if (holdIntervalId) {
+          clearInterval(holdIntervalId);
+          holdIntervalId = null;
+        }
+      }
+
+      // Keyboard & pointer events
+      document.addEventListener("keydown", (e) => {
+        if (e.code === "Space" || e.code === "ArrowUp") {
+          e.preventDefault();
+          flap();
+        }
+      });
+      // click/tap
+      canvas.addEventListener("click", () => {
+        flap();
+      });
+      canvas.addEventListener(
+        "touchstart",
+        (e) => {
+          e.preventDefault();
+          flap();
+        },
+        { passive: false }
+      );
+
+      // support holding (mouse/touch) for continuous flaps
+      canvas.addEventListener("mousedown", (e) => {
+        isHolding = true;
+        startHoldFlap();
+      });
+      window.addEventListener("mouseup", () => {
+        isHolding = false;
+        stopHoldFlap();
+      });
+      canvas.addEventListener(
+        "touchstart",
+        (e) => {
+          isHolding = true;
+          startHoldFlap();
+        },
+        { passive: false }
+      );
+      window.addEventListener("touchend", () => {
+        isHolding = false;
+        stopHoldFlap();
+      });
+
+      // --- Pipe / climate logic ---
+      function updatePipes() {
+        if (frame % spawnIntervalFrames === 0) {
+          let top = Math.random() * (canvas.height - 300) + 50;
+          pipes.push({ x: canvas.width, top, passed: false });
+        }
+
+        ctx.fillStyle = "#44ff44";
+        for (let p of pipes) {
+          p.x -= pipeSpeed;
+          ctx.fillRect(p.x, 0, pipeWidth, p.top);
+          ctx.fillRect(
+            p.x,
+            p.top + pipeGap,
+            pipeWidth,
+            canvas.height - p.top - pipeGap
+          );
+
+          // collision check (AABB circle-rect approx)
+          if (!invincible && birdX + 15 > p.x && birdX - 15 < p.x + pipeWidth) {
+            if (birdY - 15 < p.top || birdY + 15 > p.top + pipeGap) {
+              triggerLifeLoss();
+            }
+          }
+
+          if (!p.passed && p.x + pipeWidth < birdX) {
+            p.passed = true;
+            score++;
+            scoreDisplay.textContent = "Score: " + score;
+            if (score % 10 === 0) updateClimate();
+          }
+        }
+
+        // remove offscreen
+        pipes = pipes.filter((p) => p.x + pipeWidth > 0);
+      }
+
+      function updateClimate() {
+        // smoother climate changes:
+        if (score % 20 === 0) {
+          sunVisible = true;
+          moonVisible = false;
+          raining = false;
+        } else if (score % 10 === 0) {
+          sunVisible = false;
+          moonVisible = true;
+          raining = true;
+        }
+      }
+
+      // --- Life & endgame ---
+      function triggerLifeLoss() {
+        if (!gameRunning) return;
+        // decrement lives on collision
+        lives = Math.max(0, lives - 1);
+        gameRunning = false;
+        // show overlay with remaining lives
+        gameOverScreen.style.display = "block";
+        if (lives > 0) {
+          continueButton.style.display = "inline-block";
+          gameOverText.innerText = `Oops! You have ${lives} ${
+            lives === 1 ? "life" : "lives"
+          } left`;
+        } else {
+          continueButton.style.display = "none";
+          endGame();
+          return;
+        }
+      }
+
+      continueButton.addEventListener("click", () => {
+        if (lives > 0) {
+          // resume without further decrement
+          birdX = canvas.width / 5;
+          birdY = canvas.height / 2;
+          velocity = 0;
+          invincible = true;
+          setTimeout(() => (invincible = false), 1000);
+          gameOverScreen.style.display = "none";
+          lifeDisplay.textContent = "Lives: " + lives;
+          gameRunning = true;
+          requestAnimationFrame(gameLoop);
+        }
+      });
+
+      restartButton.addEventListener("click", () => {
+        sdk.showBanner();
+        resetGame(true);
+      });
+
+      function endGame() {
+        gameRunning = false;
+        gameOverScreen.style.display = "block";
+        continueButton.style.display = "none";
+        gameOverText.innerText = "Game Over!";
+        if (score > highScore) {
+          highScore = score;
+          try {
+            localStorage.setItem("highScore", String(highScore));
+          } catch (e) {}
+        }
+        highScoreText.textContent = "High Score: " + highScore;
+
+        // Example: notify / show ad SDK here, if desired.
+        // if (window.GameMonetizeSDK && window.GameMonetizeSDK.showInterstitial) {
+        //   window.GameMonetizeSDK.showInterstitial();
+        // }
+      }
+
+      // --- Background drawing ---
+      function drawBackground() {
+        // sky
+        ctx.fillStyle = "#000022";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // stars
+        ctx.fillStyle = "#fff";
+        for (let s of stars) {
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // sun/moon
+        if (moonVisible) {
+          ctx.fillStyle = "#ccc";
+          ctx.beginPath();
+          ctx.arc(canvas.width - 100, 100, 40, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        if (sunVisible) {
+          ctx.fillStyle = "#ffdd33";
+          ctx.beginPath();
+          ctx.arc(100, 100, 50, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // rain (use raindrops array for performance)
+        if (raining) {
+          ctx.strokeStyle = "#66ccff";
+          ctx.lineWidth = 1;
+          for (let drop of raindrops) {
+            drop.y += drop.speed;
+            if (drop.y > canvas.height) {
+              drop.y = -10 - Math.random() * 100;
+              drop.x = Math.random() * canvas.width;
+              drop.speed = 4 + Math.random() * 6;
+            }
+            ctx.beginPath();
+            ctx.moveTo(drop.x, drop.y);
+            ctx.lineTo(drop.x + 1, drop.y + drop.len);
+            ctx.stroke();
+          }
+        }
+
+        // mountains
+        ctx.fillStyle = "#222244";
+        ctx.beginPath();
+        ctx.moveTo(0, canvas.height);
+        ctx.lineTo(canvas.width * 0.3, canvas.height * 0.6);
+        ctx.lineTo(canvas.width * 0.6, canvas.height);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(canvas.width * 0.4, canvas.height);
+        ctx.lineTo(canvas.width * 0.7, canvas.height * 0.5);
+        ctx.lineTo(canvas.width, canvas.height);
+        ctx.fill();
+      }
+
+      // --- Bird drawing ---
+      function drawBird() {
+        ctx.fillStyle = invincible ? "#888888" : "#ffcc00";
+        ctx.beginPath();
+        ctx.arc(birdX, birdY, 15, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // --- Main loop ---
+      function gameLoop() {
+        if (!gameRunning) return;
+        frame++;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawBackground();
+
+        // physics
+        velocity += gravity;
+        velocity = clamp(velocity, -999, maxFallSpeed);
+        birdY += velocity;
+
+        // boundary check
+        if (!invincible && (birdY + 15 > canvas.height || birdY - 15 < 0)) {
+          triggerLifeLoss();
+          return;
+        }
+
+        drawBird();
+        updatePipes();
+
+        requestAnimationFrame(gameLoop);
+      }
+
+      // --- Initialization ---
+      function init() {
+        // load highscore from storage
+        try {
+          highScore =
+            parseInt(localStorage.getItem("highScore") || "0", 10) || 0;
+        } catch (e) {
+          highScore = 0;
+        }
+
+        resizeCanvas();
+        // call SDK init placeholder
+        resetGame(true); // full reset & start
+      }
+
+    // Start
+document.getElementById("playButton").addEventListener("click", () => {
+  document.getElementById("startScreen").style.display = "none";
+
+  // Show ad on Play button
+  if (typeof sdk !== "undefined" && sdk.showBanner) {
+    try {
+      sdk.showBanner(); // this triggers interstitial ad
+    } catch (e) {
+      console.log("Ad error:", e);
+    }
+  }
+
+  init(); // now actually start the game
+});
+    </script>
+
+    <script type="text/javascript">
+      window.SDK_OPTIONS = {
+        gameId: "dt780txhz9ncslrwuvqpyrbeit30ei9k",
+        onEvent: function (a) {
+          switch (a.name) {
+            case "SDK_GAME_PAUSE":
+              // pause game logic / mute audio
+              break;
+            case "SDK_GAME_START":
+              // advertisement done, resume game logic and unmute audio
+              break;
+            case "SDK_READY":
+              // when sdk is ready
+              break;
+            case "SDK_ERROR":
+              // when sdk get error
+              break;
+          }
+        },
+      };
+      (function (a, b, c) {
+        var d = a.getElementsByTagName(b)[0];
+        a.getElementById(c) ||
+          ((a = a.createElement(b)),
+          (a.id = c),
+          (a.src = "https://api.gamemonetize.com/sdk.js"),
+          d.parentNode.insertBefore(a, d));
+      })(document, "script", "gamemonetize-sdk");
+    </script>
+  </body>
+</html>

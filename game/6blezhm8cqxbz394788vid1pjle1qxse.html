@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Snowball Battle Arena 3D</title>
+    
+    <!-- GAMEMONETIZE SDK INTEGRATION -->
+    <script type="text/javascript">
+       // Global Ad Callback Handler
+       window.gameIsRunning = false;
+       window.isPaused = false;
+       window.adCallback = null; // Stores the function to run after ad finishes
+
+       window.SDK_OPTIONS = {
+          gameId: "6blezhm8cqxbz394788vid1pjle1qxse", // YOUR GAME ID
+          onEvent: function (a) {
+             switch (a.name) {
+                case "SDK_GAME_PAUSE":
+                   // Pause game logic / mute audio
+                   window.isPaused = true;
+                   if(window.audioCtx && window.audioCtx.state === 'running') window.audioCtx.suspend();
+                   break;
+                case "SDK_GAME_START":
+                   // Advertisement done, resume game logic and unmute audio
+                   window.isPaused = false;
+                   if(window.audioCtx && window.audioCtx.state === 'suspended') window.audioCtx.resume();
+                   
+                   // Execute the pending action (Start Game, Revive, etc.)
+                   if(window.adCallback) {
+                       window.adCallback();
+                       window.adCallback = null;
+                   }
+                   break;
+                case "SDK_READY":
+                   console.log("SDK Ready");
+                   break;
+                case "SDK_ERROR":
+                   console.log("SDK Error");
+                   // If ad fails, run callback anyway so user isn't stuck
+                   if(window.adCallback) {
+                       window.adCallback();
+                       window.adCallback = null;
+                   }
+                   break;
+             }
+          }
+       };
+    (function (a, b, c) {
+       var d = a.getElementsByTagName(b)[0];
+       a.getElementById(c) || (a = a.createElement(b), a.id = c, 
+       a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+    })(document, "script", "gamemonetize-sdk"); 
+    </script>
+
+    <script type="importmap">
+        { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/" } }
+    </script>
+
+    <style>
+        /* CORE */
+        html, body { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; background: #000; position: fixed; inset: 0; touch-action: none; font-family: 'Arial', sans-serif; user-select: none; }
+        canvas { display: block; width: 100%; height: 100%; }
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); box-sizing: border-box; }
+        
+        /* MENUS */
+        .menu-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(12, 20, 60, 0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: auto; color: white; text-align: center; backdrop-filter: blur(5px); z-index: 50; padding: 20px; box-sizing: border-box; }
+        h1 { font-size: clamp(2rem, 6vh, 4rem); color: #aef; text-shadow: 0 0 15px #0af; margin: 0 0 2vh 0; }
+        .currency-display { font-size: 1.5rem; color: #FFD700; font-weight: bold; margin-bottom: 10px; text-shadow: 0 0 5px #000; }
+        .btn-container { display: flex; flex-direction: column; align-items: center; gap: 1.5vh; width: 100%; max-height: 70vh; overflow-y: auto; pointer-events: auto; padding-bottom: 20px; }
+        
+        button { background: linear-gradient(to bottom, #ff4d4d, #cc0000); border: 2px solid white; color: white; padding: 1.5vh 3vw; font-size: clamp(1rem, 2.5vh, 1.3rem); border-radius: 30px; cursor: pointer; text-transform: uppercase; font-weight: bold; width: clamp(220px, 50%, 350px); touch-action: manipulation; transition: transform 0.1s; flex-shrink: 0; pointer-events: auto; }
+        button:active { transform: scale(0.95); }
+        button.secondary { background: linear-gradient(to bottom, #4d79ff, #002db3); }
+        button.upgrade { background: linear-gradient(to bottom, #28a745, #1e7e34); border-color: #7aff7a; display: flex; justify-content: space-between; align-items: center; }
+        button.upgrade span { font-size: 0.8em; opacity: 0.9; }
+        button.reward { background: linear-gradient(to bottom, #FFD700, #DAA520); color: black; border-color: yellow; }
+        button.setting { background: #555; border-color: #888; }
+
+        /* SHOP & MODALS */
+        #shop-box, #settings-box, #leaderboard-box { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); background: rgba(0,0,0,0.95); border: 2px solid #aef; padding: 20px; border-radius: 15px; width: 90%; max-width: 500px; z-index: 60; display: none; text-align: center; }
+        #shop-box { border-color: #FFD700; }
+        .shop-header { color: #FFD700; font-size: 2rem; margin-bottom: 20px; }
+        
+        /* HUD */
+        #hud { display: none; padding: 10px; color: white; text-shadow: 1px 1px 2px #000; display: flex; justify-content: space-between; width: 100%; box-sizing: border-box; }
+        .stat-box { background: rgba(0, 0, 0, 0.6); padding: 8px 15px; border-radius: 8px; border: 1px solid #fff; pointer-events: none; }
+        
+        /* RANK */
+        #rank-container { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); width: clamp(200px, 40vw, 400px); text-align: center; pointer-events: none; }
+        #rank-text { font-size: 1rem; font-weight: bold; color: #aef; margin-bottom: 3px; text-shadow: 0 0 5px #000; }
+        #rank-bar-bg { width: 100%; height: 8px; background: #333; border: 1px solid #fff; border-radius: 4px; }
+        #rank-bar-fill { width: 0%; height: 100%; background: linear-gradient(to right, #00f, #0af); border-radius: 4px; transition: width 0.5s; }
+        
+        /* COMBO */
+        #combo-display { position: absolute; top: 60px; left: 50%; transform: translateX(-50%) scale(0); font-size: 2rem; font-weight: 900; color: #ffeb3b; font-style: italic; text-shadow: 3px 3px 0 #f00; pointer-events: none; transition: transform 0.1s; opacity: 0; }
+
+        /* BARS */
+        .bar-wrap { margin-top: 5px; width: clamp(80px, 15vw, 150px); height: 10px; background: #333; border: 1px solid white; }
+        #hp-bar { width: 100%; height: 100%; background: #0f0; transition: width 0.2s; }
+        #power-bar-wrap { margin-top: 5px; display: none; }
+        #power-bar { width: 100%; height: 100%; background: #ff0; transition: width 0.1s; }
+
+        /* BOSS UI */
+        #boss-ui { position: absolute; display: none; width: 150px; text-align: center; z-index: 5; pointer-events: none; transform: translate(-50%, -150%); }
+        #boss-text { color: red; font-weight: bold; font-size: 12px; text-shadow: 1px 1px 0 #000; }
+        #boss-hp-track { width: 100%; height: 8px; background: #000; border: 1px solid red; }
+        #boss-hp-fill { width: 100%; height: 100%; background: red; transition: width 0.1s; }
+
+        #crosshair { position: absolute; top: 50%; left: 50%; width: 16px; height: 16px; background: transparent; border: 2px solid white; border-radius: 50%; transform: translate(-50%, -50%); box-shadow: 0 0 5px white; opacity: 0.8; }
+        
+        /* FLOATING TEXT */
+        .floating-text { position: absolute; color: white; font-weight: bold; font-size: 1.2rem; pointer-events: none; text-shadow: 0 0 3px #000; animation: floatUp 0.8s forwards; }
+        @keyframes floatUp { 0% { transform: translateY(0) scale(1); opacity: 1; } 100% { transform: translateY(-40px) scale(1.2); opacity: 0; } }
+
+        /* MESSAGES */
+        #message-overlay { position: absolute; top: 30%; left: 50%; transform: translate(-50%, -50%); width: 100%; text-align: center; pointer-events: none; z-index: 45; display: none; }
+        .big-msg { font-size: clamp(2.5rem, 8vw, 6rem); font-weight: bold; color: #fff; text-shadow: 0 0 20px #f0f; animation: popIn 0.5s; }
+        .sub-msg { font-size: clamp(1.2rem, 4vw, 3rem); color: #ffeb3b; text-shadow: 0 0 5px #000; margin-top: 5px; }
+        #powerup-msg { position: absolute; top: 20%; left: 50%; transform: translateX(-50%); font-size: clamp(1.2rem, 4vw, 2rem); font-weight: bold; color: yellow; text-shadow: 0 0 10px #f00; display: none; animation: popIn 0.3s; }
+        #fade-msg { position: absolute; top: 45%; width: 100%; text-align: center; font-size: clamp(1rem, 3.5vw, 2rem); color: white; text-shadow: 0 0 8px #000; pointer-events: none; z-index: 45; opacity: 0; transition: opacity 1s; }
+        @keyframes popIn { 0% { transform: translateX(-50%) scale(0); } 100% { transform: translateX(-50%) scale(1); } }
+
+        /* INPUT */
+        input[type="text"] { background: rgba(0, 0, 0, 0.5); border: 1px solid #aef; color: white; padding: 10px; border-radius: 5px; width: 90%; font-size: 1rem; text-align: center; margin-bottom: 10px; }
+        .slider-container { margin: 15px 0; text-align: left; color: #ddd; }
+        input[type=range] { width: 100%; margin-top: 5px; }
+        .close-btn { float: right; cursor: pointer; font-size: 1.5rem; color: #f00; font-weight: bold;}
+        
+        table { width: 100%; border-collapse: collapse; color: white; font-size: clamp(0.9rem, 2vh, 1.1rem); }
+        th { border-bottom: 1px solid #aef; padding: 5px; text-align: left; color: #aef; } 
+        td { padding: 5px; border-bottom: 1px solid #444; text-align: left; }
+        .highlight { color: #ffeb3b; font-weight: bold; background: rgba(255, 235, 59, 0.2); }
+
+        /* MOBILE CONTROLS */
+        #mobile-controls { display: none; position: absolute; bottom: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 40; }
+        #joystick-zone { position: absolute; bottom: 30px; left: 30px; width: 100px; height: 100px; background: rgba(255, 255, 255, 0.1); border-radius: 50%; border: 2px solid rgba(255,255,255,0.3); pointer-events: auto; }
+        #joystick-knob { position: absolute; top: 50%; left: 50%; width: 40px; height: 40px; background: rgba(255, 255, 255, 0.5); border-radius: 50%; transform: translate(-50%, -50%); }
+        .mob-btn { position: absolute; pointer-events: auto; border-radius: 50%; color: white; font-weight: bold; display: flex; align-items: center; justify-content: center; border: 2px solid white; opacity: 0.6; box-shadow: 0 0 5px #000; user-select: none; }
+        .mob-btn:active { opacity: 0.9; background: white; color: black; transform: scale(0.95); }
+        #btn-shoot { bottom: 40px; right: 20px; width: 70px; height: 70px; background: rgba(255, 0, 0, 0.5); font-size: 13px; }
+        #btn-jump { bottom: 120px; right: 20px; width: 50px; height: 50px; background: rgba(0, 0, 255, 0.5); font-size: 11px; }
+        #btn-dash { bottom: 30px; right: 100px; width: 50px; height: 50px; background: rgba(255, 165, 0, 0.5); font-size: 11px; }
+        #look-zone { position: absolute; top: 0; right: 0; width: 50%; height: 100%; pointer-events: auto; touch-action: none; }
+        
+        #landscape-msg {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: black; display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 100;
+            color: white; font-size: 1.5rem; text-align: center; opacity: 0; transition: opacity 0.5s; pointer-events: none;
+        }
+        #landscape-icon { font-size: 4rem; margin-bottom: 20px; animation: rotatePhone 2s infinite; }
+        @keyframes rotatePhone { 0% { transform: rotate(0deg); } 50% { transform: rotate(90deg); } 100% { transform: rotate(0deg); } }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div id="landscape-msg"><div id="landscape-icon">📱</div><div>Turn Device for Better Experience</div></div>
+
+    <!-- MAIN MENU -->
+    <div id="main-menu" class="menu-screen">
+        <h1>❄️ Snowball Arena</h1>
+        <div class="currency-display">💰 Coins: <span id="menu-coins">0</span></div>
+        <h3 id="main-high-score" style="font-size:1rem; margin-bottom:15px;">Best Rank: Bronze</h3>
+        <div class="btn-container">
+            <button id="btn-play">Play Game</button>
+            <button id="btn-shop" class="reward">🛒 Upgrade Shop</button>
+            <button id="btn-settings" class="setting">Settings</button>
+            <button id="btn-howto" class="secondary">Controls</button>
+        </div>
+    </div>
+
+    <!-- SHOP MENU -->
+    <div id="shop-box">
+        <span class="close-btn" id="close-shop">&times;</span>
+        <div class="shop-header">🛒 UPGRADES</div>
+        <div class="currency-display">💰: <span id="shop-coins">0</span></div>
+        <div class="btn-container">
+            <button id="btn-up-dmg" class="upgrade"><div>⚔️ Damage <span id="lvl-dmg">Lv 1</span></div><div id="cost-dmg">50 💰</div></button>
+            <button id="btn-up-hp" class="upgrade"><div>❤️ Max HP <span id="lvl-hp">Lv 1</span></div><div id="cost-hp">50 💰</div></button>
+            <button id="btn-up-spd" class="upgrade"><div>⚡ Speed <span id="lvl-spd">Lv 1</span></div><div id="cost-spd">50 💰</div></button>
+        </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div id="settings-box">
+        <span class="close-btn" id="close-settings">&times;</span>
+        <h3 style="color:#aef; margin:0 0 10px 0;">SETTINGS</h3>
+        <div class="slider-container">
+            <label>Player Name</label>
+            <input type="text" id="player-name-input" maxlength="10" placeholder="Enter Name">
+            <small style="color: #f90; font-size: 0.8rem;">Change Name? (1st Free, then Watch Ad)</small>
+        </div>
+        <div class="slider-container"><label>Sensitivity X</label><input type="range" id="sens-x" min="0.5" max="4.0" step="0.1" value="1.5"></div>
+        <div class="slider-container"><label>Sensitivity Y</label><input type="range" id="sens-y" min="0.5" max="4.0" step="0.1" value="1.5"></div>
+        <div class="slider-container"><input type="checkbox" id="sound-toggle" checked> <label>Sound Effects</label></div>
+        <button id="save-settings" style="width:100%; margin-top:10px;">Save & Close</button>
+    </div>
+
+    <!-- PAUSE -->
+    <div id="pause-menu" class="menu-screen hidden">
+        <h1>PAUSED</h1>
+        <div class="btn-container">
+            <button id="btn-resume">Resume</button>
+            <button id="btn-heal" class="reward">📺 Heal Full HP</button>
+            <button id="btn-settings-pause" class="setting">Settings</button>
+            <button id="btn-quit" class="secondary">Quit</button>
+        </div>
+    </div>
+
+    <!-- GAME OVER -->
+    <div id="game-over" class="menu-screen hidden">
+        <h1>GAME OVER</h1>
+        <div style="color:#FFD700; font-size:1.2rem; margin-bottom:10px;">Coins Earned: <span id="round-coins">0</span></div>
+        <div id="leaderboard-box">
+            <h3 style="color:#f90; margin:0 0 10px 0;">LEADERBOARD</h3>
+            <table style="width:100%;">
+                <thead><tr><th style="width:15%">#</th><th style="width:55%">Name</th><th style="width:30%">Score</th></tr></thead>
+                <tbody id="leaderboard-body"></tbody>
+            </table>
+        </div>
+        <div class="btn-container">
+            <button id="btn-revive" class="reward">📺 Revive</button>
+            <button id="btn-restart">Try Again</button>
+            <button id="btn-home" class="secondary">Menu</button>
+        </div>
+    </div>
+
+    <div id="instructions-box" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); background: rgba(0,0,0,0.9); border: 2px solid #aef; padding: 20px; border-radius: 15px; width: 80%; max-width: 400px; z-index: 60; display: none; text-align: left;">
+        <span class="close-btn" id="close-howto">&times;</span>
+        <h3 style="color:#aef; margin:0 0 10px 0;">CONTROLS</h3>
+        <div style="color:#ccc;"><b>PC:</b> WASD=Move, Mouse=Aim, Click=Shoot<br><b>Mobile:</b> Joystick + Buttons</div>
+    </div>
+
+    <!-- HUD -->
+    <div id="ui-layer">
+        <div id="rank-container"><div id="rank-text">Rank: Bronze I (Wave 1)</div><div id="rank-bar-bg"><div id="rank-bar-fill"></div></div></div>
+        <div id="combo-display">COMBO x2</div>
+
+        <div id="hud" class="hidden">
+            <div class="stat-box">
+                <div style="font-size:11px;">HP</div>
+                <div class="bar-wrap" id="hp-container"><div id="hp-bar"></div></div>
+                <div class="bar-wrap" id="power-bar-wrap"><div id="power-bar"></div></div>
+            </div>
+            <div id="crosshair"></div>
+            <div style="display:flex; gap:10px;">
+                <div class="stat-box" style="color:#FFD700;">💰 <span id="game-coins">0</span></div>
+                <div class="stat-box"><div style="font-size:11px;">Enemies</div><div style="font-size:16px; font-weight:bold;" id="enemy-count">0</div></div>
+                <div id="btn-pause-game" style="pointer-events: auto; cursor: pointer; font-size: 20px; font-weight: bold; background: rgba(0,0,0,0.5); border: 2px solid white; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">||</div>
+            </div>
+        </div>
+        
+        <div id="boss-ui"><div id="boss-text">BOSS HP: <span id="boss-hp-text">100</span></div><div id="boss-hp-track"><div id="boss-hp-fill"></div></div></div>
+        <div id="message-overlay"><div id="msg-title" class="big-msg">WAVE CLEARED</div><div id="msg-sub" class="sub-msg">7</div></div>
+        <div id="powerup-msg">RAPID FIRE!</div>
+        <div id="fade-msg">Survival Starts Now...</div>
+    </div>
+
+    <!-- MOBILE CONTROLS -->
+    <div id="mobile-controls">
+        <div id="joystick-zone"><div id="joystick-knob"></div></div>
+        <div id="look-zone"></div>
+        <div id="btn-dash" class="mob-btn">DASH</div>
+        <div id="btn-jump" class="mob-btn">JUMP</div>
+        <div id="btn-shoot" class="mob-btn">SHOOT</div>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
+
+        // --- DATA & SAVES ---
+        let gameData = { name: "Player 1", highScore: 0, coins: 100, upgrades: { dmg: 1, hp: 1, spd: 1 } };
+        let hasChangedName = false;
+        function loadData() { const d = localStorage.getItem('sb_save_v3'); if(d) gameData = JSON.parse(d); updateMenuUI(); }
+        function saveData() { localStorage.setItem('sb_save_v3', JSON.stringify(gameData)); updateMenuUI(); }
+        const getCost = (lvl) => Math.floor(50 * Math.pow(1.4, lvl-1));
+
+        // --- GLOBALS ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let soundEnabled = true, sensitivityX = 1.5, sensitivityY = 1.5;
+        const ARENA_SIZE = 50, DASH_FORCE = 50, JUMP_FORCE = 12, PLAYER_SPEED = 8;
+        
+        let scene, camera, renderer, controls;
+        let lastTime = performance.now();
+        let snowballs=[], enemies=[], powerups=[], coins=[], particles=[], deathParticles=[];
+        let moveForward=false, moveBackward=false, moveLeft=false, moveRight=false;
+        let velocity = new THREE.Vector3(), direction = new THREE.Vector3();
+        let isMobile=false, joyVector={x:0, y:0};
+        
+        let playerHP=100, maxHP=100, wave=1, canShoot=true, canDash=true;
+        let isPaused=false, isIntermission=false, countdownTimer=null;
+        let activePowerup=null, powerupTimeLeft=0, hasArmor=false;
+        let lastHealTime=0, shakeIntensity=0;
+        let bossPending=false, currentBoss=null;
+        let sessionCoins=0, combo=0, comboTimer=null;
+
+        // Materials
+        const snowMat = new THREE.MeshStandardMaterial({color:0xffffff, roughness:0.9});
+        const woodMat = new THREE.MeshStandardMaterial({color:0x5C4033});
+        const redEyeMat = new THREE.MeshStandardMaterial({color:0xff0000, emissive:0xff0000, emissiveIntensity:2});
+        const blackMat = new THREE.MeshStandardMaterial({color:0x111111});
+        const bossMat = new THREE.MeshStandardMaterial({color:0x444444}); 
+        const goldMat = new THREE.MeshStandardMaterial({color:0xFFD700, emissive:0xFFD700});
+        const purpleMat = new THREE.MeshStandardMaterial({color:0x9370DB, emissive:0x9370DB});
+        const blueMat = new THREE.MeshStandardMaterial({color:0x00FFFF, emissive:0x00FFFF});
+        const coinMat = new THREE.MeshStandardMaterial({color:0xFFD700, metalness:0.8, roughness:0.2});
+        
+        // Enemy Colors
+        const enColorNormal = new THREE.MeshStandardMaterial({color:0xffffff});
+        const enColorFast = new THREE.MeshStandardMaterial({color:0xffaaaa});   
+        const enColorTank = new THREE.MeshStandardMaterial({color:0xaaffaa});
+        const enColorElite = new THREE.MeshStandardMaterial({color:0xddaaff});
+        const trailMat = new THREE.MeshBasicMaterial({color:0x87CEEB, transparent:true, opacity:0.6});
+
+        // DOM REFERENCES
+        const dom = {
+            hud: document.getElementById('hud'), mainMenu: document.getElementById('main-menu'), pauseMenu: document.getElementById('pause-menu'), gameOverScreen: document.getElementById('game-over'), mobControls: document.getElementById('mobile-controls'),
+            powerupMsg: document.getElementById('powerup-msg'), fadeMsg: document.getElementById('fade-msg'), powerBar: document.getElementById('power-bar'), powerBarWrap: document.getElementById('power-bar-wrap'),
+            bossUI: document.getElementById('boss-ui'), bossHPText: document.getElementById('boss-hp-text'), bossHPFill: document.getElementById('boss-hp-fill'), landscapeMsg: document.getElementById('landscape-msg'),
+            msgOverlay: document.getElementById('message-overlay'), msgTitle: document.getElementById('msg-title'), msgSub: document.getElementById('msg-sub'),
+            settingsBox: document.getElementById('settings-box'), instructionsBox: document.getElementById('instructions-box'), shopBox: document.getElementById('shop-box'),
+            hpBar: document.getElementById('hp-bar'), enemyCount: document.getElementById('enemy-count'), nameInput: document.getElementById('player-name-input'),
+            mainHighScore: document.getElementById('main-high-score'), menuCoins: document.getElementById('menu-coins'), shopCoins: document.getElementById('shop-coins'), gameCoins: document.getElementById('game-coins'), roundCoins: document.getElementById('round-coins'),
+            rankText: document.getElementById('rank-text'), rankBarFill: document.getElementById('rank-bar-fill'), comboDisplay: document.getElementById('combo-display'), btnShop: document.getElementById('btn-shop')
+        };
+
+        function init() {
+            loadData();
+            // INIT AUDIO
+            window.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            
+            dom.nameInput.value = gameData.name;
+            window.addEventListener('keydown', ev => { if(['ArrowDown','ArrowUp',' '].includes(ev.key)) ev.preventDefault(); });
+            window.addEventListener('wheel', ev => ev.preventDefault(), {passive:false});
+            isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            if(isMobile) { dom.mobControls.style.display = 'block'; }
+
+            scene = new THREE.Scene(); scene.background = new THREE.Color(0x87CEEB); scene.fog = new THREE.Fog(0x87CEEB, 10, 70);
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000); camera.position.y = 1.6;
+            const amb = new THREE.AmbientLight(0xffffff, 0.6); scene.add(amb);
+            const dir = new THREE.DirectionalLight(0xffffff, 0.8); dir.position.set(30, 50, 30); dir.castShadow = true;
+            dir.shadow.mapSize.width = 1024; dir.shadow.mapSize.height = 1024; scene.add(dir);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true }); renderer.setSize(window.innerWidth, window.innerHeight); renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); renderer.shadowMap.enabled = true; document.body.appendChild(renderer.domElement);
+            controls = new PointerLockControls(camera, document.body); scene.add(controls.getObject());
+
+            createArena(); setupInputs(); if(isMobile) setupMobileInputs();
+            setInterval(() => { if(window.gameIsRunning && !isPaused && !isIntermission) spawnFallingPowerup(); }, 12000);
+            animate();
+        }
+
+        // --- SHOP & UI ---
+        function updateMenuUI() {
+            dom.mainHighScore.innerText = "Best Rank: Wave " + gameData.highScore;
+            dom.menuCoins.innerText = gameData.coins; dom.shopCoins.innerText = gameData.coins;
+            const u = gameData.upgrades;
+            document.getElementById('lvl-dmg').innerText = `Lv ${u.dmg}`; document.getElementById('cost-dmg').innerText = `${getCost(u.dmg)} 💰`;
+            document.getElementById('lvl-hp').innerText = `Lv ${u.hp}`; document.getElementById('cost-hp').innerText = `${getCost(u.hp)} 💰`;
+            document.getElementById('lvl-spd').innerText = `Lv ${u.spd}`; document.getElementById('cost-spd').innerText = `${getCost(u.spd)} 💰`;
+            
+            // Pulse Shop if upgrade available
+            const minCost = Math.min(getCost(u.dmg), getCost(u.hp), getCost(u.spd));
+            if(gameData.coins >= minCost) dom.btnShop.classList.add('shop-ready'); else dom.btnShop.classList.remove('shop-ready');
+        }
+        function buyUpgrade(type) {
+            const cost = getCost(gameData.upgrades[type]);
+            if(gameData.coins >= cost) { gameData.coins -= cost; gameData.upgrades[type]++; saveData(); playSound('powerup'); } else { playSound('ouch'); }
+        }
+
+        function createDeathParticles(pos) {
+            const count = 10;
+            const geo = new THREE.BoxGeometry(0.3, 0.3, 0.3);
+            const mat = new THREE.MeshBasicMaterial({color:0xffffff});
+            for(let i=0; i<count; i++) {
+                const mesh = new THREE.Mesh(geo, mat);
+                mesh.position.copy(pos);
+                mesh.position.x += (Math.random()-0.5); mesh.position.y += (Math.random()-0.5); mesh.position.z += (Math.random()-0.5);
+                mesh.userData.vel = new THREE.Vector3((Math.random()-0.5)*10, (Math.random())*10, (Math.random()-0.5)*10);
+                scene.add(mesh);
+                deathParticles.push(mesh);
+            }
+        }
+
+        // --- GAMEPLAY HELPERS ---
+        function playSound(type) {
+            if(!soundEnabled) return; if(audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination); const now = audioCtx.currentTime;
+            if (type === 'throw') { osc.type='triangle'; osc.frequency.setValueAtTime(400,now); osc.frequency.exponentialRampToValueAtTime(100,now+0.1); gain.gain.setValueAtTime(0.2,now); gain.gain.exponentialRampToValueAtTime(0.01,now+0.1); } 
+            else if (type === 'coin') { osc.type='sine'; osc.frequency.setValueAtTime(1200,now); osc.frequency.exponentialRampToValueAtTime(2000,now+0.1); gain.gain.setValueAtTime(0.1,now); gain.gain.exponentialRampToValueAtTime(0.01,now+0.1); } 
+            else if (type === 'hit') { osc.type='sawtooth'; osc.frequency.setValueAtTime(100,now); gain.gain.setValueAtTime(0.3,now); gain.gain.exponentialRampToValueAtTime(0.01,now+0.1); } 
+            else if (type === 'boss') { osc.type='sawtooth'; osc.frequency.setValueAtTime(80,now); osc.frequency.linearRampToValueAtTime(40,now+1); gain.gain.setValueAtTime(0.5,now); gain.gain.linearRampToValueAtTime(0,now+1); } 
+            else if (type === 'ouch') { osc.type='square'; osc.frequency.setValueAtTime(100,now); osc.frequency.exponentialRampToValueAtTime(20,now+0.3); gain.gain.setValueAtTime(0.5,now); gain.gain.linearRampToValueAtTime(0,now+0.3); } 
+            else if (type === 'powerup') { osc.type='sine'; osc.frequency.setValueAtTime(600,now); osc.frequency.linearRampToValueAtTime(1200,now+0.5); gain.gain.setValueAtTime(0.3,now); gain.gain.linearRampToValueAtTime(0,now+0.5); }
+            osc.start(now); osc.stop(now + (type==='boss'?1.0:0.3));
+        }
+
+        function createFloatingText(text, x, y, color) {
+            const el = document.createElement('div'); el.className = 'floating-text'; el.innerText = text;
+            el.style.left = x + 'px'; el.style.top = y + 'px'; el.style.color = color;
+            document.getElementById('ui-layer').appendChild(el); setTimeout(() => el.remove(), 800);
+        }
+
+        function addCombo() {
+            combo++;
+            dom.comboDisplay.innerText = `COMBO x${combo}`;
+            dom.comboDisplay.style.transform = "translateX(-50%) scale(1.5)";
+            dom.comboDisplay.style.opacity = "1";
+            setTimeout(() => dom.comboDisplay.style.transform = "translateX(-50%) scale(1)", 100);
+            if(comboTimer) clearTimeout(comboTimer);
+            comboTimer = setTimeout(() => { combo = 0; dom.comboDisplay.style.opacity = "0"; }, 2000);
+        }
+
+        function cameraShake(amount) { shakeIntensity = amount; }
+
+        function updateHUD() {
+            const pct = (playerHP / maxHP) * 100;
+            dom.hpBar.style.width = Math.max(0, pct)+'%'; dom.hpBar.style.backgroundColor = pct<30?'red':'#0f0';
+            dom.enemyCount.innerText = enemies.length; dom.gameCoins.innerText = sessionCoins;
+            let rankName = "Bronze"; let progress = (wave % 5) / 5 * 100;
+            if(wave > 5) rankName = "Silver"; if(wave > 10) rankName = "Gold"; if(wave > 15) rankName = "Diamond";
+            dom.rankText.innerText = `Rank: ${rankName} (Wave ${wave})`; dom.rankBarFill.style.width = `${progress}%`;
+        }
+
+        function gameOver() {
+            window.gameIsRunning = false; 
+            playSound('ouch');
+            dom.hud.classList.add('hidden'); dom.gameOverScreen.classList.remove('hidden'); dom.bossUI.style.display = 'none'; controls.unlock();
+            if(wave > gameData.highScore) gameData.highScore = wave; gameData.coins += sessionCoins; saveData();
+            dom.roundCoins.innerText = sessionCoins;
+            const bots = [ { name: "SantaClaus", w: wave+2 }, { name: "You", w: wave }, { name: "Frosty", w: Math.max(1, wave-1) }, { name: "Elf", w: Math.max(1, wave-2) }, { name: "Rudolph", w: Math.max(1, wave-3) } ];
+            bots.sort((a,b) => b.w - a.w);
+            const tbody = document.getElementById('leaderboard-body'); tbody.innerHTML = '';
+            bots.slice(0,5).forEach((b, index) => { const tr=document.createElement('tr'); if(b.name === gameData.name) tr.classList.add('highlight'); tr.innerHTML = `<td>#${index+1}</td><td>${b.name}</td><td>${b.w} W</td>`; tbody.appendChild(tr); });
+        }
+
+        // --- SPAWNING ---
+        function createEnemy(isBoss) {
+            const g = new THREE.Group();
+            const s = isBoss ? 2.5 : 1;
+            let type='normal', mat=snowMat, hpMult=1, spdMult=1;
+            
+            if(!isBoss) {
+                // Wave based variety
+                if(wave >= 10) { const r=Math.random(); if(r>0.7) { type='elite'; mat=enColorElite; hpMult=3; } else { type='normal'; mat=enColorNormal; } }
+                else if(wave >= 5) { const r=Math.random(); if(r>0.7) { type='tank'; mat=enColorTank; hpMult=2; spdMult=0.7; } else if(r>0.4){ type='fast'; mat=enColorFast; hpMult=0.7; spdMult=1.5; } else { mat=enColorNormal; } }
+                else if(wave >= 3) { const r=Math.random(); if(r>0.7) { type='fast'; mat=enColorFast; hpMult=0.7; spdMult=1.5; } else { mat=enColorNormal; } }
+                else { mat=enColorNormal; } // Wave 1-2 only normal
+            } else { mat = bossMat; }
+
+            const b=new THREE.Mesh(new THREE.SphereGeometry(0.8*s), mat); b.position.y=0.8*s;
+            const m=new THREE.Mesh(new THREE.SphereGeometry(0.6*s), mat); m.position.y=2.0*s;
+            const h=new THREE.Mesh(new THREE.SphereGeometry(0.4*s), mat); h.position.y=2.9*s;
+            const e1=new THREE.Mesh(new THREE.SphereGeometry(0.08*s), redEyeMat); e1.position.set(0.15*s, 3.0*s, 0.3*s);
+            const e2=new THREE.Mesh(new THREE.SphereGeometry(0.08*s), redEyeMat); e2.position.set(-0.15*s, 3.0*s, 0.3*s);
+            const hatBrim = new THREE.Mesh(new THREE.CylinderGeometry(0.5*s, 0.5*s, 0.05*s), blackMat); hatBrim.position.y=3.25*s;
+            const hatTop = new THREE.Mesh(new THREE.CylinderGeometry(0.35*s, 0.35*s, 0.6*s), blackMat); hatTop.position.y=3.55*s;
+            const arm1 = new THREE.Mesh(new THREE.CylinderGeometry(0.05*s, 0.05*s, 1.5*s), woodMat); arm1.position.set(0.6*s, 2.2*s, 0.5*s); arm1.rotation.set(1.5, 0, -0.3);
+            const arm2 = new THREE.Mesh(new THREE.CylinderGeometry(0.05*s, 0.05*s, 1.5*s), woodMat); arm2.position.set(-0.6*s, 2.2*s, 0.5*s); arm2.rotation.set(1.5, 0, 0.3);
+            g.add(b,m,h,e1,e2,hatBrim,hatTop,arm1,arm2);
+            
+            // Spawn closer in early waves (Action!)
+            const spawnRadius = wave < 3 ? 15 + Math.random()*10 : 25 + Math.random()*20;
+            const ang = Math.random()*Math.PI*2;
+            g.position.set(Math.sin(ang)*spawnRadius, 0, Math.cos(ang)*spawnRadius);
+            scene.add(g);
+            
+            const hpBase = isBoss ? 150+(wave*25) : 30+(wave*5);
+            const hp = hpBase * hpMult; const dmg = isBoss ? 15 : 3;
+            const speed = (4+(wave*0.2)) * spdMult;
+            const eObj = { mesh: g, hp: hp, maxHp: hp, speed: speed, lastShot: 0, isBoss: isBoss, dmg: dmg };
+            enemies.push(eObj);
+            if(isBoss && !currentBoss) currentBoss = eObj;
+        }
+
+        function createArena() {
+            const ground = new THREE.Mesh(new THREE.PlaneGeometry(ARENA_SIZE*2, ARENA_SIZE*2), snowMat); ground.rotation.x = -Math.PI/2; ground.receiveShadow = true; scene.add(ground);
+            const wallMat = new THREE.MeshStandardMaterial({color:0x8B4513});
+            [[0,-ARENA_SIZE,0], [0,ARENA_SIZE,0], [-ARENA_SIZE,0,1.57], [ARENA_SIZE,0,1.57]].forEach(p=>{ const w = new THREE.Mesh(new THREE.BoxGeometry(ARENA_SIZE*2, 4, 1), wallMat); w.position.set(p[0], 2, p[1]); w.rotation.y = p[2]; scene.add(w); });
+            for(let i=0; i<30; i++) { const g=new THREE.Group(); const t=new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.4,2),woodMat); t.position.y=1; t.castShadow=true; const l=new THREE.Mesh(new THREE.ConeGeometry(2,5,8),new THREE.MeshStandardMaterial({color:0x228B22})); l.position.y=3.5; l.castShadow=true; g.add(t,l); g.position.set((Math.random()-0.5)*ARENA_SIZE*1.8, 0, (Math.random()-0.5)*ARENA_SIZE*1.8); scene.add(g); }
+            const pGeo = new THREE.BufferGeometry(); const pArr = new Float32Array(2000*3);
+            for(let i=0; i<2000*3; i++) { pArr[i]=(Math.random()-0.5)*100; if(i%3===1) pArr[i]=Math.random()*50; }
+            pGeo.setAttribute('position', new THREE.BufferAttribute(pArr, 3));
+            particles = new THREE.Points(pGeo, new THREE.PointsMaterial({color:0xffffff, size:0.2, transparent:true}));
+            scene.add(particles);
+        }
+
+        function spawnCoin(pos) {
+            const geo = new THREE.SphereGeometry(0.3); const mesh = new THREE.Mesh(geo, coinMat);
+            mesh.position.copy(pos); mesh.position.y = 1;
+            scene.add(mesh); coins.push({ mesh: mesh, life: 15 });
+        }
+
+        function spawnFallingPowerup() {
+            if(powerups.length > 2) return;
+            const r = Math.random();
+            let type='rapid', mat=goldMat;
+            if(r>0.6) { type='shotgun'; mat=purpleMat; } else if(r>0.3) { type='armor'; mat=blueMat; }
+            const geo = new THREE.BoxGeometry(1.5, 1.5, 1.5); const mesh = new THREE.Mesh(geo, mat);
+            mesh.position.set((Math.random()-0.5)*(ARENA_SIZE*1.5), 20, (Math.random()-0.5)*(ARENA_SIZE*1.5));
+            scene.add(mesh); powerups.push({ mesh: mesh, type: type, falling: true });
+        }
+
+        function activatePowerup(type) {
+            playSound('powerup'); powerupTimeLeft = 20.0;
+            if(type === 'armor') { hasArmor = true; dom.powerupMsg.innerText = "ARMOR EQUIPPED!"; dom.powerupMsg.style.color="#00FFFF"; }
+            else { activePowerup = type; dom.powerupMsg.innerText = type==='rapid'?"RAPID FIRE!":"SHOTGUN!"; dom.powerupMsg.style.color=type==='rapid'?"#FFD700":"#9370DB"; }
+            dom.powerupMsg.style.display = 'block'; setTimeout(()=>dom.powerupMsg.style.display='none', 2000);
+            dom.powerBarWrap.style.display = 'block';
+        }
+
+        function startWaveLogic() {
+            isIntermission = false; bossPending = false; dom.msgOverlay.style.display = 'none';
+            const hue = (wave * 40) % 360; scene.background = new THREE.Color(`hsl(${hue}, 50%, 50%)`); scene.fog.color = new THREE.Color(`hsl(${hue}, 50%, 50%)`);
+
+            const isMonsterLevel = (wave % 5 === 0);
+            if (isMonsterLevel) {
+                const bossCount = 3 + Math.floor(wave / 5);
+                for(let i=0; i<bossCount; i++) setTimeout(() => createEnemy(true), i * 1500);
+                dom.powerupMsg.innerText = "MONSTER WAVE!"; dom.powerupMsg.style.color="red"; dom.powerupMsg.style.display='block';
+                setTimeout(()=>dom.powerupMsg.style.display='none', 3000);
+            } else {
+                const minionCount = 3 + (wave - 1);
+                for(let i=0; i<minionCount; i++) createEnemy(false);
+                bossPending = true;
+                setTimeout(() => { if(bossPending && window.gameIsRunning) { createEnemy(true); playSound('boss'); bossPending = false; } }, 15000);
+            }
+            updateHUD();
+        }
+
+        function resetGame() {
+            maxHP = 100 + (gameData.upgrades.hp - 1) * 20; playerHP = maxHP;
+            wave = 1; velocity.set(0,0,0); window.gameIsRunning = true; isPaused = false; isIntermission = false;
+            activePowerup = null; hasArmor = false; bossPending = false; currentBoss = null; sessionCoins = 0; combo = 0;
+            clearInterval(countdownTimer); dom.msgOverlay.style.display = 'none'; dom.powerBarWrap.style.display = 'none'; dom.bossUI.style.display = 'none';
+            enemies.forEach(e => scene.remove(e.mesh)); enemies = [];
+            snowballs.forEach(s => scene.remove(s.mesh)); snowballs = [];
+            powerups.forEach(p => scene.remove(p.mesh)); powerups = [];
+            coins.forEach(c => scene.remove(c.mesh)); coins = [];
+            deathParticles.forEach(p => scene.remove(p)); deathParticles = []; // clear particles
+            dom.hud.classList.remove('hidden'); dom.hud.style.display = 'flex';
+            controls.getObject().position.set(0, 1.6, 0); controls.getObject().rotation.set(0,0,0);
+            dom.fadeMsg.style.display = 'block'; dom.fadeMsg.style.opacity = '1'; setTimeout(() => { dom.fadeMsg.style.opacity = '0'; }, 3000);
+            startWaveLogic();
+        }
+
+        function safePokiCall(action, onSuccess) {
+            let adPlayed = false;
+            try { 
+                if(typeof sdk !== 'undefined' && action === 'commercial') {
+                   // GameMonetize logic: pause happens on event, but here we just trigger
+                   sdk.showBanner();
+                   // Since we don't have a promise, we assume flow continues via events.
+                   // But to ensure logic runs if no ad shows:
+                   window.adCallback = onSuccess; 
+                   // Fallback if ad doesn't trigger pause
+                   setTimeout(() => { if(!window.isPaused && window.adCallback) { window.adCallback(); window.adCallback=null; } }, 1000);
+                   return;
+                }
+                
+                // Fallback for reward if GameMonetize doesn't support reward explicitly
+                if(typeof sdk !== 'undefined' && action === 'reward') {
+                     sdk.showBanner();
+                     window.adCallback = onSuccess;
+                     setTimeout(() => { if(!window.isPaused && window.adCallback) { window.adCallback(); window.adCallback=null; } }, 1000);
+                     return;
+                }
+            } catch(e) {}
+            // If SDK missing
+            onSuccess();
+        }
+
+        function setupInputs() {
+            document.addEventListener('keydown', e => { if(isMobile)return; if(e.code==='KeyW')moveForward=true; if(e.code==='KeyS')moveBackward=true; if(e.code==='KeyA')moveLeft=true; if(e.code==='KeyD')moveRight=true; if(e.code==='Space')doJump(); if(e.code==='KeyE')doDash(); });
+            document.addEventListener('keyup', e => { if(isMobile)return; if(e.code==='KeyW')moveForward=false; if(e.code==='KeyS')moveBackward=false; if(e.code==='KeyA')moveLeft=false; if(e.code==='KeyD')moveRight=false; });
+            document.addEventListener('mousedown', e => { if(e.button===0 && !isMobile && window.gameIsRunning && !isPaused) { if(!controls.isLocked)controls.lock(); doShoot(); } });
+            controls.addEventListener('unlock', () => { if(window.gameIsRunning && !isMobile) { isPaused=true; dom.pauseMenu.classList.remove('hidden'); } });
+
+            document.getElementById('btn-play').onclick = () => { 
+                if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
+                dom.landscapeMsg.style.display = 'flex'; dom.landscapeMsg.style.opacity = '1';
+                setTimeout(() => { dom.landscapeMsg.style.opacity = '0'; setTimeout(() => dom.landscapeMsg.style.display='none', 500); safePokiCall('commercial', () => { dom.mainMenu.classList.add('hidden'); resetGame(); if(!isMobile)controls.lock(); }); }, 2000);
+            };
+            document.getElementById('btn-restart').onclick = () => { safePokiCall('commercial', () => { dom.gameOverScreen.classList.add('hidden'); resetGame(); if(!isMobile)controls.lock(); }); };
+            document.getElementById('btn-revive').onclick = () => { safePokiCall('reward', () => { playerHP=maxHP; window.gameIsRunning=true; dom.gameOverScreen.classList.add('hidden'); dom.hud.classList.remove('hidden'); if(!isMobile)controls.lock(); updateHUD(); }); };
+            document.getElementById('btn-heal').onclick = () => { safePokiCall('reward', () => { playerHP=maxHP; updateHUD(); dom.pauseMenu.classList.add('hidden'); isPaused=false; if(!isMobile)controls.lock(); }); };
+            document.getElementById('btn-resume').onclick = () => { dom.pauseMenu.classList.add('hidden'); isPaused=false; if(!isMobile)controls.lock(); };
+            document.getElementById('btn-pause-game').onclick = () => { isPaused=true; dom.pauseMenu.classList.remove('hidden'); if(!isMobile)controls.unlock(); };
+            document.getElementById('btn-quit').onclick = () => { dom.pauseMenu.classList.add('hidden'); dom.hud.classList.add('hidden'); dom.mainMenu.classList.remove('hidden'); window.gameIsRunning=false; updateMenuUI(); };
+            document.getElementById('btn-home').onclick = () => { dom.gameOverScreen.classList.add('hidden'); dom.hud.classList.add('hidden'); dom.mainMenu.classList.remove('hidden'); window.gameIsRunning=false; updateMenuUI(); };
+            
+            document.getElementById('btn-settings').onclick = () => dom.settingsBox.style.display='block';
+            document.getElementById('btn-settings-pause').onclick = () => dom.settingsBox.style.display='block';
+            document.getElementById('close-settings').onclick = () => dom.settingsBox.style.display='none';
+            document.getElementById('save-settings').onclick = () => { const newName = dom.nameInput.value.trim(); if(newName && newName !== gameData.name) { if(!hasChangedName) { gameData.name = newName; hasChangedName = true; saveData(); } else { safePokiCall('reward', () => { gameData.name = newName; saveData(); }); } } sensitivityX=parseFloat(document.getElementById('sens-x').value); sensitivityY=parseFloat(document.getElementById('sens-y').value); soundEnabled=document.getElementById('sound-toggle').checked; dom.settingsBox.style.display='none'; };
+            document.getElementById('btn-shop').onclick = () => dom.shopBox.style.display='block';
+            document.getElementById('close-shop').onclick = () => dom.shopBox.style.display='none';
+            document.getElementById('btn-up-dmg').onclick = () => buyUpgrade('dmg');
+            document.getElementById('btn-up-hp').onclick = () => buyUpgrade('hp');
+            document.getElementById('btn-up-spd').onclick = () => buyUpgrade('spd');
+            document.getElementById('btn-howto').onclick = () => dom.instructionsBox.style.display='block';
+            document.getElementById('close-howto').onclick = () => dom.instructionsBox.style.display='none';
+        }
+
+        function setupMobileInputs() {
+            const zone = document.getElementById('joystick-zone'); const knob = document.getElementById('joystick-knob');
+            let startX, startY;
+            zone.addEventListener('touchstart', e=>{ e.preventDefault(); startX=e.touches[0].clientX; startY=e.touches[0].clientY; }, {passive:false});
+            zone.addEventListener('touchmove', e=>{ e.preventDefault(); const t=e.touches[0]; const dx=t.clientX-startX; const dy=t.clientY-startY; const dist=Math.sqrt(dx*dx+dy*dy); const ang=Math.atan2(dy,dx); const cx=Math.cos(ang)*Math.min(dist,30); const cy=Math.sin(ang)*Math.min(dist,30); knob.style.transform=`translate(calc(-50% + ${cx}px),calc(-50% + ${cy}px))`; joyVector.x=cx/30; joyVector.y=cy/30; }, {passive:false});
+            zone.addEventListener('touchend', e=>{ e.preventDefault(); joyVector.x=0; joyVector.y=0; knob.style.transform=`translate(-50%,-50%)`; }, {passive:false});
+
+            const lookZone = document.getElementById('look-zone'); let lastLookX, lastLookY;
+            lookZone.addEventListener('touchstart', e=>{ lastLookX=e.touches[0].clientX; lastLookY=e.touches[0].clientY; }, {passive:false});
+            lookZone.addEventListener('touchmove', e=>{ 
+                for(let i=0; i<e.touches.length; i++){
+                    const t=e.touches[i]; if(t.clientX > window.innerWidth/2){
+                        const dx = t.clientX - lastLookX; const dy = t.clientY - lastLookY;
+                        controls.getObject().rotation.y -= dx * 0.003 * sensitivityX;
+                        camera.rotation.x -= dy * 0.003 * sensitivityY;
+                        camera.rotation.x = Math.max(-1.5, Math.min(1.5, camera.rotation.x));
+                        lastLookX=t.clientX; lastLookY=t.clientY;
+                    }
+                }
+            }, {passive:false});
+            document.getElementById('btn-shoot').addEventListener('touchstart', e=>{e.preventDefault(); doShoot();});
+            document.getElementById('btn-jump').addEventListener('touchstart', e=>{e.preventDefault(); doJump();});
+            document.getElementById('btn-dash').addEventListener('touchstart', e=>{e.preventDefault(); doDash();});
+        }
+
+        function doJump() { if(velocity.y===0 && window.gameIsRunning && !isPaused) velocity.y=JUMP_FORCE; }
+        function doDash() { if(canDash && window.gameIsRunning && !isPaused){ const fwd=new THREE.Vector3(); controls.getDirection(fwd); fwd.y=0; fwd.normalize().multiplyScalar(DASH_FORCE); velocity.x+=fwd.x; velocity.z+=fwd.z; cameraShake(0.5); canDash=false; setTimeout(()=>canDash=true,1500); } }
+        function doShoot() {
+            if(canShoot && window.gameIsRunning && !isPaused && !isIntermission) {
+                playSound('throw');
+                const shootDelay = activePowerup === 'rapid' ? 100 : 400;
+                const shotCount = activePowerup === 'shotgun' ? 3 : 1;
+                const start = controls.getObject().position.clone();
+                const dir = new THREE.Vector3(); camera.getWorldDirection(dir);
+                for(let i=0; i<shotCount; i++) {
+                    const s = new THREE.Mesh(new THREE.SphereGeometry(0.25), snowMat);
+                    s.position.copy(start).add(dir.clone().multiplyScalar(1.0));
+                    let vel = dir.clone();
+                    if(shotCount > 1) { vel.x += (Math.random()-0.5)*0.2; vel.y += (Math.random()-0.5)*0.1; vel.z += (Math.random()-0.5)*0.2; }
+                    scene.add(s);
+                    // UPGRADE DMG
+                    const dmg = 20 + (gameData.upgrades.dmg * 5);
+                    snowballs.push({ mesh: s, velocity: vel.multiplyScalar(40), life: 2, fromPlayer: true, dmgVal: dmg });
+                }
+                cameraShake(0.1); canShoot = false; setTimeout(()=>canShoot=true, shootDelay);
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const time = performance.now(); const dt = Math.min((time - lastTime) / 1000, 0.1); lastTime = time;
+            update(dt);
+            renderer.render(scene, camera);
+        }
+        function update(dt) {
+            if(playerHP <= 0 && window.gameIsRunning) { playerHP = 0; updateHUD(); gameOver(); return; }
+            if(!window.gameIsRunning || isPaused) return;
+
+            if(performance.now() - lastHealTime > 30000) {
+                if(playerHP < maxHP) { playerHP = Math.min(maxHP, playerHP + 5); updateHUD(); }
+                lastHealTime = performance.now();
+            }
+
+            if(bossPending && !isIntermission) {
+                const minions = enemies.filter(e => !e.isBoss).length;
+                if(minions === 0) { spawnBoss(); bossPending = false; }
+            }
+
+            if(currentBoss && currentBoss.hp > 0) {
+                dom.bossUI.style.display = 'block'; dom.bossHPText.innerText = `${currentBoss.hp}/${currentBoss.maxHp}`; dom.bossHPFill.style.width = (currentBoss.hp / currentBoss.maxHp * 100) + '%';
+                const pos = currentBoss.mesh.position.clone(); pos.y += (currentBoss.isBoss?8:3);
+                pos.project(camera);
+                const x = (pos.x * .5 + .5) * window.innerWidth;
+                const y = (-(pos.y * .5) + .5) * window.innerHeight;
+                dom.bossUI.style.left = x + 'px'; dom.bossUI.style.top = y + 'px';
+                if(pos.z > 1 || Math.abs(pos.x) > 1 || Math.abs(pos.y) > 1) dom.bossUI.style.display = 'none';
+            } else {
+                dom.bossUI.style.display = 'none';
+                const nextBoss = enemies.find(e => e.isBoss && e.hp > 0);
+                if(nextBoss) currentBoss = nextBoss;
+            }
+
+            if (activePowerup || hasArmor) {
+                powerupTimeLeft -= dt;
+                dom.powerBar.style.width = (powerupTimeLeft/20*100) + '%';
+                if(powerupTimeLeft <= 0) { activePowerup=null; hasArmor=false; dom.powerBarWrap.style.display='none'; }
+            }
+
+            if(shakeIntensity > 0) {
+                shakeIntensity -= dt * 2; if(shakeIntensity < 0) shakeIntensity = 0;
+                camera.position.x += (Math.random()-0.5)*shakeIntensity; camera.position.y += (Math.random()-0.5)*shakeIntensity;
+            }
+
+            velocity.x -= velocity.x * 10.0 * dt; velocity.z -= velocity.z * 10.0 * dt; velocity.y -= 9.8 * 3.0 * dt;
+            direction.z = 0; direction.x = 0;
+            if(isMobile) { direction.z = joyVector.y; direction.x = joyVector.x; } 
+            else { direction.z = Number(moveForward)-Number(moveBackward); direction.x = Number(moveRight)-Number(moveLeft); direction.normalize(); }
+            
+            // UPGRADE SPEED
+            const speed = PLAYER_SPEED + (gameData.upgrades.spd * 2);
+            if(moveForward||moveBackward||(isMobile&&joyVector.y!==0)){ let iz=isMobile?-joyVector.y:direction.z; velocity.z-=iz*speed*50*dt; }
+            if(moveLeft||moveRight||(isMobile&&joyVector.x!==0)){ let ix=isMobile?joyVector.x:direction.x; velocity.x-=ix*speed*50*dt; }
+            
+            controls.moveRight(-velocity.x*dt); controls.moveForward(-velocity.z*dt); controls.getObject().position.y+=velocity.y*dt;
+            if(controls.getObject().position.y<1.6){ velocity.y=0; controls.getObject().position.y=1.6; }
+            const pos = controls.getObject().position;
+            pos.x=Math.max(-ARENA_SIZE,Math.min(ARENA_SIZE,pos.x)); pos.z=Math.max(-ARENA_SIZE,Math.min(ARENA_SIZE,pos.z));
+
+            for(let i=powerups.length-1; i>=0; i--) {
+                const p = powerups[i];
+                if(p.falling) { p.mesh.position.y -= 10 * dt; if(p.mesh.position.y <= 0.75) { p.mesh.position.y = 0.75; p.falling = false; } }
+                p.mesh.rotation.y += 2 * dt;
+                if(pos.distanceTo(p.mesh.position) < 2.5) { 
+                    activatePowerup(p.type); scene.remove(p.mesh); powerups.splice(i, 1); 
+                }
+            }
+
+            // Coin Logic
+            for(let i=coins.length-1; i>=0; i--) {
+                const c = coins[i]; c.mesh.rotation.y += 3 * dt; c.life -= dt;
+                if(pos.distanceTo(c.mesh.position) < 2) { playSound('coin'); sessionCoins += 1; createFloatingText("+1 💰", c.mesh.position.x, c.mesh.position.y, "gold"); updateHUD(); scene.remove(c.mesh); coins.splice(i, 1); } 
+                else if(c.life <= 0) { scene.remove(c.mesh); coins.splice(i, 1); }
+            }
+
+            for(let i=snowballs.length-1; i>=0; i--) {
+                const s = snowballs[i]; s.mesh.position.add(s.velocity.clone().multiplyScalar(dt)); s.life-=dt;
+                let remove = false;
+                if(s.fromPlayer) {
+                    for(let j=enemies.length-1; j>=0; j--) {
+                        const ePos=enemies[j].mesh.position; const scale=enemies[j].isBoss?2.5:1;
+                        if(Math.sqrt(Math.pow(s.mesh.position.x-ePos.x,2)+Math.pow(s.mesh.position.z-ePos.z,2))<1.0*scale && s.mesh.position.y>0 && s.mesh.position.y<3.5*scale) {
+                            playSound('hit'); 
+                            enemies[j].hp -= s.dmgVal || 10;
+                            // Floating DMG text
+                            const scPos = ePos.clone(); scPos.project(camera);
+                            const sx = (scPos.x * .5 + .5) * window.innerWidth; const sy = (-(scPos.y * .5) + .5) * window.innerHeight;
+                            createFloatingText(`-${s.dmgVal}`, sx, sy, "#ff0000");
+
+                            enemies[j].mesh.children.forEach(c=>{ if(c.material) c.material=redEyeMat; });
+                            setTimeout(()=>{ if(enemies[j]) enemies[j].mesh.children.forEach(c=>{ if(c.material===redEyeMat) c.material = enemies[j].isBoss?bossMat:snowMat; }); }, 100);
+                            
+                            if(enemies[j].hp<=0) {
+                                // Drop Coins
+                                const dropCount = enemies[j].isBoss ? 10 : 2;
+                                for(let k=0; k<dropCount; k++) {
+                                    const cPos = enemies[j].mesh.position.clone();
+                                    cPos.x += (Math.random()-0.5)*2; cPos.z += (Math.random()-0.5)*2;
+                                    spawnCoin(cPos);
+                                }
+                                createDeathParticles(enemies[j].mesh.position);
+                                scene.remove(enemies[j].mesh); enemies.splice(j,1);
+                                if(enemies.length===0 && !isIntermission && !bossPending) {
+                                    isIntermission = true;
+                                    dom.msgOverlay.style.display='block';
+                                    dom.msgTitle.innerText=`WAVE ${wave} CLEARED!`;
+                                    let sec = 5;
+                                    const timer = setInterval(()=>{ sec--; dom.msgSub.innerText=`Next in ${sec}...`; if(sec<=0) { clearInterval(timer); wave++; startWaveLogic(); } }, 1000);
+                                }
+                                updateHUD();
+                            }
+                            remove=true; break;
+                        }
+                    }
+                } else {
+                    if(s.mesh.position.distanceTo(pos) < 1.2) {
+                        playSound('ouch'); 
+                        if(shakeIntensity < 0.5) shakeIntensity=0.5;
+                        const finalDmg = hasArmor ? Math.ceil((s.dmgVal||5)/2) : (s.dmgVal||5);
+                        playerHP -= finalDmg; updateHUD();
+                        document.body.style.background='red'; setTimeout(()=>document.body.style.background='#000', 50);
+                        if(playerHP <= 0) { playerHP=0; updateHUD(); gameOver(); return; }
+                        remove=true;
+                    }
+                }
+                if(s.life<=0 || s.mesh.position.y<0) remove=true;
+                if(remove) { scene.remove(s.mesh); snowballs.splice(i,1); }
+            }
+
+            if(!isIntermission) {
+                enemies.forEach(e => {
+                    const dist = e.mesh.position.distanceTo(pos);
+                    if(dist > 8) {
+                        const dir = new THREE.Vector3().subVectors(pos, e.mesh.position); dir.y=0; dir.normalize();
+                        e.mesh.position.add(dir.multiplyScalar((e.isBoss?2:4) * dt));
+                        e.mesh.lookAt(pos.x, 0, pos.z);
+                    }
+                    if(dist < 40 && Date.now() - e.lastShot > (2000 - (wave*50))) {
+                        const ball = new THREE.Mesh(new THREE.SphereGeometry(0.25 * (e.isBoss?2:1)), new THREE.MeshBasicMaterial({color:0xffaaaa}));
+                        const shootPos = e.mesh.position.clone().add(new THREE.Vector3(0, 2*(e.isBoss?3:1), 0));
+                        ball.position.copy(shootPos);
+                        const dir = new THREE.Vector3().subVectors(pos, ball.position).normalize();
+                        dir.x += (Math.random()-0.5)*0.2; dir.z += (Math.random()-0.5)*0.2;
+                        scene.add(ball);
+                        snowballs.push({mesh:ball, velocity:dir.multiplyScalar(25), life:3, fromPlayer:false, dmgVal: e.dmg});
+                        e.lastShot = Date.now();
+                    }
+                });
+            }
+            const pArr = particles.geometry.attributes.position.array;
+            for(let i=1; i<pArr.length; i+=3) { pArr[i]-=8*dt; if(pArr[i]<0) pArr[i]=50; }
+            particles.geometry.attributes.position.needsUpdate = true;
+        }
+
+        window.addEventListener('resize', () => { camera.aspect=window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
+        
+        init();
+    </script>
+</body>
+</html>

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Running From A Hungry Tiger</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <script type="text/javascript">
+       window.SDK_OPTIONS = {
+          gameId: "oso8aslj76ynijftfvvvfjg3l9vt0xmv", // ВСТАВЬТЕ СЮДА ВАШ ID ИГРЫ С САЙТА GAMEMONETIZE
+          onEvent: function (a) {
+             // Передаем событие в основной скрипт игры
+             if (window.handleSdkEvent) {
+                 window.handleSdkEvent(a.name);
+             }
+          }
+       };
+       (function (a, b, c) {
+          var d = a.getElementsByTagName(b)[0];
+          a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+       })(document, "script", "gamemonetize-sdk"); 
+    </script>
+</head>
+<body oncontextmenu="return false;">
+    
+    <div id="loading-screen">
+        <h1 id="loadingTitle">LOADING...</h1>
+        <div id="progress-container">
+            <div id="progress-bar"></div>
+        </div>
+    </div>
+
+    <div id="startScreen" class="hidden overlay-screen">
+        <h1 id="startTitle">Running From<br> A Hungry Tiger</h1>
+        <p id="startDesc">Run, survive, escape the Tiger!</p>
+        <button id="startBtn">START GAME</button>
+    </div>
+
+    <div id="hud" class="hidden">
+        <div class="hud-item">
+            <span id="labelLevel">Level:</span> <span id="levelText">1</span>
+            <div style="font-size: 14px; margin-top: 5px;"><span id="labelTime">Time:</span> <span id="timeText">0:00</span></div>
+        </div>
+        <div class="hud-item">
+            <span id="labelLives">Lives:</span> <span id="livesText">❤️❤️❤️</span>
+            <div id="turbo-container">
+                <div id="turbo-bar"></div>
+            </div>
+        </div>
+        <div class="hud-item" style="display: flex; flex-direction: column; align-items: flex-end;">
+            <div><span id="labelScore">Score:</span> <span id="scoreText">0</span></div>
+            <div id="muteBtn" title="Toggle Sound">🔊</div>
+        </div>
+    </div>
+
+    <div id="mobile-controls" class="hidden">
+        <button id="btn-left">◀</button>
+        <button id="btn-right">▶</button>
+    </div>
+
+    <div id="crashScreen" class="hidden overlay-screen">
+        <h1 id="crashTitle" style="color: orange;">WATCH OUT!</h1>
+        <p id="crashDesc">Be careful, the tiger is closer!</p>
+        <button id="continueCrashBtn">CONTINUE</button>
+    </div>
+
+    <div id="levelCompleteScreen" class="hidden overlay-screen">
+        <h1 id="levelCompTitle" style="color: #2ed573;">LEVEL COMPLETE!</h1>
+        <p id="levelCompDesc">Great job! +100 Score</p>
+        <button id="nextLevelBtn">NEXT LEVEL</button>
+    </div>
+
+    <div id="gameOverScreen" class="hidden overlay-screen">
+        <h1 id="gameOverTitle" style="color: #ff4757;">GAME OVER</h1>
+        <p><span id="labelFinalScore">Your Score: </span><span id="finalScore">0</span></p> 
+        <button id="restartLevelBtn">RESTART LEVEL</button>
+    </div>
+
+    <div id="pauseScreen" class="hidden overlay-screen">
+        <h1 id="pauseTitle">PAUSED</h1>
+        <button id="resumeBtn">RESUME</button>
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "./three.module.js",
+                "three/addons/loaders/GLTFLoader.js": "./GLTFLoader.js",
+                "three/addons/utils/BufferGeometryUtils.js": "./BufferGeometryUtils.js",
+                "./utils/BufferGeometryUtils.js": "./BufferGeometryUtils.js",
+                "../utils/BufferGeometryUtils.js": "./BufferGeometryUtils.js"
+            }
+        }
+    </script>
+    
+    <script type="module" src="game.js"></script>
+</body>
+</html>

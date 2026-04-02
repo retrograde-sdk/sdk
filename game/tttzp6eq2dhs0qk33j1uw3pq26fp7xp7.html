@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Basic Economics Knockout Quiz</title>
+  <style>
+    :root{
+      /* New palette: warm sunrise + teal */
+      --bg:#180F1A; --panel:#1F1422; --text:#FAFAF9; --muted:#C7C9D1;
+      --accent:#fb923c; /* orange */
+      --accent2:#14b8a6; /* teal */
+      --danger:#ef4444; --gold:#f59e0b; --ink:#0b0e14;
+    }
+    *{box-sizing:border-box}
+    body{margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif; background:radial-gradient(1200px 800px at 50% -10%, #2a1731, var(--bg)); color:var(--text); min-height:100dvh; display:grid; place-items:center}
+    .wrap{width:min(980px,92vw)}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02)); border:1px solid rgba(255,255,255,0.1); border-radius:20px; padding:22px; box-shadow:0 10px 30px rgba(0,0,0,.35)}
+    h1{margin:0 0 6px; font-weight:900}
+    .muted{color:var(--muted)}
+    .row{display:flex; gap:12px; flex-wrap:wrap; align-items:center; justify-content:space-between}
+    .badge{background:rgba(255,255,255,.08); padding:8px 10px; border-radius:10px}
+    .gold{color:var(--gold)}
+    .center{display:grid; place-items:center; text-align:center; gap:14px; padding:20px}
+
+    /* NEW buttons layout: vertical stack, full-width, numbered pills */
+    .board{ margin-top:14px; padding:16px; border-radius:16px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08)}
+    .question{ font-size:clamp(22px, 4.2vw, 40px); font-weight:900; text-align:center; margin:10px 0 14px }
+    .choices{ display:flex; flex-direction:column; gap:12px }
+    .choice{ display:flex; align-items:center; gap:12px; width:100%; padding:14px 16px; border-radius:16px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.06); color:var(--text); cursor:pointer; font-weight:800; letter-spacing:.2px; box-shadow:0 8px 18px rgba(20,184,166,.15); transition:.14s transform, .2s box-shadow }
+    .choice:hover{ transform:translateY(-1px); box-shadow:0 10px 22px rgba(251,146,60,.25) }
+    .num{ flex:0 0 auto; width:34px; height:34px; display:grid; place-items:center; border-radius:999px; background:linear-gradient(90deg,var(--accent),var(--accent2)); color:var(--ink); font-weight:900 }
+    .label{ flex:1 1 auto; text-align:left; font-size:18px }
+
+    .status{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:space-between; margin-top:8px }
+    .timer{flex:1; height:10px; background:rgba(255,255,255,.1); border-radius:999px; overflow:hidden}
+    .bar{height:100%; width:100%; background:linear-gradient(90deg, var(--accent2), var(--accent)); transform-origin:left center}
+    .small{font-size:13px}
+    .hide{ display:none !important }
+    .pulse{ animation:pulse .9s infinite }
+    .btn{background:var(--accent); color:var(--ink); border:0; padding:12px 16px; border-radius:12px; font-weight:800; cursor:pointer; box-shadow:0 8px 18px rgba(251,146,60,.35)}
+    .ghost{background:transparent; border:1px solid rgba(255,255,255,.18); color:var(--text)}
+    @keyframes pulse{ 0%{transform:scale(1)} 50%{transform:scale(1.04)} 100%{transform:scale(1)} }
+  </style>
+</head>
+<body>
+
+
+<script type="text/javascript">
+   window.SDK_OPTIONS = {
+      gameId: "tttzp6eq2dhs0qk33j1uw3pq26fp7xp7",
+      onEvent: function (a) {
+         switch (a.name) {
+            case "SDK_GAME_PAUSE":
+               // pause game logic / mute audio
+               break;
+            case "SDK_GAME_START":
+               // advertisement done, resume game logic and unmute audio
+               break;
+            case "SDK_READY":
+               // when sdk is ready
+               break;
+         }
+      }
+   };
+(function (a, b, c) {
+   var d = a.getElementsByTagName(b)[0];
+   a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+})(document, "script", "gamemonetize-sdk"); 
+</script>
+
+
+  <div class="wrap">
+    <div class="card">
+      <div class="row">
+        <div>
+          <h1>Basic Economics Knockout Quiz</h1>
+          <p class="muted">Intro Micro & Macro • 100+ MCQs • One wrong answer ends the game — aim for your longest streak!</p>
+        </div>
+        <div class="row">
+          <div class="badge">Best: <span id="best" class="gold">0</span></div>
+          <div class="badge">Streak: <span id="streak">0</span></div>
+          <div class="badge">Last: <span id="last">0</span></div>
+        </div>
+      </div>
+
+      <div id="intro" class="center">
+        <div style="font-size:clamp(30px,6vw,50px); font-weight:900">Ready?</div>
+        <p class="muted">Answer basic economics questions across scarcity, supply & demand, elasticity, market structures, GDP, inflation, money, trade, public finance, and development. Each question is <b>timed</b>.<br><b>Knockout rule:</b> one mistake or timeout ends your run.</p>
+        <div class="row" style="justify-content:center">
+          <button id="start" class="btn pulse">Start</button>
+          <button id="how" class="btn ghost">How to play</button>
+        </div>
+        <p class="small muted">Shortcuts: <b>1–4</b> to answer • <b>Enter</b> to start/restart</p>
+      </div>
+
+      <div id="board" class="board hide" role="group" aria-label="Question and answers">
+        <div class="status">
+          <div class="badge">Q <span id="qnum">1</span></div>
+          <div class="timer" aria-label="Time remaining"><div class="bar" id="bar"></div></div>
+          <div class="badge">Time: <span id="time">0</span>s</div>
+        </div>
+        <div id="q" class="question">—</div>
+        <div id="choices" class="choices"></div>
+      </div>
+
+      <div id="summary" class="center hide">
+        <div style="font-size:clamp(30px,6vw,50px); font-weight:900" id="sumTitle">Game Over</div>
+        <p class="muted" id="sumReason"></p>
+        <div class="row" style="justify-content:center">
+          <button id="again" class="btn">Play Again</button>
+          <button id="back" class="btn ghost">Back</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  const TIME_PER_Q = 12; // seconds
+
+  // ====== State ======
+  let best = Number(localStorage.getItem('econ.best')) || 0;
+  let last = Number(localStorage.getItem('econ.last')) || 0;
+  let streak = 0;
+  let qIndex = 0;
+  let ticking = null;
+  let current = null;
+  let bank = [];
+
+  // ====== Elements ======
+  const elBest = document.getElementById('best');
+  const elLast = document.getElementById('last');
+  const elStreak = document.getElementById('streak');
+  const elIntro = document.getElementById('intro');
+  const elBoard = document.getElementById('board');
+  const elSummary = document.getElementById('summary');
+  const elBar = document.getElementById('bar');
+  const elTime = document.getElementById('time');
+  const elQ = document.getElementById('q');
+  const elChoices = document.getElementById('choices');
+  const elQnum = document.getElementById('qnum');
+  const elSumTitle = document.getElementById('sumTitle');
+  const elSumReason = document.getElementById('sumReason');
+
+  elBest.textContent = best; elLast.textContent = last; elStreak.textContent = 0;
+
+  // ====== Util ======
+  const rand = (a,b)=> Math.floor(Math.random()*(b-a+1))+a;
+  function shuffle(arr){ for(let i=arr.length-1;i>0;i--){ const j = rand(0,i); [arr[i],arr[j]]=[arr[j],arr[i]] } return arr }
+  function pick(n, pool){ const copy=[...pool]; shuffle(copy); return copy.slice(0,n) }
+
+  // ====== Question Banks (10×10 ≈ 100+) ======
+  function definitionsBank(){
+    const items = [
+      ['Scarcity in economics means', 'Limited resources vs unlimited wants', ['Limited wants vs unlimited resources','High prices only','Government rationing only']],
+      ['Opportunity cost is', 'Value of the next best alternative forgone', ['Total monetary cost',' sunk cost from past','Price paid only']],
+      ['A trade-off is', 'Choosing more of one thing and less of another', ['Eliminating all choices','Getting more of everything','Only monetary decisions']],
+      ['Marginal cost is', 'Cost of producing one more unit', ['Average cost per unit','Total fixed cost','Price minus cost']],
+      ['Marginal benefit is', 'Extra benefit from one more unit', ['Total utility','Sunk benefit','Opportunity cost']],
+      ['Diminishing marginal utility means', 'Extra satisfaction decreases with each additional unit', ['Total satisfaction must fall','Price must fall','Income must rise']],
+      ['Positive economics deals with', 'What is (testable statements)', ['What ought to be (value judgments)','Moral philosophy only','Legal questions']],
+      ['Normative economics deals with', 'What ought to be (value judgments)', ['Only facts and data','Mathematics only','Accounting']],
+      ['Factors of production include', 'Land, labor, capital, entrepreneurship', ['Money, prices, taxes, subsidies','Goods, services, trade, barter','GDP, CPI, PPI, PMI']],
+      ['Production possibilities frontier shows', 'Max combinations given resources & technology', ['Demand at various prices','Government budget','Utility levels only']],
+    ];
+    return items.map(([q,a,wrong])=>({ q, choices: shuffle([a,...wrong]), answer: a }));
+  }
+
+  function demandSupplyBank(){
+    const items = [
+      ['Law of demand states', 'Price ↑ → Quantity demanded ↓ (ceteris paribus)', ['Price ↑ → Qd ↑','Income ↑ → Qd ↓','Supply shifts left']],
+      ['A rightward shift of the demand curve means', 'Increase in demand at every price', ['Increase in quantity demanded','Decrease in demand','Price floor introduced']],
+      ['Substitutes example', 'Tea and coffee', ['Pen and ink','Printer and paper','Shoes and shoelaces']],
+      ['Complements example', 'Printer and ink', ['Tea and coffee','Butter and margarine','Rice and wheat']],
+      ['Law of supply states', 'Price ↑ → Quantity supplied ↑ (ceteris paribus)', ['Price ↑ → Qs ↓','Income ↑ → Qs ↓','Demand curve shifts']],
+      ['Price ceiling below equilibrium leads to', 'Shortage', ['Surplus','No effect','Higher equilibrium']],
+      ['Price floor above equilibrium leads to', 'Surplus', ['Shortage','No effect','Lower equilibrium']],
+      ['If demand decreases and supply increases', 'Equilibrium price falls', ['Price rises','Quantity must rise','Quantity must fall']],
+      ['Increase in income for a normal good', 'Shifts demand right', ['Shifts demand left','No change','Shifts supply right']],
+      ['Increase in input costs', 'Shifts supply left', ['Shifts supply right','Shifts demand right','No effect']],
+    ];
+    return items.map(([q,a,wrong])=>({ q, choices: shuffle([a,...wrong]), answer: a }));
+  }
+
+  function elasticityBank(){
+    const items = [
+      ['Price elasticity of demand measures', '% change in Qd for % change in price', ['% change in price for % change in Qd','Income changes only','Cross-price effects only']],
+      ['If |Ed| > 1, demand is', 'Elastic', ['Inelastic','Unit elastic','Perfectly inelastic']],
+      ['If demand is elastic and price rises, total revenue', 'Falls', ['Rises','Unchanged','First rises then falls']],
+      ['Cross-price elasticity for substitutes is', 'Positive', ['Negative','Zero','Undefined']],
+      ['Income elasticity for inferior goods is', 'Negative', ['Positive','Zero','Greater than 1']],
+      ['Perfectly inelastic demand curve is', 'Vertical', ['Horizontal','Upward sloping','Backward bending']],
+      ['Unit elastic demand implies total revenue', 'Unchanged when price changes', ['Always rises with price','Always falls with price','Maximized at highest price']],
+      ['Elasticity along a straight demand curve', 'Varies from elastic to inelastic', ['Constant','Always unitary','Only inelastic']],
+      ['Determinant of elasticity', 'Availability of substitutes', ['Time has no role','Necessity makes goods elastic','Share in budget irrelevant']],
+      ['Price elasticity of supply is generally', 'Higher in the long run', ['Higher in the very short run','Independent of time','Always zero']],
+    ];
+    return items.map(([q,a,wrong])=>({ q, choices: shuffle([a,...wrong]), answer: a }));
+  }
+
+  function marketStructuresBank(){
+    const items = [
+      ['Perfect competition features', 'Many firms, identical products, price takers', ['Few firms, collusion','Product differentiation, price makers','Single seller only']],
+      ['Monopoly features', 'Single seller with barriers to entry', ['Many sellers, free entry','Identical products, no power','Zero market power']],
+      ['Monopolistic competition features', 'Many firms, differentiated products', ['Single seller','Collusive oligopoly','Homogeneous product only']],
+      ['Oligopoly features', 'Few firms, interdependence', ['Many tiny firms','Price taking','No strategic behavior']],
+      ['Price discrimination means', 'Charging different prices to different buyers for same good', ['Charging same price to all','Illegal pricing always','Cost-based pricing only']],
+      ['Natural monopoly arises due to', 'Economies of scale over market demand', ['Patent law only','Price controls','Tax policy']],
+      ['In perfect competition, firm’s demand curve is', 'Perfectly elastic at market price', ['Downward sloping','Upward sloping','Vertical']],
+      ['Cartel is', 'Formal collusion among firms', ['Price war','Government regulation','Consumer coalition']],
+      ['Product differentiation is crucial in', 'Monopolistic competition', ['Perfect competition','Pure monopoly','Perfect oligopoly']],
+      ['Herfindahl–Hirschman Index measures', 'Market concentration', ['Price elasticity','Consumer surplus','Inflation persistence']],
+    ];
+    return items.map(([q,a,wrong])=>({ q, choices: shuffle([a,...wrong]), answer: a }));
+  }
+
+  function productionCostsBank(){
+    const items = [
+      ['Fixed cost is', 'Cost that does not vary with output', ['Cost per unit','Cost that varies with output','Opportunity cost']],
+      ['Variable cost is', 'Cost that varies with output', ['Unavoidable cost','Sunk cost','Fixed cost']],
+      ['Marginal cost intersects ATC at', 'ATC minimum', ['ATC maximum','AFC minimum','AVC maximum']],
+      ['Law of diminishing marginal returns occurs when', 'Marginal product eventually falls', ['Total product falls from start','Average product rises forever','Costs fall forever']],
+      ['Economies of scale imply', 'Long-run average cost falls as output rises', ['LRAC rises','Constant LRAC','Only short-run effect']],
+      ['Diseconomies of scale imply', 'LRAC rises with output', ['LRAC falls','No change','Only fixed costs change']],
+      ['Shutdown rule (short run) if', 'Price < AVC', ['Price < ATC','Price < AFC','Price < MC at min']],
+      ['Profit maximization (price taker) where', 'MC = MR (= price)', ['ATC = price','AVC = price','AFC = price']],
+      ['Accounting profit vs economic profit', 'Economic profit subtracts opportunity cost', ['Accounting subtracts opportunity cost','Both identical','Economic adds sunk costs']],
+      ['Learning curve effects generally', 'Lower costs as cumulative output rises', ['Raise costs','No relation','Only quality changes']],
+    ];
+    return items.map(([q,a,wrong])=>({ q, choices: shuffle([a,...wrong]), answer: a }));
+  }
+
+  function macroIndicatorsBank(){
+    const items = [
+      ['GDP measures', 'Market value of final goods & services produced domestically', ['Total sales incl. intermediates','Value produced by nationals anywhere','Money supply']],
+      ['Nominal vs real GDP', 'Real GDP adjusted for price changes', ['Nominal adjusted for inflation','Both adjusted','Neither adjusted']],
+      ['GDP deflator equals', '(Nominal GDP / Real GDP) × 100', ['CPI × 100','PPI/CPI × 100','(Real/ Nominal) × 100']],
+      ['Unemployment rate is', 'Unemployed / Labor force × 100', ['Unemployed / Population','Employed / Labor force','Labor force / Population']],
+      ['Types of unemployment include', 'Frictional, structural, cyclical', ['Fiscal, monetary, trade','Seasonal only','Technological only']],
+      ['Inflation is', 'Sustained rise in general price level', ['One-time price increase','Rise in wages only','Money illusion']],
+      ['Stagflation combines', 'High inflation & high unemployment', ['High growth & high inflation','Low inflation & low unemployment','High savings & investment']],
+      ['Business cycle phases', 'Expansion, peak, contraction, trough', ['Boom, bust, recovery','Only growth','Only recession']],
+      ['CPI stands for', 'Consumer Price Index', ['Cost & Price Indicator','Currency Price Index','Common Price Index']],
+      ['Potential output refers to', 'Economy’s sustainable level of production', ['Maximum possible in short run','Actual GDP','Only manufacturing output']],
+    ];
+    return items.map(([q,a,wrong])=>({ q, choices: shuffle([a,...wrong]), answer: a }));
+  }
+
+  function fiscalMonetaryBank(){
+    const items = [
+      ['Fiscal policy uses', 'Government spending and taxes', ['Interest rates','Money supply only','Exchange rate pegs']],
+      ['Monetary policy uses mainly', 'Money supply & interest rates', ['Government purchases','Tariffs','Wage controls']],
+      ['Expansionary fiscal policy tends to', 'Increase AD via higher G or lower T', ['Decrease AD','Only lowers inflation','Raises unemployment always']],
+      ['Contractionary monetary policy tends to', 'Raise interest rates & slow inflation', ['Lower rates & raise inflation','Raise deficits','Raise money supply quickly']],
+      ['Open market purchase by central bank', 'Increases money supply', ['Decreases money supply','No effect','Raises tax revenue']],
+      ['Reserve requirement increase', 'Decreases money multiplier', ['Increases multiplier','No relation','Raises GDP deflator']],
+      ['Discount rate is', 'Rate central bank charges banks', ['Interbank lending rate only','Inflation target','Mortgage rate']],
+      ['Liquidity trap occurs when', 'Very low rates make monetary policy weak', ['High rates block lending','Only fiscal policy fails','Exchange rate fixed']],
+      ['Quantitative easing is', 'Large-scale asset purchases by central bank', ['Tax cuts','Tariff hikes','Price controls']],
+      ['Automatic stabilizers include', 'Unemployment insurance & progressive taxes', ['Capital controls','Export subsidies','Price ceilings']],
+    ];
+    return items.map(([q,a,wrong])=>({ q, choices: shuffle([a,...wrong]), answer: a }));
+  }
+
+  function internationalBank(){
+    const items = [
+      ['Comparative advantage means', 'Lower opportunity cost in a good', ['Higher productivity in all goods','Absolute dominance','Lower wages']],
+      ['Absolute advantage means', 'Produce more with same inputs', ['Lower opportunity cost','Produce with lower price','No trade benefit']],
+      ['Tariff is', 'Tax on imports', ['Limit on exports','Subsidy to importers','Quota on money']],
+      ['Quota is', 'Quantity limit on imports', ['Tax on exports','Exchange-rate control','Interest rate cap']],
+      ['Balance of payments includes', 'Current & capital/financial accounts', ['Only trade balance','Government budget','Only remittances']],
+      ['Current account records', 'Trade in goods/services, income, transfers', ['Asset purchases','FDI only','Government debt']],
+      ['Currency appreciation makes exports', 'More expensive abroad', ['Cheaper abroad','Unaffected','Illegal']],
+      ['Floating exchange rate is determined by', 'Market demand & supply of currency', ['Government decree always','Fixed gold parity','Only interest rates']],
+      ['WTO primarily aims to', 'Promote rules-based trade & reduce barriers', ['Fix exchange rates','Set world interest rate','Control oil prices']],
+      ['Trade embargo is', 'Government ban on trade with a country', ['Tariff reduction','Quotas on domestic buyers','Currency swap']],
+    ];
+    return items.map(([q,a,wrong])=>({ q, choices: shuffle([a,...wrong]), answer: a }));
+  }
+
+  function publicGoodsExternalitiesBank(){
+    const items = [
+      ['Public goods are', 'Non-rival and non-excludable', ['Rival and excludable','Non-rival and excludable','Rival and non-excludable']],
+      ['Free rider problem arises because', 'People benefit without paying', ['Producers collude','Prices fall','Government overspends']],
+      ['Negative externality example', 'Pollution from a factory', ['Vaccination spillovers','Street lighting','Public park']],
+      ['Pigovian tax aims to', 'Internalize a negative externality', ['Subsidize pollution','Set price ceilings','Eliminate producer surplus']],
+      ['Coase theorem suggests with low transaction costs', 'Private bargaining can solve externalities', ['Only taxes work','Courts must decide always','No solution exists']],
+      ['Common resources are', 'Rival but non-excludable', ['Non-rival & excludable','Public goods','Private goods only']],
+      ['Club goods are', 'Excludable but non-rival (up to capacity)', ['Non-excludable and rival','Public goods','Common resources']],
+      ['Regressive tax takes', 'Higher share from low-income than high-income', ['Higher share from high-income','Same share','No share']],
+      ['Progressive tax takes', 'Higher share from high-income', ['Lower share from high-income','Same share','Head tax']],
+      ['Incidence of tax depends on', 'Relative elasticities of demand & supply', ['Statutory assignment only','Government choice only','Who pays at store']],
+    ];
+    return items.map(([q,a,wrong])=>({ q, choices: shuffle([a,...wrong]), answer: a }));
+  }
+
+  function developmentBank(){
+    const items = [
+      ['Economic growth vs development', 'Growth = output ↑; development = broader welfare ↑', ['Both identical','Development = inflation ↑','Growth = prices ↑']],
+      ['Human Development Index combines', 'Income, education, life expectancy', ['Income only','Education only','Inequality index only']],
+      ['Gini coefficient measures', 'Income inequality', ['Economic growth','Poverty headcount','Human capital']],
+      ['Poverty headcount ratio is', 'Share of people below poverty line', ['Average income','Median income','Unemployment rate']],
+      ['PPP (Purchasing Power Parity) adjusts for', 'Price level differences across countries', ['Interest rates only','Exchange controls','Fiscal deficits']],
+      ['Microfinance primarily provides', 'Small loans & services to low-income borrowers', ['Large corporate loans','Stock options','Forex hedging']],
+      ['Human capital refers to', 'Education, skills, health of workers', ['Machines & buildings','Natural resources','Financial assets']],
+      ['Remittances are', 'Money sent home by migrants', ['FDI flows','Aid to governments','Tariff revenues']],
+      ['Import substitution strategy emphasizes', 'Producing domestically instead of importing', ['Export orientation only','Primary commodity exports','Privatization only']],
+      ['Export-led growth focuses on', 'Increasing exports to drive growth', ['Reducing exports','Autarky','Only agriculture']],
+    ];
+    return items.map(([q,a,wrong])=>({ q, choices: shuffle([a,...wrong]), answer: a }));
+  }
+
+  function moneyBank(){
+    const items = [
+      ['Functions of money include', 'Medium of exchange, unit of account, store of value', ['Only store of value','Only medium of exchange','Only legal tender']],
+      ['Fiat money is', 'Money by government decree (not backed by commodity)', ['Backed by gold always','Backed by silver','Only digital money']],
+      ['M1 typically includes', 'Currency + demand deposits', ['Currency + time deposits','Gold + currency','Bonds + currency']],
+      ['Inflation erodes', 'Purchasing power of money', ['Real output','Employment automatically','All prices equally']],
+      ['Velocity of money is', 'Rate at which money circulates (PY = MV)', ['Money growth rate','Interest rate','Government deficit']],
+      ['Bank reserve is', 'Fraction of deposits kept as reserves', ['Bank capital','Government bond holding','Foreign exchange only']],
+      ['Credit creation multiplier is higher when', 'Reserve ratio is lower', ['Reserve ratio higher','Banks hold excess reserves only','Currency drain rises']],
+      ['Lender of last resort is typically', 'The central bank', ['Commercial banks','Treasury','IMF']],
+      ['Real interest rate is approx.', 'Nominal rate − inflation', ['Nominal + inflation','Nominal × inflation','Inflation ÷ nominal']],
+      ['Yield curve plots', 'Bond yields vs maturities', ['Stock returns vs risk','Money supply vs GDP','Inflation vs unemployment']],
+    ];
+    return items.map(([q,a,wrong])=>({ q, choices: shuffle([a,...wrong]), answer: a }));
+  }
+
+  function numericsBank(){
+    const items = [];
+    // Fisher approximation
+    items.push({ q:'If nominal interest is 8% and inflation is 3%, real interest ≈', choices: shuffle(['≈5%','≈11%','≈2.67%','≈3%']), answer:'≈5%' });
+    // GDP deflator
+    items.push({ q:'Nominal GDP = 110, Real GDP = 100 → GDP deflator =', choices: shuffle(['110','100','90','10']), answer:'110' });
+    // Opportunity cost simple
+    items.push({ q:'You can earn $50 tutoring or $40 delivering. You choose tutoring. Opportunity cost is', choices: shuffle(['$40','$50','$10','$90']), answer:'$40' });
+    // Elasticity & revenue
+    items.push({ q:'With elastic demand, a 10% price cut tends to make total revenue', choices: shuffle(['Increase','Decrease','Unchanged','Undefined']), answer:'Increase' });
+    // CPI % change
+    items.push({ q:'CPI rises from 200 to 210. Approx inflation rate is', choices: shuffle(['5%','10%','2.1%','20%']), answer:'5%' });
+    // Real wage
+    items.push({ q:'Nominal wage +4%, inflation +6% → real wage', choices: shuffle(['−2%','+2%','+10%','0%']), answer:'−2%' });
+    // Comparative advantage numbers
+    items.push({ q:'A can make 10 shirts or 20 hats; B can make 8 shirts or 24 hats. A has comparative advantage in', choices: shuffle(['Shirts','Hats','Both','Neither']), answer:'Shirts' });
+    // Tax incidence—elastic demand
+    items.push({ q:'If demand is very elastic and supply inelastic, a unit tax is borne mainly by', choices: shuffle(['Sellers','Buyers','Both equally','Government']), answer:'Sellers' });
+    // Money multiplier
+    items.push({ q:'Reserve ratio = 10%. Simple money multiplier ≈', choices: shuffle(['10','5','0.1','100']), answer:'10' });
+    // Unemployment rate calc
+    items.push({ q:'Labor force 100, employed 92 → unemployment rate =', choices: shuffle(['8%','12%','92%','4%']), answer:'8%' });
+    return items;
+  }
+
+  function buildBank(){
+    const pool = [
+      ...definitionsBank(),
+      ...demandSupplyBank(),
+      ...elasticityBank(),
+      ...marketStructuresBank(),
+      ...productionCostsBank(),
+      ...macroIndicatorsBank(),
+      ...fiscalMonetaryBank(),
+      ...internationalBank(),
+      ...publicGoodsExternalitiesBank(),
+      ...developmentBank(),
+      ...moneyBank(),
+      ...numericsBank(),
+    ];
+    // Ensure uniqueness by text
+    const seen = new Set();
+    const unique = [];
+    for(const item of pool){ if(!seen.has(item.q)){ seen.add(item.q); unique.push(item); } }
+    // Top up to at least 120 by reordering choices (varies play, same answer)
+    while(unique.length < 120){
+      const base = unique[rand(0, unique.length-1)];
+      unique.push({ q: base.q + ' ', choices: shuffle([...base.choices]), answer: base.answer });
+    }
+    return shuffle(unique);
+  }
+
+  // ====== Game Flow ======
+  function startGame(){
+    streak = 0; qIndex = 0; current=null; elStreak.textContent = 0;
+    bank = buildBank();
+    elIntro.classList.add('hide');
+    elSummary.classList.add('hide');
+    elBoard.classList.remove('hide');
+    nextQuestion();
+  }
+
+  function nextQuestion(){
+    if(bank.length === 0) bank = buildBank();
+    current = bank.pop();
+    qIndex++;
+    elQnum.textContent = qIndex;
+    elQ.textContent = current.q;
+    elChoices.innerHTML = '';
+    const nums = ['1','2','3','4'];
+    current.choices.forEach((c, i)=>{
+      const btn = document.createElement('button');
+      btn.className = 'choice';
+      btn.setAttribute('data-val', c);
+      const num = document.createElement('span'); num.className='num'; num.textContent = nums[i] || '';
+      const label = document.createElement('span'); label.className='label'; label.textContent = c;
+      btn.appendChild(num); btn.appendChild(label);
+      btn.addEventListener('click', ()=> choose(btn.getAttribute('data-val')));
+      elChoices.appendChild(btn);
+    });
+    startTimer();
+  }
+
+  function startTimer(){
+    stopTimer();
+    const start = performance.now();
+    const total = TIME_PER_Q * 1000;
+    (function tick(){
+      const elapsed = performance.now() - start;
+      const left = Math.max(0, total - elapsed);
+      elTime.textContent = Math.ceil(left/1000);
+      const r = left/total; const bar = Math.max(0, Math.min(1,r));
+      elBar.style.transform = `scaleX(${bar.toFixed(4)})`;
+      elBar.style.background = bar < 0.25 ? `linear-gradient(90deg, var(--danger), #dc2626)` :
+                             bar < 0.5 ? `linear-gradient(90deg, var(--gold), #f59e0b)` :
+                                          `linear-gradient(90deg, var(--accent2), var(--accent))`;
+      if(left <= 0){ stopTimer(); endGame('⏰ Time up!'); }
+      else { ticking = requestAnimationFrame(tick); }
+    })();
+  }
+
+  function stopTimer(){ if(ticking){ cancelAnimationFrame(ticking); ticking=null; } }
+
+  function choose(val){
+    if(String(val) === String(current.answer)){
+      streak++; elStreak.textContent = streak; flash(true); nextQuestion();
+    } else {
+      endGame(`❌ Incorrect. Correct answer: ${current.answer}`);
+    }
+  }
+
+  function flash(ok){
+    elBoard.style.outline = `3px solid ${ok? 'var(--accent2)':'var(--danger)'}`;
+    setTimeout(()=> elBoard.style.outline='none', 140);
+  }
+
+  function endGame(reason){
+    stopTimer();
+
+if (typeof sdk !== 'undefined' && sdk.showBanner !== 'undefined') {
+sdk.showBanner();
+}
+
+console.log("Start");
+
+setTimeout(() => {
+  console.log("Waited 5 seconds!");
+}, 5000);
+
+console.log("End");
+
+
+
+    elBoard.classList.add('hide');
+    elSummary.classList.remove('hide');
+    elSumTitle.textContent = `Game Over — Streak ${streak}`;
+    elSumReason.textContent = reason || '';
+    last = streak; localStorage.setItem('econ.last', String(last));
+    if(streak > best){ best = streak; localStorage.setItem('econ.best', String(best)); }
+    elBest.textContent = best; elLast.textContent = last;
+  }
+
+  // ====== Events ======
+  document.getElementById('start').addEventListener('click', startGame);
+  document.getElementById('how').addEventListener('click', ()=>{
+    alert('Answer each multiple-choice economics question before the timer ends. One mistake or timeout ends your run. Build the longest streak!');
+  });
+  document.getElementById('again').addEventListener('click', startGame);
+  document.getElementById('back').addEventListener('click', ()=>{ elSummary.classList.add('hide'); elIntro.classList.remove('hide'); });
+
+  // Keyboard: Enter, 1-4
+  window.addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter'){
+      if(!elBoard.classList.contains('hide')) return; startGame();
+    }
+    const map = { '1':0, '2':1, '3':2, '4':3 };
+    if(map.hasOwnProperty(e.key) && !elBoard.classList.contains('hide')){
+      const idx = map[e.key];
+      const btn = elChoices.children[idx]; if(btn) btn.click();
+    }
+  });
+
+  // Focus first answer when rendered
+  const observer = new MutationObserver(()=>{
+    const first = elChoices.querySelector('button'); if(first) first.focus({preventScroll:true});
+  });
+  observer.observe(elChoices, {childList:true});
+})();
+</script>
+</body>
+</html>

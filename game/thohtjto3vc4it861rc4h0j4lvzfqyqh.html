@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Crazy Table Tennis</title>
+  <link rel="stylesheet" href="style.css" />
+  
+  <!-- GameMonetize SDK -->
+  <script type="text/javascript">
+    window.SDK_OPTIONS = {
+      gameId: "thohtjto3vc4it861rc4h0j4lvzfqyqh",
+      onEvent: function (a) {
+        switch (a.name) {
+          case "SDK_GAME_PAUSE":
+            // Pause game logic
+            if (window.GAME_INSTANCE) {
+              window.GAME_INSTANCE.pauseForAd();
+            }
+            break;
+          case "SDK_GAME_START":
+            // Resume game logic after ad
+            if (window.GAME_INSTANCE) {
+              window.GAME_INSTANCE.resumeFromAd();
+            }
+            break;
+          case "SDK_READY":
+            // SDK is ready
+            console.log("GameMonetize SDK ready");
+            break;
+        }
+      }
+    };
+    (function (a, b, c) {
+      var d = a.getElementsByTagName(b)[0];
+      a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = 
+      "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+    })(document, "script", "gamemonetize-sdk"); 
+  </script>
+</head>
+<body>
+  <div id="game-container">
+    <canvas id="game"></canvas>
+
+    <!-- Mobile Controls -->
+    <div id="mobile-controls">
+      <button class="mobile-btn" data-direction="up">↑</button>
+      <button class="mobile-btn" data-direction="down">↓</button>
+      <button class="mobile-btn" data-direction="left">←</button>
+      <button class="mobile-btn" data-direction="right">→</button>
+    </div>
+
+    <div id="overlay start-screen" class="overlay visible" data-screen="start">
+      <div class="panel">
+        <h1>Crazy Table Tennis</h1>
+        <p>First to <span id="target-score">11</span> wins</p>
+        <div class="difficulty-selector">
+          <button class="diff-btn active" data-diff="easy">Easy</button>
+          <button class="diff-btn" data-diff="medium">Medium</button>
+          <button class="diff-btn" data-diff="difficult">Difficult</button>
+          <button class="diff-btn" data-diff="unbeatable">Unbeatable</button>
+        </div>
+        <button id="btn-start" class="primary-btn">Start Game</button>
+        <p class="hint">Controls: WASD to move • P or Esc to pause</p>
+      </div>
+    </div>
+
+    <div id="overlay pause-screen" class="overlay" data-screen="pause">
+      <div class="panel">
+        <h2>Paused</h2>
+        <button id="btn-resume" class="primary-btn">Resume</button>
+        <button id="btn-restart-while-paused">Restart</button>
+        <button id="btn-quit">Quit to Menu</button>
+      </div>
+    </div>
+
+    <div id="overlay gameover-screen" class="overlay" data-screen="gameover">
+      <div class="panel">
+        <h2 id="gameover-title">Game Over</h2>
+        <p id="final-score"></p>
+        <button id="btn-play-again" class="primary-btn">Play Again</button>
+        <button id="btn-back-menu">Back to Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Road Racer - Smartphone</title>
+  <style type="text/css">@font-face {font-family:Orbitron;font-style:normal;font-weight:400;src:url(/cf-fonts/v/orbitron/5.0.18/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Orbitron;font-style:normal;font-weight:700;src:url(/cf-fonts/v/orbitron/5.0.18/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Orbitron;font-style:normal;font-weight:900;src:url(/cf-fonts/v/orbitron/5.0.18/latin/wght/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}</style>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="shortcut icon" href="icon.png" type="image/x-icon">
+  <style>
+    /* Loading animation - car driving across a small road (match smartphone variant) */
+    .loader-road{position:relative;width:240px;height:46px;margin:8px auto 10px;background:linear-gradient(#2b2b2b,#222);border-radius:10px;box-shadow:inset 0 0 0 2px rgba(255,255,255,.06);overflow:hidden}
+    .loader-road .lane{position:absolute;left:6px;right:6px;top:50%;height:3px;margin-top:-1.5px;background:repeating-linear-gradient(90deg, rgba(255,255,255,.9) 0 16px, rgba(255,255,255,0) 16px 30px);opacity:.9}
+    .loader-car{position:absolute;top:50%;left:-60px;width:48px;height:auto;display:block;filter:drop-shadow(0 2px 4px rgba(0,0,0,.6));transform:translateY(-50%) rotate(90deg);transform-origin:center;animation:carDrive 2.4s linear infinite}
+    @keyframes carDrive{0%{left:-60px}100%{left:240px}}
+  </style>
+</head>
+
+<body>
+  <!-- ===== Loader Screen ===== -->
+  <div class="loader-screen">
+    <div class="loader-container">
+      <div class="loader-road">
+        <div class="lane"></div>
+        <img class="loader-car" src="main-car.png" alt="Road Racer Icon" />
+      </div>
+      <p>Loading Game...</p>
+      <div class="progress-bar">
+        <div class="progress"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="game hide">
+    <div class="day-night-overlay"></div>
+    <div class="speed-lines"></div>
+    <div class="street-lights-container"></div>
+    <div class="topbar">
+      <div class="score"></div>
+      <div class="highScore"></div>
+    </div>
+
+    <div class="startScreen">
+      <p class="ClickToStart">Tap here to start the game</p>
+
+      <p>INSTRUCTIONS:<br>
+        Touch left side to steer left.<br>
+        Touch right side to steer right.<br>
+        Avoid traffic — one crash ends the run.<br>
+        Watch a rewarded video to continue from your last score.
+      </p>
+
+    </div>
+
+    <div class="gameArea"></div>
+
+    <!-- Mobile touch controls -->
+    <div class="mc">
+      <button class="mc-btn" id="leftBtn">⟵</button>
+      <button class="mc-btn" id="rightBtn">⟶</button>
+    </div>
+  </div>
+
+  <!-- ===== Rewarded Video Popup ===== -->
+  <div id="rewardedVideoPopup" style="position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;z-index:90;">
+    <div style="width:92%;max-width:480px;border-radius:12px;background:#111;padding:20px;border:2px solid #ffaa00;box-shadow:0 0 24px rgba(255,170,0,.3);text-align:center;color:#fff;">
+      <div style="font-family:'Lobster', cursive;font-size:28px;color:#ffaa00;margin-bottom:16px;">Watch Video to Continue?</div>
+      <div style="font-size:16px;color:#ccc;margin-bottom:20px;">Watch a rewarded video ad to continue from your last score.</div>
+      <div style="display:flex;gap:12px;justify-content:center;">
+        <button id="btnRewardedYes" style="flex:1;padding:12px 10px;background:linear-gradient(90deg,#00ffaa,#00ccff);border:none;border-radius:8px;color:#001;font-weight:700;letter-spacing:.5px;cursor:pointer;">YES</button>
+        <button id="btnRewardedNo" style="flex:1;padding:12px 10px;background:#333;border:1px solid #666;border-radius:8px;color:#fff;font-weight:700;letter-spacing:.5px;cursor:pointer;">NO</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Game Over Popup ===== -->
+  <div id="gameOverPopup" style="position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;z-index:80;">
+    <div style="width:92%;max-width:480px;border-radius:12px;background:#111;padding:20px;border:2px solid #ff3300;box-shadow:0 0 24px rgba(255,51,0,.3);text-align:center;color:#fff;">
+      <div style="font-family:'Lobster', cursive;font-size:32px;color:#ff6600;margin-bottom:12px;">Game Over!</div>
+      <div id="gameOverScore" style="font-size:24px;color:#00ff88;margin-bottom:8px;font-weight:bold;">Score: 0</div>
+      <div id="gameOverHighScore" style="font-size:18px;color:#00ccff;margin-bottom:20px;">High Score: 0</div>
+      <button id="btnRestartGame" style="width:100%;padding:12px 10px;margin:6px 0;background:linear-gradient(90deg,#ff9900,#ff5500);border:none;border-radius:8px;color:#001;font-weight:700;letter-spacing:.5px;cursor:pointer;">Restart Game</button>
+      <button id="btnGoToHome" style="width:100%;padding:12px 10px;margin:6px 0;background:linear-gradient(90deg,#00ffaa,#00ccff);border:none;border-radius:8px;color:#001;font-weight:700;letter-spacing:.5px;cursor:pointer;">Go to Home</button>
+    </div>
+  </div>
+  <!-- GameMonetize SDK Implementation -->
+  <script type="text/javascript">
+    window.gmSdkReady = false;
+    window.watchingRewardedAd = false;
+
+    window.SDK_OPTIONS = {
+      gameId: "zru2a1xcmbfoa11pq8nqlce2dzfes58a",
+      onEvent: function (a) {
+        switch (a.name) {
+          case "SDK_GAME_PAUSE":
+            // pause game logic / mute audio
+            if (typeof window.setGamePaused === 'function') {
+                window.setGamePaused(true);
+            }
+            break;
+          case "SDK_GAME_START":
+            // advertisement done, resume game logic and unmute audio
+            if (typeof window.setGamePaused === 'function') {
+                window.setGamePaused(false);
+            }
+            
+            // ✅ Give reward if this was a reward ad
+            if (window.watchingRewardedAd) {
+              giveReward();
+              window.watchingRewardedAd = false;
+            }
+
+            // Handle pending navigation (Go to Home)
+            if (window._rrn_pendingNavigation === 'home') {
+              window._rrn_pendingNavigation = null;
+              if (typeof window.rrnGoToHomeFromGame === 'function') {
+                window.rrnGoToHomeFromGame();
+              }
+            }
+            break;
+          case "SDK_READY":
+            // when sdk is ready
+            window.gmSdkReady = true;
+            break;
+          case "SDK_ERROR":
+            // when sdk get error
+            window.gmSdkReady = false;
+            if (window.watchingRewardedAd) {
+              window.watchingRewardedAd = false;
+            }
+            // Fallback for pending navigation on error
+            if (window._rrn_pendingNavigation === 'home') {
+              window._rrn_pendingNavigation = null;
+              if (typeof window.rrnGoToHomeFromGame === 'function') {
+                window.rrnGoToHomeFromGame();
+              }
+            }
+            break;
+        }
+      }
+    };
+    
+    (function (a, b, c) {
+      var d = a.getElementsByTagName(b)[0];
+      a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+    })(document, "script", "gamemonetize-sdk");
+    
+    window.gmAdsEnabled = false; // Flag to prevent ads before game star
+    
+    // Helper functions for app.js to call
+    function showAd() {
+      if (!window.gmAdsEnabled) {
+           console.log("Road Racer: Ads blocked because game hasn't started yet");
+           return;
+      }
+      if (typeof sdk !== 'undefined' && sdk.showBanner) {
+        sdk.showBanner();
+      }
+    }
+
+    function showAdRewarded() {
+      if (typeof sdk !== 'undefined' && sdk.showBanner) {
+        window.watchingRewardedAd = true;
+        sdk.showBanner();
+      } else {
+          // Fallback for testing or if SDK fails
+           console.log("SDK not ready, simulating reward for testing");
+           window.watchingRewardedAd = true;
+           // Simulate event
+           setTimeout(function() {
+               giveReward();
+               window.watchingRewardedAd = false;
+           }, 1000);
+      }
+    }
+
+    function giveReward() {
+       console.log("Giving reward...");
+       // Call the existing function in app.js
+       if (typeof window.grantRewardContinue === 'function') {
+          window.grantRewardContinue();
+       }
+    }
+  </script>
+  <script src="app.js"></script>
+  
+  <!-- ===== Home Screen Overlay ===== -->
+  <div id="home" style="position:fixed;inset:0;background:linear-gradient(rgba(0,0,0,.6), rgba(0,0,0,.6)), url('roadracer-homepage.jpg') center/cover no-repeat;display:none;align-items:center;justify-content:center;z-index:50;">
+    <div style="width:92%;max-width:520px;border-radius:12px;background:#111;padding:16px;border:1px solid #0aa;box-shadow:0 0 24px rgba(0,255,170,.15);text-align:center;color:#eafffb;">
+      <div style="font-family:'Lobster', cursive;font-size:28px;color:#30e6ff;margin-bottom:6px;">Road Racer</div>
+      <img src="main-car.png" alt="Car" style="width:80px;height:auto;max-width:80px;margin:6px auto 10px;display:block;object-fit:contain;"/>
+      <button id="btnStart" style="width:100%;padding:12px 10px;margin:6px 0;background:linear-gradient(90deg,#00ffaa,#00ccff);border:none;border-radius:8px;color:#001;font-weight:700;letter-spacing:.5px;">START GAME</button>
+      <button id="btnOptions" style="width:100%;padding:10px;margin:6px 0;background:#07202c;border:1px solid #0aa;border-radius:8px;color:#bfe8ff;">OPTIONS</button>
+      <button id="btnHelp" style="width:100%;padding:10px;margin:6px 0;background:#0d2230;border:1px solid #0aa;border-radius:8px;color:#bfe8ff;">HELP</button>
+    </div>
+  </div>
+
+  <!-- ===== Help Modal ===== -->
+  <div id="help" style="position:fixed;inset:0;background:rgba(0,0,0,.75);display:none;align-items:center;justify-content:center;z-index:60;">
+    <div style="width:92%;max-width:560px;background:#0b1116;border:1px solid #0aa;border-radius:10px;color:#d9f7ff;padding:14px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <div style="font-weight:700;color:#6df;">How to Play</div>
+        <button id="btnCloseHelp" style="background:#07202c;color:#9ad;border:1px solid #0aa;border-radius:6px;padding:6px 10px;">Close</button>
+      </div>
+      <ul style="margin:0;padding-left:18px;line-height:1.6;color:#bfe8ff;text-align:left;">
+        <li>Tap START to begin racing.</li>
+        <li>Touch the left half of the screen to move the car left.</li>
+        <li>Touch the right half of the screen to move the car right.</li>
+        <li>Avoid traffic; any crash ends the current run.</li>
+        <li>Watch rewarded video ads after crashing to continue from your last score.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ===== Options Modal ===== -->
+  <div id="optionsPanel" style="position:fixed;inset:0;background:rgba(0,0,0,.75);display:none;align-items:center;justify-content:center;z-index:60;">
+    <div style="width:92%;max-width:420px;background:#0b1116;border:1px solid #0aa;border-radius:10px;color:#d9f7ff;padding:14px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <div style="font-weight:700;color:#6df;">Options</div>
+        <button id="btnCloseOptions" style="background:#07202c;color:#9ad;border:1px solid #0aa;border-radius:6px;padding:6px 10px;">Close</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <button id="btnToggleSound" style="padding:10px;background:#07202c;border:1px solid #0aa;border-radius:8px;color:#bfe8ff;">Sound: On</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Load banner immediately on page load (like Space Battle/Pacman)
+    window.addEventListener('load', function(){
+      console.log("Road Racer Smartphone - Page Loaded");
+      
+      // Hide splash and show home
+      setTimeout(function(){ 
+        var h=document.getElementById('home'); 
+        if(h){ h.style.display='flex'; }
+      }, 1800);
+      
+      // Note: cacheAd() will be called ONLY at game start (in Start())
+      // NOT during initialization per JioGames guidelines
+    });
+    // Bind home buttons
+    (function(){
+      document.addEventListener('DOMContentLoaded', function(){
+        var btnStart=document.getElementById('btnStart');
+        var btnHelp=document.getElementById('btnHelp');
+        var btnOptions=document.getElementById('btnOptions');
+        var help=document.getElementById('help');
+        var options=document.getElementById('optionsPanel');
+        var btnClose=document.getElementById('btnCloseHelp');
+        var btnCloseOptions=document.getElementById('btnCloseOptions');
+        var btnToggleSound=document.getElementById('btnToggleSound');
+        if(btnStart){ btnStart.addEventListener('click', function(){
+          // Hide home and banner, then start (direct call like Space Battle/Pacman)
+          var h=document.getElementById('home'); if(h){ h.style.display='none'; }
+          try{ hideBanner(); }catch(e){}
+          if(options){ options.style.display='none'; }
+          // Hide game over popup if visible
+          var gameOverPopup = document.getElementById('gameOverPopup');
+          if(gameOverPopup){ gameOverPopup.style.display='none'; }
+          // Show game container (remove hide class in case it was hidden)
+          var gameContainer = document.querySelector('.game');
+          if(gameContainer){ 
+            gameContainer.classList.remove('hide');
+            // Clear any inline display styles that might interfere
+            if(gameContainer.style.display === 'none'){
+              gameContainer.style.display = '';
+            }
+          }
+          // Stop any running game
+          try{
+            if(typeof player !== 'undefined' && player){
+              player.isStart = false;
+            }
+          }catch(e){ console.log('Error stopping game on start:', e); }
+          // Hide instruction screen immediately before starting game
+          var startScreen = document.querySelector('.startScreen');
+          if(startScreen){ 
+            startScreen.classList.add('hide');
+            startScreen.style.display = 'none';
+          }
+          
+          // Directly start the game without showing instructions
+          setTimeout(function(){
+            try{ 
+              // Verify game container is visible
+              var gameContainerCheck = document.querySelector('.game');
+              if(gameContainerCheck && gameContainerCheck.classList.contains('hide')){
+                gameContainerCheck.classList.remove('hide');
+              }
+              
+              // Call Start function directly to avoid showing instructions screen
+              if(typeof Start === 'function'){
+                Start(0); // Start fresh game with score 0
+                console.log('Game started directly from home screen');
+              } else {
+                console.error('Start function not found');
+              }
+            }catch(e){
+              console.error('Error starting game:', e);
+            }
+          }, 50);
+        }); }
+        if(btnHelp){ btnHelp.addEventListener('click', function(){ if(help){ help.style.display='flex'; } }); }
+        if(btnClose){ btnClose.addEventListener('click', function(){ if(help){ help.style.display='none'; } }); }
+        function refreshSoundLabel(){
+          if(!btnToggleSound) return;
+          try{
+            var isOn = window.roadRacerSound && window.roadRacerSound.isEnabled();
+            btnToggleSound.textContent = isOn ? 'Sound: On' : 'Sound: Off';
+          }catch(e){ console.log(e); }
+        }
+        if(btnOptions){
+          btnOptions.addEventListener('click', function(){
+            if(options){ options.style.display='flex'; }
+            refreshSoundLabel();
+          });
+        }
+        if(btnCloseOptions){
+          btnCloseOptions.addEventListener('click', function(){ if(options){ options.style.display='none'; } });
+        }
+        if(btnToggleSound){
+          btnToggleSound.addEventListener('click', function(){
+            try{
+              if(window.roadRacerSound){
+                window.roadRacerSound.toggle();
+                refreshSoundLabel();
+              }
+            }catch(e){ console.log(e); }
+          });
+          refreshSoundLabel();
+        }
+        // Helper to actually go to home screen from game
+        function goToHomeFromGame(){
+          // Hide game over popup
+          var gameOverPopup = document.getElementById('gameOverPopup');
+          if(gameOverPopup){ gameOverPopup.style.display = 'none'; }
+          // Stop the game
+          try{
+            if(typeof player !== 'undefined' && player){
+              player.isStart = false;
+            }
+          }catch(e){ console.log('Error stopping game:', e); }
+          // Hide game container
+          var gameContainer = document.querySelector('.game');
+          if(gameContainer){ gameContainer.classList.add('hide'); }
+          // Reset startScreen to show it when game starts again
+          var startScreen = document.querySelector('.startScreen');
+          if(startScreen){ 
+            startScreen.classList.remove('hide');
+            var clickToStart = document.querySelector('.ClickToStart');
+            if(clickToStart){ clickToStart.textContent = 'Tap here to start the game'; }
+          }
+          // Hide banner
+          try{ hideBanner(); }catch(e){}
+          // Show home screen
+          var home = document.getElementById('home');
+          if(home){ home.style.display = 'flex'; }
+          // Reset game state
+          try{
+            if(typeof window.roadRacerResetGame === 'function'){
+              window.roadRacerResetGame();
+            }
+          }catch(e){ console.log(e); }
+        }
+        // Expose for wrapper to call after midroll closes
+        window.rrnGoToHomeFromGame = goToHomeFromGame;
+
+        function requestGoHomeWithAdIfPossible(){
+          try{
+            // Set flag and show ad
+            window._rrn_pendingNavigation = 'home';
+            window.gmAdsEnabled = true; // Ensure ads are enabled
+            showAd();
+            
+            // Fallback: If ad doesn't show/fail within 1s (e.g. rate limit), force home
+            setTimeout(function(){
+              if(window._rrn_pendingNavigation === 'home'){
+                console.log('Ad timeout/skipped, forcing home navigation');
+                window._rrn_pendingNavigation = null;
+                goToHomeFromGame();
+              }
+            }, 1000);
+            
+            // Note: visible navigation happens in SDK_GAME_START or SDK_ERROR
+          }catch(e){ 
+            console.log('Error requesting home ad:', e); 
+            goToHomeFromGame();
+          }
+        }
+        window.rrnRequestGoHome = requestGoHomeWithAdIfPossible;
+
+        // Go to Home button in game over popup
+        var btnGoToHome = document.getElementById('btnGoToHome');
+        if(btnGoToHome){
+          btnGoToHome.addEventListener('click', function(){
+            requestGoHomeWithAdIfPossible();
+          });
+        }
+
+        // Restart game button in game over popup
+        var btnRestartGame = document.getElementById('btnRestartGame');
+        if(btnRestartGame){
+          btnRestartGame.addEventListener('click', function(){
+            var gameOverPopup = document.getElementById('gameOverPopup');
+            if(gameOverPopup){ gameOverPopup.style.display = 'none'; }
+            try{
+              if(typeof player !== 'undefined' && player){
+                player.isStart = false;
+              }
+            }catch(e){ console.log('Error stopping game before restart:', e); }
+            setTimeout(function(){
+              try{
+                if(typeof Start === 'function'){
+                  Start(0);
+                  console.log('Game restarted from game over popup');
+                }
+              }catch(e){ console.log('Error restarting game:', e); }
+            }, 50);
+          });
+        }
+
+        // SoftRight key => go home flow during gameplay
+        document.addEventListener('keydown', function(evt){
+          if(evt.key === 'SoftRight'){
+            evt.preventDefault();
+            try{
+              if(typeof player !== 'undefined' && player && player.isStart){
+                requestGoHomeWithAdIfPossible();
+                return;
+              }
+            }catch(e){ console.log('Error handling SoftRight:', e); }
+            goToHomeFromGame();
+          }
+        });
+      });
+    })();
+  </script>
+</body>
+
+</html>

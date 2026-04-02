@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Number Merger Infinite</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- GameMonetize SDK Integration -->
+    <script type="text/javascript">
+        window.SDK_OPTIONS = {
+            gameId: "ylbicwd30vva0awbilt3x3ryxjkg5v59", // Your Game ID
+            onEvent: function (a) {
+                switch (a.name) {
+                    case "SDK_GAME_PAUSE":
+                        window.gamePaused = true;
+                        break;
+                    case "SDK_GAME_START":
+                        window.gamePaused = false;
+                        if(window.pendingAdReward) {
+                            window.pendingAdReward();
+                            window.pendingAdReward = null;
+                        }
+                        break;
+                    case "SDK_READY":
+                        console.log("SDK Ready");
+                        break;
+                }
+            }
+        };
+        (function (a, b, c) {
+            var d = a.getElementsByTagName(b)[0];
+            a.getElementById(c) || (a = a.createElement(b), a.id = c, 
+            a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+        })(document, "script", "gamemonetize-sdk");
+    </script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap');
+
+        :root {
+            --bg-color: #0f172a;
+            --panel-bg: #1e293b;
+            --accent: #3b82f6;
+        }
+
+        body {
+            background-color: #000;
+            color: white;
+            font-family: 'Fredoka', sans-serif;
+            margin: 0; padding: 0;
+            width: 100vw; height: 100vh;
+            display: flex; align-items: center; justify-content: center;
+            overflow: hidden;
+            touch-action: none;
+            user-select: none; -webkit-user-select: none;
+        }
+
+        /* --- SCALER CONTAINER (800x600 Ratio) --- */
+        #game-root {
+            width: 800px;
+            height: 600px;
+            background: var(--bg-color);
+            position: relative;
+            overflow: hidden;
+            display: flex; flex-direction: column;
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+        }
+
+        /* --- ZONES --- */
+        .header-zone {
+            height: 70px;
+            background: var(--panel-bg);
+            border-bottom: 2px solid #334155;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 20px; z-index: 20;
+        }
+
+        .main-zone {
+            flex: 1;
+            position: relative;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .controls-panel {
+            position: absolute;
+            bottom: 0; left: 0; width: 100%;
+            height: 280px; /* Expanded Height */
+            background: var(--panel-bg);
+            border-top: 4px solid #334155;
+            border-radius: 20px 20px 0 0;
+            z-index: 30;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex; flex-direction: column;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
+        }
+
+        /* COLLAPSED STATE */
+        .controls-panel.collapsed {
+            transform: translateY(252px); 
+        }
+
+        .controls-panel.collapsed .panel-handle svg {
+            transform: rotate(180deg);
+        }
+
+        .panel-handle {
+            width: 100%; height: 24px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            color: #64748b;
+        }
+        .panel-handle svg { transition: transform 0.3s ease; }
+        .panel-handle:hover { color: white; background: rgba(255,255,255,0.05); }
+
+        /* --- GAME BOARD --- */
+        .board-container {
+            width: 400px; height: 400px; /* Fixed size within 800x600 */
+            background: #334155;
+            border-radius: 12px;
+            padding: 8px;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 6px;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
+            margin-bottom: 20px;
+        }
+
+        .cell {
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            position: relative;
+        }
+
+        .num-block {
+            width: 100%; height: 100%;
+            position: absolute; top: 0; left: 0;
+            border-radius: 6px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; color: white;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+            box-shadow: inset 0 2px 0 rgba(255,255,255,0.3), 0 3px 0 rgba(0,0,0,0.2);
+            cursor: grab;
+            transition: transform 0.1s;
+            z-index: 10;
+        }
+        .num-block.dragging { transform: scale(0.8); z-index: 100; opacity: 0.9; }
+
+        /* --- UI ELEMENTS --- */
+        .btn-action {
+            background: linear-gradient(to bottom, #3b82f6, #2563eb);
+            border-bottom: 4px solid #1e40af;
+        }
+        .btn-action:active { transform: translateY(3px); border-bottom-width: 0; }
+        
+        .btn-ad {
+            background: linear-gradient(to bottom, #a855f7, #9333ea);
+            border-bottom: 4px solid #6b21a8;
+        }
+
+        .tab-btn { color: #94a3b8; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .tab-btn.active { color: white; background: rgba(255,255,255,0.1); border-radius: 6px; }
+
+        .scroll-area::-webkit-scrollbar { width: 6px; }
+        .scroll-area::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+
+        .floating-text {
+            position: absolute; pointer-events: none;
+            color: #4ade80; font-weight: 900; z-index: 99;
+            animation: floatUp 1s forwards; text-shadow: 0 2px 0 black;
+        }
+        @keyframes floatUp { to { transform: translateY(-80px); opacity: 0; } }
+
+        /* --- TIME FLUX UI --- */
+        .flux-bar {
+            position: absolute; top: 80px; left: 20px;
+            background: rgba(0,0,0,0.5); padding: 8px; border-radius: 8px;
+            display: flex; flex-direction: column; gap: 4px;
+            border: 1px solid #06b6d4; z-index: 15;
+            width: 160px;
+        }
+
+        /* --- CUSTOM MODAL --- */
+        #custom-modal {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 999;
+            display: none; align-items: center; justify-content: center;
+        }
+        .modal-content {
+            background: #1e293b; width: 80%; max-width: 400px;
+            padding: 20px; border-radius: 16px; border: 2px solid #475569;
+            text-align: center; box-shadow: 0 10px 50px black;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="game-root">
+        
+        <!-- Header -->
+        <div class="header-zone">
+            <div class="flex items-center gap-4">
+                <div>
+                    <div class="text-[10px] text-slate-400 font-bold">CASH</div>
+                    <div class="text-xl font-bold text-white leading-none" id="money-display">$0</div>
+                </div>
+                <div class="hidden" id="boost-indicator">
+                    <span class="text-[10px] bg-green-500 px-1 rounded font-bold">2X ACTIVE</span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4 text-right">
+                <div onclick="toggleFullScreen()" class="cursor-pointer hover:text-white text-slate-400">
+                    <i data-lucide="maximize" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <div class="text-[10px] text-slate-400 font-bold">GEMS</div>
+                    <div class="text-lg font-bold text-pink-400 leading-none" id="gems-display">0 💎</div>
+                </div>
+                <div>
+                    <div class="text-[10px] text-slate-400 font-bold">CROWNS</div>
+                    <div class="text-lg font-bold text-yellow-400 leading-none" id="crowns-display">0 👑</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Time Flux Widget -->
+        <div class="flux-bar">
+            <div class="flex justify-between text-[10px] font-bold text-cyan-400">
+                <span>TIME FLUX</span>
+                <span id="flux-amount">0s</span>
+            </div>
+            <div class="w-full bg-black h-2 rounded-full overflow-hidden">
+                <div id="flux-fill" class="h-full bg-cyan-500 w-0"></div>
+            </div>
+            <div class="flex gap-1 mt-1">
+                <input type="number" id="flux-speed-input" value="10" min="2" max="100" class="w-10 bg-black text-white text-xs text-center rounded border border-cyan-800">
+                <button onclick="toggleFlux()" id="flux-btn" class="flex-1 bg-cyan-700 hover:bg-cyan-600 text-[10px] font-bold rounded text-white py-1">
+                    ENABLE 10x
+                </button>
+            </div>
+            <div class="text-[9px] text-slate-400 text-center" id="flux-cost">Cost: 9s / sec</div>
+        </div>
+
+        <!-- Main Game Zone -->
+        <div class="main-zone">
+            
+            <!-- Ad Button -->
+            <button id="ad-btn" onclick="watchAd()" class="absolute top-4 right-4 btn-ad px-3 py-2 rounded-lg text-xs font-bold text-white flex items-center gap-2 z-10 shadow-lg">
+                <i data-lucide="video" class="w-4 h-4"></i>
+                <div class="text-left leading-tight">
+                    <div>+5 💎 & 2X CASH</div>
+                    <div class="text-[9px] opacity-80" id="ad-timer-text">Ready</div>
+                </div>
+            </button>
+
+            <!-- Board -->
+            <div>
+                <div id="grid-container" class="board-container"></div>
+                
+                <div class="flex justify-center">
+                    <button id="spawn-btn" class="btn-action px-8 py-3 rounded-xl font-bold text-lg flex items-center gap-2 shadow-xl z-10 w-64 justify-center text-white">
+                        <i data-lucide="plus" class="w-5 h-5"></i> SPAWN
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Collapsible Controls (Default Collapsed) -->
+        <div class="controls-panel collapsed" id="bottom-panel">
+            <div class="panel-handle" onclick="togglePanel()">
+                <i data-lucide="chevron-down" id="panel-icon" class="w-6 h-6"></i>
+            </div>
+            
+            <!-- Tabs -->
+            <div class="flex px-2 pb-2 gap-1 border-b border-slate-700">
+                <button onclick="setTab('upgrades')" class="flex-1 py-2 tab-btn active" id="btn-upgrades">Upgrades</button>
+                <button onclick="setTab('ascension')" class="flex-1 py-2 tab-btn" id="btn-ascension">Ascend</button>
+                <button onclick="setTab('gems')" class="flex-1 py-2 tab-btn text-pink-400" id="btn-gems">Gems</button>
+                <button onclick="setTab('stats')" class="flex-1 py-2 tab-btn" id="btn-stats">Stats</button>
+                <button onclick="setTab('settings')" class="flex-1 py-2 tab-btn" id="btn-settings">System</button>
+            </div>
+
+            <!-- Content Area -->
+            <div class="flex-1 overflow-y-auto scroll-area p-4 bg-slate-900 relative">
+                
+                <!-- UPGRADES -->
+                <div id="tab-upgrades" class="tab-content space-y-2"></div>
+
+                <!-- ASCENSION -->
+                <div id="tab-ascension" class="tab-content hidden text-center space-y-3">
+                    <div class="bg-yellow-900/20 p-3 rounded border border-yellow-600/30 flex justify-between items-center">
+                        <div class="text-left">
+                            <div class="text-xs text-slate-400">Prestige Bonus</div>
+                            <div class="text-lg font-bold text-yellow-400">+<span id="pending-crowns">0</span> 👑</div>
+                        </div>
+                        <button onclick="doPrestige()" class="bg-yellow-600 px-4 py-2 rounded font-bold text-sm text-white hover:bg-yellow-500">ASCEND</button>
+                    </div>
+                    <div id="ascension-list" class="space-y-2"></div>
+                </div>
+
+                <!-- GEMS -->
+                <div id="tab-gems" class="tab-content hidden space-y-2">
+                    <div class="text-[10px] text-center text-slate-500">Gems persist through resets.</div>
+                    <div id="gem-list" class="space-y-2"></div>
+                </div>
+
+                <!-- STATS -->
+                <div id="tab-stats" class="tab-content hidden space-y-2 text-sm">
+                    <div class="flex justify-between bg-slate-800 p-2 rounded"><span>Highest Number</span> <span id="stat-high" class="text-blue-400 font-bold">0</span></div>
+                    <div class="flex justify-between bg-slate-800 p-2 rounded"><span>Total Merges</span> <span id="stat-merges" class="text-green-400 font-bold">0</span></div>
+                    <div class="flex justify-between bg-slate-800 p-2 rounded"><span>Lifetime Cash</span> <span id="stat-earnings" class="text-yellow-400 font-bold">0</span></div>
+                </div>
+
+                <!-- SETTINGS -->
+                <div id="tab-settings" class="tab-content hidden text-center p-4">
+                    <button onclick="wipeSave()" class="bg-red-900/50 border border-red-500 text-red-200 px-6 py-3 rounded font-bold hover:bg-red-800 w-full mb-2">
+                        WIPE SAVE DATA
+                    </button>
+                    <p class="text-[10px] text-slate-600">Game Version 2.3 - Economy Nerf</p>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Custom Modal -->
+        <div id="custom-modal">
+            <div class="modal-content">
+                <h2 id="modal-title" class="text-xl font-bold text-white mb-2">Alert</h2>
+                <p id="modal-msg" class="text-slate-300 mb-6 text-sm">Message</p>
+                <div class="flex gap-2 justify-center" id="modal-actions">
+                    <button onclick="closeModal()" class="bg-blue-600 text-white px-4 py-2 rounded font-bold">OK</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Drag Ghost -->
+    <div id="drag-ghost" class="fixed pointer-events-none z-[999] hidden num-block" style="width:70px; height:70px;"></div>
+
+    <script>
+        // --- SCALER LOGIC ---
+        function scaleGame() {
+            const root = document.getElementById('game-root');
+            const winW = window.innerWidth;
+            const winH = window.innerHeight;
+            const scale = Math.min(winW / 800, winH / 600);
+            root.style.transform = `scale(${scale})`;
+        }
+        window.addEventListener('resize', scaleGame);
+        setTimeout(scaleGame, 100);
+
+        // --- CONFIG ---
+        const GRID_SIZE = 25;
+        const MAX_NUMBER = 99999; 
+
+        // --- STATE ---
+        const DEFAULT_STATE = {
+            money: 0, gems: 0, crowns: 0,
+            grid: Array(GRID_SIZE).fill(null),
+            flux: 0, fluxCap: 3600, 
+            upgrades: { spawnRate: 0, spawnLevel: 1, autoMerge: 0 },
+            ascension: { startLevel: 0, incomeMult: 0, crownBonus: 0 },
+            permBoosts: { speed: 0, fluxStorage: 0 },
+            stats: { highest: 0, merges: 0, lifetime: 0 },
+            boosts: { doubleUntil: 0, adCooldown: 0 },
+            lastSave: Date.now()
+        };
+        const STATE = JSON.parse(JSON.stringify(DEFAULT_STATE));
+        let isFluxActive = false;
+        let fluxSpeedTarget = 10;
+
+        // --- DEFINITIONS ---
+        const UPGRADES = {
+            spawnRate: { name: "Fabricator", base: 50, mult: 1.6, max: 30, desc: "Faster spawns" },
+            spawnLevel: { name: "Base Level", base: 200, mult: 2.5, max: Infinity, desc: "Higher starting nums" }, // INFINITE MAX
+            autoMerge: { name: "Auto-Merger", base: 1000, mult: 2.2, max: 10, desc: "Combines automatically" }
+        };
+        const ASCENSION = {
+            startLevel: { name: "Head Start", base: 5, mult: 2, max: 20, desc: "+1 Start Level" },
+            incomeMult: { name: "Tax Rate", base: 10, mult: 1.5, max: 100, desc: "+25% Income" },
+            crownBonus: { name: "Nobility", base: 50, mult: 2, max: 10, desc: "+10% Crown Gain" }
+        };
+        const GEMS = {
+            speed: { name: "Global Speed", cost: 20, max: 10, desc: "Perm 10% faster" },
+            fluxStorage: { name: "Flux Tank", cost: 10, max: 10, desc: "+1 Hour Capacity" }
+        };
+
+        // --- ENGINE ---
+        let lastTick = 0;
+        let lastAutoSpawn = 0;
+        let lastAutoMerge = 0;
+        let modalCallback = null;
+
+        function init() {
+            lucide.createIcons();
+            loadGame();
+            checkOfflineProgress();
+            
+            renderGrid();
+            renderUpgrades();
+            renderAscension();
+            renderGems();
+            updateFluxUI();
+            
+            requestAnimationFrame(loop);
+            
+            setInterval(() => {
+                const now = Date.now();
+                const btn = document.getElementById('ad-btn');
+                if (now < STATE.boosts.adCooldown) {
+                    btn.disabled = true;
+                    document.getElementById('ad-timer-text').innerText = Math.ceil((STATE.boosts.adCooldown - now)/1000) + 's';
+                } else {
+                    btn.disabled = false;
+                    document.getElementById('ad-timer-text').innerText = "Ready";
+                }
+                
+                if (now < STATE.boosts.doubleUntil) {
+                    document.getElementById('boost-indicator').classList.remove('hidden');
+                } else {
+                    document.getElementById('boost-indicator').classList.add('hidden');
+                }
+            }, 1000);
+        }
+
+        function checkOfflineProgress() {
+            const now = Date.now();
+            const diffSeconds = Math.floor((now - STATE.lastSave) / 1000);
+            if (diffSeconds >= 600) {
+                const cap = getFluxCap();
+                const gain = Math.min(diffSeconds, cap - STATE.flux);
+                if (gain > 0) {
+                    STATE.flux += gain;
+                    showAlert("Welcome Back!", `You were gone for ${Math.floor(diffSeconds/60)} mins.\nGained ${formatTime(gain)} of Time Flux.`);
+                }
+            }
+        }
+
+        function loop() {
+            const now = Date.now();
+            let dt = (now - lastTick) / 1000;
+            if (dt > 1) dt = 1; 
+            
+            let timeMult = 1.0;
+            
+            if (isFluxActive) {
+                const speed = Math.max(2, parseInt(document.getElementById('flux-speed-input').value) || 10);
+                fluxSpeedTarget = speed;
+                const costPerSec = speed - 1;
+                const cost = costPerSec * dt;
+                
+                if (STATE.flux >= cost) {
+                    STATE.flux -= cost;
+                    timeMult = speed;
+                    document.getElementById('flux-cost').innerText = `Cost: ${costPerSec}s / sec`;
+                } else {
+                    isFluxActive = false;
+                    toggleFluxUI(false);
+                }
+                updateFluxUI();
+            }
+
+            timeMult *= (1 + (STATE.permBoosts.speed || 0) * 0.1);
+            const gameDt = dt * timeMult;
+
+            if (STATE.upgrades.spawnRate > 0) {
+                const rate = 4 / (1 + STATE.upgrades.spawnRate * 0.2); 
+                if (now - lastAutoSpawn > (rate * 1000) / timeMult) {
+                    spawnNumber();
+                    lastAutoSpawn = now;
+                }
+            }
+
+            if (STATE.upgrades.autoMerge > 0) {
+                const rate = 3 / (1 + STATE.upgrades.autoMerge * 0.3);
+                if (now - lastAutoMerge > (rate * 1000) / timeMult) {
+                    autoMerge();
+                    lastAutoMerge = now;
+                }
+            }
+
+            let mps = calculateMPS();
+            if (mps > 0) {
+                addMoney(mps * gameDt); 
+            }
+
+            if (Math.random() < 0.1) updateUI();
+
+            if (now - STATE.lastSave > 5000) saveGame();
+            lastTick = now;
+            
+            requestAnimationFrame(loop);
+        }
+
+        // --- FLUX UTILS ---
+        function getFluxCap() {
+            return 3600 + ((STATE.permBoosts.fluxStorage || 0) * 3600);
+        }
+
+        function toggleFlux() {
+            isFluxActive = !isFluxActive;
+            toggleFluxUI(isFluxActive);
+        }
+
+        function toggleFluxUI(active) {
+            const btn = document.getElementById('flux-btn');
+            const inp = document.getElementById('flux-speed-input');
+            if (active) {
+                btn.innerText = "STOP";
+                btn.classList.add('bg-red-600', 'hover:bg-red-500');
+                btn.classList.remove('bg-cyan-700', 'hover:bg-cyan-600');
+                inp.disabled = true;
+            } else {
+                const val = inp.value;
+                btn.innerText = `ENABLE ${val}x`;
+                btn.classList.remove('bg-red-600', 'hover:bg-red-500');
+                btn.classList.add('bg-cyan-700', 'hover:bg-cyan-600');
+                inp.disabled = false;
+            }
+        }
+
+        function updateFluxUI() {
+            document.getElementById('flux-amount').innerText = formatTime(STATE.flux);
+            const pct = (STATE.flux / getFluxCap()) * 100;
+            document.getElementById('flux-fill').style.width = pct + '%';
+        }
+
+        function formatTime(sec) {
+            if (sec < 60) return Math.floor(sec) + 's';
+            if (sec < 3600) return Math.floor(sec/60) + 'm';
+            return (sec/3600).toFixed(1) + 'h';
+        }
+
+        // --- CORE LOGIC & MATH BALANCE ---
+        function calculateMPS() {
+            let total = 0;
+            STATE.grid.forEach(n => { if(n) total += getIncome(n); });
+            if (Date.now() < STATE.boosts.doubleUntil) total *= 2;
+            total *= (1 + ((STATE.ascension.incomeMult||0) * 0.25));
+            total *= (1 + (STATE.crowns * 0.1));
+            return total;
+        }
+
+        // BALANCED FORMULA: 
+        // Was n^4.5 (too steep). 
+        // New: n^3.8. Smoother curve, less inflation.
+        function getIncome(n) { 
+            if (n < 1) return 0;
+            if (n === 1) return 0.1; // Small drip for 1s
+            return Math.pow(n, 3.8); 
+        }
+        
+        function getValue(n) { 
+            // Merge Reward (Was ^5)
+            return Math.pow(n, 4.0);
+        }
+
+        function addMoney(amt) {
+            STATE.money += amt;
+            STATE.stats.lifetime += amt;
+        }
+
+        function spawnNumber() {
+            const idx = STATE.grid.findIndex(c => c === null);
+            if (idx === -1) return;
+            let lvl = (STATE.upgrades.spawnLevel||1) + (STATE.ascension.startLevel||0);
+            STATE.grid[idx] = lvl;
+            renderCell(idx, true);
+        }
+
+        function merge(from, to) {
+            const v1 = STATE.grid[from];
+            const v2 = STATE.grid[to];
+            if (v1 && v2 && v1 === v2 && v1 < MAX_NUMBER) {
+                const next = v1 + 1;
+                STATE.grid[to] = next;
+                STATE.grid[from] = null;
+                if(next > STATE.stats.highest) STATE.stats.highest = next;
+                STATE.stats.merges++;
+                
+                const val = getValue(next);
+                addMoney(val);
+                showFloat(val, document.getElementById(`c-${to}`));
+                
+                renderCell(from);
+                renderCell(to);
+            } else {
+                STATE.grid[from] = v2;
+                STATE.grid[to] = v1;
+                renderCell(from);
+                renderCell(to);
+            }
+        }
+
+        function autoMerge() {
+            for(let i=0; i<GRID_SIZE; i++) {
+                if(!STATE.grid[i]) continue;
+                for(let j=i+1; j<GRID_SIZE; j++) {
+                    if(STATE.grid[j] === STATE.grid[i]) {
+                        merge(j, i);
+                        return;
+                    }
+                }
+            }
+        }
+
+        // --- PRESTIGE ---
+        function calculatePendingCrowns() {
+            if (STATE.stats.lifetime < 1000000) return 0;
+            // Adjusted for new math scale
+            let c = Math.floor(Math.pow(STATE.stats.lifetime / 1000000, 0.25)); 
+            c = Math.floor(c * (1 + (STATE.ascension.crownBonus||0) * 0.1));
+            return c;
+        }
+
+        function doPrestige() {
+            const pending = calculatePendingCrowns();
+            if (pending <= 0) return;
+            showConfirm(`Ascend and earn ${pending} Crowns?`, () => {
+                STATE.crowns += pending;
+                STATE.money = 0;
+                STATE.stats.lifetime = 0;
+                STATE.grid = Array(GRID_SIZE).fill(null);
+                STATE.upgrades = JSON.parse(JSON.stringify(DEFAULT_STATE.upgrades));
+                saveGame();
+                location.reload();
+            });
+        }
+
+        // --- RENDERING ---
+        function renderGrid() {
+            const c = document.getElementById('grid-container');
+            c.innerHTML = '';
+            for(let i=0; i<GRID_SIZE; i++) {
+                const d = document.createElement('div');
+                d.className = 'cell'; d.id = `c-${i}`; d.dataset.idx = i;
+                c.appendChild(d);
+                renderCell(i);
+            }
+        }
+
+        function renderCell(i, anim=false) {
+            const el = document.getElementById(`c-${i}`);
+            const val = STATE.grid[i];
+            el.innerHTML = '';
+            if (val) {
+                const d = document.createElement('div');
+                d.className = 'num-block';
+                // Better coloring for high numbers
+                const hue = (200 + (val * 15)) % 360;
+                d.style.backgroundColor = `hsl(${hue}, 70%, 55%)`;
+                d.innerText = val;
+                
+                // Adjusted Font Sizing for 99999
+                if (val > 99999) d.style.fontSize = '10px';
+                else if (val > 9999) d.style.fontSize = '12px';
+                else if (val > 999) d.style.fontSize = '16px';
+                else d.style.fontSize = '20px';
+
+                if(anim) d.animate([{transform:'scale(0)'}, {transform:'scale(1)'}], 200);
+                
+                d.addEventListener('mousedown', dragStart);
+                d.addEventListener('touchstart', dragStart, {passive:false});
+                el.appendChild(d);
+            }
+        }
+
+        function renderUpgrades() {
+            const c = document.getElementById('tab-upgrades');
+            c.innerHTML = '';
+            renderList(c, UPGRADES, STATE.upgrades, 'buyUpgrade', '$');
+        }
+        function renderAscension() {
+            const c = document.getElementById('ascension-list');
+            c.innerHTML = '';
+            renderList(c, ASCENSION, STATE.ascension, 'buyAscension', '👑');
+        }
+        function renderGems() {
+            const c = document.getElementById('gem-list');
+            c.innerHTML = '';
+            
+            Object.keys(GEMS).forEach(k => {
+                const u = GEMS[k];
+                const lvl = STATE.permBoosts[k] || 0;
+                const cost = u.cost * (lvl + 1);
+                const maxed = lvl >= u.max;
+                
+                c.innerHTML += `
+                    <div class="bg-pink-900/20 p-2 rounded flex justify-between items-center border border-pink-700/30">
+                        <div>
+                            <div class="font-bold text-sm text-pink-200">${u.name} <span class="text-xs text-white">Lvl ${lvl}</span></div>
+                            <div class="text-[10px] text-slate-400">${u.desc}</div>
+                        </div>
+                        <button onclick="buyGem('${k}')" ${maxed ? 'disabled' : ''} class="bg-pink-600 px-3 py-1 rounded text-xs font-bold hover:bg-pink-500 disabled:opacity-50 text-white">
+                            ${maxed ? 'MAX' : cost + ' 💎'}
+                        </button>
+                    </div>
+                `;
+            });
+            c.innerHTML += `
+                <div class="bg-cyan-900/20 p-2 rounded flex justify-between items-center border border-cyan-700/30">
+                    <div>
+                        <div class="font-bold text-sm text-cyan-200">1 Hour Flux</div>
+                        <div class="text-[10px] text-slate-400">Fill your tank instantly</div>
+                    </div>
+                    <button onclick="buyFlux()" class="bg-cyan-600 px-3 py-1 rounded text-xs font-bold hover:bg-cyan-500 text-white">
+                        5 💎
+                    </button>
+                </div>
+            `;
+        }
+
+        function renderList(container, defs, stateObj, funcName, currencySym) {
+            Object.keys(defs).forEach(k => {
+                const u = defs[k];
+                const lvl = stateObj[k];
+                const cost = Math.floor(u.base * Math.pow(u.mult, lvl));
+                const maxed = lvl >= u.max && u.max !== Infinity; // Handle Infinite Max
+                
+                container.innerHTML += `
+                    <div class="bg-slate-800 p-2 rounded flex justify-between items-center border border-slate-700">
+                        <div>
+                            <div class="font-bold text-sm text-slate-200">${u.name} <span class="text-blue-400 text-xs">Lvl ${lvl}</span></div>
+                            <div class="text-[10px] text-slate-500">${u.desc}</div>
+                        </div>
+                        <button onclick="${funcName}('${k}')" ${maxed?'disabled':''} class="bg-blue-600 px-3 py-1 rounded text-xs font-bold hover:bg-blue-500 disabled:opacity-50 disabled:bg-slate-600 text-white">
+                            ${maxed ? 'MAX' : currencySym + format(cost)}
+                        </button>
+                    </div>
+                `;
+            });
+        }
+
+        function updateUI() {
+            document.getElementById('money-display').innerText = '$'+format(STATE.money);
+            document.getElementById('gems-display').innerText = STATE.gems + ' 💎';
+            document.getElementById('crowns-display').innerText = STATE.crowns + ' 👑';
+            
+            document.getElementById('stat-high').innerText = STATE.stats.highest;
+            document.getElementById('stat-merges').innerText = STATE.stats.merges;
+            document.getElementById('stat-earnings').innerText = '$'+format(STATE.stats.lifetime);
+            
+            document.getElementById('pending-crowns').innerText = calculatePendingCrowns();
+
+            const c1 = document.getElementById('tab-upgrades');
+            if (!c1.classList.contains('hidden')) renderUpgrades();
+        }
+
+        // --- BUYING ---
+        function buyUpgrade(k) {
+            const u = UPGRADES[k];
+            const lvl = STATE.upgrades[k];
+            if (u.max !== Infinity && lvl >= u.max) return;
+            const cost = Math.floor(u.base * Math.pow(u.mult, lvl));
+            if (STATE.money >= cost) {
+                STATE.money -= cost;
+                STATE.upgrades[k]++;
+                if (k === 'spawnLevel') upgradeGridToMin();
+                renderUpgrades();
+                updateUI();
+                saveGame();
+            }
+        }
+        function buyAscension(k) {
+            const u = ASCENSION[k];
+            const lvl = STATE.ascension[k];
+            if (u.max !== Infinity && lvl >= u.max) return;
+            const cost = Math.floor(u.base * Math.pow(u.mult, lvl));
+            if (STATE.crowns >= cost) {
+                STATE.crowns -= cost;
+                STATE.ascension[k]++;
+                if (k === 'startLevel') upgradeGridToMin();
+                renderAscension();
+                updateUI();
+                saveGame();
+            }
+        }
+        
+        function upgradeGridToMin() {
+            const minLvl = (STATE.upgrades.spawnLevel || 1) + (STATE.ascension.startLevel || 0);
+            for(let i=0; i<GRID_SIZE; i++) {
+                if (STATE.grid[i] !== null && STATE.grid[i] < minLvl) {
+                    STATE.grid[i] = minLvl;
+                    renderCell(i, true);
+                }
+            }
+        }
+
+        function buyGem(k) {
+            const u = GEMS[k];
+            const lvl = STATE.permBoosts[k] || 0;
+            const cost = u.cost * (lvl + 1);
+            if (STATE.gems >= cost && lvl < u.max) {
+                STATE.gems -= cost;
+                STATE.permBoosts[k] = lvl + 1;
+                renderGems();
+                updateFluxUI(); 
+                updateUI();
+                saveGame();
+            }
+        }
+        function buyFlux() {
+            if (STATE.gems >= 5) {
+                STATE.gems -= 5;
+                STATE.flux = Math.min(STATE.flux + 3600, getFluxCap());
+                updateFluxUI();
+                updateUI();
+                saveGame();
+                showAlert("Purchase Successful", "Added 1 Hour of Time Flux!");
+            }
+        }
+
+        // --- AD WATCH ---
+        function watchAd() {
+            if (Date.now() < STATE.boosts.adCooldown) return;
+            
+            // 1. Define Reward Callback
+            window.pendingAdReward = () => {
+                STATE.gems += 5;
+                STATE.boosts.doubleUntil = Date.now() + 300000;
+                STATE.boosts.adCooldown = Date.now() + 60000;
+                updateUI();
+                saveGame();
+                showAlert("Ad Bonus", "You received 5 Gems and 2x Income for 5 mins!");
+            };
+
+            // 2. Check SDK availability and call showBanner
+            if (typeof sdk !== 'undefined' && typeof sdk.showBanner === 'function') {
+                sdk.showBanner();
+            } else {
+                // Fallback for development/no SDK loaded
+                console.warn("SDK not available. Simulating success for logic testing.");
+                setTimeout(() => {
+                    if (window.SDK_OPTIONS && window.SDK_OPTIONS.onEvent) {
+                        window.SDK_OPTIONS.onEvent({ name: 'SDK_GAME_START' });
+                    }
+                }, 1000);
+            }
+        }
+
+        // --- UTILS ---
+        function format(n) {
+            if (n < 1000) return Math.floor(n);
+            const s = ["", "k", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc", "Ud", "Dd", "Td", "Qad", "Qid", "Sxd", "Spd", "Ocd", "Nod", "Vg"];
+            const i = Math.floor(Math.log10(n) / 3);
+            if(i >= s.length) return n.toExponential(2);
+            return (n / Math.pow(1000, i)).toFixed(2) + s[i];
+        }
+
+        function setTab(id) {
+            document.querySelectorAll('.tab-content').forEach(e => e.classList.add('hidden'));
+            document.getElementById('tab-'+id).classList.remove('hidden');
+            document.querySelectorAll('.tab-btn').forEach(e => e.classList.remove('active'));
+            document.getElementById('btn-'+id).classList.add('active');
+        }
+
+        function togglePanel() {
+            const p = document.getElementById('bottom-panel');
+            const i = document.getElementById('panel-icon');
+            p.classList.toggle('collapsed');
+        }
+
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.getElementById('game-root').requestFullscreen().catch(e => {
+                    alert(`Error attempting to enable full-screen mode: ${e.message} (${e.name})`);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        // --- CUSTOM MODAL ---
+        function showAlert(title, msg) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-msg').innerText = msg;
+            document.getElementById('modal-actions').innerHTML = `<button onclick="closeModal()" class="bg-blue-600 text-white px-6 py-2 rounded font-bold hover:bg-blue-500">OK</button>`;
+            document.getElementById('custom-modal').style.display = 'flex';
+        }
+        function showConfirm(msg, callback) {
+            document.getElementById('modal-title').innerText = "Confirm";
+            document.getElementById('modal-msg').innerText = msg;
+            modalCallback = callback;
+            document.getElementById('modal-actions').innerHTML = `
+                <button onclick="closeModal()" class="bg-slate-600 text-white px-4 py-2 rounded font-bold hover:bg-slate-500">Cancel</button>
+                <button onclick="confirmAction()" class="bg-red-600 text-white px-4 py-2 rounded font-bold hover:bg-red-500">Confirm</button>
+            `;
+            document.getElementById('custom-modal').style.display = 'flex';
+        }
+        function confirmAction() {
+            if(modalCallback) modalCallback();
+            closeModal();
+        }
+        function closeModal() {
+            document.getElementById('custom-modal').style.display = 'none';
+            modalCallback = null;
+        }
+
+        function showFloat(val, el) {
+            if(!el) return;
+            const r = el.getBoundingClientRect();
+            const root = document.getElementById('game-root').getBoundingClientRect();
+            const div = document.createElement('div');
+            div.className = 'floating-text';
+            div.innerText = "+$" + format(val);
+            div.style.left = (r.left - root.left + 10) + 'px';
+            div.style.top = (r.top - root.top) + 'px';
+            document.getElementById('game-root').appendChild(div);
+            setTimeout(()=>div.remove(), 1000);
+        }
+
+        // --- SAVE SYSTEM ---
+        function saveGame() {
+            STATE.lastSave = Date.now();
+            localStorage.setItem('NumMergeFluxSave', JSON.stringify(STATE));
+        }
+        function loadGame() {
+            const s = localStorage.getItem('NumMergeFluxSave');
+            if(s) {
+                try {
+                    const parsed = JSON.parse(s);
+                    if (isNaN(parsed.money)) parsed.money = 0;
+                    if (isNaN(parsed.gems)) parsed.gems = 0;
+                    Object.assign(STATE, parsed);
+                    if (STATE.grid.length !== GRID_SIZE) STATE.grid = Array(GRID_SIZE).fill(null);
+                    if(!STATE.permBoosts) STATE.permBoosts = {};
+                } catch(e) { console.log("Save corrupted, reset"); }
+            }
+        }
+        function wipeSave() {
+            showConfirm("Delete all progress forever?", () => {
+                localStorage.removeItem('NumMergeFluxSave');
+                location.reload();
+            });
+        }
+
+        // --- DRAG ---
+        let dragSrc = null;
+        let ghost = document.getElementById('drag-ghost');
+        
+        function dragStart(e) {
+            e.preventDefault();
+            const t = e.target.closest('.num-block');
+            if(!t) return;
+            dragSrc = parseInt(t.parentElement.dataset.idx);
+            
+            ghost.innerText = t.innerText;
+            ghost.style.backgroundColor = t.style.backgroundColor;
+            ghost.style.display = 'flex';
+            t.classList.add('dragging');
+
+            const touch = e.touches ? e.touches[0] : e;
+            moveGhost(touch.clientX, touch.clientY);
+            
+            window.addEventListener('mousemove', dragMove);
+            window.addEventListener('touchmove', dragMove, {passive:false});
+            window.addEventListener('mouseup', dragEnd);
+            window.addEventListener('touchend', dragEnd);
+        }
+        function dragMove(e) {
+            const t = e.touches ? e.touches[0] : e;
+            moveGhost(t.clientX, t.clientY);
+        }
+        function moveGhost(x, y) {
+            ghost.style.left = (x - 35) + 'px';
+            ghost.style.top = (y - 35) + 'px';
+        }
+        function dragEnd(e) {
+            window.removeEventListener('mousemove', dragMove);
+            window.removeEventListener('touchmove', dragMove);
+            window.removeEventListener('mouseup', dragEnd);
+            window.removeEventListener('touchend', dragEnd);
+            
+            ghost.style.display = 'none';
+            const srcEl = document.querySelector('.num-block.dragging');
+            if(srcEl) srcEl.classList.remove('dragging');
+
+            const t = e.changedTouches ? e.changedTouches[0] : e;
+            const el = document.elementFromPoint(t.clientX, t.clientY);
+            const cell = el ? el.closest('.cell') : null;
+            
+            if(cell) {
+                const targetIdx = parseInt(cell.dataset.idx);
+                if(targetIdx !== dragSrc) merge(dragSrc, targetIdx);
+            }
+            dragSrc = null;
+        }
+
+        document.getElementById('spawn-btn').onclick = () => spawnNumber();
+        init();
+
+    </script>
+</body>
+</html>

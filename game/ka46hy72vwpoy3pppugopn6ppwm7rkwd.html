@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <title>Water Sort Master</title>
+    <meta name="description" content="Water Sort Master - A relaxing and challenging puzzle game with multiple modes including Classic, Time Trial, and Mystery. Sort the colors to win!" />
+    <!-- The `react-native-web` recommended style reset: https://necolas.github.io/react-native-web/docs/setup/#root-element -->
+    <style id="expo-reset">
+      /* These styles make the body full-height */
+      html,
+      body {
+        height: 100%;
+      }
+      /* These styles disable body scrolling if you are using <ScrollView> */
+      body {
+        overflow: hidden;
+        background-color: #1f2937;
+        /* Prevent text selection and touch gestures that might interfere with game controls */
+        touch-action: none;
+        -webkit-user-select: none;
+        user-select: none;
+      }
+      /* These styles make the root element full-height */
+      #root {
+        display: flex;
+        height: 100%;
+        flex: 1;
+      }
+    </style>
+  <link rel="icon" href="./favicon.ico" /></head>
+
+  <body>
+    <!-- Use static rendering with Expo Router to support running without JavaScript. -->
+    <noscript>
+      You need to enable JavaScript to run this app.
+    </noscript>
+    <!-- The root element for your Expo app. -->
+    <div id="root"></div>
+
+    <!-- GameMonetize SDK Integration -->
+    <script type="text/javascript">
+        window.SDK_OPTIONS = {
+            gameId: "ka46hy72vwpoy3pppugopn6ppwm7rkwd",
+            onEvent: function (a) {
+                switch (a.name) {
+                    case "SDK_GAME_PAUSE":
+                        // Dispatch event for React to pause game and mute audio
+                        window.dispatchEvent(new Event("SDK_GAME_PAUSE"));
+                        break;
+                    case "SDK_GAME_START":
+                        // Dispatch event for React to resume game and audio
+                        window.dispatchEvent(new Event("SDK_GAME_START"));
+                        break;
+                    case "SDK_REWARDED_WATCH_COMPLETE":
+                        // Dispatch event for React to grant reward
+                        window.dispatchEvent(new Event("SDK_REWARDED_WATCH_COMPLETE"));
+                        break;
+                }
+            }
+        };
+        (function (a, b, c) {
+            var d = a.getElementsByTagName(b)[0];
+            a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+        })(document, "script", "gamemonetize-sdk");
+    </script>
+  <script src="./_expo/static/js/web/index-5f0e037a13ef3f97bf1b1ba29e349904.js" defer></script>
+</body>
+</html>

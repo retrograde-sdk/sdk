@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NEON JUMPER</title>
+
+<!-- ✅ GAMEMONETIZE SDK -->
+<script type="text/javascript">
+  window.SDK_OPTIONS = {
+    gameId: "6x0r7yogrupxurjrtw4v8wme2c82of96",
+    onEvent: function(a) {
+      switch(a.name) {
+        case "SDK_GAME_PAUSE":
+          if(typeof pauseGameForAd === 'function') pauseGameForAd();
+          break;
+        case "SDK_GAME_START":
+          if(typeof resumeGameFromAd === 'function') resumeGameFromAd();
+          break;
+        case "SDK_READY":
+          console.log("GameMonetize SDK ready");
+          break;
+        case "SDK_ERROR":
+          console.warn("GameMonetize SDK error");
+          break;
+      }
+    }
+  };
+  (function(a,b,c){
+    var d=a.getElementsByTagName(b)[0];
+    a.getElementById(c)||(a=a.createElement(b),a.id=c,
+    a.src="https://api.gamemonetize.com/sdk.js",d.parentNode.insertBefore(a,d))
+  })(document,"script","gamemonetize-sdk");
+</script>
+<link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<!-- ══ SPLASH SCREEN ══ -->
+<div id="splash-screen">
+  <img src="images/splash.jpg" alt="NEON JUMPER" id="splash-img"/>
+  <div id="splash-tap">TAP TO PLAY</div>
+</div>
+
+<div id="game-wrap">
+
+  <canvas id="cv" width="1280" height="720"></canvas>
+  <div id="flash"></div>
+
+  <!-- PAUSE SCREEN -->
+  <div id="pause-screen">
+    <div class="pause-title">// PAUSED //</div>
+    <div class="pause-sub">RETURN TO WINDOW TO CONTINUE</div>
+  </div>
+
+  <!-- HUD -->
+  <div id="hud">
+    <div class="hi"><span class="hl" id="hl_sc">SCORE</span><span class="hv" id="hv_sc">000000</span></div>
+    <div class="hi"><span class="hl" id="hl_lv">LEVEL</span><span class="hv" id="hv_lv">01</span></div>
+    <div class="hi"><span class="hl" id="hl_bs">BEST</span><span class="hv" id="hv_bs">000000</span></div>
+  </div>
+
+  <!-- OVERLAY MENU / GAMEOVER -->
+  <div id="ov">
+    <div id="title-wrap">
+      <div class="tl t-sh1">NEON JUMPER</div>
+      <div class="tl t-sh2">NEON JUMPER</div>
+      <div class="tl t-main" id="ov_title">NEON JUMPER</div>
+      <div class="tl t-g1">NEON JUMPER</div>
+      <div class="tl t-g2">NEON JUMPER</div>
+      <div class="t-scan"></div>
+    </div>
+    <div class="os">&#8734; INFINITE PROTOCOL &#8734;</div>
+
+    <!-- ── TABS ── -->
+    <div id="menu-tabs">
+      <button class="mtab active" id="tab-play">PLAY</button>
+      <button class="mtab" id="tab-lb">SCORES</button>
+      <button class="mtab" id="tab-howto">HOW TO PLAY</button>
+      <button class="mtab" id="tab-ach">ACHIEVEMENTS</button>
+    </div>
+
+    <!-- ── PLAY PANEL ── -->
+    <div id="panel-play">
+      <div class="ok">
+        <kbd>SPACE</kbd> / <kbd>&#8593;</kbd> &mdash; JUMP &nbsp;(double jump!)<br>
+        CLICK / TAP &mdash; JUMP
+      </div>
+      <div id="name-row">
+        <span class="ok" style="margin-bottom:0">NAME:</span>
+        <input id="pname" maxlength="12" placeholder="PLAYER"
+               spellcheck="false" style="text-transform:uppercase"/>
+      </div>
+      <button class="ob" id="ov_btn">&#9658;&nbsp;START</button>
+      <button id="reset-btn" onclick="resetAll()">&#128465; RESET ALL</button>
+    </div>
+
+    <!-- ── LEADERBOARD PANEL ── -->
+    <div id="panel-lb" style="display:none">
+      <div id="lb-list"><div class="lb-loading">LOADING...</div></div>
+      <button class="ob" id="lb-back"
+              style="margin-top:14px;font-size:11px;padding:9px 26px">&#8592; BACK</button>
+    </div>
+
+    <!-- ── HOW TO PLAY PANEL ── -->
+    <div id="panel-howto" style="display:none">
+      <div class="howto-scroll">
+
+        <div class="howto-block">
+          <div class="howto-title">🎮 OBJECTIVE</div>
+          <div class="howto-text">
+            Run as far as possible avoiding obstacles.<br>
+            Collect coins and power-ups to survive longer!<br>
+            Speed increases with each level — stay focused.
+          </div>
+        </div>
+
+        <div class="howto-block">
+          <div class="howto-title">⌨️ CONTROLS</div>
+          <div class="howto-text">
+            <span class="howto-key">SPACE</span> /
+            <span class="howto-key">↑</span> &mdash; Jump<br>
+            <span class="howto-key">Double tap</span> &mdash; Double jump (mid-air)<br>
+            <span class="howto-key">CLICK / TAP</span> &mdash; Jump
+          </div>
+        </div>
+
+        <div class="howto-block">
+          <div class="howto-title">⭐ POWER-UPS</div>
+          <div class="howto-text">
+            Collect diamond-shaped pickups for special abilities:<br><br>
+            <span class="howto-pu" style="color:#00f7ff">◆ [S] SHIELD</span>
+            &mdash; Destroys obstacles on contact. Lasts ~5 hits.<br>
+            <span class="howto-pu" style="color:#ffe600">◆ [T] SLOW TIME</span>
+            &mdash; Slows the entire world to 40% speed.<br>
+            <span class="howto-pu" style="color:#ff2d78">◆ [M] MAGNET</span>
+            &mdash; Attracts all nearby coins automatically.<br>
+            <span class="howto-pu" style="color:#8b00ff">◆ [G] GRAVITY</span>
+            &mdash; Flips the entire world upside down for ~10 sec!
+          </div>
+        </div>
+
+        <div class="howto-block">
+          <div class="howto-title">🚧 OBSTACLES</div>
+          <div class="howto-text">
+            ▲ <b>Spikes</b> &mdash; Always lethal. Avoid completely.<br>
+            ■ <b>Blocks</b> &mdash; Jump ON TOP to land safely. Lethal from sides/below.<br>
+            &mdash; <b>Platforms</b> &mdash; Safe to land on and safe to pass under.
+          </div>
+        </div>
+
+        <div class="howto-block">
+          <div class="howto-title">🪙 COINS &amp; SCORING</div>
+          <div class="howto-text">
+            Coins are worth +100 points each.<br>
+            They never spawn inside obstacles — always safe to grab.<br>
+            Distance traveled automatically adds to your score.
+          </div>
+        </div>
+
+        <div class="howto-block">
+          <div class="howto-title">💡 TIPS</div>
+          <div class="howto-text">
+            &bull; Double-jump clears most obstacle combos.<br>
+            &bull; Shield bars appear above your square when active.<br>
+            &bull; Gravity Flip ends automatically — wait it out!<br>
+            &bull; Unlock all 11 achievements for bragging rights.
+          </div>
+        </div>
+
+      </div><!-- /.howto-scroll -->
+      <button class="ob" id="howto-back"
+              style="margin-top:14px;font-size:11px;padding:9px 26px">&#8592; BACK</button>
+    </div>
+
+    <!-- ── ACHIEVEMENTS PANEL ── -->
+    <div id="panel-ach" style="display:none">
+      <div id="ach-list" class="ach-scroll"></div>
+      <button class="ob" id="ach-back"
+              style="margin-top:14px;font-size:11px;padding:9px 26px">&#8592; BACK</button>
+    </div>
+
+    <!-- MAPI GAMES branding inside overlay too -->
+    <div class="menu-branding">MAPI GAMES</div>
+  </div><!-- /#ov -->
+
+  <!-- In-game branding -->
+  <div id="branding">MAPI GAMES</div>
+
+</div><!-- /#game-wrap -->
+
+<script src="game.js"></script>
+
+<!-- Wire tabs on first load (before any game starts) -->
+<script>
+(function(){
+  function wireMenuTabs(){
+    var tabIds=['play','lb','howto','ach'];
+    tabIds.forEach(function(t){
+      var btn=document.getElementById('tab-'+t);
+      if(btn) btn.addEventListener('click',function(){
+        if(typeof showTab==='function') showTab(t);
+      });
+    });
+    var lb=document.getElementById('lb-back');
+    var hw=document.getElementById('howto-back');
+    var ac=document.getElementById('ach-back');
+    var ob=document.getElementById('ov_btn');
+    if(lb) lb.addEventListener('click',function(){ if(typeof showTab==='function') showTab('play'); });
+    if(hw) hw.addEventListener('click',function(){ if(typeof showTab==='function') showTab('play'); });
+    if(ac) ac.addEventListener('click',function(){ if(typeof showTab==='function') showTab('play'); });
+    if(ob) ob.addEventListener('click',function(){ if(typeof startGame==='function') startGame(); });
+  }
+  // Wire immediately (game.js already loaded above)
+  wireMenuTabs();
+})();
+</script>
+</body>
+</html>

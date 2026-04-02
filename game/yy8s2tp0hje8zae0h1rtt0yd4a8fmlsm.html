@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>SkyTap Dash</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Montserrat:wght@400;700;900&display=swap');
+
+        :root {
+            --primary: #FFD700;
+            --secondary: #FFFFFF;
+            --ui-bg: rgba(15, 23, 42, 0.95);
+            --accent: #FF4757;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #0f172a;
+            font-family: 'Montserrat', sans-serif;
+            touch-action: none;
+            /* Critical for mobile: disables browser handling of gestures */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            /* Fix for mobile address bar */
+            height: 100dvh;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            max-width: 500px;
+            /* Max height to prevent looking too stretched on tall desktop monitors */
+            max-height: 900px;
+            background: #000;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.6);
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* UI Overlay Styles */
+        .ui-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 20;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .ui-screen.active {
+            opacity: 1;
+            pointer-events: all;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            /* Safari support */
+        }
+
+        h1 {
+            font-family: 'Black Ops One', cursive;
+            font-size: 4rem;
+            line-height: 0.9;
+            color: var(--primary);
+            text-shadow: 4px 4px 0px #000, 0 0 20px rgba(255, 215, 0, 0.5);
+            margin: 0 0 20px 0;
+            text-align: center;
+            transform: rotate(-3deg);
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: rotate(-3deg) translateY(0);
+            }
+
+            50% {
+                transform: rotate(-3deg) translateY(-10px);
+            }
+        }
+
+        .score-panel {
+            background: var(--ui-bg);
+            padding: 20px;
+            border-radius: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            min-width: 220px;
+            transform: scale(0.9);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .ui-screen.active .score-panel {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        .score-display {
+            font-size: 3rem;
+            font-weight: 900;
+            color: white;
+            text-shadow: 2px 2px 0 #000;
+            margin: 5px 0;
+        }
+
+        .label {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: #94a3b8;
+            font-weight: 700;
+        }
+
+        /* Buttons */
+        button {
+            border: none;
+            border-radius: 12px;
+            padding: 15px 40px;
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 900;
+            font-family: 'Montserrat', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.1s;
+            margin-top: 10px;
+            position: relative;
+            overflow: hidden;
+            width: 200px;
+            /* Prevent double-tap zoom on buttons */
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        button:active {
+            transform: translateY(4px);
+        }
+
+        .btn-easy {
+            background: linear-gradient(135deg, #1abc9c, #16a085);
+            box-shadow: 0 6px 0 #0e6655;
+        }
+
+        .btn-easy:active {
+            box-shadow: 0 0 0 #0e6655;
+        }
+
+        .btn-normal {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            box-shadow: 0 6px 0 #1a5276;
+        }
+
+        .btn-normal:active {
+            box-shadow: 0 0 0 #1a5276;
+        }
+
+        .btn-hard {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            box-shadow: 0 6px 0 #7b241c;
+        }
+
+        .btn-hard:active {
+            box-shadow: 0 0 0 #7b241c;
+        }
+
+        .btn-retry {
+            background: linear-gradient(135deg, #f1c40f, #f39c12);
+            box-shadow: 0 6px 0 #9a7d0a;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+            box-shadow: 0 6px 0 #1e40af;
+            font-size: 0.9rem;
+            padding: 12px 30px;
+        }
+
+        /* Difficulty Selection Container */
+        .difficulty-select {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        /* HUD */
+        #hud {
+            position: absolute;
+            top: 40px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            pointer-events: none;
+            z-index: 10;
+            display: none;
+        }
+
+        #hud-score {
+            font-family: 'Black Ops One', cursive;
+            font-size: 5rem;
+            color: white;
+            text-shadow: 4px 4px 0 #000, 0 0 20px rgba(0, 0, 0, 0.3);
+            -webkit-text-stroke: 2px black;
+        }
+
+        #hud-mode {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-top: -10px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+            letter-spacing: 2px;
+        }
+
+        /* Medal Styles */
+        .medal-container {
+            margin: 15px auto;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #333;
+            border: 4px solid #555;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
+
+        .medal {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+        }
+
+        .medal.bronze {
+            background: linear-gradient(45deg, #804a00, #cd7f32);
+        }
+
+        .medal.silver {
+            background: linear-gradient(45deg, #7f8c8d, #bdc3c7);
+        }
+
+        .medal.gold {
+            background: linear-gradient(45deg, #f39c12, #f1c40f);
+            box-shadow: 0 0 15px #f1c40f;
+        }
+
+        .medal.platinum {
+            background: linear-gradient(45deg, #3a506b, #5bc0be);
+            box-shadow: 0 0 20px #5bc0be;
+        }
+
+        .medal.diamond {
+            background: linear-gradient(45deg, #a2d9ff, #ffffff);
+            box-shadow: 0 0 25px #a2d9ff;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        /* Mock Ad Modal */
+        #ad-modal {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            color: white;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .ad-content {
+            border: 2px solid #333;
+            padding: 40px;
+            background: #111;
+            text-align: center;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 300px;
+        }
+
+        #ad-progress {
+            width: 100%;
+            height: 6px;
+            background: #333;
+            margin-top: 20px;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        #ad-bar {
+            width: 0%;
+            height: 100%;
+            background: var(--primary);
+            transition: width 0.1s linear;
+        }
+
+        /* Responsive Design Tweaks */
+        @media (max-width: 380px) {
+            h1 {
+                font-size: 3rem;
+                margin-bottom: 10px;
+            }
+
+            #hud-score {
+                font-size: 4rem;
+            }
+
+            button {
+                width: 100%;
+                padding: 12px;
+                font-size: 1rem;
+            }
+
+            .score-panel {
+                min-width: auto;
+                width: 100%;
+                padding: 15px;
+            }
+
+            .difficulty-select {
+                gap: 10px;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+
+        <!-- HUD -->
+        <div id="hud">
+            <div id="hud-score">0</div>
+            <div id="hud-mode">NORMAL</div>
+        </div>
+
+        <!-- Start Screen -->
+        <div id="start-screen" class="ui-screen active">
+            <h1>SKY TAP<br>DASH</h1>
+            <div class="score-panel">
+                <div class="label">BEST RUN</div>
+                <div class="score-display" id="home-best-score">0</div>
+            </div>
+
+            <div class="label" style="margin-bottom: 5px;">SELECT DIFFICULTY</div>
+            <div class="difficulty-select">
+                <button class="btn-easy" onclick="initGame('EASY')">EASY</button>
+                <button class="btn-normal" onclick="initGame('NORMAL')">NORMAL</button>
+                <button class="btn-hard" onclick="initGame('HARD')">HARD</button>
+            </div>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div id="game-over-screen" class="ui-screen">
+            <h1 style="font-size: 3rem; margin-bottom: 10px; color: #ff6b6b;">CRASHED!</h1>
+
+            <div class="score-panel" style="padding: 20px 40px;">
+                <div class="medal-container" id="medal-slot">
+                    <!-- Medal injected here via JS -->
+                </div>
+                <div class="label" id="medal-label">NO MEDAL</div>
+
+                <div style="margin: 15px 0; border-top: 1px solid rgba(255,255,255,0.1);"></div>
+
+                <div class="label">SCORE</div>
+                <div class="score-display" id="final-score" style="font-size: 2.5rem;">0</div>
+
+                <div class="label" style="margin-top: 5px;">BEST: <span id="final-best-score">0</span></div>
+            </div>
+
+            <button id="btn-continue" class="btn-secondary" style="display:none; margin-bottom: 10px;">📺 REVIVE
+                (AD)</button>
+            <button id="btn-retry" class="btn-retry">RETRY</button>
+        </div>
+
+        <!-- Mock Ad Screen -->
+        <div id="ad-modal">
+            <div class="ad-content">
+                <h2 style="color: var(--primary);">AD BREAK</h2>
+                <p>Sponsor Message Loading...</p>
+                <div id="ad-progress">
+                    <div id="ad-bar"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * CONFIGURATION
+         */
+        const CONFIG = {
+            physics: {
+                gravity: 0.45,
+                flapForce: -6.5,
+                terminalVelocity: 9.5,
+                rotationSpeed: 0.15,
+                tapWindowMs: 150,
+                boostMultiplier: 1.15
+            },
+            gameplay: {
+                pipeSpawnDist: 180,
+            }
+        };
+
+        // Strict Difficulty Settings
+        const DIFFICULTIES = {
+            'EASY': {
+                speed: 1.8,  // Slowed down from 2.5
+                gap: 220,    // Widened significantly from 170
+                theme: {
+                    pipe: '#1abc9c', dark: '#16a085', highlight: '#48c9b0',
+                    sky: { top: '#E0FFFF', bottom: '#F0FFFF' }
+                }
+            },
+            'NORMAL': {
+                speed: 2.5,  // Slowed down from 3.5
+                gap: 180,    // Widened from 150
+                theme: {
+                    pipe: '#3498db', dark: '#2980b9', highlight: '#5dade2',
+                    sky: { top: '#4A90E2', bottom: '#87CEEB' }
+                }
+            },
+            'HARD': {
+                speed: 3.5,  // Slowed down from 5.0
+                gap: 150,    // Widened from 125
+                theme: {
+                    pipe: '#e74c3c', dark: '#c0392b', highlight: '#ec7063',
+                    sky: { top: '#2c3e50', bottom: '#c0392b' }
+                }
+            }
+        };
+
+        const MEDALS = [
+            { name: 'bronze', score: 10, class: 'bronze', label: 'BRONZE' },
+            { name: 'silver', score: 25, class: 'silver', label: 'SILVER' },
+            { name: 'gold', score: 50, class: 'gold', label: 'GOLD' },
+            { name: 'platinum', score: 100, class: 'platinum', label: 'PLATINUM' },
+            { name: 'diamond', score: 200, class: 'diamond', label: 'DIAMOND' }
+        ];
+
+        /**
+         * AUDIO SYSTEM
+         */
+        class AudioController {
+            constructor() {
+                this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                this.masterGain = this.ctx.createGain();
+                this.masterGain.gain.value = 0.3;
+                this.masterGain.connect(this.ctx.destination);
+            }
+
+            playTone(freq, type, duration, vol = 1, slide = 0) {
+                if (this.ctx.state === 'suspended') this.ctx.resume();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                if (slide !== 0) {
+                    osc.frequency.linearRampToValueAtTime(freq + slide, this.ctx.currentTime + duration);
+                }
+
+                gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+
+                osc.connect(gain);
+                gain.connect(this.masterGain);
+                osc.start();
+                osc.stop(this.ctx.currentTime + duration);
+            }
+
+            playFlap() {
+                this.playTone(150, 'triangle', 0.1, 0.4, -50);
+            }
+
+            playScore(combo = 0) {
+                const base = 800;
+                const pitch = base + (combo * 50);
+                this.playTone(pitch, 'sine', 0.15, 0.6);
+                setTimeout(() => this.playTone(pitch * 1.5, 'sine', 0.2, 0.3), 50);
+            }
+
+            playCrash() {
+                this.playTone(100, 'sawtooth', 0.4, 0.8, -80);
+            }
+        }
+
+        /**
+         * GAME ENGINE
+         */
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const audio = new AudioController();
+
+        // State
+        const game = {
+            state: 'HOME',
+            score: 0,
+            bestScore: parseInt(localStorage.getItem('skytap_best')) || 0,
+            pipes: [],
+            particles: [],
+            clouds: [],
+            lastTime: 0,
+
+            // Difficulty Settings
+            selectedMode: 'NORMAL',
+            speed: 3.5,
+            gapSize: 150,
+            theme: DIFFICULTIES['NORMAL'].theme,
+
+            lastTapTime: 0,
+            deathCount: 0,
+            shake: 0
+        };
+
+        // Initialize Clouds (Sparse/Clean look)
+        function initClouds() {
+            game.clouds = [];
+            // Layer 1: Far
+            for (let i = 0; i < 3; i++) game.clouds.push(createCloud(0.15, '#E0FFFF', 0.4));
+            // Layer 2: Mid
+            for (let i = 0; i < 4; i++) game.clouds.push(createCloud(0.35, '#B0E0E6', 0.5));
+        }
+
+        function createCloud(speedMult, color, opacity) {
+            return {
+                x: Math.random() * canvas.logicalWidth,
+                y: Math.random() * (canvas.logicalHeight * 0.6),
+                w: 60 + Math.random() * 100,
+                h: 30 + Math.random() * 40,
+                speed: speedMult,
+                color: color,
+                opacity: opacity
+            };
+        }
+
+        const bird = {
+            x: 0, y: 0, vel: 0, rot: 0, radius: 14,
+            reset: function () {
+                this.x = canvas.logicalWidth * 0.25;
+                this.y = canvas.logicalHeight / 2;
+                this.vel = 0;
+                this.rot = 0;
+            },
+            update: function () {
+                this.vel += CONFIG.physics.gravity;
+                if (this.vel > CONFIG.physics.terminalVelocity) this.vel = CONFIG.physics.terminalVelocity;
+                this.y += this.vel;
+
+                const targetRot = Math.min(Math.PI / 4, Math.max(-Math.PI / 4, (this.vel * 0.1)));
+                this.rot += (targetRot - this.rot) * CONFIG.physics.rotationSpeed;
+            },
+            flap: function () {
+                const now = Date.now();
+                let force = CONFIG.physics.flapForce;
+
+                if (now - game.lastTapTime < CONFIG.physics.tapWindowMs) {
+                    force *= CONFIG.physics.boostMultiplier;
+                    createParticles(this.x, this.y, 'boost');
+                } else {
+                    createParticles(this.x - 10, this.y + 5, 'flap');
+                }
+
+                this.vel = force;
+                this.rot = -Math.PI / 4;
+                game.lastTapTime = now;
+                audio.playFlap();
+            }
+        };
+
+        function createParticles(x, y, type) {
+            let count = type === 'crash' ? 30 : (type === 'score' ? 15 : 5);
+            for (let i = 0; i < count; i++) {
+                game.particles.push({
+                    x: x, y: y,
+                    vx: (Math.random() - 0.5) * (type === 'crash' ? 10 : 4),
+                    vy: (Math.random() - 0.5) * (type === 'crash' ? 10 : 4),
+                    life: 1.0,
+                    type: type,
+                    color: type === 'score' ? '#FFD700' : '#FFF'
+                });
+            }
+        }
+
+        function updatePhysics() {
+            if (game.pipes.length === 0 || canvas.logicalWidth - game.pipes[game.pipes.length - 1].x >= CONFIG.gameplay.pipeSpawnDist) {
+                spawnPipe();
+            }
+
+            for (let i = game.pipes.length - 1; i >= 0; i--) {
+                let p = game.pipes[i];
+                p.x -= game.speed;
+
+                const birdLeft = bird.x - bird.radius + 4;
+                const birdRight = bird.x + bird.radius - 4;
+                const birdTop = bird.y - bird.radius + 4;
+                const birdBottom = bird.y + bird.radius - 4;
+                const pipeLeft = p.x;
+                const pipeRight = p.x + p.w;
+
+                if (birdRight > pipeLeft && birdLeft < pipeRight) {
+                    if (birdTop < p.topH || birdBottom > p.topH + p.gap) {
+                        return gameOver();
+                    }
+                }
+
+                if (!p.passed && birdLeft > pipeRight) {
+                    p.passed = true;
+                    game.score++;
+                    audio.playScore(game.score > 50 ? 2 : 0);
+                    document.getElementById('hud-score').innerText = game.score;
+                    createParticles(bird.x, bird.y - 30, 'score');
+
+                    const hud = document.getElementById('hud-score');
+                    hud.style.transform = 'scale(1.4)';
+                    setTimeout(() => hud.style.transform = 'scale(1)', 150);
+                }
+
+                if (p.x + p.w < -50) game.pipes.splice(i, 1);
+            }
+
+            if (bird.y + bird.radius > canvas.logicalHeight || bird.y - bird.radius < 0) {
+                gameOver();
+            }
+        }
+
+        function spawnPipe() {
+            // Increased minH to ensure pipes aren't too close to edges
+            const minH = 80;
+            const maxH = canvas.logicalHeight - minH - game.gapSize;
+            const h = Math.floor(Math.random() * (maxH - minH + 1)) + minH;
+
+            game.pipes.push({
+                x: canvas.logicalWidth,
+                w: 52,
+                topH: h,
+                gap: game.gapSize,
+                passed: false
+            });
+        }
+
+        function draw() {
+            // Clear using LOGICAL dimensions (since context is scaled)
+            ctx.clearRect(0, 0, canvas.logicalWidth, canvas.logicalHeight);
+
+            const sky = game.theme.sky;
+            const grad = ctx.createLinearGradient(0, 0, 0, canvas.logicalHeight);
+            grad.addColorStop(0, sky.top);
+            grad.addColorStop(1, sky.bottom);
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, canvas.logicalWidth, canvas.logicalHeight);
+
+            game.clouds.forEach(c => {
+                if (game.state === 'PLAYING') {
+                    c.x -= c.speed * (game.speed * 0.5);
+                    if (c.x + c.w < 0) {
+                        c.x = canvas.logicalWidth;
+                        c.y = Math.random() * (canvas.logicalHeight * 0.6);
+                    }
+                }
+                ctx.fillStyle = c.color;
+                ctx.globalAlpha = c.opacity;
+                ctx.beginPath();
+                ctx.roundRect(c.x, c.y, c.w, c.h, 20);
+                ctx.fill();
+            });
+            ctx.globalAlpha = 1.0;
+
+            ctx.save();
+            if (game.shake > 0) {
+                ctx.translate((Math.random() - 0.5) * game.shake, (Math.random() - 0.5) * game.shake);
+                game.shake *= 0.9;
+                if (game.shake < 0.5) game.shake = 0;
+            }
+
+            const t = game.theme;
+            game.pipes.forEach(p => {
+                ctx.fillStyle = t.pipe;
+                ctx.fillRect(p.x, 0, p.w, p.topH);
+                ctx.fillRect(p.x, p.topH + p.gap, p.w, canvas.logicalHeight - (p.topH + p.gap));
+
+                ctx.fillStyle = t.dark;
+                ctx.fillRect(p.x - 3, p.topH - 24, p.w + 6, 24);
+                ctx.fillRect(p.x - 3, p.topH + p.gap, p.w + 6, 24);
+
+                ctx.fillStyle = t.highlight;
+                ctx.fillRect(p.x + 8, 0, 4, p.topH - 24);
+                ctx.fillRect(p.x + 8, p.topH + p.gap + 24, 4, canvas.logicalHeight);
+                ctx.globalAlpha = 0.3;
+                ctx.fillStyle = '#000';
+                ctx.fillRect(p.x + p.w - 8, 0, 4, p.topH - 24);
+                ctx.fillRect(p.x + p.w - 8, p.topH + p.gap + 24, 4, canvas.logicalHeight);
+                ctx.globalAlpha = 1.0;
+            });
+
+            ctx.translate(bird.x, bird.y);
+            ctx.rotate(bird.rot);
+
+            ctx.beginPath();
+            ctx.arc(0, 0, bird.radius, 0, Math.PI * 2);
+            ctx.fillStyle = '#FFD700';
+            ctx.fill();
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(6, -6, 6, 0, Math.PI * 2);
+            ctx.fillStyle = 'white';
+            ctx.fill();
+            ctx.fillStyle = 'black';
+            ctx.beginPath();
+            ctx.arc(8, -6, 2, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.ellipse(-5, 5, 8, 6, -0.2, 0, Math.PI * 2);
+            ctx.fillStyle = '#E6C200';
+            ctx.fill();
+            ctx.restore();
+
+            game.particles.forEach((p, index) => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life -= 0.02;
+                if (p.type === 'score' || p.type === 'boost') p.y -= 1;
+
+                if (p.life <= 0) {
+                    game.particles.splice(index, 1);
+                } else {
+                    ctx.globalAlpha = p.life;
+                    ctx.fillStyle = p.color;
+                    ctx.beginPath();
+                    if (p.type === 'score') ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+                    else ctx.arc(p.x, p.y, p.type === 'crash' ? Math.random() * 5 : 3, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.globalAlpha = 1.0;
+                }
+            });
+
+            ctx.restore();
+        }
+
+        /**
+         * RESTORED FUNCTIONS
+         */
+
+        function loop() {
+            if (game.state === 'PLAYING') {
+                bird.update();
+                updatePhysics();
+            }
+            draw();
+            requestAnimationFrame(loop);
+        }
+
+        function initGame(difficulty) {
+            audio.ctx.resume().then(() => {
+                game.selectedMode = difficulty;
+                const settings = DIFFICULTIES[difficulty];
+                game.speed = settings.speed;
+                game.gapSize = settings.gap;
+                game.theme = settings.theme;
+                startGame();
+            });
+        }
+
+        // Expose to window for button onclick
+        window.initGame = initGame;
+
+        function startGame() {
+            game.score = 0;
+            game.pipes = [];
+            game.particles = [];
+
+            document.getElementById('hud-score').innerText = '0';
+            document.getElementById('hud-mode').innerText = game.selectedMode;
+            document.getElementById('hud').style.display = 'block';
+
+            bird.reset();
+            bird.flap();
+
+            game.state = 'PLAYING';
+            document.querySelectorAll('.ui-screen').forEach(el => el.classList.remove('active'));
+        }
+
+        function gameOver() {
+            game.state = 'GAMEOVER';
+            audio.playCrash();
+            game.shake = 20;
+            createParticles(bird.x, bird.y, 'crash');
+            game.deathCount++;
+
+            if (game.score > game.bestScore) {
+                game.bestScore = game.score;
+                localStorage.setItem('skytap_best', game.bestScore);
+            }
+
+            setTimeout(() => {
+                const screen = document.getElementById('game-over-screen');
+                document.getElementById('final-score').innerText = game.score;
+                document.getElementById('final-best-score').innerText = game.bestScore;
+
+                const medalSlot = document.getElementById('medal-slot');
+                const medalLabel = document.getElementById('medal-label');
+                medalSlot.innerHTML = '';
+
+                let earnedMedal = null;
+                for (let i = MEDALS.length - 1; i >= 0; i--) {
+                    if (game.score >= MEDALS[i].score) {
+                        earnedMedal = MEDALS[i];
+                        break;
+                    }
+                }
+
+                if (earnedMedal) {
+                    const mDiv = document.createElement('div');
+                    mDiv.className = `medal ${earnedMedal.class}`;
+                    medalSlot.appendChild(mDiv);
+                    medalLabel.innerText = earnedMedal.label;
+                    medalLabel.style.color = earnedMedal.class === 'gold' ? '#f1c40f' : '#aaa';
+                } else {
+                    medalLabel.innerText = 'NO MEDAL';
+                    medalLabel.style.color = '#555';
+                }
+
+                const btnContinue = document.getElementById('btn-continue');
+                if (game.deathCount % 3 === 0) {
+                    btnContinue.style.display = 'inline-block';
+                } else {
+                    btnContinue.style.display = 'none';
+                }
+
+                document.getElementById('hud').style.display = 'none';
+                screen.classList.add('active');
+            }, 600);
+        }
+
+        function handleInput(e) {
+            if (e.type === 'keydown') {
+                if (e.code !== 'Space') return;
+            }
+
+            // Check if the target is a button (or inside a button)
+            const isButton = e.target.closest('button');
+
+            // Critical for mobile: prevent default to stop scrolling/zooming,
+            // BUT allow default behavior for buttons so the 'click' event fires
+            if (e.type !== 'keydown' && !isButton) {
+                e.preventDefault();
+            }
+
+            // Stop processing game input if clicking a button
+            if (isButton) return;
+
+            // Only allow flap input if game is actually running
+            if (game.state === 'PLAYING') bird.flap();
+        }
+
+        // Resize Handler
+        function resize() {
+            const container = document.getElementById('game-container');
+            const rect = container.getBoundingClientRect();
+
+            const dpr = window.devicePixelRatio || 1;
+
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+
+            ctx.scale(dpr, dpr);
+
+            canvas.style.width = `${rect.width}px`;
+            canvas.style.height = `${rect.height}px`;
+
+            // Define logical props
+            if (!canvas.hasOwnProperty('logicalWidth')) {
+                Object.defineProperty(canvas, 'logicalWidth', { get: function () { return this.width / (window.devicePixelRatio || 1); } });
+                Object.defineProperty(canvas, 'logicalHeight', { get: function () { return this.height / (window.devicePixelRatio || 1); } });
+            }
+
+            initClouds();
+            if (game.state === 'HOME') bird.reset();
+
+            draw();
+        }
+        window.addEventListener('resize', resize);
+
+        // Initial Resize
+        resize();
+
+        // Call loop at end
+        loop();
+
+        // Input Handling
+        window.addEventListener('keydown', handleInput);
+        window.addEventListener('mousedown', handleInput);
+        window.addEventListener('touchstart', handleInput, { passive: false });
+
+        document.getElementById('btn-retry').onclick = (e) => {
+            e.stopPropagation();
+            startGame();
+        };
+
+        // ADDED: GameMonetize Helper Function
+        function showAd(callback) {
+            if (window.GameMonetize) {
+                GameMonetize.showInterstitial(() => {
+                    if (callback) callback();
+                });
+            } else {
+                if (callback) callback();
+            }
+        }
+
+        // MODIFIED: Continue Button Logic
+        document.getElementById('btn-continue').onclick = () => {
+            showAd(() => {
+                game.state = 'PLAYING';
+                bird.y = canvas.logicalHeight / 2;
+                bird.vel = 0;
+                game.pipes = [];
+                document.getElementById('game-over-screen').classList.remove('active');
+                document.getElementById('hud').style.display = 'block';
+            });
+        };
+
+    </script>
+    <script src="https://html5.gamemonetize.com/sdk.js"></script>
+    <script>
+        window.SDK_OPTIONS = {
+            gameId: "y9s8z2p0hje8zae0h1rtt0y4a8fmlsm",
+            onEvent: (event) => {
+                console.log(event);
+            }
+        };
+        window.SdkInit = function () { };</script>
+</body>
+
+</html>

@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
+  <meta name="description" content="Memory Emoji - Match pairs of emojis in this fun memory card game!" />
+  <title>Memory Emoji</title>
+  
+  <!-- GameMonetize SDK Configuration -->
+  <script type="text/javascript">
+    window.SDK_OPTIONS = {
+      gameId: "3s56bhfz1vc2njsrlqzgnfs9m2r9eabf",
+      onEvent: function (event) {
+        switch (event.name) {
+          case "SDK_GAME_PAUSE":
+            // Pause game logic and mute audio
+            if (window.gameController && window.gameController.pauseForAd) {
+              window.gameController.pauseForAd();
+            }
+            break;
+          case "SDK_GAME_START":
+            // Resume game logic and unmute audio
+            if (window.gameController && window.gameController.resumeFromAd) {
+              window.gameController.resumeFromAd();
+            }
+            break;
+          case "SDK_READY":
+            console.log("GameMonetize SDK is ready");
+            // Show ad on initial game load
+            if (window.gameController && window.gameController.showInitialAd) {
+              window.gameController.showInitialAd();
+            }
+            break;
+        }
+      }
+    };
+    (function (a, b, c) {
+      var d = a.getElementsByTagName(b)[0];
+      a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = 
+      "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+    })(document, "script", "gamemonetize-sdk");
+  </script>
+  
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <!-- Overlay selezione dimensione board -->
+    <div id="sizeOverlay" class="overlay visible">
+      <h1>🎮 Memory Emoji</h1>
+      <p>Choose your board size</p>
+      <div class="size-options">
+        <button class="btn-size" data-size="4">
+          <span class="size-label">4×4</span>
+          <span class="size-desc">Easy</span>
+        </button>
+        <button class="btn-size" data-size="6">
+          <span class="size-label">6×6</span>
+          <span class="size-desc">Medium</span>
+        </button>
+        <button class="btn-size" data-size="8">
+          <span class="size-label">8×8</span>
+          <span class="size-desc">Hard</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Overlay offerta booster -->
+    <div id="boosterOverlay" class="overlay">
+      <h2>🚀 Power-Up Available!</h2>
+      <p class="booster-desc">Get the <strong>3-Card Mode</strong></p>
+      <p class="booster-info">Select up to 3 cards to find matches!</p>
+      <div class="overlay-actions">
+        <button id="btnBooster" class="btn primary">Get Booster</button>
+        <button id="btnSkipBooster" class="btn">Skip</button>
+      </div>
+    </div>
+
+    <!-- Overlay vittoria -->
+    <div id="winOverlay" class="overlay">
+      <h2>You Won! 🎉</h2>
+      <p id="finalTime">Time: 00:00.0</p>
+      <p id="newRecord" class="new-record"></p>
+      <div class="overlay-actions">
+        <button id="btnReshuffleWin" class="btn primary">Play Again</button>
+      </div>
+    </div>
+
+    <header class="topbar">
+      <div class="title">🎮 Memory Emoji</div>
+      <div class="controls">
+        <div id="boosterIndicator" class="booster-indicator" style="display:none;">
+          <span class="booster-icon">🚀</span>
+          <span id="boosterCounter" class="booster-counter">3</span>
+        </div>
+        <div class="timer" aria-live="polite"><span id="timer">00:00.0</span></div>
+        <button id="btnPause" class="btn">⏸️ Pause</button>
+        <button id="btnReshuffle" class="btn">🔄 Restart</button>
+      </div>
+    </header>
+
+    <main class="game-area">
+      <div class="board-wrap">
+        <div id="board" class="board" aria-label="Memory game board"></div>
+      </div>
+    </main>
+
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

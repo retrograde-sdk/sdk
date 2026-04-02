@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Cube Game</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: orange;
+    }
+    canvas {
+      display: block;
+    }
+    #score, #highscore {
+      position: absolute;
+      top: 10px;
+      font-size: 24px;
+      color: white;
+      font-family: Arial, sans-serif;
+    }
+    #score {
+      left: 20px;
+    }
+    #highscore {
+      right: 20px;
+    }
+    #message {
+      position: absolute;
+      top: 40%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 40px;
+      font-family: Arial, sans-serif;
+      color: white;
+      text-align: center;
+      display: none;
+    }
+    #replay {
+      position: absolute;
+      top: 55%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      padding: 10px 20px;
+      font-size: 24px;
+      border: none;
+      border-radius: 10px;
+      background: white;
+      color: black;
+      cursor: pointer;
+      display: none;
+    }
+  </style>
+
+  <!-- GameMonetize SDK Integration -->
+  <script type="text/javascript">
+    window.SDK_OPTIONS = {
+      gameId: "96p8199ppy7p1fsd5cbkkrruohgwh3h",
+      onEvent: function (a) {
+        switch (a.name) {
+          case "SDK_GAME_PAUSE":
+            // pause game logic / mute audio
+            gamePaused = true;
+            jumpSound.muted = true;
+            loseSound.muted = true;
+            break;
+          case "SDK_GAME_START":
+            // advertisement done, resume
+            gamePaused = false;
+            jumpSound.muted = false;
+            loseSound.muted = false;
+            break;
+          case "SDK_READY":
+            // when sdk is ready
+            sdkReady = true;
+            break;
+        }
+      }
+    };
+
+    (function (a, b, c) {
+      var d = a.getElementsByTagName(b)[0];
+      a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d));
+    })(document, "script", "gamemonetize-sdk");
+  </script>
+</head>
+<body>
+  <div id="score">Score: 0</div>
+  <div id="highscore">High Score: 0</div>
+  <div id="message">YOU LOSE</div>
+  <button id="replay">Replay</button>
+  <canvas id="game"></canvas>
+  
+  <!-- أصوات -->
+  <audio id="jumpSound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
+  <audio id="loseSound" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"></audio>
+
+  <script>
+    // متغيرات SDK
+    let sdkReady = false;
+    let gamePaused = false;
+    let lastAdTime = 0;
+    const AD_INTERVAL = 60000; // 60 ثانية بين الإعلانات
+
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const scoreText = document.getElementById("score");
+    const highScoreText = document.getElementById("highscore");
+    const message = document.getElementById("message");
+    const replayBtn = document.getElementById("replay");
+
+    const jumpSound = document.getElementById("jumpSound");
+    const loseSound = document.getElementById("loseSound");
+
+    let score = 0;
+    let highScore = localStorage.getItem("highScore") || 0;
+    highScoreText.innerText = "High Score: " + highScore;
+
+    let speed = 6;
+    let isGameOver = false;
+    let particles = [];
+
+    const groundHeight = 80;
+
+    const player = {
+      x: 100,
+      y: canvas.height - groundHeight - 50,
+      size: 50,
+      color: "red",
+      dy: 0,
+      gravity: 0.6,
+      jumpPower: -12,
+      grounded: true,
+    };
+
+    let blocks = [];
+    let blockTimer = 0;
+
+    function spawnBlock() {
+      let distance = Math.random() * 300 + 200;
+      let block = {
+        x: canvas.width + distance,
+        y: canvas.height - groundHeight - 50,
+        size: 50,
+        color: "blue",
+        passed: false
+      };
+      blocks.push(block);
+    }
+
+    function createParticles(x, y) {
+      for (let i = 0; i < 10; i++) {
+        particles.push({
+          x: x + player.size / 2,
+          y: y + player.size,
+          dx: (Math.random() - 0.5) * 4,
+          dy: Math.random() * -4,
+          size: Math.random() * 4 + 2,
+          alpha: 1
+        });
+      }
+    }
+
+    function updateParticles() {
+      for (let i = particles.length - 1; i >= 0; i--) {
+        let p = particles[i];
+        p.x += p.dx;
+        p.y += p.dy;
+        p.alpha -= 0.02;
+        if (p.alpha <= 0) {
+          particles.splice(i, 1);
+        } else {
+          ctx.fillStyle = "rgba(255,255,255," + p.alpha + ")";
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+    }
+
+    function resetGame() {
+      score = 0;
+      speed = 6;
+      blocks = [];
+      particles = [];
+      player.y = canvas.height - groundHeight - player.size;
+      player.dy = 0;
+      player.grounded = true;
+      isGameOver = false;
+      scoreText.innerText = "Score: 0";
+      message.style.display = "none";
+      replayBtn.style.display = "none";
+      update();
+    }
+
+    function showAdIfNeeded() {
+      const currentTime = Date.now();
+      if (sdkReady && currentTime - lastAdTime > AD_INTERVAL) {
+        if (typeof sdk !== 'undefined' && sdk.showBanner) {
+          sdk.showBanner();
+          lastAdTime = currentTime;
+        }
+      }
+    }
+
+    function update() {
+      if (isGameOver || gamePaused) return;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // الأرض
+      ctx.fillStyle = "green";
+      ctx.fillRect(0, canvas.height - groundHeight, canvas.width, groundHeight);
+
+      // player physics
+      player.y += player.dy;
+      if (!player.grounded) player.dy += player.gravity;
+
+      if (player.y >= canvas.height - groundHeight - player.size) {
+        player.y = canvas.height - groundHeight - player.size;
+        player.dy = 0;
+        player.grounded = true;
+      }
+
+      ctx.fillStyle = player.color;
+      ctx.fillRect(player.x, player.y, player.size, player.size);
+
+      // spawn blocks
+      blockTimer--;
+      if (blockTimer <= 0) {
+        spawnBlock();
+        blockTimer = Math.random() * 100 + 50;
+      }
+
+      for (let i = 0; i < blocks.length; i++) {
+        let b = blocks[i];
+        b.x -= speed;
+
+        ctx.fillStyle = b.color;
+        ctx.fillRect(b.x, b.y, b.size, b.size);
+
+        // collision
+        if (
+          player.x < b.x + b.size &&
+          player.x + player.size > b.x &&
+          player.y < b.y + b.size &&
+          player.y + player.size > b.y
+        ) {
+          isGameOver = true;
+          loseSound.play();
+          message.style.display = "block";
+          replayBtn.style.display = "block";
+
+          if (score > highScore) {
+            highScore = score;
+            localStorage.setItem("highScore", highScore);
+          }
+          highScoreText.innerText = "High Score: " + highScore;
+          
+          // عرض الإعلان عند الخسارة (إذا مرت دقيقة على الأقل منذ آخر إعلان)
+          showAdIfNeeded();
+          return;
+        }
+
+        // scoring
+        if (!b.passed && player.x > b.x + b.size) {
+          score++;
+          b.passed = true;
+          scoreText.innerText = "Score: " + score;
+          if (score % 5 === 0) speed += 1;
+        }
+      }
+
+      updateParticles();
+      requestAnimationFrame(update);
+    }
+
+    // jump
+    function jump() {
+      if (player.grounded && !isGameOver && !gamePaused) {
+        player.dy = player.jumpPower;
+        player.grounded = false;
+        jumpSound.play();
+        createParticles(player.x, player.y);
+      }
+    }
+
+    window.addEventListener("mousedown", jump);
+    window.addEventListener("touchstart", jump);
+
+    // replay button
+    replayBtn.addEventListener("click", () => {
+      resetGame();
+    });
+
+    resetGame();
+  </script>
+</body>
+</html>

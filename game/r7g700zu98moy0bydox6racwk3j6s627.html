@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jungle Runner</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+    }
+    #root {
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+  
+  <!-- GameMonetize SDK Configuration -->
+  <script type="text/javascript">
+    window.SDK_OPTIONS = {
+      gameId: "r7g700zu98moy0bydox6racwk3j6s627",
+      onEvent: function (a) {
+        switch (a.name) {
+          case "SDK_GAME_PAUSE":
+            // pause game logic / mute audio
+            window.dispatchEvent(new Event('SDK_GAME_PAUSE'));
+            break;
+          case "SDK_GAME_START":
+            // advertisement done, resume game logic and unmute audio
+            window.dispatchEvent(new Event('SDK_GAME_START'));
+            break;
+          case "SDK_READY":
+            // when sdk is ready
+            window.dispatchEvent(new Event('SDK_READY'));
+            break;
+        }
+      }
+    };
+    (function (a, b, c) {
+      var d = a.getElementsByTagName(b)[0];
+      a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+    })(document, "script", "gamemonetize-sdk");
+  </script>
+  <script type="module" crossorigin src="./assets/index-DFylRmh9.js"></script>
+</head>
+<body>
+  <div id="root"></div>
+  
+  <!-- React Build Script -->
+</body>
+</html>

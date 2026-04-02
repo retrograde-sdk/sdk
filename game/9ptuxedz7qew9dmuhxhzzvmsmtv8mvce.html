@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+
+
+
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Amaze Mission</title>
+    <link rel="shortcut icon" href="TemplateData/favicon.ico">
+    <link rel="stylesheet" href="TemplateData/style.css">
+
+<style>	
+      @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@200;500&display=swap');	
+      @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@200;500&family=MuseoModerno:wght@600&display=swap');	
+    </style>
+
+  </head>
+  <body class="dark">
+    <div id="unity-container" class="unity-desktop">
+      <canvas id="unity-canvas"></canvas>
+    </div>
+    <div id="loading-cover" style="display:none;">
+      <div id="unity-loading-bar">
+        
+	
+        <div id="unity-logo">	
+          <img src="logo.png">	
+          <br>	
+          <p id="loading-txt" style="text-align: center; font-family: 'MuseoModerno', cursive;color: white;font-size: 50px;margin-top: 0px;margin-bottom: 0px;" >Loading...</p>	
+        </div>
+
+
+        <div id="unity-progress-bar-empty" style="display: none;">
+          <div id="unity-progress-bar-full"></div>
+        </div>
+        <div class="spinner"></div>
+      </div>
+    </div>
+    <div id="unity-fullscreen-button" style="display: none;"></div>
+    <script>
+      const hideFullScreenButton = "";
+      const buildUrl = "Build";
+      const loaderUrl = buildUrl + "/7a2dbded24d57e056180125b1583e7c4.loader.js";
+      const config = {
+        dataUrl: buildUrl + "/4b278ff17726a0e58979ba80fc6e0515.data",
+        frameworkUrl: buildUrl + "/d99d22c3c84efabf1e53ad1a6e92f92a.framework.js",
+        codeUrl: buildUrl + "/fefc95aceabdbd2f05514fbc17ccb5df.wasm",
+        streamingAssetsUrl: "StreamingAssets",
+        companyName: "EGaming",
+        productName: "Amaze Mission",
+        productVersion: "1.0.0",
+      };
+
+      const container = document.querySelector("#unity-container");
+      const canvas = document.querySelector("#unity-canvas");
+      const loadingCover = document.querySelector("#loading-cover");
+      const progressBarEmpty = document.querySelector("#unity-progress-bar-empty");
+      const progressBarFull = document.querySelector("#unity-progress-bar-full");
+      const fullscreenButton = document.querySelector("#unity-fullscreen-button");
+      const spinner = document.querySelector('.spinner');
+
+      const canFullscreen = (function() {
+        for (const key of [
+            'exitFullscreen',
+            'webkitExitFullscreen',
+            'webkitCancelFullScreen',
+            'mozCancelFullScreen',
+            'msExitFullscreen',
+          ]) {
+          if (key in document) {
+            return true;
+          }
+        }
+        return false;
+      }());
+
+
+      loadingCover.style.display = "";
+
+      const script = document.createElement("script");
+      script.src = loaderUrl;
+      script.onload = () => {
+        createUnityInstance(canvas, config, (progress) => {
+          spinner.style.display = "none";
+          progressBarEmpty.style.display = "";
+          progressBarFull.style.width = `${100 * progress}%`;
+        }).then((unityInstance) => {
+		window.unityInstance=unityInstance;
+          loadingCover.style.display = "none";
+          if (canFullscreen) {
+            if (!hideFullScreenButton) {
+              fullscreenButton.style.display = "";
+            }
+            fullscreenButton.onclick = () => {
+              unityInstance.SetFullscreen(1);
+            };
+          }
+        }).catch((message) => {
+          alert(message);
+        });
+      };
+      document.body.appendChild(script);
+
+
+
+      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+        container.className = "unity-mobile";
+        config.devicePixelRatio = 1.5;
+      }
+
+
+    </script>
+	<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-analytics-compat.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-remote-config-compat.js"></script>
+	<script>
+		function unitySend(go, method, msg) {
+			if (window.unityInstance && window.unityInstance.SendMessage) {
+			  window.unityInstance.SendMessage(go, method, msg);
+			} else if (typeof SendMessage === "function") {
+			  SendMessage(go, method, msg);
+			} else {
+			  console.warn("Unity SendMessage not ready:", go, method, msg);
+			}
+		}
+		window.RC_GetValuesJson = function (keysJson, gameObjectName, methodName) {
+			try {
+			  const keys = JSON.parse(keysJson);
+			  const obj = {};
+			  window.firebase_remoteConfig.fetchAndActivate()
+				.then(() => {
+					keys.forEach(k => obj[k] = window.firebase_remoteConfig.getValue(k).asString());
+					unitySend(gameObjectName, methodName, JSON.stringify(obj));
+				})
+				.catch(err => {
+					console.error("RC fetch error:", err);
+				});
+			} catch (e) {
+			  console.error("RC_GetValuesJson parse error:", e);
+			  unitySend(gameObjectName, methodName, "{}");
+			}
+		};
+		window.GA_LogEvent = function (eventName, paramsJson) {
+			try {
+			  const params = paramsJson ? JSON.parse(paramsJson) : undefined;
+			  window.firebase_analytics.logEvent(eventName, params);
+			} catch (e) {
+			  console.error("GA_LogEvent error:", e);
+			}
+		};
+		const originalLog = console.log;
+		
+		console.log = function (...args) {
+			if(args.join(" ").indexOf("adsLoaderPromise failed to load")>=0){
+				if (window.unityInstance && window.unityInstance.SendMessage)
+					window.unityInstance.SendMessage("GameMonetizeController","ShowAdsAgain");
+			}
+		    originalLog.apply(console, args); 
+		};
+		function hasAdblock({ timeout = 1500 } = {}) {
+		  return new Promise(resolve => {
+			let resolved = false;
+			const done = (val) => {
+			  if (resolved) return;
+			  resolved = true;
+			  cleanup();
+			  resolve(Boolean(val));
+			};
+			const bait = document.createElement('div');
+			bait.className = 'pub_300x250 adunit adsbox ad-banner google-ad'; 
+			bait.style.width = '1px';
+			bait.style.height = '1px';
+			bait.style.position = 'absolute';
+			bait.style.left = '-9999px';
+			document.body.appendChild(bait);
+			const baitCheck = () => {
+			  try {
+				const cs = window.getComputedStyle?.(bait);
+				if (!cs) return false;
+				if (cs.display === 'none' || cs.visibility === 'hidden') return true;
+				if (bait.offsetParent === null || bait.offsetHeight === 0 || bait.offsetWidth === 0) return true;
+			  } catch (e) {
+				// ignore
+			  }
+			  return false;
+			};
+			const testScriptUrl = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js';
+			const script = document.createElement('script');
+			script.async = true;
+			script.type = 'text/javascript';
+
+			let scriptFired = false;
+			script.onload = () => {
+			  scriptFired = true;
+			  tryResolveFromResults(false);
+			};
+			script.onerror = () => {
+			  scriptFired = true;
+			  tryResolveFromResults(true);
+			};
+			script.src = testScriptUrl;
+			const testImgUrl = 'https://pagead2.googlesyndication.com/pagead/imgad?id=12345'; 
+			const img = new Image();
+			let imgFired = false;
+			img.onload = () => {
+			  imgFired = true;
+			  tryResolveFromResults(false);
+			};
+			img.onerror = () => {
+			  imgFired = true;
+			  tryResolveFromResults(true);
+			};
+			function cleanup() {
+			  try { if (bait && bait.parentNode) bait.parentNode.removeChild(bait); } catch (e) {}
+			  try { script.onload = script.onerror = null; if (script.parentNode) script.parentNode.removeChild(script); } catch (e) {}
+			  try { img.onload = img.onerror = null; } catch (e) {}
+			  if (timeoutHandle) clearTimeout(timeoutHandle);
+			}
+			let scriptResult = null; 
+			let imgResult = null;
+			let baitResult = null;
+
+			function tryResolveFromResults(likelyBlocked) {
+			  if (likelyBlocked) {
+				done(true);
+				return;
+			  }
+			  if (scriptFired && scriptResult === null) scriptResult = false;
+			  if (imgFired && imgResult === null) imgResult = false;
+			  baitResult = baitCheck();
+			  if (baitResult) { done(true); return; }
+			  if (scriptFired && imgFired && !baitResult) { done(false); return; }
+			  if ((scriptFired && scriptResult === true) || (imgFired && imgResult === true)) { done(true); return; }
+			}
+			(document.head || document.documentElement).appendChild(script);
+			img.src = testImgUrl + '?_=' + Date.now();
+			try {
+			  baitResult = baitCheck();
+			  if (baitResult) { done(true); return; }
+			} catch (e) {
+			}
+			const timeoutHandle = setTimeout(() => {
+			  if (baitResult) { done(true); return; }
+			  if (scriptFired && !imgFired) {
+				done(false);
+				return;
+			  }
+			  if (!scriptFired && imgFired) {
+				done(false);
+				return;
+			  }
+			  done(false);
+			}, timeout);
+		  });
+		}
+		function CheckHasAdBlock(){
+			hasAdblock().then(has => {
+				if(window.unityInstance != null && window.unityInstance.SendMessage != null)
+					window.unityInstance.SendMessage("LostConnect","HasBlockAd",has.toString());
+			});
+		}
+	</script>
+  </body>
+</html>

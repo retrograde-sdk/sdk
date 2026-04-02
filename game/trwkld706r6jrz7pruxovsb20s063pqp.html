@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Abyss Sweeper</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --tile-hidden: #3a3a3a;
+            --tile-revealed: #222;
+            --accent-color: #00ffcc;
+            --danger-color: #ff4444;
+            --fuel-color: #ffcc00;
+        }
+
+        * {
+            box-sizing: border-box;
+            /* Disable selection and native touch actions globally for better game feel */
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none; /* iOS Safari context menu disable */
+            -webkit-tap-highlight-color: transparent; /* Remove tap highlight color */
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            color: white;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            height: 100dvh; /* Better mobile viewport height support */
+            touch-action: none; /* Crucial for preventing scroll/zoom interference */
+        }
+
+        /* Top HUD */
+        #hud {
+            height: 70px;
+            background: rgba(0, 0, 0, 0.95);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            border-bottom: 1px solid #333;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            z-index: 10;
+            flex-shrink: 0;
+            padding-top: env(safe-area-inset-top); /* Notch support */
+        }
+
+        .stat-box {
+            text-align: center;
+            flex: 1;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            color: #888;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+            letter-spacing: 1px;
+        }
+
+        .stat-value {
+            font-size: 22px;
+            font-weight: bold;
+            font-family: monospace;
+        }
+
+        #fuel-val { color: var(--fuel-color); }
+        #hp-val { color: var(--danger-color); }
+        #depth-val { color: var(--accent-color); }
+
+        /* Main Game Area */
+        #game-container {
+            flex-grow: 1;
+            position: relative;
+            overflow: hidden; 
+            background-color: #000;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+
+        #grid-wrapper {
+            position: absolute;
+            top: 0;
+            width: 100%;
+            max-width: 450px; /* Max width for tablets/desktop */
+            /* Center horizontally handled by flex container */
+            transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .row {
+            display: flex;
+            width: 100%;
+            /* CSS Aspect Ratio Hack for Perfect Squares */
+            height: 0; 
+            padding-bottom: 16.66%; /* 100% / 6 cols = 16.66% */
+            position: relative;
+        }
+
+        .tile {
+            position: absolute;
+            top: 0;
+            width: 16.666%; /* 1/6th */
+            height: 100%;
+            border: 1px solid #2a2a2a;
+            background-color: var(--tile-hidden);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: clamp(16px, 4vw, 24px); /* Responsive font size */
+            cursor: pointer;
+            transition: background-color 0.1s, transform 0.1s;
+        }
+        
+        .tile:active {
+            transform: scale(0.95);
+        }
+        
+        /* Positioning tiles using left % for absolute positioning within the row */
+        .tile:nth-child(1) { left: 0%; }
+        .tile:nth-child(2) { left: 16.666%; }
+        .tile:nth-child(3) { left: 33.333%; }
+        .tile:nth-child(4) { left: 50%; }
+        .tile:nth-child(5) { left: 66.666%; }
+        .tile:nth-child(6) { left: 83.333%; }
+
+        /* Tile States */
+        .tile.revealed { background-color: var(--tile-revealed); cursor: default; transform: none; }
+        .tile.revealed[data-num="1"] { color: #5c9eff; }
+        .tile.revealed[data-num="2"] { color: #5cff77; }
+        .tile.revealed[data-num="3"] { color: #ffeb3b; }
+        .tile.revealed[data-num="4"] { color: #ff9100; }
+        .tile.revealed[data-num="5"] { color: #ff0000; }
+        .tile.revealed[data-num="6"] { color: #ff00dd; }
+        
+        .tile.flagged::after {
+            content: "⚡";
+            color: var(--fuel-color);
+            font-size: clamp(16px, 4vw, 28px);
+        }
+
+        .tile.mine {
+            background-color: #441111;
+        }
+
+        .tile.exploded {
+            background-color: var(--danger-color) !important;
+            animation: shake 0.5s;
+        }
+
+        /* Bottom Controls (Mobile Optimized) */
+        #controls {
+            background: rgba(18, 18, 18, 0.98);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-top: 1px solid #333;
+            z-index: 10;
+            flex-shrink: 0;
+            padding: 10px 20px;
+            /* Safe area for iPhone Home Bar */
+            padding-bottom: calc(15px + env(safe-area-inset-bottom));
+        }
+
+        .mode-switch {
+            display: flex;
+            background: #2a2a2a;
+            border-radius: 40px;
+            padding: 5px;
+            width: 100%;
+            max-width: 400px;
+            height: 60px; /* Larger touch target */
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .mode-btn {
+            flex: 1;
+            border: none;
+            border-radius: 35px;
+            background: transparent;
+            color: #888;
+            font-weight: bold;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .mode-btn.active {
+            color: #000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            transform: scale(1.02);
+        }
+
+        #btn-dig.active { background-color: var(--accent-color); }
+        #btn-flag.active { background-color: var(--fuel-color); }
+
+        /* Floating Text Effects */
+        .floater {
+            position: absolute;
+            font-weight: bold;
+            font-size: 24px;
+            pointer-events: none;
+            animation: floatUp 0.8s ease-out forwards;
+            z-index: 100;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.9);
+            white-space: nowrap;
+        }
+
+        @keyframes floatUp {
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            100% { transform: translateY(-60px) scale(1.2); opacity: 0; }
+        }
+
+        @keyframes shake {
+            0% { transform: translate(1px, 1px); }
+            20% { transform: translate(-3px, 0px); }
+            40% { transform: translate(1px, -1px); }
+            60% { transform: translate(-3px, 1px); }
+            80% { transform: translate(-1px, -1px); }
+            100% { transform: translate(0, 0); }
+        }
+
+        /* Screens (Start & Game Over) */
+        .screen-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            padding: 20px;
+            transition: opacity 0.3s;
+        }
+
+        .screen-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        #game-over {
+            background: rgba(0,0,0,0.92);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            display: none; /* Controlled via JS display property */
+        }
+        
+        .screen-title {
+            color: var(--accent-color);
+            font-size: 48px;
+            margin-bottom: 10px;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 20px rgba(0, 255, 204, 0.3);
+        }
+
+        .screen-subtitle {
+            font-size: 18px;
+            color: #888;
+            margin-bottom: 40px;
+            text-align: center;
+            max-width: 400px;
+            line-height: 1.5;
+        }
+
+        .death-title {
+            color: var(--danger-color);
+            font-size: 40px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        button.action-btn {
+            background: var(--accent-color);
+            border: none;
+            padding: 18px 50px;
+            font-size: 20px;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            text-transform: uppercase;
+            box-shadow: 0 0 20px rgba(0, 255, 204, 0.4);
+            color: #000;
+            transition: transform 0.1s;
+        }
+        button.action-btn:active { transform: scale(0.95); }
+        
+        .tutorial-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 30px;
+            text-align: left;
+            background: #1a1a1a;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #333;
+        }
+        .tut-item { display: flex; align-items: center; gap: 10px; font-size: 14px; color: #ccc; }
+        .tut-icon { font-size: 20px; }
+
+        /* Tutorial Overlay Text */
+        #tutorial-text {
+            position: absolute;
+            top: 15%;
+            width: 100%;
+            text-align: center;
+            pointer-events: none;
+            color: rgba(255,255,255,0.6);
+            font-size: 16px;
+            z-index: 5;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+            line-height: 1.6;
+            padding: 0 20px;
+            opacity: 1;
+            transition: opacity 0.5s;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Top HUD -->
+    <div id="hud">
+        <div class="stat-box">
+            <div class="stat-label">Depth</div>
+            <div class="stat-value" id="depth-val">0m</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-label">Hull HP</div>
+            <div class="stat-value" id="hp-val">3</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-label">Fuel</div>
+            <div class="stat-value" id="fuel-val">30</div>
+        </div>
+    </div>
+
+    <!-- Main Game Area -->
+    <div id="game-container">
+        <div id="tutorial-text">Tap to DIG<br>Long press to HARVEST</div>
+        <div id="grid-wrapper">
+            <!-- Grid generated by JS -->
+        </div>
+    </div>
+
+    <!-- Bottom Controls -->
+    <div id="controls">
+        <div class="mode-switch">
+            <button id="btn-dig" class="mode-btn active" onclick="setMode('dig')">
+                <span>⛏️</span> DIG
+            </button>
+            <button id="btn-flag" class="mode-btn" onclick="setMode('flag')">
+                <span>⚡</span> HARVEST
+            </button>
+        </div>
+    </div>
+
+    <!-- Start Screen -->
+    <div id="start-screen" class="screen-overlay">
+        <h1 class="screen-title">Abyss<br>Sweeper</h1>
+        
+        <div class="tutorial-grid">
+            <div class="tut-item"><span class="tut-icon">⛏️</span> Reveal Safe Tiles</div>
+            <div class="tut-item"><span class="tut-icon">⚡</span> Harvest Mines (+Fuel)</div>
+            <div class="tut-item"><span class="tut-icon">❤️</span> Avoid Damage</div>
+            <div class="tut-item"><span class="tut-icon">👆</span> Long Press to Flag</div>
+        </div>
+
+        <button class="action-btn" onclick="startGame()">Initialize System</button>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="game-over" class="screen-overlay" style="display: none;">
+        <h1 class="death-title">SYSTEM OFFLINE</h1>
+        <p id="death-reason" class="screen-subtitle" style="color: #ccc; font-size: 20px;">Fuel Depleted</p>
+        <p class="screen-subtitle">Final Depth: <span id="final-score" style="color:white; font-weight:bold;">0</span>m</p>
+        <button class="action-btn" onclick="restartGame()">Reboot System</button>
+    </div>
+
+    <script type="text/javascript">
+        // --- GameMonetize SDK Setup ---
+        window.SDK_OPTIONS = {
+           gameId: "trwkld706r6jrz7pruxovsb20s063pqp",
+           onEvent: function (a) {
+              switch (a.name) {
+                 case "SDK_GAME_PAUSE":
+                    // pause game logic / mute audio
+                    if (state) state.isPlaying = false;
+                    if (audioCtx && audioCtx.state === 'running') {
+                        audioCtx.suspend();
+                    }
+                    break;
+                 case "SDK_GAME_START":
+                    // advertisement done, resume game logic and unmute audio
+                    if (state) state.isPlaying = true;
+                    if (audioCtx && audioCtx.state === 'suspended') {
+                        audioCtx.resume();
+                    }
+                    break;
+                 case "SDK_READY":
+                    // when sdk is ready
+                    break;
+                 case "SDK_ERROR":
+                    // when sdk get error
+                    break;
+              }
+           }
+        };
+        (function (a, b, c) {
+           var d = a.getElementsByTagName(b)[0];
+           a.getElementById(c) || (a = a.createElement(b), a.id = c,
+           a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+        })(document, "script", "gamemonetize-sdk");
+
+        // --- Game Config ---
+        const COLS = 6;
+        const MINE_CHANCE_START = 0.15;
+        const MINE_CHANCE_MAX = 0.35;
+        const LONG_PRESS_MS = 350; // Threshold for long press
+        
+        // --- Game State ---
+        let grid = []; // Stores all row data
+        let state = {
+            depth: 0,
+            hp: 3,
+            fuel: 30,
+            isPlaying: false,
+            mode: 'dig', // 'dig' or 'flag'
+            offsetY: 0,  // Scroll offset
+            rowsGenerated: 0
+        };
+
+        // --- DOM Elements ---
+        const gridWrapper = document.getElementById('grid-wrapper');
+        const depthEl = document.getElementById('depth-val');
+        const hpEl = document.getElementById('hp-val');
+        const fuelEl = document.getElementById('fuel-val');
+        
+        const startScreen = document.getElementById('start-screen');
+        const gameOverEl = document.getElementById('game-over');
+        const deathReasonEl = document.getElementById('death-reason');
+        const finalScoreEl = document.getElementById('final-score');
+        
+        const btnDig = document.getElementById('btn-dig');
+        const btnFlag = document.getElementById('btn-flag');
+        const tutorialText = document.getElementById('tutorial-text');
+
+        // --- Mobile Prevention ---
+        window.addEventListener('contextmenu', (e) => e.preventDefault(), { passive: false });
+        
+        function getCellHeight() {
+            return gridWrapper.clientWidth / COLS;
+        }
+
+        // --- Audio Synthesis ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function initAudio() {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playSound(type) {
+            if (audioCtx.state === 'suspended') return;
+            
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            const t = audioCtx.currentTime;
+
+            if (type === 'dig') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400, t);
+                osc.frequency.exponentialRampToValueAtTime(100, t + 0.1);
+                gain.gain.setValueAtTime(0.1, t);
+                gain.gain.linearRampToValueAtTime(0, t + 0.1);
+                osc.start(t);
+                osc.stop(t + 0.1);
+            } else if (type === 'flag') {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(800, t);
+                gain.gain.setValueAtTime(0.05, t);
+                gain.gain.linearRampToValueAtTime(0, t + 0.1);
+                osc.start(t);
+                osc.stop(t + 0.1);
+            } else if (type === 'boom') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(100, t);
+                osc.frequency.exponentialRampToValueAtTime(10, t + 0.5);
+                gain.gain.setValueAtTime(0.2, t);
+                gain.gain.exponentialRampToValueAtTime(0.01, t + 0.5);
+                osc.start(t);
+                osc.stop(t + 0.5);
+            } else if (type === 'success') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(600, t);
+                osc.frequency.linearRampToValueAtTime(1200, t + 0.2);
+                gain.gain.setValueAtTime(0.1, t);
+                gain.gain.linearRampToValueAtTime(0, t + 0.3);
+                osc.start(t);
+                osc.stop(t + 0.3);
+            }
+        }
+
+        // --- Game Flow Control ---
+
+        function startGame() {
+            initAudio(); // Initialize audio context on user gesture
+            startScreen.classList.add('hidden');
+            initGame();
+            if (typeof sdk !== 'undefined' && sdk.showBanner) {
+                sdk.showBanner();
+            }
+        }
+
+        function restartGame() {
+            gameOverEl.style.display = 'none';
+            initGame();
+            if (typeof sdk !== 'undefined' && sdk.showBanner) {
+                sdk.showBanner();
+            }
+        }
+
+        function initGame() {
+            state = {
+                depth: 0,
+                hp: 3,
+                fuel: 35,
+                isPlaying: true,
+                mode: 'dig',
+                offsetY: 0,
+                rowsGenerated: 0
+            };
+            grid = [];
+            gridWrapper.innerHTML = '';
+            setMode('dig');
+            tutorialText.style.opacity = 1;
+            
+            // Initial generation: 12 rows
+            for(let i=0; i<12; i++) {
+                createRow(i < 3); // First 3 rows are safe
+            }
+            updateHUD();
+            gridWrapper.style.transform = `translateY(0px)`;
+        }
+
+        function setMode(mode) {
+            state.mode = mode;
+            if(mode === 'dig') {
+                btnDig.classList.add('active');
+                btnFlag.classList.remove('active');
+            } else {
+                btnDig.classList.remove('active');
+                btnFlag.classList.add('active');
+            }
+            if (navigator.vibrate) navigator.vibrate(10);
+        }
+
+        // --- Core Logic: Generate Row ---
+        function createRow(safe = false) {
+            const rowIndex = state.rowsGenerated;
+            const rowEl = document.createElement('div');
+            rowEl.className = 'row';
+            rowEl.dataset.rowIndex = rowIndex;
+
+            let rowData = [];
+            let difficulty = Math.min(MINE_CHANCE_MAX, MINE_CHANCE_START + (rowIndex * 0.002));
+
+            for (let c = 0; c < COLS; c++) {
+                const isMine = safe ? false : Math.random() < difficulty;
+                const tileEl = document.createElement('div');
+                tileEl.className = 'tile';
+                tileEl.dataset.r = rowIndex;
+                tileEl.dataset.c = c;
+                
+                // --- Enhanced Touch/Mouse Handling ---
+                let pressTimer = null;
+                let startX = 0, startY = 0;
+                let isLongPress = false;
+
+                const startHandler = (e) => {
+                    if (!state.isPlaying) return;
+                    
+                    // Fade out tutorial on first interaction
+                    if (tutorialText.style.opacity == 1) tutorialText.style.opacity = 0;
+
+                    const cell = grid[rowIndex][c];
+                    if (cell.isRevealed) return;
+
+                    isLongPress = false;
+                    startX = e.clientX || e.touches[0].clientX;
+                    startY = e.clientY || e.touches[0].clientY;
+
+                    // Start timer for Long Press
+                    pressTimer = setTimeout(() => {
+                        isLongPress = true;
+                        // Long press trigger: Haptic feedback + Action
+                        if (navigator.vibrate) navigator.vibrate(40);
+                        
+                        // Force HARVEST behavior on long press
+                        handleInput(rowIndex, c, 'flag');
+                    }, LONG_PRESS_MS);
+                };
+
+                const moveHandler = (e) => {
+                    if (!pressTimer) return;
+                    const cx = e.clientX || e.touches[0].clientX;
+                    const cy = e.clientY || e.touches[0].clientY;
+                    
+                    // If moved more than 10px, cancel long press (it's a scroll)
+                    if (Math.abs(cx - startX) > 10 || Math.abs(cy - startY) > 10) {
+                        clearTimeout(pressTimer);
+                        pressTimer = null;
+                    }
+                };
+
+                const endHandler = (e) => {
+                    if (pressTimer) {
+                        clearTimeout(pressTimer);
+                        pressTimer = null;
+                        
+                        // If it wasn't a long press and wasn't canceled by move, it's a Tap
+                        if (!isLongPress) {
+                            handleInput(rowIndex, c, state.mode);
+                        }
+                    }
+                    e.preventDefault(); // Prevent phantom mouse clicks
+                };
+
+                // Pointer events cover both mouse and touch efficiently
+                tileEl.addEventListener('pointerdown', startHandler);
+                tileEl.addEventListener('pointermove', moveHandler);
+                tileEl.addEventListener('pointerup', endHandler);
+                tileEl.addEventListener('pointercancel', () => clearTimeout(pressTimer));
+
+                // Right click for desktop
+                tileEl.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    if(e.pointerType === 'mouse') {
+                        clearTimeout(pressTimer); // Cancel pending taps
+                        handleInput(rowIndex, c, 'flag');
+                    }
+                });
+
+                rowEl.appendChild(tileEl);
+                
+                rowData.push({
+                    isMine: isMine,
+                    isRevealed: false,
+                    isFlagged: false,
+                    el: tileEl
+                });
+            }
+
+            grid.push(rowData);
+            gridWrapper.appendChild(rowEl);
+            state.rowsGenerated++;
+
+            if (rowIndex > 0) {
+                updateRowNumbers(rowIndex - 1);
+            }
+            updateRowNumbers(rowIndex);
+        }
+
+        function getMineCount(r, c) {
+            let count = 0;
+            for (let i = -1; i <= 1; i++) {
+                for (let j = -1; j <= 1; j++) {
+                    const nr = r + i;
+                    const nc = c + j;
+                    if (nr >= 0 && nr < grid.length && nc >= 0 && nc < COLS) {
+                        if (grid[nr][nc].isMine) count++;
+                    }
+                }
+            }
+            return count;
+        }
+
+        function updateRowNumbers(r) {
+            if (r < 0 || r >= grid.length) return;
+            for (let c = 0; c < COLS; c++) {
+                const cell = grid[r][c];
+                if (!cell.isMine) {
+                    const count = getMineCount(r, c);
+                    cell.num = count;
+                    if (cell.isRevealed && count > 0) {
+                        cell.el.textContent = count;
+                        cell.el.dataset.num = count;
+                    }
+                }
+            }
+        }
+
+        // --- Interaction Logic ---
+        function handleInput(r, c, actionMode) {
+            if (!state.isPlaying) return;
+            
+            const cell = grid[r][c];
+            if (cell.isRevealed) return; 
+
+            if (actionMode === 'flag') {
+                toggleFlag(r, c);
+            } else {
+                dig(r, c);
+            }
+        }
+
+        function toggleFlag(r, c) {
+            const cell = grid[r][c];
+            if (cell.isRevealed) return;
+
+            // Optional: Smaller vibration for valid flag action
+            // if (navigator.vibrate) navigator.vibrate(10); 
+
+            if (cell.isMine) {
+                cell.isRevealed = true;
+                cell.isFlagged = true;
+                cell.el.classList.add('flagged', 'revealed');
+                addFuel(8, cell.el);
+                playSound('success');
+                checkScroll(r);
+            } else {
+                addFuel(-5, cell.el);
+                playSound('dig'); // Use dig sound for fail to indicate mistake
+                cell.el.classList.add('revealed'); 
+                cell.el.style.backgroundColor = '#553333';
+                setTimeout(() => {
+                   if(state.isPlaying) {
+                       cell.el.style.backgroundColor = '';
+                       cell.el.classList.remove('revealed');
+                   }
+                }, 500);
+            }
+        }
+
+        function dig(r, c) {
+            const cell = grid[r][c];
+            if (cell.isFlagged || cell.isRevealed) return;
+
+            addFuel(-1);
+            playSound('dig');
+
+            if (cell.isMine) {
+                if (navigator.vibrate) navigator.vibrate(200);
+                cell.isRevealed = true;
+                cell.el.classList.add('revealed', 'mine', 'exploded');
+                cell.el.textContent = "💥";
+                state.hp--;
+                showFloatText(cell.el, "-1 HP", "#ff4444");
+                playSound('boom');
+                
+                const container = document.getElementById('game-container');
+                container.style.transform = "translate(5px, 5px)";
+                setTimeout(() => container.style.transform = "none", 100);
+
+                if (state.hp <= 0) {
+                    gameOver("Hull Destroyed");
+                    return;
+                }
+                checkScroll(r);
+            } else {
+                revealCell(r, c);
+                checkScroll(r);
+            }
+            updateHUD();
+        }
+
+        function revealCell(r, c) {
+            if (r < 0 || r >= grid.length || c < 0 || c >= COLS) return;
+            const cell = grid[r][c];
+            
+            if (cell.isRevealed || cell.isFlagged || cell.isMine) return;
+
+            cell.isRevealed = true;
+            cell.el.classList.add('revealed');
+            
+            const count = getMineCount(r, c);
+            if (count > 0) {
+                cell.el.textContent = count;
+                cell.el.dataset.num = count;
+            } else {
+                for (let i = -1; i <= 1; i++) {
+                    for (let j = -1; j <= 1; j++) {
+                        revealCell(r + i, c + j);
+                    }
+                }
+            }
+        }
+
+        // --- Game Loop & Resource Management ---
+        function addFuel(amount, targetEl = null) {
+            state.fuel += amount;
+            if (state.fuel > 100) state.fuel = 100;
+            
+            if (targetEl) {
+                const color = amount > 0 ? "#00ffcc" : "#ffcc00";
+                const sign = amount > 0 ? "+" : "";
+                showFloatText(targetEl, `${sign}${amount} ⚡`, color);
+            }
+
+            if (state.fuel <= 0) {
+                state.fuel = 0;
+                gameOver("Fuel Depleted");
+            }
+            updateHUD();
+        }
+
+        function showFloatText(el, text, color) {
+            const rect = el.getBoundingClientRect();
+            
+            const floater = document.createElement('div');
+            floater.className = 'floater';
+            floater.textContent = text;
+            floater.style.color = color;
+            floater.style.left = (rect.left) + 'px';
+            floater.style.top = (rect.top) + 'px';
+            document.body.appendChild(floater);
+            setTimeout(() => floater.remove(), 800);
+        }
+
+        function checkScroll(r) {
+            if (r > state.depth) {
+                state.depth = r;
+            }
+
+            const buffer = 8;
+            while (grid.length < state.depth + buffer) {
+                createRow();
+            }
+
+            const cellSize = getCellHeight();
+            const screenHeight = document.getElementById('game-container').clientHeight;
+            const targetVisualY = screenHeight * 0.6;
+            const rowY = r * cellSize;
+            const desiredOffset = targetVisualY - rowY;
+            let finalOffset = Math.min(0, desiredOffset);
+
+            if (finalOffset < state.offsetY) {
+               state.offsetY = finalOffset;
+            }
+
+            gridWrapper.style.transform = `translateY(${state.offsetY}px)`;
+        }
+
+        function updateHUD() {
+            depthEl.textContent = state.depth + "m";
+            hpEl.textContent = "♥".repeat(state.hp);
+            fuelEl.textContent = state.fuel;
+            fuelEl.style.color = state.fuel < 10 ? '#ff4444' : '#ffcc00';
+        }
+
+        function gameOver(reason) {
+            state.isPlaying = false;
+            if (navigator.vibrate) navigator.vibrate(500);
+            deathReasonEl.textContent = reason;
+            finalScoreEl.textContent = state.depth;
+            gameOverEl.style.display = 'flex';
+        }
+
+        window.addEventListener('resize', () => {
+             if(state.isPlaying) checkScroll(state.depth);
+        });
+
+    </script>
+</body>
+</html>

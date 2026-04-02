@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Neon Collider - MAPI GAMES</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- FIGURE GEOMETRICHE LEGGERE -->
+    <div class="scene-3d">
+        <div class="geo-shape rect-1"></div>
+        <div class="geo-shape rect-2"></div>
+        <div class="geo-shape rect-3"></div>
+        <div class="geo-shape square-1"></div>
+        <div class="geo-shape square-2"></div>
+        <div class="geo-shape square-3"></div>
+        <div class="geo-shape triangle-1"></div>
+        <div class="geo-shape triangle-2"></div>
+        <div class="geo-shape triangle-3"></div>
+    </div>
+    
+    <div id="game-wrapper">
+        <div id="game-container">
+            <!-- TRACK DISPLAY -->
+            <div id="track-display">
+                <div class="track-text">TRACK <span id="track-number">1</span></div>
+            </div>
+            
+            <!-- COUNTDOWN DISPLAY -->
+            <div id="countdown-display">
+                <div class="countdown-text"></div>
+            </div>
+            
+            <div id="splash-screen" class="screen active">
+                <h1 class="title-large">
+                    <span class="title-neon">NEON</span><br>
+                    <span class="title-collider">COLLIDER</span>
+                </h1>
+                <p class="subtitle pulse">Click to Play</p>
+                <p class="footer">MAPI GAMES</p>
+            </div>
+
+            <div id="menu-screen" class="screen">
+                <h1 class="title-large">
+                    <span class="title-neon">NEON</span><br>
+                    <span class="title-collider">COLLIDER</span>
+                </h1>
+                <button id="play-btn" class="neon-button cyan-button">PLAY</button>
+                <button id="stats-btn" class="neon-button green-button">STATS</button>
+                <button id="controls-btn" class="neon-button red-button">CONTROLS</button>
+                <button id="info-btn" class="neon-button orange-button">INFO</button>
+                <p class="footer">MAPI GAMES</p>
+                <a href="https://www.giugames.com/" target="_blank" id="more-games-link" class="more-games-link">MORE GAMES</a>
+            </div>
+
+            <div id="level-select-screen" class="screen">
+                <h1 class="title-medium">LEVELS</h1>
+                <div id="levels-grid"></div>
+                <button id="back-to-menu-btn" class="neon-button orange-button small-button">BACK</button>
+            </div>
+
+            <div id="game-screen" class="screen">
+                <div id="hud">
+                    <div class="hud-item glow-cyan">SCORE <span id="score">0</span></div>
+                    <div class="hud-item glow-yellow">LEVEL <span id="level">1</span></div>
+                    <div class="hud-item glow-red">LIVES ❤ <span id="lives">3</span></div>
+                </div>
+                <canvas id="game-canvas"></canvas>
+                
+                <div id="level-transition" class="level-transition">
+                    <h2>LEVEL <span id="transition-level">1</span></h2>
+                    <p>GET READY!</p>
+                </div>
+            </div>
+
+            <div id="gameover-screen" class="screen">
+                <h1 class="title-large">
+                    <span class="title-neon">GAME</span><br>
+                    <span class="title-collider">OVER</span>
+                </h1>
+                <p class="subtitle">FINAL SCORE: <span id="final-score">0</span></p>
+                <button id="restart-btn" class="neon-button cyan-button">RESTART</button>
+                <p class="footer">MAPI GAMES</p>
+            </div>
+            
+            <!-- MODALI DENTRO GAME CONTAINER PER RESCALE -->
+            <div id="info-modal" class="modal">
+                <div class="modal-content">
+                    <h2>HOW TO PLAY</h2>
+                    <p>🎮 <strong>ARROW KEYS</strong> or <strong>MOUSE/TOUCH</strong> to move</p>
+                    <p>🧱 Destroy all bricks!</p>
+                    <p>⭐ Power-ups:</p>
+                    <ul>
+                        <li><span class="power-green">E</span> Expand</li>
+                        <li><span class="power-red">S</span> Shrink</li>
+                        <li><span class="power-pink">L</span> Life</li>
+                        <li><span class="power-yellow">M</span> Multiball</li>
+                        <li><span class="power-blue">W</span> Slow</li>
+                        <li><span class="power-yellow">F</span> Fire (SPACE)</li>
+                    </ul>
+                    <p>⚠️ <strong>P or ESC = PAUSE</strong></p>
+                    <button id="close-info-btn" class="neon-button orange-button">CLOSE</button>
+                </div>
+            </div>
+
+            <div id="controls-modal" class="modal">
+                <div class="modal-content">
+                    <h2>CONTROLS</h2>
+                    <div class="slider-container">
+                        <label for="music-slider">🎵 MUSIC VOLUME</label>
+                        <input type="range" id="music-slider" min="0" max="100" value="50" class="audio-slider">
+                        <span id="music-value">50%</span>
+                    </div>
+                    <div class="slider-container">
+                        <label for="sound-slider">🔊 SOUND VOLUME</label>
+                        <input type="range" id="sound-slider" min="0" max="100" value="50" class="audio-slider">
+                        <span id="sound-value">50%</span>
+                    </div>
+                    <button id="close-controls-btn" class="neon-button cyan-button">SAVE & CLOSE</button>
+                </div>
+            </div>
+
+            <div id="stats-modal" class="modal">
+                <div class="modal-content">
+                    <h2>STATISTICS</h2>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <span class="stat-label">🏆 HIGH SCORE</span>
+                            <span class="stat-value" id="stat-highscore">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">⭐ MAX LEVEL</span>
+                            <span class="stat-value" id="stat-maxlevel">1</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">🧱 BRICKS DESTROYED</span>
+                            <span class="stat-value" id="stat-bricks">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">💥 COMBO RECORD</span>
+                            <span class="stat-value" id="stat-combo">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">🎁 POWERUPS COLLECTED</span>
+                            <span class="stat-value" id="stat-powerups">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">🎮 GAMES PLAYED</span>
+                            <span class="stat-value" id="stat-games">0</span>
+                        </div>
+                    </div>
+                    <button id="reset-stats-btn" class="neon-button red-button">RESET STATS</button>
+                    <button id="close-stats-btn" class="neon-button cyan-button">CLOSE</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- GameMonetize.com SDK - OFFICIAL IMPLEMENTATION -->
+    <script type="text/javascript">
+        window.SDK_OPTIONS = {
+            gameId: "vy809reourjzmnf76c7l3b2sj7k2la96",
+            onEvent: function (a) {
+                switch (a.name) {
+                    case "SDK_GAME_PAUSE":
+                        // pause game logic / mute audio
+                        if (window.pauseForAd) window.pauseForAd();
+                        break;
+                    case "SDK_GAME_START":
+                        // advertisement done, resume game logic and unmute audio
+                        if (window.resumeAfterAd) window.resumeAfterAd();
+                        break;
+                    case "SDK_READY":
+                        // when sdk is ready
+                        console.log("GameMonetize.com SDK is ready.");
+                        if (window.onSDKReady) window.onSDKReady();
+                        break;
+                }
+            }
+        };
+        (function (a, b, c) {
+            var d = a.getElementsByTagName(b)[0];
+            a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+        })(document, "script", "gamemonetize-sdk");
+    </script>
+    <script src="script.js"></script>
+</body>
+</html>

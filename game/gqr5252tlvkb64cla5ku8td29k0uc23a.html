@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0">
+		<title>Minesweeper - Find Bombs</title>
+		<style>
+			html, body, #canvas { margin: 0; padding: 0; border: 0; }
+			body { background-color: #d3d3d3; overflow: hidden; touch-action: none; }
+			#canvas { display: block; }
+
+			#status {
+				position: absolute; left: 0; right: 0; top: 0; bottom: 0;
+				background-color: #d3d3d3;
+				display: flex; 
+				flex-direction: column; 
+				justify-content: center; /* Dikeyde merkezle */
+				align-items: center;    /* Yatayda merkezle */
+				visibility: hidden;
+				z-index: 100;
+			}
+
+			/* İkon - Yatayda ekranın 2/5'i (40%) */
+			#status-splash {
+				display: block;
+				width: 40vw; /* Ekran genişliğinin %40'ı */
+				height: auto;
+				max-height: 40vh; /* Dikeyde çok uzayıp barı ezmemesi için sınır */
+				object-fit: contain;
+				margin-bottom: 5vh; /* İkon ve bar arası dikey boşluk */
+			}
+
+			#status-notice { display: none !important; }
+
+			/* Loading Bar - Yatayda ekranın 2/4'ü (50%) */
+			#status-progress {
+				display: none;
+				width: 50vw; /* Ekran genişliğinin %50'si */
+				height: 22px;
+				appearance: none;
+				-webkit-appearance: none;
+				border: 2px solid #424242;
+				border-radius: 50px;
+				background-color: #d3d3d3;
+				overflow: hidden;
+				padding: 2px;
+			}
+
+			#status-progress::-webkit-progress-value { background-color: #424242; border-radius: 50px; }
+			#status-progress::-moz-progress-bar { background-color: #424242; border-radius: 50px; }
+			#status-progress::-webkit-progress-bar { background-color: #d3d3d3; }
+		</style>
+		<link id="-gd-engine-icon" rel="icon" type="image/png" href="index.icon.png" />
+<link rel="apple-touch-icon" href="index.apple-touch-icon.png"/>
+
+	</head>
+	<body>
+		<canvas id="canvas"></canvas>
+		<div id="status">
+			<img id="status-splash" src="index.png" alt="">
+			<progress id="status-progress"></progress>
+		</div>
+
+		<script src="index.js"></script>
+		<script>
+			const engine = new Engine({"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":8545028,"index.wasm":38057390},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4});
+			(function () {
+				const statusOverlay = document.getElementById('status');
+				const statusProgress = document.getElementById('status-progress');
+				engine.startGame({
+					'onProgress': function (current, total) {
+						statusOverlay.style.visibility = 'visible';
+						statusProgress.style.display = 'block';
+						if (current > 0 && total > 0) {
+							statusProgress.value = current;
+							statusProgress.max = total;
+						}
+					},
+				}).then(() => {
+					statusOverlay.remove();
+				});
+			}());
+		</script>
+		
+		
+		
+<script type="text/javascript">
+    // Değişkenler (Kontrol Paneli)
+    window.isWaitingReward = false; // Kullanıcı ödül butonuna bastı mı?
+    window.canReceiveReward = false; // Reklam gerçekten izlendi mi?
+
+    window.SDK_OPTIONS = {
+        gameId: "gqr5252tlvkb64cla5ku8td29k0uc23a",
+        onEvent: function (a) {
+            console.log("GM_SDK Event: " + a.name);
+            
+            switch (a.name) {
+                case "SDK_GAME_PAUSE": 
+                    if (window.godotBridge) window.godotBridge("pause"); 
+                    break;
+
+                // LOGLARINDA GELEN 'COMPLETE' VE STANDART ÖDÜL SİNYALİNİ BİRLEŞTİRDİK
+                case "SDK_REWARDED_WATCH_COMPLETE": 
+                case "COMPLETE": 
+                    if (window.isWaitingReward) {
+                        console.log("GM_SDK: Reklam başarıyla izlendi, hak tanımlandı.");
+                        window.canReceiveReward = true; 
+                    }
+                    break;
+
+                case "SDK_GAME_START":
+                    // Sadece hem buton basılıysa hem de izleme tamamlandıysa ödül ver
+                    if (window.isWaitingReward && window.canReceiveReward) {
+                        console.log("GM_SDK: Şartlar tamam, Godot'ya ödül gönderiliyor.");
+                        if (window.godotBridge) window.godotBridge("reward");
+                    } else {
+                        console.warn("GM_SDK: Reklam tamamlanmadı veya izlenmedi, ödül yok.");
+                    }
+                    
+                    // Her durumda temizlik yap ve oyunu devam ettir
+                    window.isWaitingReward = false;
+                    window.canReceiveReward = false;
+                    if (window.godotBridge) window.godotBridge("resume");
+                    break;
+
+                case "SDK_ERROR":
+                    console.error("GM_SDK: Bir hata oluştu.");
+                    window.isWaitingReward = false;
+                    window.canReceiveReward = false;
+                    if (window.godotBridge) window.godotBridge("resume");
+                    break;
+            }
+        }
+    };
+
+    // Godot: window.triggerRewardedAd()
+    window.triggerRewardedAd = function() { 
+        console.log("GM_SDK: Reklam isteği başlatıldı.");
+        window.isWaitingReward = true; // "Bu bir ödüllü reklam isteğidir" işaretlemesi
+        window.canReceiveReward = false; 
+        
+        if (typeof sdk !== 'undefined' && typeof sdk.showBanner === 'function') { 
+            sdk.showBanner(); 
+        } else {
+            console.error("GM_SDK: SDK Hazır değil.");
+            window.isWaitingReward = false;
+            if (window.godotBridge) window.godotBridge("resume");
+        }
+    };
+
+    // GM SDK Yükleyici
+    (function (a, b, c) {
+        var d = a.getElementsByTagName(b)[0];
+        if (!a.getElementById(c)) {
+            var s = a.createElement(b);
+            s.id = c;
+            s.src = "https://api.gamemonetize.com/sdk.js";
+            d.parentNode.insertBefore(s, d);
+        }
+    })(document, "script", "gamemonetize-sdk");
+</script>
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</body>
+</html>

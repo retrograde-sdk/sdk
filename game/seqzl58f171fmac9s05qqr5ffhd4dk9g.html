@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Fruit Memory Match</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #fff8dc;
+            margin: 0;
+            text-align: center;
+        }
+        #start-screen, #game-screen {
+            display: none;
+        }
+        #start-screen.active, #game-screen.active {
+            display: block;
+        }
+        h1 {
+            margin-top: 30px;
+        }
+        .btn {
+            margin: 20px;
+            padding: 15px 30px;
+            font-size: 18px;
+            background-color: #ffa500;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        #stats {
+            font-size: 18px;
+            margin-top: 10px;
+        }
+        #game-board {
+            display: grid;
+            grid-gap: 10px;
+            justify-content: center;
+            margin: 20px auto;
+        }
+        .card {
+            width: 80px;
+            height: 80px;
+            background-color: #f4a261;
+            font-size: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border-radius: 10px;
+        }
+        .matched {
+            background-color: #2a9d8f;
+            color: white;
+            cursor: default;
+        }
+    </style>
+</head>
+<body>
+    <div id="start-screen" class="active">
+        <h1>🍇 Fruit Memory Game 🍓</h1>
+        <p>Test your memory and match the fruit pairs across 10 levels!</p>
+        <button class="btn" onclick="startGame()">Start Game</button>
+        <div id="stats">
+            Best Score: <span id="best">0</span>
+        </div>
+    </div>
+    <div id="game-screen">
+        <h1>🍎 Level <span id="level">1</span></h1>
+        <div id="stats">
+            Score: <span id="score">0</span> |
+            Best Score: <span id="best2">0</span>
+        </div>
+        <div id="game-board"></div>
+        <button class="btn" onclick="resetGame()">Replay</button>
+    </div>
+    <script src="game.js"></script>
+
+<script type="text/javascript">
+   window.SDK_OPTIONS = {
+      gameId: "seqzl58f171fmac9s05qqr5ffhd4dk9g",
+      onEvent: function (a) {
+         switch (a.name) {
+            case "SDK_GAME_PAUSE":
+               // pause game logic / mute audio
+               break;
+            case "SDK_GAME_START":
+               // advertisement done, resume game logic and unmute audio
+               break;
+            case "SDK_READY":
+               // when sdk is ready
+               break;
+         }
+      }
+   };
+(function (a, b, c) {
+   var d = a.getElementsByTagName(b)[0];
+   a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+})(document, "script", "gamemonetize-sdk"); 
+</script>
+
+</body>
+</html>

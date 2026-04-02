@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="description" content="THREE POINTS: NEON COLLIDER - Match colors, score high!">
+    <title>THREE POINTS: NEON COLLIDER</title>
+    
+    <link rel="stylesheet" href="styles.css">
+
+    <!-- ============================================
+         SDK GAMEMONETIZE - INIZIO
+         ============================================ -->
+    <script type="text/javascript">
+       window.SDK_OPTIONS = {
+          // TODO: Sostituisci con il tuo ID di gioco reale fornito da GameMonetize
+          gameId: "j26hfzgrv8fjng9pi1deswl9gcoyag8e",
+          onEvent: function (a) {
+             switch (a.name) {
+                case "SDK_GAME_PAUSE":
+                   // L'SDK richiede una pausa, la logica è gestita in game.js
+                   window.dispatchEvent(new Event('sdk_pause'));
+                   break;
+                case "SDK_GAME_START":
+                   // La pubblicità è finita, la logica di ripresa è gestita in game.js
+                   window.dispatchEvent(new Event('sdk_resume'));
+                   break;
+                case "SDK_READY":
+                   // L'SDK è pronto
+                   window.dispatchEvent(new Event('sdk_ready'));
+                   break;
+                case "SDK_ERROR":
+                   // Errore nell'SDK
+                   console.error("GameMonetize SDK Error:", a.payload);
+                   // Se c'è un errore, assicurati di riprendere il gioco
+                   window.dispatchEvent(new Event('sdk_resume'));
+                   break;
+             }
+          }
+       };
+    (function (a, b, c) {
+       var d = a.getElementsByTagName(b)[0];
+       a.getElementById(c) || (a = a.createElement(b), a.id = c, 
+       a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+    })(document, "script", "gamemonetize-sdk"); 
+    </script>
+    <!-- ============================================
+         SDK GAMEMONETIZE - FINE
+         ============================================ -->
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+        
+        <div id="hud" class="hidden">
+            <div id="powerupTimer" class="hidden">
+                <div class="powerup-icon"></div>
+                <div class="powerup-bar-container"><div id="powerupBar" class="powerup-bar"></div></div>
+            </div>
+            <div id="shieldIndicator" class="hidden">🛡️</div>
+            <div id="gemsDisplay" class="gems-hud">💎 0</div>
+            <div class="hud-top">
+                <div class="hud-score"><div class="label">SCORE</div><div id="hudScore" class="value">0</div></div>
+                <div id="hudTimer" class="hud-timer hidden"><div class="label">TIME</div><div id="hudTimeValue" class="value">60</div></div>
+                <div class="hud-best"><div class="label">BEST</div><div id="hudBest" class="value">0</div></div>
+            </div>
+            <div class="hud-controls">
+                <button id="btnPauseHud" class="icon-btn" aria-label="Pause">⏸</button>
+            </div>
+        </div>
+
+        <div id="achievementNotification" class="hidden"></div>
+        <div id="comboNotification" class="hidden"></div>
+        <div id="countdown" class="hidden">3</div>
+        
+        <div id="splashScreen" class="screen active">
+            <div class="splash-content">
+                <h1 class="game-title glow-text">THREE POINTS</h1>
+                <h2 class="game-subtitle">NEON COLLIDER</h2>
+                <p class="press-to-continue blink">PRESS TO CONTINUE</p>
+            </div>
+        </div>
+
+        <div id="tutorialScreen" class="screen">
+            <div id="tutorialArrows" class="tutorial-arrows hidden">
+                <div class="arrow-left">
+                    <svg width="80" height="120" viewBox="0 0 80 120">
+                        <defs>
+                            <filter id="glow-left">
+                                <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+                                <feMerge>
+                                    <feMergeNode in="coloredBlur"/>
+                                    <feMergeNode in="SourceGraphic"/>
+                                </feMerge>
+                            </filter>
+                        </defs>
+                        <path d="M 60 20 L 20 60 L 60 100" 
+                              stroke="#3FA9FF" 
+                              stroke-width="6" 
+                              fill="none" 
+                              stroke-linecap="round" 
+                              stroke-linejoin="round"
+                              filter="url(#glow-left)"/>
+                    </svg>
+                </div>
+                <div class="arrow-right">
+                    <svg width="80" height="120" viewBox="0 0 80 120">
+                        <defs>
+                            <filter id="glow-right">
+                                <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+                                <feMerge>
+                                    <feMergeNode in="coloredBlur"/>
+                                    <feMergeNode in="SourceGraphic"/>
+                                </feMerge>
+                            </filter>
+                        </defs>
+                        <path d="M 20 20 L 60 60 L 20 100" 
+                              stroke="#9B5CFF" 
+                              stroke-width="6" 
+                              fill="none" 
+                              stroke-linecap="round" 
+                              stroke-linejoin="round"
+                              filter="url(#glow-right)"/>
+                    </svg>
+                </div>
+            </div>
+            <div class="tutorial-overlay">
+                <div class="tutorial-content">
+                    <h2 id="tutorialTitle" class="tutorial-title">WELCOME!</h2>
+                    <p id="tutorialText" class="tutorial-text">Match the ball color with the triangle's top side!</p>
+                    <button id="btnSkipTutorial" class="btn-skip">SKIP</button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="menuScreen" class="screen">
+            <div class="menu-content">
+                <h1 class="game-title-small glow-text">THREE POINTS</h1>
+                <div id="menuGemsDisplay" class="menu-gems">💎 0</div>
+                <button id="dailyRewardBtn" class="btn-daily hidden">🎁 DAILY REWARD</button>
+                <nav class="menu-nav">
+                    <button id="btnPlay" class="btn-neon btn-large">PLAY ENDLESS</button>
+                    <button id="btnPlayTimeAttack" class="btn-neon btn-large">TIME ATTACK</button>
+                    <button id="btnShop" class="btn-neon">🎨 SHOP</button>
+                    <button id="btnLeaderboard" class="btn-neon">🏆 LEADERBOARD</button>
+                    <button id="btnHowTo" class="btn-neon">HOW TO PLAY</button>
+                    <button id="btnAchievements" class="btn-neon">ACHIEVEMENTS</button>
+                    <button id="btnOptions" class="btn-neon">OPTIONS</button>
+                    <button id="btnStats" class="btn-neon">STATS</button>
+                    <button id="btnCredits" class="btn-neon">CREDITS</button>
+                    <!-- NUOVO PULSANTE MORE GAMES -->
+                    <button id="btnMoreGames" class="btn-neon">MORE GAMES</button>
+                    <button id="btnResetData" class="btn-neon">RESET DATA</button>
+                </nav>
+                <div class="menu-footer">
+                    <span class="version">v1.2.0</span>
+                    <span class="separator">•</span>
+                    <span class="lang">EN</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- SHOP SCREEN -->
+        <div id="shopScreen" class="screen">
+            <div class="panel-content panel-shop">
+                <h2 class="panel-title">SHOP</h2>
+                <div class="shop-gems">💎 <span id="shopGemsDisplay">0</span></div>
+                <div id="skinsList" class="skins-grid"></div>
+                <button id="btnBackFromShop" class="btn-neon">BACK</button>
+            </div>
+        </div>
+
+        <!-- LEADERBOARD SCREEN -->
+        <div id="leaderboardScreen" class="screen">
+            <div class="panel-content">
+                <h2 class="panel-title">🏆 LEADERBOARD</h2>
+                <div class="leaderboard-tabs">
+                    <button id="leaderboardTabEndless" class="tab-btn active" data-mode="endless">ENDLESS</button>
+                    <button id="leaderboardTabTimeAttack" class="tab-btn" data-mode="time_attack">TIME ATTACK</button>
+                </div>
+                <div class="leaderboard-header">
+                    <div class="rank-header">#</div>
+                    <div class="name-header">PLAYER</div>
+                    <div class="score-header">SCORE</div>
+                    <div class="date-header">DATE</div>
+                </div>
+                <div id="leaderboardList" class="leaderboard-list"></div>
+                <button id="btnBackFromLeaderboard" class="btn-neon">BACK</button>
+            </div>
+        </div>
+        
+        <div id="howToScreen" class="screen">
+            <div class="panel-content">
+                <h2 class="panel-title">HOW TO PLAY</h2>
+                <div class="tutorial-steps">
+                    <div class="step"><div class="step-icon">▶</div><h3>1. ROTATE THE TRIANGLE</h3><p>Tap left/right side of the screen</p><p class="step-keys">Keyboard: A/D or ←/→</p></div>
+                    <div class="step"><div class="step-icon">●</div><h3>2. MATCH THE COLORS</h3><p>The top side of the triangle must match the ball's color</p></div>
+                    <div class="step"><div class="step-icon">⚡</div><h3>3. SCALE THE DIFFICULTY</h3><p>The more you score, the faster it gets!</p></div>
+                </div>
+                <h3 class="powerup-section-title">GRAB POWER-UPS</h3>
+                <div class="powerup-grid">
+                    <div class="powerup-item">
+                        <div class="powerup-ball-icon slowmo">T</div><h4>SLOW-MOTION</h4><p>Hit the white ball to slow down time.</p>
+                    </div>
+                    <div class="powerup-item">
+                        <div class="powerup-ball-icon scorex2">x2</div><h4>SCORE x2</h4><p>Hit the purple ball to double your score.</p>
+                    </div>
+                    <div class="powerup-item">
+                        <div class="powerup-ball-icon shield">S</div><h4>SHIELD</h4><p>Hit the yellow ball for a one-time protection.</p>
+                    </div>
+                </div>
+                <button id="btnBackFromHowTo" class="btn-neon">BACK</button>
+            </div>
+        </div>
+        
+        <div id="optionsScreen" class="screen">
+            <div class="panel-content">
+                <h2 class="panel-title">OPTIONS</h2>
+                <div class="options-list">
+                    <div class="option-row"><label>SFX VOLUME</label><div><input type="range" id="volumeSliderSfx" min="0" max="100" value="70" class="volume-slider"><span id="volumeValueSfx" class="volume-value">70%</span></div></div>
+                    <div class="option-row"><label>MUSIC VOLUME</label><div><input type="range" id="volumeSliderMusic" min="0" max="100" value="70" class="volume-slider"><span id="volumeValueMusic" class="volume-value">70%</span></div></div>
+                    <div class="option-row"><label>HIGH CONTRAST</label><button id="toggleContrast" class="toggle-btn">OFF</button></div>
+                </div>
+                <button id="btnBackFromOptions" class="btn-neon">BACK</button>
+            </div>
+        </div>
+        
+        <div id="achievementsScreen" class="screen">
+            <div class="panel-content">
+                <h2 class="panel-title">ACHIEVEMENTS</h2>
+                <div id="achievementsList" class="achievements-list"></div>
+                <button id="btnBackFromAchievements" class="btn-neon">BACK</button>
+            </div>
+        </div>
+        
+        <div id="statsScreen" class="screen">
+            <div class="panel-content">
+                <h2 class="panel-title">STATS</h2>
+                <div class="stats-grid">
+                    <div class="stat-item"><div class="stat-label">BEST SCORE</div><div id="statBest" class="stat-value">0</div></div>
+                    <div class="stat-item"><div class="stat-label">GAMES PLAYED</div><div id="statGames" class="stat-value">0</div></div>
+                    <div class="stat-item"><div class="stat-label">TIME PLAYED</div><div id="statTime" class="stat-value">0m</div></div>
+                    <div class="stat-item"><div class="stat-label">MAX STREAK</div><div id="statStreak" class="stat-value">0</div></div>
+                    <div class="stat-item"><div class="stat-label">ACCURACY</div><div id="statAccuracy" class="stat-value">0%</div></div>
+                    <div class="stat-item"><div class="stat-label">BALLS HIT</div><div id="statHits" class="stat-value">0</div></div>
+                </div>
+                <button id="btnBackFromStats" class="btn-neon">BACK</button>
+            </div>
+        </div>
+        
+        <div id="creditsScreen" class="screen">
+            <div class="panel-content">
+                <h2 class="panel-title">CREDITS</h2>
+                <div class="credits-text"><p class="credits-footer">Mapi Games 2025</p></div>
+                <button id="btnBackFromCredits" class="btn-neon">BACK</button>
+            </div>
+        </div>
+        
+        <div id="pauseScreen" class="screen overlay">
+            <div class="panel-content panel-small">
+                <h2 class="panel-title">PAUSED</h2>
+                <div id="manualPauseButtons" class="pause-buttons hidden">
+                    <button id="btnResumeManual" class="btn-neon btn-large">RESUME</button>
+                    <button id="btnRestart" class="btn-neon">RESTART</button>
+                    <button id="btnQuitToMenu" class="btn-neon">MENU</button>
+                </div>
+                <div id="autoPauseButtons" class="pause-buttons hidden">
+                    <button id="btnResumeAuto" class="btn-neon btn-large">RESUME</button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="gameOverScreen" class="screen overlay">
+            <div class="panel-content panel-small">
+                <h2 id="gameOverTitle" class="panel-title game-over-title">GAME OVER</h2>
+                <p id="newBestMessage" class="new-best-message hidden">NEW BEST!</p>
+                <p id="gameOverReason" class="game-over-message">Wrong color!</p>
+                <div id="gemsEarned" class="gems-earned">+0 💎</div>
+                <div class="game-over-scores">
+                    <div class="score-box"><div class="label">SCORE</div><div id="finalScore" class="value glow-text">0</div></div>
+                    <div class="score-box"><div class="label">BEST</div><div id="finalBest" class="value">0</div></div>
+                </div>
+                <div class="game-over-buttons">
+                    <button id="btnPlayAgain" class="btn-neon btn-large">RESTART</button>
+                    <button id="btnBackToMenu" class="btn-neon">MENU</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="confirmResetScreen" class="screen overlay">
+            <div class="panel-content panel-small">
+                <h2 class="panel-title">CONFIRM RESET</h2>
+                <p class="confirm-message">Are you sure you want to delete all saved data? This action cannot be undone.</p>
+                <div class="confirm-buttons">
+                    <button id="btnCancelReset" class="btn-neon">CANCEL</button>
+                    <button id="btnConfirmReset" class="btn-neon btn-danger">CONFIRM</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- NAME INPUT OVERLAY -->
+        <div id="nameInputOverlay" class="screen overlay hidden">
+            <div class="panel-content panel-small">
+                <h2 class="panel-title">ENTER YOUR NAME</h2>
+                <p class="name-input-message">Join the leaderboard!</p>
+                <input type="text" id="playerNameInput" class="name-input" maxlength="10" placeholder="Your name..." autocomplete="off">
+                <div class="name-input-hint">Max 10 characters</div>
+                <button id="btnSubmitName" class="btn-neon btn-large">SUBMIT</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="game.js"></script>
+</body>
+</html>

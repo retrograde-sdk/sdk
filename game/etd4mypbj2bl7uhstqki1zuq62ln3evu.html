@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Magical Tic Tac Toe ✨</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="style.css" />
+
+    <!-- GameMonetize SDK (kept unchanged) -->
+    <script type="text/javascript">
+        window.SDK_OPTIONS = {
+            gameId: "etd4mypbj2bl7uhstqki1zuq62ln3evu",
+            onEvent: function (a) {
+                switch (a.name) {
+                    case "SDK_GAME_PAUSE":
+                        if (window.gamePauseFromSDK) gamePauseFromSDK();
+                        break;
+                    case "SDK_GAME_START":
+                        if (window.gameResumeFromSDK) gameResumeFromSDK();
+                        break;
+                    case "SDK_READY":
+                        console.log("SDK Ready ✔️");
+                        break;
+                    case "SDK_ERROR":
+                        console.log("SDK Error ❌");
+                        break;
+                }
+            }
+        };
+        (function (a, b, c) {
+            var d = a.getElementsByTagName(b)[0];
+            a.getElementById(c) ||
+                ((a = a.createElement(b)),
+                    (a.id = c),
+                    (a.src = "https://api.gamemonetize.com/sdk.js"),
+                    d.parentNode.insertBefore(a, d));
+        })(document, "script", "gamemonetize-sdk");
+    </script>
+</head>
+
+<body>
+
+    <div id="app">
+        <!-- Home top-left coin chip -->
+        <div class="home-coin-chip" id="homeCoinChip" title="Coins 💰">
+            <img src="https://cdn-icons-png.flaticon.com/512/138/138292.png" alt="coin" />
+            <span id="homeCoinCount">0</span>
+        </div>
+
+        <!-- HOME SCREEN -->
+        <section id="homeScreen" class="screen active">
+            <div class="card menu-card">
+                <h1 class="game-title">Magical<br>Tic Tac Toe ✨</h1>
+                <div class="menu-buttons">
+                    <button class="btn home-btn" id="playComputerBtn">🤖 Play With Computer</button>
+                    <button class="btn home-btn" id="playFriendBtn">👥 Play With Friend</button>
+                    <button class="btn home-btn" id="themeStoreBtn">🎨 Theme Store</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- DIFFICULTY SCREEN -->
+        <section id="difficultyScreen" class="screen">
+            <div class="card">
+                <button class="back-btn" id="difficultyBack">← Back</button>
+                <h2 class="menu-title">Select Difficulty</h2>
+                <div class="diff-buttons">
+                    <button class="btn diff-btn" data-level="easy">Easy</button>
+                    <button class="btn diff-btn" data-level="medium">Medium</button>
+                    <button class="btn diff-btn" data-level="hard">Hard</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- GAME SCREEN -->
+        <section id="gameScreen" class="screen">
+            <div class="card game-card" role="application" aria-label="Tic Tac Toe Game">
+                <div class="card-top">
+                    <div class="coin-wrap">
+                        <img src="https://cdn-icons-png.flaticon.com/512/138/138292.png" class="coin-icon" alt="coins">
+                        <span id="coinCount">0</span>
+                    </div>
+
+                    <div class="turn-wrap">
+                        <span id="turnText">❌ X's Turn</span>
+                    </div>
+
+                    <div class="top-controls">
+                        <button id="pauseBtn" class="btn small-btn">⏸️ Pause</button>
+                        <button id="homeBtnFromGame" class="btn small-btn">🏠 Home</button>
+                    </div>
+                </div>
+
+                <div class="board-wrap">
+                    <div class="board" id="board" aria-live="polite" aria-atomic="true">
+                        <!-- JS will generate 9 cells -->
+                    </div>
+                </div>
+
+                <div class="card-bottom">
+                    <div class="hint">Tap a square to play. Play with computer to earn coins 💰.</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PAUSE POPUP -->
+        <div id="pausePopup" class="popup hidden">
+            <div class="popup-box">
+                <h2>Paused ⏸️</h2>
+                <button class="btn popup-btn" id="resumeBtn">▶️ Resume</button>
+                <button class="btn popup-btn" id="restartBtn">🔁 Restart</button>
+                <button class="btn popup-btn" id="pauseHomeBtn">🏠 Home</button>
+            </div>
+        </div>
+
+        <!-- RESULT POPUP -->
+        <div id="resultPopup" class="popup hidden">
+            <div class="popup-box">
+                <h2 id="resultText">Someone Wins!</h2>
+                <p id="rewardText"></p>
+                <button class="btn popup-btn" id="playAgainBtn">🔁 Play Again</button>
+                <button class="btn popup-btn" id="resultHomeBtn">🏠 Home</button>
+            </div>
+        </div>
+
+        <!-- THEME STORE -->
+        <section id="themeStore" class="screen">
+            <div class="card">
+                <button class="back-btn" id="themeBackBtn">← Back</button>
+                <h2 class="menu-title">Theme Store 🎨</h2>
+                <div id="themeList" class="theme-grid">
+                    <!-- JS will generate 20 themes -->
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- SCRIPT -->
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <title>Cat Escape</title>
+
+  <style>
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background-color: #232323;
+      overflow: hidden;
+    }
+
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* GAME CONTAINER (JS will best-fit it to the viewport) */
+    #gameContainer {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      box-shadow: 0px 0px 20px rgba(0,0,0,0.5);
+    }
+
+    /* Unity injects a canvas into #gameContainer */
+    #gameContainer canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* UNITY LOADER */
+    #loader {
+      position: absolute;
+      left: 50%;
+      top: 65%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-family: sans-serif;
+      text-align: center;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    /* SPLASH OVERLAY (logo + animation) */
+    #splash {
+      position: fixed;
+      inset: 0;
+      background: #232323;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      gap: 18px;
+    }
+
+    #splash img {
+      max-width: 40vw;
+      max-height: 40vh;
+      width: auto;
+      height: auto;
+      animation: logoPulse 1.2s ease-in-out infinite;
+    }
+
+    /* Simple login/loading animation (spinner) */
+    .spinner {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      border: 4px solid rgba(255,255,255,0.18);
+      border-top-color: rgba(255,255,255,0.95);
+      animation: spin 0.9s linear infinite;
+    }
+
+    .splash-text {
+      color: rgba(255,255,255,0.85);
+      font-family: sans-serif;
+      font-size: 14px;
+      letter-spacing: 0.5px;
+      user-select: none;
+    }
+
+    /* Fade-out when game is ready */
+    #splash.fade-out {
+      animation: fadeOut 300ms ease forwards;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes logoPulse {
+      0%, 100% { transform: scale(1); opacity: 0.92; }
+      50%      { transform: scale(1.03); opacity: 1; }
+    }
+
+    @keyframes fadeOut {
+      to { opacity: 0; visibility: hidden; }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Splash / Login animation overlay -->
+  <div id="splash" aria-label="Loading">
+    <img src="logo.png" alt="Logo">
+    <div class="spinner" aria-hidden="true"></div>
+    <div class="splash-text">Loading…</div>
+  </div>
+
+  <div id="gameContainer"></div>
+
+  <div id="loader">
+    <div>Loading...</div>
+    <div id="progress">0%</div>
+  </div>
+
+  <script src="Build/UnityLoader.js"></script>
+  <script>
+    // Target resolution from Unity (keeps aspect ratio)
+    var targetWidth = 350;
+    var targetHeight = 600;
+    var targetAspect = targetWidth / targetHeight;
+
+    function isFullscreenNow() {
+      return document.fullscreenElement ||
+             document.webkitFullscreenElement ||
+             document.mozFullScreenElement ||
+             document.msFullscreenElement;
+    }
+
+    function resizeGame() {
+      var container = document.getElementById("gameContainer");
+
+      var vw = window.innerWidth;
+      var vh = window.innerHeight;
+      var windowAspect = vw / vh;
+
+      // Best-fit to viewport while preserving aspect ratio
+      var w, h;
+      if (windowAspect > targetAspect) {
+        h = vh;
+        w = h * targetAspect;
+      } else {
+        w = vw;
+        h = w / targetAspect;
+      }
+
+      container.style.width = w + "px";
+      container.style.height = h + "px";
+
+      // Shadow only when not fullscreen (optional)
+      container.style.boxShadow = isFullscreenNow()
+        ? "none"
+        : "0px 0px 20px rgba(0,0,0,0.5)";
+    }
+
+    function hideSplash() {
+      var splash = document.getElementById("splash");
+      if (!splash) return;
+      splash.classList.add("fade-out");
+      // optional: remove from DOM after fade
+      setTimeout(function () {
+        if (splash && splash.parentNode) splash.parentNode.removeChild(splash);
+      }, 350);
+    }
+
+    // Unity load
+    var gameInstance = UnityLoader.instantiate("gameContainer", "Build/New folder.json", {
+      onProgress: UnityProgress
+    });
+
+    function UnityProgress(gameInstance, progress) {
+      var loader = document.querySelector("#loader");
+      var progressText = document.querySelector("#progress");
+      if (!gameInstance.Module) return;
+
+      if (progress === 1) {
+        loader.style.display = "none";
+        // Game is ready -> hide logo/login animation now
+        hideSplash();
+      } else {
+        loader.style.display = "block";
+        progressText.innerHTML = Math.round(progress * 100) + "%";
+      }
+    }
+
+    // Events
+    window.addEventListener("resize", resizeGame);
+    document.addEventListener("fullscreenchange", resizeGame);
+    document.addEventListener("webkitfullscreenchange", resizeGame);
+    document.addEventListener("mozfullscreenchange", resizeGame);
+    document.addEventListener("MSFullscreenChange", resizeGame);
+
+    // Initial sizing
+    resizeGame();
+  </script>
+</body>
+</html>

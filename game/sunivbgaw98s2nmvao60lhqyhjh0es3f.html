@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+
+<html lang="en-us">
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+<title>Geometry Dash 3D</title>
+<link rel="stylesheet" href="./style.css"/>
+<style>
+        /* Убираем выделение по нажатию клавиш */
+        canvas:focus {
+            outline: none;
+        }
+
+        html, body {
+            /* Убираем отступы */
+            padding: 0;
+            margin: 0;
+            /* Отключаем скролл и лонгтап на IOS */
+            overflow: hidden;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-tap-highlight-color: rgba(0,0,0,0);
+            /* Ставим высоту на 100% */
+            height: 100%;
+        }
+    </style>
+<script src="vungleMessageSender.js"></script>
+</head>
+<body class="dark">
+<div id="unity-container" class="unity-desktop">
+<canvas id="unity-canvas" tabindex="-1"></canvas>
+</div>
+<div id="loading-cover" style="display:none;">
+<div id="unity-loading-bar">
+<div id="unity-logo"><img src="geometry-dash-3d-512.png"/></div>
+<div id="unity-progress-bar-empty" style="display: none;">
+<div id="unity-progress-bar-full"></div>
+</div>
+<div class="spinner"></div>
+</div>
+</div>
+<!-- Additional body modules -->
+<script>
+        const hideFullScreenButton = "";
+        const buildUrl = "Build";
+        const loaderUrl = buildUrl + "/jjoojjoojoj.loader.js";
+        const config = {
+            dataUrl: buildUrl + "/jjoojjoojoj.data.br",
+            frameworkUrl: buildUrl + "/jjoojjoojoj.framework.js.br",
+            codeUrl: buildUrl + "/jjoojjoojoj.wasm.br",
+        streamingAssetsUrl: "StreamingAssets",
+            companyName: "DefaultCompany",
+            productName: "GameometryDash3D2",
+            productVersion: "0.0.0.1"
+        };
+
+        const container = document.querySelector("#unity-container");
+        const canvas = document.querySelector("#unity-canvas");
+        const loadingCover = document.querySelector("#loading-cover");
+        const progressBarEmpty = document.querySelector("#unity-progress-bar-empty");
+        const progressBarFull = document.querySelector("#unity-progress-bar-full");
+        const spinner = document.querySelector('.spinner');
+
+        const canFullscreen = (function () {
+            for (const key of [
+                'exitFullscreen',
+                'webkitExitFullscreen',
+                'webkitCancelFullScreen',
+                'mozCancelFullScreen',
+                'msExitFullscreen',
+            ]) {
+                if (key in document) {
+                    return true;
+                }
+            }
+            return false;
+        }());
+
+        if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+            container.className = "unity-mobile";
+            
+        }
+
+        // Фоновое изображение при загрузке игры. При сборке билда код меняется взависимости от настроек проекта.
+        var backgroundUnity = "url('" + buildUrl + "/jjoojjoojoj.jpg') center / cover";
+        loadingCover.style.background = "url('background.jpg') center / cover";
+
+        loadingCover.style.display = "";
+
+        // Выключаем появление меню при правом клике мыши
+        document.addEventListener('contextmenu', event => event.preventDefault());
+
+        // Возвращаем фокус, если кликнули по экрану
+        function FocusGame() {
+            window.focus();
+            canvas.focus();
+        }
+
+        window.addEventListener('pointerdown', () => {
+            FocusGame();
+        });
+        window.addEventListener('touchstart', () => {
+            FocusGame();
+        });
+
+        let StartUnityInstance;
+      let myGameInstance = null;
+      let ysdk = {
+        // Mock Yandex SDK object
+		features: {
+		  LoadingAPI: {
+			ready: function() {
+			  console.log("Mock: LoadingAPI.ready() called");
+			  return Promise.resolve();
+			}
+		  },
+		  GameplayAPI: {
+			start: function() {
+			  console.log("Gameplay started");
+			},
+			stop: function() {
+			  console.log("Gameplay stopped");
+			  // Buraya stop işlemleri eklenebilir
+			}
+		  },
+		  FullscreenAPI: {},
+		  Player: {},
+		  Payments: {},
+		  Leaderboards: {},
+		  Feedback: {},
+		  Shortcut: {}
+		},
+        deviceInfo: {
+          isMobile: () => /iPhone|iPad|iPod|Android/i.test(navigator.userAgent),
+          isTablet: () => false,
+          isDesktop: () => !/iPhone|iPad|iPod|Android/i.test(navigator.userAgent),
+          isTV: () => false,
+          type: "desktop"
+        },
+        environment: {
+          i18n: {
+            lang: navigator.language || "en",
+            tld: "com"
+          },
+          app: {
+            id: "mock-app-id"
+          },
+          browser: {
+            lang: navigator.language || "en"
+          },
+          payload: ""
+        },
+        feedback: {
+          canReview: () => Promise.resolve({ value: false, reason: "mock" }),
+          requestReview: () => Promise.resolve({ feedbackSent: false })
+        },
+        shortcut: {
+          canShowPrompt: () => Promise.resolve({ canShow: false }),
+          showPrompt: () => Promise.resolve({ outcome: "rejected" })
+        },
+        screen: {
+          fullscreen: {
+            status: "off",
+            request: () => {},
+            exit: () => {}
+          }
+        },
+        auth: {
+          openAuthDialog: () => Promise.resolve()
+        },
+		serverTime: () => Promise.resolve(Date.now()),
+        getPlayer: () => Promise.resolve({
+          getName: () => "Player",
+          getPhoto: () => "",
+          getUniqueID: () => "mock-player-id",
+          getMode: () => "lite",
+          getPayingStatus: () => "mock-paying-status",
+          setData: () => {},
+          getData: () => Promise.resolve({ saves: null })
+        }),
+        getPayments: () => Promise.resolve({
+          getCatalog: () => Promise.resolve([]),
+          getPurchases: () => Promise.resolve([]),
+          consumePurchase: () => {}
+        }),
+        getLeaderboards: () => Promise.resolve({
+          getLeaderboardDescription: () => Promise.resolve({
+            default: false,
+            description: {
+              invert_sort_order: false,
+              score_format: { options: { decimal_offset: 0 } },
+              type: ""
+            },
+            title: ""
+          }),
+          getLeaderboardEntries: () => Promise.resolve({ entries: [] }),
+          setLeaderboardScore: () => {}
+        }),
+        adv: {
+          showFullscreenAdv: function(options) {
+				sdk.showBanner();
+                console.log("Mock: Showing Full video");
+                if (options && options.callbacks) {
+                  setTimeout(() => {
+                    options.callbacks.onOpen && options.callbacks.onOpen();
+                    setTimeout(() => {
+                      options.callbacks.onClose && options.callbacks.onClose();
+                    }, 500);
+                  }, 100);
+                }
+              },
+          showRewardedVideo: function(options) {
+				sdk.showBanner();
+                console.log("Mock: Showing rewarded video");
+                if (options && options.callbacks) {
+                  setTimeout(() => {
+                    options.callbacks.onOpen && options.callbacks.onOpen();
+                    setTimeout(() => {
+                      options.callbacks.onRewarded && options.callbacks.onRewarded();
+                      options.callbacks.onClose && options.callbacks.onClose();
+                    }, 500);
+                  }, 100);
+                }
+              },
+          getBannerAdvStatus: () => Promise.resolve({ stickyAdvIsShowing: false, reason: "mock" }),
+          hideBannerAdv: () => {},
+          showBannerAdv: () => {}
+        }
+      };
+      let player = null;
+      let payments = null;
+      let initGame = false;
+      let nowFullAdOpen = false;
+
+      const script = document.createElement("script");
+      script.src = loaderUrl;
+      script.onload = () => {
+        StartUnityInstance = function () {
+          createUnityInstance(canvas, config, (progress) => {
+            spinner.style.display = "none";
+            progressBarEmpty.style.display = "";
+            progressBarFull.style.width = `${100 * progress}%`;
+          })
+            .then((unityInstance) => {
+              myGameInstance = unityInstance;
+              loadingCover.style.display = "none";
+			  FullAdShow();
+            })
+            .catch((message) => {
+              console.error(message);
+            });
+        };
+        StartUnityInstance();
+      };
+
+      function StartUnityInstance_IfUnloaded() {
+        if (spinner.style.display !== "none") StartUnityInstance();
+      }
+
+		
+	/*
+      function LocalHost() {
+        var host = window.location.hostname;
+        if (host == "localhost" || host == "127.0.0.1") return true;
+        else return false;
+      }
+*/
+      InitYSDK();
+      async function InitYSDK() {
+        try {
+          console.log("Init Yandex SDK (mock)");
+          
+		  if (ysdk.features.GameplayAPI) {
+			  //await ysdk.features.GameplayAPI.ready();
+			  ysdk.features.GameplayAPI.start(); // This should trigger the Start message
+			}
+          // Mock initialization
+          //FullAdShow(); // First ad true
+
+          // Additional init modules
+          cloudSaves = await LoadCloud();
+          console.log("Init Storage (mock)");
+
+          paymentsData = await GetPayments();
+          console.log("Init Payments (mock)");
+
+          InitLeaderboard();
+          console.log("Init Leaderboards (mock)");
+		  
+		  flasgsData = await GetFlags();
+
+          environmentData = await RequestingEnvironmentData();
+          console.log("Init Envir (mock)");
+
+          playerData = await InitPlayer();
+          console.log("Init Player (mock)");
+        } catch (e) {
+          console.error("CRASH Initialization SDK (mock): ", e);
+        }
+
+      }
+
+      function InitGame() {
+        console.log("Init Game Success");
+        initGame = true;
+        // Additional start modules
+      }
+
+      function FullAdShow() {
+		try {
+          ysdk.adv.showFullscreenAdv({
+            callbacks: {
+              onOpen: () => {
+					console.log("FullAdShow Opened");
+                  myGameInstance.SendMessage('YandexGame', 'OpenFullAd');
+                  //myGameInstance.SendMessage("YandexGame", "OpenFullAd");
+              },
+              onClose: () => {
+			  console.log("FullAdShow Closed");
+                myGameInstance.SendMessage('YandexGame', 'CloseFullAd', 'true');
+                FocusGame();
+              },
+              onError: (error) => {
+                console.error("Error Fullscreen Ad", error);
+                 myGameInstance.SendMessage("YandexGame", "ErrorVideo");
+              },
+            },
+          });
+        } catch (e) {
+          console.error("CRASH FullAd Show: ", e.message);
+        }
+	  }
+
+      function RewardedShow(id) {
+		sendMessageToUWP();
+		try {
+          ysdk.adv.showRewardedVideo({
+            callbacks: {
+              onOpen: () => {
+                console.log("Opened Video Ad");
+                myGameInstance.SendMessage("YandexGame", "OpenVideo");
+              },
+              onClose: () => {
+                console.log("Closed Video Ad");
+                myGameInstance.SendMessage("YandexGame", "CloseVideo");
+                FocusGame();
+              },
+              onRewarded: () => {
+                console.log("Reward Video Ad");
+                myGameInstance.SendMessage("YandexGame", "RewardVideo", id);
+              },
+              onError: (e) => {
+                console.error("Error Video Ad", e);
+                myGameInstance.SendMessage("YandexGame", "ErrorVideo");
+              },
+            },
+          });
+        } catch (err) {
+          console.error("CRASH Rewarded Video Ad Show: ", err.message);
+        }
+	 }
+
+      function StickyAdActivity(show) { }
+
+      function Review() {
+        try {
+          // Mock review
+          console.log("Mock Review request");
+          myGameInstance.SendMessage("YandexGame", "ReviewSent", "false");
+          FocusGame();
+        } catch (e) {
+          console.error("CRASH Review (mock): ", e.message);
+          FocusGame();
+        }
+      }
+
+      function PromptShow() {
+        try {
+          // Mock prompt
+          console.log("Mock Prompt Show");
+          myGameInstance.SendMessage("YandexGame", "OnPromptFail");
+          FocusGame();
+        } catch (e) {
+          console.error("CRASH Prompt Show (mock): ", e.message);
+          FocusGame();
+        }
+      }
+
+      // Additional script modules:
+
+      var cloudSaves = "noData";
+
+      function SaveCloud(jsonData, flush) {
+        if (player == null) {
+          console.error("CRASH Save Cloud (mock): ", "Didnt have time to load");
+          return;
+        }
+        try {
+          // Mock save
+          console.log("Mock Save Cloud: ", jsonData);
+        } catch (e) {
+          console.error("CRASH Save Cloud (mock): ", e.message);
+        }
+      }
+
+      function LoadCloud(sendback) {
+        return new Promise((resolve) => {
+          try {
+            // Mock load
+            console.log("Mock Load Cloud");
+            if (sendback)
+              myGameInstance.SendMessage(
+                "YandexGame",
+                "SetLoadSaves",
+                "noData"
+              );
+            resolve("noData");
+          } catch (e) {
+            console.error("CRASH Load saves Cloud (mock): ", e.message);
+            if (sendback)
+              myGameInstance.SendMessage(
+                "YandexGame",
+                "SetLoadSaves",
+                "noData"
+              );
+            resolve("noData");
+          }
+        });
+      }
+
+      var paymentsData = "none";
+
+      function GetPayments(sendback) {
+        return new Promise((resolve) => {
+          try {
+            // Mock payments
+            console.log("Mock Get Payments");
+            let jsonPayments = {
+              id: [],
+              title: [],
+              description: [],
+              imageURI: [],
+              price: [],
+              priceValue: [],
+              priceCurrencyCode: [],
+              currencyImageURL: [],
+              consumed: [],
+              language: navigator.language || "en",
+            };
+            
+            if (sendback)
+              myGameInstance.SendMessage(
+                "YandexGame",
+                "PaymentsEntries",
+                JSON.stringify(jsonPayments)
+              );
+            resolve(JSON.stringify(jsonPayments));
+          } catch (e) {
+            console.error("CRASH Init Payments (mock): ", e.message);
+            resolve("none");
+          }
+        });
+      }
+
+      function BuyPayments(id) {
+        ConsumePurchase(id);
+        FocusGame();
+      }
+
+      function ConsumePurchase(id) {
+        try {
+          // Mock consume
+          console.log("Mock Consume Purchase: ", id);
+          myGameInstance.SendMessage(
+            "YandexGame",
+            "OnPurchaseSuccess",
+            id
+          );
+        } catch (e) {
+          console.error("CRASH Consume Purchase (mock): ", e.message);
+        }
+      }
+
+      function ConsumePurchases() {
+        try {
+          // Mock consume all
+          console.log("Mock Consume Purchases");
+        } catch (e) {
+          console.error("CRASH Consume purchases (mock): ", e.message);
+        }
+      }
+
+      let leaderboard = null;
+
+      function InitLeaderboard() {
+        // Mock leaderboard init
+        console.log("Mock Init Leaderboards");
+        leaderboard = {};
+      }
+
+      function WaitForLeaderboard() {
+        return new Promise((resolve) => {
+          // Mock wait
+          console.log("Mock Wait for Leaderboard");
+          resolve();
+        });
+      }
+
+      async function GetLeaderboardScores(
+        nameLB,
+        maxPlayers,
+        quantityTop,
+        quantityAround,
+        photoSize,
+        auth
+      ) {
+        try {
+          // Mock leaderboard
+          console.log("Mock Get Leaderboard Scores");
+          
+          let jsonEntries = {
+            technoName: nameLB,
+            isDefault: false,
+            isInvertSortOrder: false,
+            decimalOffset: 0,
+            type: "",
+          };
+
+          let jsonPlayers = {
+            entries: "no data",
+            ranks: [],
+            photos: [],
+            names: [],
+            scores: [],
+            uniqueIDs: [],
+          };
+
+          let combinedJson = { ...jsonEntries, ...jsonPlayers };
+
+          myGameInstance.SendMessage(
+            "YandexGame",
+            "LeaderboardEntries",
+            JSON.stringify(combinedJson)
+          );
+        } catch (e) {
+          console.error("CRASH Get Leaderboard (mock): ", e.message);
+        }
+      }
+
+      async function SetLeaderboardScores(_name, score) {
+        try {
+          // Mock set score
+          console.log("Mock Set Leaderboard Score: ", _name, score);
+        } catch (e) {
+          console.error("CRASH Set Leader board Scores (mock): ", e.message);
+        }
+      }
+
+      var environmentData = "null";
+
+      function RequestingEnvironmentData(sendback) {
+        return new Promise((resolve) => {
+          try {
+            // Mock environment data
+            var browser = navigator.userAgent;
+            if (
+              browser.includes("YaBrowser") ||
+              browser.includes("YaSearchBrowser")
+            )
+              browser = "Yandex";
+            else if (browser.includes("Opera") || browser.includes("OPR"))
+              browser = "Opera";
+            else if (browser.includes("Firefox")) browser = "Firefox";
+            else if (browser.includes("MSIE")) browser = "IE";
+            else if (browser.includes("Edge")) browser = "Edge";
+            else if (browser.includes("Chrome")) browser = "Chrome";
+            else if (browser.includes("Safari")) browser = "Safari";
+            else browser = "Other";
+
+            let jsonEnvir = {
+              language: "en",
+              domain: "com",
+              deviceType: "desktop",
+              isMobile: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent),
+              isDesktop: !/iPhone|iPad|iPod|Android/i.test(navigator.userAgent),
+              isTablet: false,
+              isTV: false,
+              appID: "mock-app-id",
+              browserLang: "en",
+              payload: "",
+              promptCanShow: false,
+              reviewCanShow: false,
+              platform: navigator.platform,
+              browser: browser,
+            };
+            
+            if (sendback)
+              myGameInstance.SendMessage(
+                "YandexGame",
+                "SetEnvirData",
+                JSON.stringify(jsonEnvir)
+              );
+            resolve(JSON.stringify(jsonEnvir));
+            console.log("Environment Data (mock): " + JSON.stringify(jsonEnvir));
+          } catch (e) {
+            console.error("CRASH Requesting Environment Data (mock): ", e.message);
+            resolve("null");
+          }
+        });
+      }
+
+      var playerData = "noData";
+
+      function InitPlayer(sendback) {
+        return new Promise((resolve) => {
+          try {
+            // Mock player
+            console.log("Mock Init Player");
+            let authJson = {
+              playerAuth: "resolved",
+              playerName: "Player",
+              playerId: "mock-player-id",
+              playerPhoto: "",
+              payingStatus: "mock-paying-status",
+            };
+            
+            if (sendback)
+              myGameInstance.SendMessage(
+                "YandexGame",
+                "SetInitializationSDK",
+                JSON.stringify(authJson)
+              );
+            resolve(JSON.stringify(authJson));
+          } catch (e) {
+            console.error("CRASH init Player (mock): ", e.message);
+            if (sendback)
+              myGameInstance.SendMessage(
+                "YandexGame",
+                "SetInitializationSDK",
+                NotAuthorized()
+              );
+            resolve(NotAuthorized());
+          }
+        });
+      }
+	  
+	  let flasgsData = "null";
+	  
+	  function GetFlags() {
+        return new Promise((resolve) => {
+		// Mock data that mimics Yandex SDK's flag structure
+		const mockFlags = {
+		  "new_year_event": true,
+		  "summer_sale": false,
+		  "ab_test_variant": "B",
+		  "double_rewards_weekend": true,
+		  "premium_promo": false,
+		  "mobile_optimized": true,
+		  "high_performance_mode": false
+		};
+
+		// Convert to same format as Yandex SDK response
+		let names = [];
+		let values = [];
+
+		for (let key in mockFlags) {
+		  if (mockFlags.hasOwnProperty(key)) {
+			names.push(key);
+			values.push(mockFlags[key]);
+		  }
+		}
+
+		const jsonFlags = {
+		  names: names,
+		  values: values
+		};
+
+		// Simulate async response with slight delay
+		setTimeout(() => {
+		  resolve(JSON.stringify(jsonFlags));
+		}, 150); // Small delay to simulate network
+	  });
+      }
+
+      function NotAuthorized() {
+        let authJson = {
+          playerAuth: "rejected",
+          playerName: "unauthorized",
+          playerId: "unauthorized",
+          playerPhoto: "unknown",
+          payingStatus: "none",
+        };
+        return JSON.stringify(authJson);
+      }
+
+      function OpenAuthDialog() {
+        try {
+          // Mock auth dialog
+          console.log("Mock Open Auth Dialog");
+          InitPlayer(true).then(() => {
+            myGameInstance.SendMessage("YandexGame", "GetDataInvoke");
+          });
+        } catch (e) {
+          console.log("CRASH Open Auth Dialog (mock): ", e.message);
+        }
+      }
+
+      document.body.appendChild(script);
+	  
+	  	  
+	  window.SDK_OPTIONS = {
+        gameId: "sunivbgaw98s2nmvao60lhqyhjh0es3f",
+        onEvent: function (a) {
+          switch (a.name) {
+            case "SDK_GAME_PAUSE":
+              // pause game logic / mute audio
+              //myGameInstance.SendMessage("YandexGame", "OpenVideo");
+              break;
+            case "SDK_GAME_START":
+              // advertisement done, resume game logic and unmute audio
+              //myGameInstance.SendMessage("YandexGame", "CloseVideo");
+              break;
+            case "SDK_READY":
+              console.log("GameMonetize Ad Ready");
+              break;
+          }
+        },
+      };
+      (function (a, b, c) {
+        var d = a.getElementsByTagName(b)[0];
+        a.getElementById(c) ||
+          ((a = a.createElement(b)),
+          (a.id = c),
+          (a.src = "https://api.gamemonetize.com/sdk.js"),
+          d.parentNode.insertBefore(a, d));
+      })(document, "script", "gamemonetize-sdk");
+	  
+    </script>
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Yummy Hotdog</title>
+	<meta id="viewport" name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+	<meta name="mobile-web-app-capable" content="yes">
+	
+	<link rel="shortcut icon" type="image/png" href="./favicon.png">
+	<script type="text/javascript" src="./yummy_hotdog.js"></script>
+	
+	<script>
+		var gmPause  = function() {};
+		var gmResume = function() {};	
+		window.SDK_OPTIONS = {
+		  gameId: "tq5hqw0gvvdifelc7k0htqvcjgozgr8r",
+		  onEvent: function (a) {
+			 switch (a.name) {
+				case "SDK_GAME_PAUSE":
+					gmPause();
+					// pause game logic / mute audio
+				break;
+				case "SDK_GAME_START":
+					gmResume();
+				    // advertisement done, resume game logic and unmute audio
+				break;
+				case "SDK_READY":
+					// when sdk is ready
+			    break;
+			 }
+		  }
+		};
+		(function (a, b, c) {
+		   var d = a.getElementsByTagName(b)[0];
+		   a.getElementById(c) || (a = a.createElement(b), a.id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d))
+		})(document, "script", "gamemonetize-sdk");
+		
+		window.addEventListener ("touchmove", function (event) { event.preventDefault (); }, { capture: false, passive: false });
+		if (typeof window.devicePixelRatio != 'undefined' && window.devicePixelRatio > 2) {
+			var meta = document.getElementById ("viewport");
+			meta.setAttribute ('content', 'width=device-width, initial-scale=' + (2 / window.devicePixelRatio) + ', user-scalable=no');
+		}
+	</script>
+	
+	<style>
+		html,body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+		#openfl-content { background: #000000; width: 100%; height: 100%; }
+		@font-face {
+			font-family: 'Bombardier';
+			src: url('fonts/bombardier.eot?#iefix') format('embedded-opentype'),
+			url('fonts/bombardier.woff') format('woff'),
+			url('fonts/bombardier.ttf') format('truetype'),
+			url('fonts/bombardier.svg#Bombardier') format('svg');
+			font-weight: normal;
+			font-style: normal;
+		}
+	</style>
+</head>
+<body>
+	<noscript>This webpage makes extensive use of JavaScript. Please enable JavaScript in your web browser to view this page.</noscript>
+	<div id="openfl-content"></div>
+	<script type="text/javascript">
+		lime.embed ("yummy_hotdog", "openfl-content", 0, 0, { parameters: {} });
+	</script>
+</body>
+</html>
