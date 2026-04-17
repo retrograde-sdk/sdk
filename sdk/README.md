@@ -42,7 +42,7 @@ Download `retro.min.js` and serve it from your own domain:
 ### Option 2: CDN
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/retrograde-sdk/sdk@main/sdk/retro.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/xazalea/retrograde@main/sdk/retro.min.js"></script>
 ```
 
 ## Configuration
@@ -73,7 +73,7 @@ This will automatically create a `Retrograde` instance targeting the specified e
 
 - 🎮 **28,000+ HTML5 games** — Instant access to a massive game catalog
 - 🔍 **Real-time search** — Find any game in milliseconds
-- 📂 **16 categories** — Action, Racing, Puzzle, Sports, and more
+- 📂 **15 categories** — Action, Racing, Puzzle, Sports, and more
 - 🎯 **Featured game** — Randomized spotlight on every page load
 - ⭐ **Favorites** — Users can save their favorite games (persisted in localStorage)
 - 🕐 **Recently played** — Automatic history tracking
