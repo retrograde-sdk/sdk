@@ -28,11 +28,22 @@ import urllib.request
 import urllib.error
 from collections import defaultdict
 
-# Fix SSL certificate verification on macOS (scoped to this script only)
-_ctx = ssl.create_default_context()
-_ctx.check_hostname = False
-_ctx.verify_mode = ssl.CERT_NONE
-ssl._create_default_https_context = lambda: _ctx
+# Handle SSL certificate verification on macOS
+# macOS system Python may lack proper root certificates.
+# Use certifi if available (provides Mozilla CA bundle), otherwise
+# fall back to default context (may fail on some corporate networks),
+# and as a last resort, disable verification for this script only.
+try:
+    import certifi
+    ssl._create_default_https_context = lambda: ssl.create_default_context(cafile=certifi.where())
+except ImportError:
+    try:
+        ssl._create_default_https_context = ssl.create_default_context
+    except AttributeError:
+        _ctx = ssl.create_default_context()
+        _ctx.check_hostname = False
+        _ctx.verify_mode = ssl.CERT_NONE
+        ssl._create_default_https_context = lambda: _ctx
 
 # ─── Configuration ────────────────────────────────────────────────
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -126,8 +137,17 @@ def fetch_feed(url=FEED_URL, timeout=120):
             data = json.loads(resp.read().decode('utf-8'))
         print(f'  ✓ Fetched {len(data)} games from feed')
         return data
-    except (urllib.error.URLError, urllib.error.HTTPError) as e:
-        print(f'  ✗ Failed to fetch feed: {e}')
+    except urllib.error.HTTPError as e:
+        print(f'  ✗ HTTP error fetching feed: {e.code} {e.reason}')
+        return None
+    except urllib.error.URLError as e:
+        print(f'  ✗ URL error fetching feed: {e.reason}')
+        return None
+    except (json.JSONDecodeError, ValueError) as e:
+        print(f'  ✗ Invalid JSON in feed response: {e}')
+        return None
+    except Exception as e:
+        print(f'  ✗ Unexpected error fetching feed: {e}')
         return None
 
 
@@ -379,7 +399,7 @@ def generate_page_data(games_full, videos, cat_counts):
         
         out_path = os.path.join(pages_dir, f'{page}.json')
         with open(out_path, 'w') as f:
-            json.dump(page_data, f, separators=(',', ':'))
+            json.dump(page_data, f, separators=(',', ':'), ensure_ascii=False)
     
     print(f'  ✓ Generated {total_pages} page files in {pages_dir}')
     
@@ -434,7 +454,7 @@ def generate_page_data(games_full, videos, cat_counts):
             
             out_path = os.path.join(cat_page_dir, f'{page}.json')
             with open(out_path, 'w') as f:
-                json.dump(page_data, f, separators=(',', ':'))
+                json.dump(page_data, f, separators=(',', ':'), ensure_ascii=False)
         
         print(f'  ✓ Category "{cat_slug}": {total_cat} games, {cat_pages} pages')
     
@@ -570,8 +590,11 @@ def main():
     # Summary
     elapsed = time.time() - start_time
     print(f'\n[7/7] ✓ Pipeline complete in {elapsed:.1f}s')
-    print(f'  Total games: {len(games_full)}')
-    print(f'  Games with video: {len(videos)} ({len(videos)*100//len(games_full)}%)')
+    if len(games_full) > 0:
+        print(f'  Total games: {len(games_full)}')
+        print(f'  Games with video: {len(videos)} ({len(videos)*100//len(games_full)}%)')
+    else:
+        print(f'  Total games: 0')
     print(f'  Categories: {len(sdk_cats)}')
     print()
     
